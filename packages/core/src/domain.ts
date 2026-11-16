@@ -7,9 +7,37 @@ export type FutureMapEngineId = "baidu";
 export type TripRole = "owner" | "editor" | "viewer";
 
 export type TripMember = {
+  id: string;
   tripId: string;
   userId: string;
   role: TripRole;
+  displayName?: string;
+  joinedAt: string;
+};
+
+/** Invite join link / short code — owner|editor create; never grants owner. */
+export type TripInvite = {
+  id: string;
+  tripId: string;
+  code: string;
+  role: Exclude<TripRole, "owner">;
+  createdBy: string;
+  createdAt: string;
+  expiresAt?: string;
+  revokedAt?: string;
+  maxUses?: number;
+  useCount: number;
+};
+
+export type CreateInviteInput = {
+  role?: Exclude<TripRole, "owner">;
+  /** Hours until expiry; omit for no expiry. */
+  expiresInHours?: number;
+  maxUses?: number;
+};
+
+export type AcceptInviteInput = {
+  displayName?: string;
 };
 
 export type Trip = {

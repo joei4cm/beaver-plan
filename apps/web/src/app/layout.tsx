@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Fraunces, Sora } from "next/font/google";
 import { brand } from "@beaver/ui-tokens";
+import { AuthBridge } from "@/components/auth/auth-bridge";
+import { BeaverClerkProvider } from "@/components/providers/clerk-provider";
 import { SiteHeader } from "@/components/site-header";
+import { clerkPublishableKey } from "@/lib/clerk";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 
@@ -31,6 +34,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const publishableKey = clerkPublishableKey();
 
   return (
     <html
@@ -38,14 +42,19 @@ export default async function RootLayout({
       className={`${display.variable} ${body.variable}`}
       style={
         {
-          "--bp-font-display": "var(--font-fraunces), \"Songti SC\", Georgia, serif",
-          "--bp-font-body": "var(--font-sora), \"PingFang SC\", system-ui, sans-serif",
+          "--bp-font-display":
+            'var(--font-fraunces), "Songti SC", Georgia, serif',
+          "--bp-font-body":
+            'var(--font-sora), "PingFang SC", system-ui, sans-serif',
         } as React.CSSProperties
       }
     >
       <body>
-        <SiteHeader locale={locale} />
-        <main>{children}</main>
+        <BeaverClerkProvider publishableKey={publishableKey}>
+          <AuthBridge />
+          <SiteHeader locale={locale} />
+          <main>{children}</main>
+        </BeaverClerkProvider>
       </body>
     </html>
   );

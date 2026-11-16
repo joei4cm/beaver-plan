@@ -15,13 +15,17 @@ DEFAULT_LOCALE = "zh-CN"
 DEFAULT_MAP_ENGINE = "google"
 MAP_AUTO_AMAP_CN = "true"
 FEATURE_TRANSLATION = "true"
+PUBLIC_WEB_ORIGIN = "http://localhost:3000"
+CLERK_WECHAT_ENABLED = "false"
 
 # Secrets (wrangler secret put …) — never commit values:
-# CLERK_SECRET_KEY
+# CLERK_SECRET_KEY         — enables JWT-gated trip mutations
+# CLERK_PUBLISHABLE_KEY / CLERK_JWT_ISSUER — JWKS verification
 # DATABASE_URL
 # R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (or use R2 binding above)
 # GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
 # AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
 # OPENAI_API_KEY (translation — Slice E)
 #
+# Without CLERK_SECRET_KEY, BFF uses demo identity headers (X-Beaver-User-Id).
 # Without map secrets, /v1/places and /v1/directions use curated demo data.

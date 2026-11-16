@@ -12,6 +12,7 @@
     "@beaver/core": "workspace:*",
     "@beaver/i18n": "workspace:*",
     "@beaver/ui-tokens": "workspace:*",
+    "@clerk/nextjs": "^7.10.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

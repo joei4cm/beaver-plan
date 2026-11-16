@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
+import { AuthControls } from "@/components/auth/auth-controls";
 
 export function SiteHeader({ locale }: { locale: Locale }) {
   return (
@@ -17,12 +18,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <Link href="/trips" className="transition hover:text-river">
           {t(locale, "nav.trips")}
         </Link>
-        <span
-          className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-ink-soft/80"
-          title="Clerk — set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-        >
-          {t(locale, "nav.signIn")}
-        </span>
+        <AuthControls locale={locale} />
       </nav>
     </header>
   );

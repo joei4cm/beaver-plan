@@ -70,9 +70,9 @@ export type CollabSyncResult =
   | { ok: true; version: number }
   | { ok: false; reason: "version_conflict"; serverVersion: number };
 
-/** Collaboration port — invite + version sync; Slice D. */
+/** Collaboration port — invite + version sync (Slice D). */
 export interface CollabPort {
-  invite(input: CollabInvite): Promise<{ inviteUrl: string }>;
+  invite(input: CollabInvite): Promise<{ inviteUrl: string; code: string }>;
   pushVersion(
     tripId: string,
     expectedVersion: number,
@@ -143,8 +143,14 @@ export class StubRoutingEngine implements RoutingEngine {
 }
 
 export class StubCollabPort implements CollabPort {
-  async invite(input: CollabInvite): Promise<{ inviteUrl: string }> {
-    return { inviteUrl: `https://beaver.plan/invite/stub/${input.tripId}` };
+  async invite(
+    input: CollabInvite,
+  ): Promise<{ inviteUrl: string; code: string }> {
+    const code = `BP-STUB${input.tripId.slice(0, 2).toUpperCase()}`;
+    return {
+      code,
+      inviteUrl: `https://beaver.plan/invite/${code}`,
+    };
   }
 
   async pushVersion(

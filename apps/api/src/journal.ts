@@ -4,6 +4,9 @@ import type {
   JournalEntry,
   UpdateJournalInput,
 } from "@beaver/core";
+import type { AuthVariables } from "./auth.js";
+import { requireAuth } from "./auth.js";
+import { applyVersionOrConflict, assertCanEdit } from "./access.js";
 import type { Bindings } from "./env.js";
 import {
   daysByTrip,
@@ -13,7 +16,10 @@ import {
   trips,
 } from "./store.js";
 
-export const journalRoutes = new Hono<{ Bindings: Bindings }>();
+export const journalRoutes = new Hono<{
+  Bindings: Bindings;
+  Variables: AuthVariables;
+}>();
 
 journalRoutes.get("/v1/trips/:id/journal", (c) => {
   const trip = trips.get(c.req.param("id"));
@@ -27,12 +33,15 @@ journalRoutes.get("/v1/trips/:id/journal", (c) => {
   return c.json({ entries });
 });
 
-journalRoutes.post("/v1/trips/:id/journal", async (c) => {
+journalRoutes.post("/v1/trips/:id/journal", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  let body: CreateJournalInput;
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let body: CreateJournalInput & { expectedVersion?: number };
   try {
-    body = await c.req.json<CreateJournalInput>();
+    body = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
@@ -52,7 +61,10 @@ journalRoutes.post("/v1/trips/:id/journal", async (c) => {
     }
   }
 
-  const stamp = nowIso();
+  const bumped = applyVersionOrConflict(c, trip, body.expectedVersion);
+  if (!bumped.ok) return bumped.res;
+
+  const stamp = bumped.trip.updatedAt;
   const entry: JournalEntry = {
     id: crypto.randomUUID(),
     tripId: trip.id,
@@ -65,28 +77,29 @@ journalRoutes.post("/v1/trips/:id/journal", async (c) => {
   };
   const list = journalByTrip.get(trip.id) ?? [];
   journalByTrip.set(trip.id, [...list, entry]);
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: stamp,
-  });
-  return c.json({ entry }, 201);
+  return c.json({ entry, tripVersion: bumped.trip.version }, 201);
 });
 
-journalRoutes.patch("/v1/trips/:id/journal/:entryId", async (c) => {
+journalRoutes.patch("/v1/trips/:id/journal/:entryId", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
   const entryId = c.req.param("entryId");
   const list = journalByTrip.get(trip.id) ?? [];
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx < 0) return c.json({ error: "entry_not_found" }, 404);
 
-  let body: UpdateJournalInput;
+  let body: UpdateJournalInput & { expectedVersion?: number };
   try {
-    body = await c.req.json<UpdateJournalInput>();
+    body = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
+
+  const bumped = applyVersionOrConflict(c, trip, body.expectedVersion);
+  if (!bumped.ok) return bumped.res;
 
   const prev = list[idx]!;
   const next: JournalEntry = {
@@ -110,30 +123,39 @@ journalRoutes.patch("/v1/trips/:id/journal/:entryId", async (c) => {
   const updated = [...list];
   updated[idx] = next;
   journalByTrip.set(trip.id, updated);
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
-  });
-  return c.json({ entry: next });
+  return c.json({ entry: next, tripVersion: bumped.trip.version });
 });
 
-journalRoutes.delete("/v1/trips/:id/journal/:entryId", (c) => {
-  const trip = trips.get(c.req.param("id"));
-  if (!trip) return c.json({ error: "not_found" }, 404);
-  const entryId = c.req.param("entryId");
-  const list = journalByTrip.get(trip.id) ?? [];
-  if (!list.some((e) => e.id === entryId)) {
-    return c.json({ error: "entry_not_found" }, 404);
-  }
-  journalByTrip.set(
-    trip.id,
-    list.filter((e) => e.id !== entryId),
-  );
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
-  });
-  return c.json({ ok: true });
-});
+journalRoutes.delete(
+  "/v1/trips/:id/journal/:entryId",
+  requireAuth,
+  async (c) => {
+    const trip = trips.get(c.req.param("id"));
+    if (!trip) return c.json({ error: "not_found" }, 404);
+    const access = assertCanEdit(c, trip.id);
+    if (!access.ok) return access.res;
+
+    const entryId = c.req.param("entryId");
+    const list = journalByTrip.get(trip.id) ?? [];
+    if (!list.some((e) => e.id === entryId)) {
+      return c.json({ error: "entry_not_found" }, 404);
+    }
+
+    let expectedVersion: number | undefined;
+    try {
+      const body = await c.req.json<{ expectedVersion?: number }>();
+      expectedVersion = body.expectedVersion;
+    } catch {
+      expectedVersion = undefined;
+    }
+
+    const bumped = applyVersionOrConflict(c, trip, expectedVersion);
+    if (!bumped.ok) return bumped.res;
+
+    journalByTrip.set(
+      trip.id,
+      list.filter((e) => e.id !== entryId),
+    );
+    return c.json({ ok: true, tripVersion: bumped.trip.version });
+  },
+);
