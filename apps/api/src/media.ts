@@ -1,19 +1,46 @@
 import { Hono } from "hono";
 import type { Bindings } from "./env.js";
 import {
-  mediaById,
+  mediaIdFromRef,
+  mediaKeyFromRef,
+  mediaObjectKey,
   mediaPublicPath,
-  putMedia,
+  putMediaObject,
 } from "./media-store.js";
-import { nowIso } from "./store.js";
+import {
+  getObject,
+  isS3Configured,
+  mediaMissingResponse,
+  requireS3Config,
+  signedGetUrl,
+  signedPutUrl,
+  S3ConfigError,
+} from "./s3.js";
 
 export const mediaRoutes = new Hono<{ Bindings: Bindings }>();
 
+async function requireCfg(c: {
+  env: Bindings;
+  json: (body: unknown, status?: number) => Response;
+}) {
+  if (!isS3Configured(c.env)) return null;
+  try {
+    return requireS3Config(c.env);
+  } catch (e) {
+    if (e instanceof S3ConfigError) return null;
+    throw e;
+  }
+}
+
 /**
- * Upload stub — accepts JSON `{ contentType, dataBase64, tripId? }`
- * or multipart `file`. Persists in-memory; swap to R2 when `MEDIA` binding exists.
+ * Upload via BFF → S3 PutObject.
+ * Accepts JSON `{ contentType, dataBase64, tripId? }` or multipart `file`.
+ * Returns object `key` (store in Neon journal.media) + stable BFF `url`.
  */
 mediaRoutes.post("/v1/media", async (c) => {
+  const cfg = await requireCfg(c);
+  if (!cfg) return mediaMissingResponse(c);
+
   const contentTypeHeader = c.req.header("content-type") ?? "";
 
   if (contentTypeHeader.includes("multipart/form-data")) {
@@ -25,19 +52,20 @@ mediaRoutes.post("/v1/media", async (c) => {
     const buf = new Uint8Array(await file.arrayBuffer());
     const tripId =
       typeof form.tripId === "string" ? form.tripId : undefined;
-    const obj = putMedia({
+    const contentType = file.type || "application/octet-stream";
+    const obj = await putMediaObject(cfg, {
       bytes: buf,
-      contentType: file.type || "application/octet-stream",
+      contentType,
       tripId,
     });
     return c.json(
       {
         id: obj.id,
-        url: mediaPublicPath(obj.id),
-        contentType: obj.contentType,
-        storage: "memory",
-        note: "R2-ready: bind MEDIA bucket and replace putMedia",
-        createdAt: obj.createdAt,
+        key: obj.key,
+        url: obj.url,
+        contentType,
+        storage: "s3",
+        createdAt: new Date().toISOString(),
       },
       201,
     );
@@ -60,7 +88,7 @@ mediaRoutes.post("/v1/media", async (c) => {
   } catch {
     return c.json({ error: "invalid_base64" }, 400);
   }
-  const obj = putMedia({
+  const obj = await putMediaObject(cfg, {
     bytes,
     contentType,
     tripId: body.tripId,
@@ -68,44 +96,85 @@ mediaRoutes.post("/v1/media", async (c) => {
   return c.json(
     {
       id: obj.id,
-      url: mediaPublicPath(obj.id),
-      contentType: obj.contentType,
-      storage: "memory",
-      note: "R2-ready: bind MEDIA bucket and replace putMedia",
-      createdAt: obj.createdAt ?? nowIso(),
+      key: obj.key,
+      url: obj.url,
+      contentType,
+      storage: "s3",
+      createdAt: new Date().toISOString(),
     },
     201,
   );
 });
 
-/** Presign stub — returns a same-origin POST target until R2 is wired. */
+/**
+ * Presign a direct PUT to R2/S3. Client must send matching Content-Type.
+ * Configure bucket CORS for browser uploads (see README).
+ */
 mediaRoutes.post("/v1/media/presign", async (c) => {
-  let body: { contentType?: string; tripId?: string };
+  const cfg = await requireCfg(c);
+  if (!cfg) return mediaMissingResponse(c);
+
+  let body: { contentType?: string; tripId?: string; id?: string };
   try {
     body = await c.req.json();
   } catch {
     body = {};
   }
-  const id = crypto.randomUUID();
+  const id = body.id ?? crypto.randomUUID();
+  const contentType = body.contentType ?? "image/jpeg";
+  const key = mediaObjectKey(id);
+  const uploadUrl = await signedPutUrl(cfg, {
+    key,
+    contentType,
+    expiresInSec: 900,
+  });
+  const downloadUrl = await signedGetUrl(cfg, { key, expiresInSec: 3600 });
+
   return c.json({
-    uploadUrl: "/v1/media",
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    bodyTemplate: {
-      contentType: body.contentType ?? "image/jpeg",
-      dataBase64: "<base64>",
-      tripId: body.tripId,
-    },
-    publicUrl: mediaPublicPath(id),
-    storage: "memory",
-    note: "Stub presign — client POSTs base64/multipart to /v1/media. With R2, return a signed PUT URL.",
+    id,
+    key,
+    uploadUrl,
+    method: "PUT" as const,
+    headers: { "Content-Type": contentType },
+    expiresInSec: 900,
+    url: mediaPublicPath(id),
+    downloadUrl,
+    storage: "s3",
+    note: "PUT file bytes to uploadUrl with the Content-Type header. Persist `key` in journal.media. Configure R2 CORS for browser PUTs.",
   });
 });
 
-mediaRoutes.get("/v1/media/:id", (c) => {
-  const obj = mediaById.get(c.req.param("id"));
-  if (!obj) return c.json({ error: "not_found" }, 404);
-  return new Response(obj.bytes, {
+/** JSON signed download URL for a media id or object key. */
+mediaRoutes.get("/v1/media/:id/signed", async (c) => {
+  const cfg = await requireCfg(c);
+  if (!cfg) return mediaMissingResponse(c);
+  const raw = c.req.param("id");
+  const key = mediaKeyFromRef(raw) ?? mediaObjectKey(raw);
+  const downloadUrl = await signedGetUrl(cfg, { key, expiresInSec: 3600 });
+  return c.json({ key, downloadUrl, expiresInSec: 3600 });
+});
+
+/**
+ * Fetch / redirect media. Default: 302 to signed GET (or public base URL).
+ * `?proxy=1` streams bytes through the Worker (for share SVG inlining).
+ */
+mediaRoutes.get("/v1/media/:id", async (c) => {
+  const cfg = await requireCfg(c);
+  if (!cfg) return mediaMissingResponse(c);
+
+  const raw = c.req.param("id");
+  const id = mediaIdFromRef(raw) ?? raw;
+  const key = mediaObjectKey(id);
+  const proxy = c.req.query("proxy") === "1";
+
+  if (!proxy) {
+    const downloadUrl = await signedGetUrl(cfg, { key, expiresInSec: 3600 });
+    return c.redirect(downloadUrl, 302);
+  }
+
+  const obj = await getObject(cfg, key);
+  if (!obj) return c.json({ error: "not_found", key }, 404);
+  return new Response(obj.body, {
     headers: {
       "Content-Type": obj.contentType,
       "Cache-Control": "public, max-age=3600",

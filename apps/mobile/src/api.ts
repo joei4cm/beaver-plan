@@ -140,7 +140,7 @@ export async function uploadMediaBase64(input: {
   tripId: string;
   contentType: string;
   dataBase64: string;
-}): Promise<{ url: string }> {
+}): Promise<{ url: string; key: string }> {
   return apiSend(`/v1/media`, "POST", input);
 }
 
@@ -170,7 +170,12 @@ export function resolveMediaUrl(url: string): string {
     return url;
   }
   const base = apiBase();
-  return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+  if (url.startsWith("media/")) {
+    const id = url.slice("media/".length);
+    return `${base}/v1/media/${encodeURIComponent(id)}`;
+  }
+  if (url.startsWith("/")) return `${base}${url}`;
+  return `${base}/v1/media/${encodeURIComponent(url)}`;
 }
 
 export type TranslationStatus = {

@@ -18,6 +18,7 @@ import { translationRoutes } from "./translation.js";
 import { tripRoutes } from "./trips.js";
 import { ensureSampleTrip, nowIso } from "./store.js";
 import { createTranslationStack, reportTranslationCapabilities } from "@beaver/core";
+import { isS3Configured } from "./s3.js";
 
 const app = new Hono<{ Bindings: Bindings; Variables: AuthVariables }>();
 
@@ -39,7 +40,7 @@ app.use(
 
 /**
  * Persistence requires Neon/Postgres. No silent in-memory fallback for trips.
- * Media bytes remain in-memory until the R2 PR.
+ * Media bytes require S3/R2 — /v1/media* returns 503 when unset (no memory fallback).
  */
 app.use("*", async (c, next) => {
   const path = new URL(c.req.url).pathname;
@@ -56,7 +57,7 @@ app.use("*", async (c, next) => {
     return databaseMissingResponse(c);
   }
   try {
-    await ensureSampleTrip(dbOf(c));
+    await ensureSampleTrip(dbOf(c), c.env);
   } catch (err) {
     if (isDatabaseConfigError(err)) return databaseMissingResponse(c);
     const message = err instanceof Error ? err.message : "database_error";
@@ -111,6 +112,7 @@ app.get("/health", (c) => {
     translationEnabled,
   );
   const hasDb = Boolean(c.env.DATABASE_URL?.trim());
+  const hasS3 = isS3Configured(c.env);
   return c.json({
     status: t(locale, "api.health"),
     app: c.env.APP_NAME ?? "Beaver Plan",
@@ -134,9 +136,13 @@ app.get("/health", (c) => {
     },
     translation,
     media: {
-      storage: "memory",
-      r2Ready: true,
-      note: "Bind R2 as MEDIA to replace in-memory media stubs",
+      storage: hasS3 ? "s3" : "unconfigured",
+      configured: hasS3,
+      required: true,
+      driver: "aws4fetch (S3-compatible → Cloudflare R2)",
+      note: hasS3
+        ? "Journal/share media bytes in S3/R2; Neon stores object keys"
+        : "Set S3_ENDPOINT|R2_ACCOUNT_ID + S3_ACCESS_KEY_ID + S3_SECRET_ACCESS_KEY + S3_BUCKET — /v1/media returns 503 until configured",
     },
   });
 });

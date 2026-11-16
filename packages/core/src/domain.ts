@@ -105,7 +105,7 @@ export type JournalEntry = {
   stopId?: string;
   /** Short note — magazine caption, not a form field dump. */
   body: string;
-  /** Media URLs (R2 public URL or `/v1/media/:id` stub). */
+  /** Object keys (`media/{id}`) or legacy `/v1/media/:id` paths. */
   media: string[];
   createdAt: string;
   updatedAt: string;
@@ -137,7 +137,7 @@ export type ShareArtifact = {
   dayId?: string;
   width: number;
   height: number;
-  /** SVG data URL or R2 object URL when persisted. */
+  /** Object key (`share/{id}.svg`), signed URL, or legacy SVG data URL. */
   storageUrl?: string;
   createdAt: string;
 };
@@ -145,8 +145,8 @@ export type ShareArtifact = {
 export type MediaObject = {
   id: string;
   contentType: string;
-  /** In-memory bytes (R2 binding later). */
-  bytes: Uint8Array;
+  /** Object key in S3/R2 (`media/{id}`). */
+  key: string;
   createdAt: string;
   /** Optional trip scoping for cleanup. */
   tripId?: string;

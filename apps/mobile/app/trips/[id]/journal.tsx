@@ -108,7 +108,7 @@ export default function JournalScreen() {
           contentType: asset.mimeType ?? "image/jpeg",
           dataBase64: b64,
         });
-        urls.push(uploaded.url);
+        urls.push(uploaded.key ?? uploaded.url);
       }
       setPendingMedia((prev) => [...prev, ...urls].slice(0, 8));
     } catch (e) {

@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** Post-MVP — Neon/Postgres persistence (Drizzle) for trips / journal / members
+**Slice:** Post-MVP — Neon/Postgres + R2 media (S3-compatible API)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -33,6 +33,7 @@ Product plan (Agent Store / humans):
 - For API deploy: Cloudflare account + Wrangler
 - Optional: Clerk, Google / Amap, OpenAI / Deepgram keys
 - **Required for trip APIs:** a Neon (or any Postgres) `DATABASE_URL`
+- **Required for journal/share media:** Cloudflare R2 S3 API credentials (`S3_*` or `R2_*`)
 
 ---
 
@@ -50,7 +51,7 @@ cp .env.example apps/api/.dev.vars
 
 ### Neon / Postgres (required for trips)
 
-Trip, day, stop, leg, journal, share-artifact, membership, and invite data live in **Neon Postgres** via **Drizzle** (`@neondatabase/serverless` HTTP driver — Cloudflare Workers compatible). There is **no silent in-memory fallback** for those tables: missing `DATABASE_URL` → HTTP **503** on `/v1/trips`, `/v1/invites`, `/v1/share` (maps / translation / health still respond). Journal **photo bytes** remain in-memory until the R2 PR.
+Trip, day, stop, leg, journal, share-artifact, membership, and invite data live in **Neon Postgres** via **Drizzle** (`@neondatabase/serverless` HTTP driver — Cloudflare Workers compatible). There is **no silent in-memory fallback** for those tables: missing `DATABASE_URL` → HTTP **503** on `/v1/trips`, `/v1/invites`, `/v1/share` (maps / translation / health still respond). Journal **photo bytes** live in **R2 via the S3 API** (object keys stored in Neon); missing S3/R2 env → HTTP **503** on `/v1/media*`.
 
 1. Create a free project at [console.neon.tech](https://console.neon.tech).
 2. Copy the connection string (prefer the **pooled** / `-pooler` host for Workers).
@@ -77,6 +78,57 @@ pnpm --filter @beaver/api db:migrate
 On first request with a working DB, the API idempotently seeds **`sample-kyoto`** (same demo shape as before). Existing demo flows (`/trips/sample-kyoto`, journal, share, invites) keep the same JSON shapes.
 
 **Smoke after migrate:** `pnpm dev:api` → `GET /health` should show `database.configured: true` → `GET /v1/trips/sample-kyoto` returns days/stops/members → open web planner on sample trip.
+
+### Media / R2 (S3-compatible API)
+
+Journal photos and share SVG objects use **Cloudflare R2** through the **S3-compatible API** (`aws4fetch` on Workers — not a proprietary R2 binding). Neon stores **object keys** (`media/{id}`, `share/{id}.svg`); bytes never stay in Worker memory.
+
+1. Create a bucket in [Cloudflare R2](https://dash.cloudflare.com/?to=/:account/r2).
+2. Create an **R2 API token** with Object Read & Write ([docs](https://developers.cloudflare.com/r2/api/tokens/)).
+3. Put credentials in `apps/api/.dev.vars` (and `wrangler secret put …` for deploy):
+
+```bash
+# Preferred S3_* names
+S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=…
+S3_SECRET_ACCESS_KEY=…
+S3_BUCKET=beaver-plan-media
+S3_REGION=auto
+# Optional public / custom domain (skips signed GET):
+# S3_PUBLIC_BASE_URL=https://media.example.com
+
+# Equivalent R2_* aliases also work:
+# R2_ACCOUNT_ID=…   # → builds the endpoint above
+# R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_REGION
+```
+
+4. **CORS** (needed for browser signed PUT from the web app):
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Without CORS, the web journal **falls back** to `POST /v1/media` (BFF PutObject) — still writes to R2. Mobile already uploads via that BFF path.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `POST` | `/v1/media/presign` | Signed PUT URL + `key` to store in `journal.media` |
+| `POST` | `/v1/media` | BFF upload (base64 or multipart) → S3 PutObject |
+| `GET` | `/v1/media/:id` | 302 to signed GET (or public base URL) |
+| `GET` | `/v1/media/:id?proxy=1` | Stream bytes through Worker |
+| `GET` | `/v1/media/:id/signed` | JSON `{ key, downloadUrl }` |
+
+`/health` → `media.configured: true` when S3/R2 env is set. Missing credentials → **503** with setup hints (no silent memory fallback).
+
+**Demo steps:** set Neon + R2 env → `pnpm dev:api` + `pnpm dev:web` → open `/trips/sample-kyoto/journal` → photos load from R2 → upload a new photo → save entry → open Share studio and export PNG.
 
 ### Scripts
 
@@ -173,7 +225,7 @@ Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still
 | Scripted bilingual translate UI (web + mobile) | ✅ | — | — |
 | Live ASR → LLM → TTS | demo | ✅ | — |
 | Camera OCR / caption | demo overlays | ✅ vision | — |
-| Kyoto planner / journal / share / collab | ✅ with Neon `DATABASE_URL` | — | ✅ when keyed |
+| Kyoto planner / journal / share / collab | ✅ Neon `DATABASE_URL` + R2 `S3_*` for photos | — | ✅ when keyed |
 
 ---
 
@@ -190,6 +242,9 @@ Hosting is **Cloudflare only** (Workers + R2; no VPS).
 ```bash
 cd apps/api
 pnpm exec wrangler secret put DATABASE_URL   # Neon connection string (required)
+pnpm exec wrangler secret put S3_ACCESS_KEY_ID
+pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
+# also set vars/secrets: S3_ENDPOINT (or R2_ACCOUNT_ID), S3_BUCKET, S3_REGION=auto
 pnpm exec wrangler secret put OPENAI_API_KEY
 # optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY
 pnpm --filter @beaver/api db:migrate        # against the same Neon DB

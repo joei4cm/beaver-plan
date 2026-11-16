@@ -7,7 +7,7 @@ import { journalForDay, stopsForDay } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
-import { fileToBase64, resolveMediaUrl } from "@/lib/media-url";
+import { resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
 
 type TripPayload = {
   trip: Trip;
@@ -84,13 +84,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     const uploaded: string[] = [];
     try {
       for (const file of Array.from(files).slice(0, 6)) {
-        const dataBase64 = await fileToBase64(file);
-        const res = await apiSend<{ url: string }>("/v1/media", "POST", {
-          contentType: file.type || "image/jpeg",
-          dataBase64,
-          tripId,
-        });
-        uploaded.push(res.url);
+        const key = await uploadJournalPhoto(file, tripId);
+        uploaded.push(key);
       }
       setPendingMedia((prev) => [...prev, ...uploaded].slice(0, 8));
     } catch (e) {
