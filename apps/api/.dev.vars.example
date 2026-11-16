@@ -26,7 +26,8 @@ AMAP_SERVER_KEY=
 DEFAULT_MAP_ENGINE=auto
 MAP_AUTO_AMAP_CN=true
 
-# ── Live translation (optional — without keys, scripted demo turns) ────────
+# ── Live translation + day-fill (optional — without keys, scripted demos) ──
+# OPENAI_API_KEY also powers POST /v1/trips/:id/day-fill/propose (智能填天).
 FEATURE_TRANSLATION=true
 OPENAI_API_KEY=
 # OPENAI_BASE_URL=https://api.openai.com/v1

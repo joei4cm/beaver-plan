@@ -7,3 +7,4 @@ export * from "./share.js";
 export * from "./collab.js";
 export * from "./templates.js";
 export * from "./translation/index.js";
+export * from "./day-fill/index.js";

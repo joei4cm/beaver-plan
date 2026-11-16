@@ -21,6 +21,7 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
 import { TripMembersBar } from "@/components/collab/trip-members";
+import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
 import { TransferSteps } from "./transfer-steps";
 
@@ -427,6 +428,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       </section>
 
       <aside className="animate-rise flex flex-col gap-5" style={{ animationDelay: "100ms" }}>
+        <DayFillPanel
+          tripId={tripId}
+          locale={locale}
+          trip={trip}
+          dayCountHint={days.length || 3}
+          onApplied={async () => {
+            await refresh();
+          }}
+          onError={(message) => setError(message || null)}
+        />
+
         <div className="flex gap-2 overflow-x-auto pb-1">
           {days.map((day, i) => (
             <button

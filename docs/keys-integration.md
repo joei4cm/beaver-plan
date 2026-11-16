@@ -256,6 +256,26 @@ curl -s -X POST http://127.0.0.1:8787/v1/translation/translate \
 
 UI: `http://localhost:3000/translate` — next-demo line still works; mic / typed line should hit live providers when keyed. Mobile → **实时翻译**.
 
+### Day-fill (智能填天) — same OpenAI key
+
+Uses the same `OPENAI_*` / `LLM_PROVIDER` vars. No extra secret.
+
+```bash
+# Demo (no key)
+curl -s http://127.0.0.1:8787/v1/day-fill/status | jq '.mode,.provider'
+# → demo / demo-day-fill
+
+curl -s -X POST http://127.0.0.1:8787/v1/trips/sample-kyoto/day-fill/propose \
+  -H 'content-type: application/json' -H 'X-Beaver-User-Id: demo-user' \
+  -d '{"interests":["temples","food"],"maxWalkMinutesPerDay":60,"dayCount":3}'
+
+# Live (after OPENAI_API_KEY + restart)
+curl -s http://127.0.0.1:8787/v1/day-fill/status | jq '.mode,.provider'
+# → live / openai-day-fill
+```
+
+UI: `/trips/sample-kyoto` → **智能填天** → generate draft → preview → apply.
+
 ---
 
 ## 6. End-to-end smoke matrix
@@ -272,8 +292,10 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | 6 | Share | Share studio → export | Card generates; SVG may persist under `share/…` |
 | 7 | Translate demo | `/translate` without LLM keys | Scripted bilingual turns |
 | 8 | Translate live | Same UI / `POST /v1/translation/translate` with keys | `mode: "live"`; non-demo providers |
-| 9 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
-| 10 | Mobile | Expo itinerary / journal / translate | Hits same API base URL |
+| 9 | Day-fill demo | `/trips/sample-kyoto` 智能填天 without key | Draft preview; apply updates days/stops |
+| 10 | Day-fill live | Same + `OPENAI_API_KEY` | `dayFill.mode: "live"`; LLM propose |
+| 11 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
+| 12 | Mobile | Expo itinerary / journal / translate | Hits same API base URL |
 
 ---
 
@@ -312,3 +334,4 @@ Authoritative templates: root [`.env.example`](../.env.example) and [`apps/api/.
 | R2 / S3 | `S3_ENDPOINT` or `R2_ACCOUNT_ID`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, optional `S3_PUBLIC_BASE_URL` (+ `R2_*` aliases) |
 | Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
 | Translation | `FEATURE_TRANSLATION`, `OPENAI_*`, `DEEPGRAM_API_KEY`, `ASR_PROVIDER`, `LLM_PROVIDER`, `TTS_PROVIDER` |
+| Day-fill | same `OPENAI_*` + `LLM_PROVIDER` (demo when key unset) |

@@ -234,6 +234,29 @@ Phase 2 step 1 — clone a trip or materialize a read-only city skeleton into a 
 
 ---
 
+## LLM auto day-fill (智能填天)
+
+Phase 2 step 4 — propose day → stop assignments from **interests** + **max walk minutes/day**. Secrets stay on the BFF (`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `LLM_PROVIDER`); the web UI never sees keys.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/v1/day-fill/status` | `mode` + provider id (`demo-day-fill` / `openai-day-fill`) |
+| `POST` | `/v1/trips/:id/day-fill/propose` | Auth + edit. Body `{ interests, maxWalkMinutesPerDay, dayCount?, locale? }` → **draft** proposal (not persisted yet) |
+| `POST` | `/v1/trips/:id/day-fill/apply` | Auth + edit. Body `{ proposal, expectedVersion? }` → replace days/stops; clears legs |
+
+### Demo without `OPENAI_API_KEY`
+
+1. Leave `OPENAI_API_KEY` empty (`LLM_PROVIDER=auto` or `demo`).
+2. Open **http://localhost:3000/trips/sample-kyoto** (or an empty trip).
+3. Expand **智能填天** → pick interest chips + walk budget → **生成草稿** → preview → **应用到行程**.
+4. Scripted Kyoto / destination catalog fill; `/health` shows `dayFill.mode: "demo"`.
+
+### With OpenAI-compatible key
+
+Same UI. Set `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL`, `OPENAI_CHAT_MODEL`) in `apps/api/.dev.vars`, restart API. Propose uses chat completions JSON; apply still requires user confirm. `LLM_PROVIDER=demo` forces scripted fill even with a key.
+
+---
+
 ## What works without keys vs with keys
 
 | Capability | No keys | With OpenAI / Deepgram | With Clerk / maps |
@@ -241,6 +264,7 @@ Phase 2 step 1 — clone a trip or materialize a read-only city skeleton into a 
 | Scripted bilingual translate UI (web + mobile) | ✅ | — | — |
 | Live ASR → LLM → TTS | demo | ✅ | — |
 | Camera OCR / caption | demo overlays | ✅ vision | — |
+| Smart day-fill (智能填天) | scripted demo | ✅ LLM propose | — |
 | Kyoto planner / journal / share / collab | ✅ Neon `DATABASE_URL` + R2 `S3_*` for photos | — | ✅ when keyed |
 
 Full enablement checklist + smoke matrix: [`docs/keys-integration.md`](docs/keys-integration.md).
