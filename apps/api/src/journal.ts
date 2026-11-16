@@ -7,13 +7,17 @@ import type {
 import type { AuthVariables } from "./auth.js";
 import { requireAuth } from "./auth.js";
 import { applyVersionOrConflict, assertCanEdit } from "./access.js";
+import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
-  daysByTrip,
-  journalByTrip,
+  deleteJournal,
+  getTrip,
+  insertJournal,
+  listDays,
+  listJournal,
+  listStops,
   nowIso,
-  stopsByTrip,
-  trips,
+  updateJournal,
 } from "./store.js";
 
 export const journalRoutes = new Hono<{
@@ -21,12 +25,13 @@ export const journalRoutes = new Hono<{
   Variables: AuthVariables;
 }>();
 
-journalRoutes.get("/v1/trips/:id/journal", (c) => {
-  const trip = trips.get(c.req.param("id"));
+journalRoutes.get("/v1/trips/:id/journal", async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
   const dayId = c.req.query("dayId");
   const stopId = c.req.query("stopId");
-  let entries = journalByTrip.get(trip.id) ?? [];
+  let entries = await listJournal(db, trip.id);
   if (dayId) entries = entries.filter((e) => e.dayId === dayId);
   if (stopId) entries = entries.filter((e) => e.stopId === stopId);
   entries = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -34,9 +39,10 @@ journalRoutes.get("/v1/trips/:id/journal", (c) => {
 });
 
 journalRoutes.post("/v1/trips/:id/journal", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   let body: CreateJournalInput & { expectedVersion?: number };
@@ -49,19 +55,19 @@ journalRoutes.post("/v1/trips/:id/journal", requireAuth, async (c) => {
     return c.json({ error: "body_or_media_required" }, 400);
   }
   if (body.dayId) {
-    const days = daysByTrip.get(trip.id) ?? [];
+    const days = await listDays(db, trip.id);
     if (!days.some((d) => d.id === body.dayId)) {
       return c.json({ error: "day_not_found" }, 404);
     }
   }
   if (body.stopId) {
-    const stops = stopsByTrip.get(trip.id) ?? [];
+    const stops = await listStops(db, trip.id);
     if (!stops.some((s) => s.id === body.stopId)) {
       return c.json({ error: "stop_not_found" }, 404);
     }
   }
 
-  const bumped = applyVersionOrConflict(c, trip, body.expectedVersion);
+  const bumped = await applyVersionOrConflict(c, trip, body.expectedVersion);
   if (!bumped.ok) return bumped.res;
 
   const stamp = bumped.trip.updatedAt;
@@ -75,19 +81,19 @@ journalRoutes.post("/v1/trips/:id/journal", requireAuth, async (c) => {
     createdAt: stamp,
     updatedAt: stamp,
   };
-  const list = journalByTrip.get(trip.id) ?? [];
-  journalByTrip.set(trip.id, [...list, entry]);
+  await insertJournal(db, entry);
   return c.json({ entry, tripVersion: bumped.trip.version }, 201);
 });
 
 journalRoutes.patch("/v1/trips/:id/journal/:entryId", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   const entryId = c.req.param("entryId");
-  const list = journalByTrip.get(trip.id) ?? [];
+  const list = await listJournal(db, trip.id);
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx < 0) return c.json({ error: "entry_not_found" }, 404);
 
@@ -98,7 +104,7 @@ journalRoutes.patch("/v1/trips/:id/journal/:entryId", requireAuth, async (c) => 
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const bumped = applyVersionOrConflict(c, trip, body.expectedVersion);
+  const bumped = await applyVersionOrConflict(c, trip, body.expectedVersion);
   if (!bumped.ok) return bumped.res;
 
   const prev = list[idx]!;
@@ -120,9 +126,7 @@ journalRoutes.patch("/v1/trips/:id/journal/:entryId", requireAuth, async (c) => 
           : prev.stopId,
     updatedAt: nowIso(),
   };
-  const updated = [...list];
-  updated[idx] = next;
-  journalByTrip.set(trip.id, updated);
+  await updateJournal(db, next);
   return c.json({ entry: next, tripVersion: bumped.trip.version });
 });
 
@@ -130,13 +134,14 @@ journalRoutes.delete(
   "/v1/trips/:id/journal/:entryId",
   requireAuth,
   async (c) => {
-    const trip = trips.get(c.req.param("id"));
+    const db = dbOf(c);
+    const trip = await getTrip(db, c.req.param("id"));
     if (!trip) return c.json({ error: "not_found" }, 404);
-    const access = assertCanEdit(c, trip.id);
+    const access = await assertCanEdit(c, trip.id);
     if (!access.ok) return access.res;
 
     const entryId = c.req.param("entryId");
-    const list = journalByTrip.get(trip.id) ?? [];
+    const list = await listJournal(db, trip.id);
     if (!list.some((e) => e.id === entryId)) {
       return c.json({ error: "entry_not_found" }, 404);
     }
@@ -149,13 +154,10 @@ journalRoutes.delete(
       expectedVersion = undefined;
     }
 
-    const bumped = applyVersionOrConflict(c, trip, expectedVersion);
+    const bumped = await applyVersionOrConflict(c, trip, expectedVersion);
     if (!bumped.ok) return bumped.res;
 
-    journalByTrip.set(
-      trip.id,
-      list.filter((e) => e.id !== entryId),
-    );
+    await deleteJournal(db, trip.id, entryId);
     return c.json({ ok: true, tripVersion: bumped.trip.version });
   },
 );

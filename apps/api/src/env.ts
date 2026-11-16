@@ -4,6 +4,11 @@ export type Bindings = {
   DEFAULT_MAP_ENGINE: string;
   MAP_AUTO_AMAP_CN: string;
   FEATURE_TRANSLATION: string;
+  /**
+   * Neon / Postgres connection string (required for trip/journal/member persistence).
+   * Local: apps/api/.dev.vars — Prod: `wrangler secret put DATABASE_URL`
+   */
+  DATABASE_URL?: string;
   /** When set (real sk_…), trip mutations require a Clerk Bearer JWT. */
   CLERK_SECRET_KEY?: string;
   /** Optional; used with jose to derive JWKS issuer if CLERK_JWT_ISSUER unset. */

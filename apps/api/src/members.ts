@@ -17,15 +17,17 @@ import {
   assertCanView,
   publicWebOrigin,
 } from "./access.js";
+import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
-  inviteCodesByTrip,
-  invitesByCode,
+  getInviteByCode,
+  getTrip,
+  inviteCodeExists,
+  listInvites,
   listMembers,
   nowIso,
   removeMember,
   saveInvite,
-  trips,
   upsertMember,
 } from "./store.js";
 
@@ -34,16 +36,17 @@ export const memberRoutes = new Hono<{
   Variables: AuthVariables;
 }>();
 
-memberRoutes.get("/v1/trips/:id/members", (c) => {
-  const trip = trips.get(c.req.param("id"));
+memberRoutes.get("/v1/trips/:id/members", async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
   // Public sample remains listable without a session (planner demo).
   if (trip.id !== "sample-kyoto") {
-    const access = assertCanView(c, trip.id);
+    const access = await assertCanView(c, trip.id);
     if (!access.ok) return access.res;
   }
   const auth = c.get("auth");
-  const members = listMembers(trip.id);
+  const members = await listMembers(db, trip.id);
   const yourRole =
     members.find((m) => m.userId === auth?.userId)?.role ??
     (trip.id === "sample-kyoto" && auth?.userId === "demo-user"
@@ -59,9 +62,10 @@ memberRoutes.get("/v1/trips/:id/members", (c) => {
 });
 
 memberRoutes.post("/v1/trips/:id/invites", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
   // Editors may mint editor/viewer invites; only owner can mint editor if we want stricter —
   // keep simple: editor+ can invite as editor|viewer.
@@ -75,7 +79,7 @@ memberRoutes.post("/v1/trips/:id/invites", requireAuth, async (c) => {
     body.role === "viewer" ? "viewer" : "editor";
 
   let code = generateInviteCode();
-  while (invitesByCode.has(code)) code = generateInviteCode();
+  while (await inviteCodeExists(db, code)) code = generateInviteCode();
 
   const stamp = nowIso();
   const invite: TripInvite = {
@@ -92,7 +96,7 @@ memberRoutes.post("/v1/trips/:id/invites", requireAuth, async (c) => {
     maxUses: body.maxUses,
     useCount: 0,
   };
-  saveInvite(invite);
+  await saveInvite(db, invite);
 
   const origin = publicWebOrigin(c.env, c.req.url);
   const path = invitePath(code);
@@ -107,36 +111,36 @@ memberRoutes.post("/v1/trips/:id/invites", requireAuth, async (c) => {
   );
 });
 
-memberRoutes.get("/v1/trips/:id/invites", requireAuth, (c) => {
-  const trip = trips.get(c.req.param("id"));
+memberRoutes.get("/v1/trips/:id/invites", requireAuth, async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
-  const codes = inviteCodesByTrip.get(trip.id) ?? [];
-  const invites = codes
-    .map((code) => invitesByCode.get(code))
-    .filter((x): x is TripInvite => Boolean(x));
+  const invites = await listInvites(db, trip.id);
   return c.json({ invites });
 });
 
-memberRoutes.post("/v1/trips/:id/invites/:code/revoke", requireAuth, (c) => {
-  const trip = trips.get(c.req.param("id"));
+memberRoutes.post("/v1/trips/:id/invites/:code/revoke", requireAuth, async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanManage(c, trip.id);
+  const access = await assertCanManage(c, trip.id);
   if (!access.ok) return access.res;
-  const invite = invitesByCode.get(c.req.param("code").toUpperCase());
+  const invite = await getInviteByCode(db, c.req.param("code"));
   if (!invite || invite.tripId !== trip.id) {
     return c.json({ error: "invite_not_found" }, 404);
   }
   const next = { ...invite, revokedAt: nowIso() };
-  saveInvite(next);
+  await saveInvite(db, next);
   return c.json({ invite: next });
 });
 
 memberRoutes.patch("/v1/trips/:id/members/:userId", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanManage(c, trip.id);
+  const access = await assertCanManage(c, trip.id);
   if (!access.ok) return access.res;
 
   let body: { role?: TripRole };
@@ -150,7 +154,7 @@ memberRoutes.patch("/v1/trips/:id/members/:userId", requireAuth, async (c) => {
   }
 
   const targetId = c.req.param("userId");
-  const members = listMembers(trip.id);
+  const members = await listMembers(db, trip.id);
   const target = members.find((m) => m.userId === targetId);
   if (!target) return c.json({ error: "member_not_found" }, 404);
 
@@ -161,18 +165,19 @@ memberRoutes.patch("/v1/trips/:id/members/:userId", requireAuth, async (c) => {
     }
   }
 
-  const updated = upsertMember({ ...target, role: body.role });
+  const updated = await upsertMember(db, { ...target, role: body.role });
   return c.json({ member: updated });
 });
 
-memberRoutes.delete("/v1/trips/:id/members/:userId", requireAuth, (c) => {
-  const trip = trips.get(c.req.param("id"));
+memberRoutes.delete("/v1/trips/:id/members/:userId", requireAuth, async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanManage(c, trip.id);
+  const access = await assertCanManage(c, trip.id);
   if (!access.ok) return access.res;
 
   const targetId = c.req.param("userId");
-  const members = listMembers(trip.id);
+  const members = await listMembers(db, trip.id);
   const target = members.find((m) => m.userId === targetId);
   if (!target) return c.json({ error: "member_not_found" }, 404);
   if (target.role === "owner") {
@@ -181,18 +186,19 @@ memberRoutes.delete("/v1/trips/:id/members/:userId", requireAuth, (c) => {
       return c.json({ error: "last_owner" }, 400);
     }
   }
-  removeMember(trip.id, targetId);
+  await removeMember(db, trip.id, targetId);
   return c.json({ ok: true });
 });
 
 /** Public preview — no auth required. */
-memberRoutes.get("/v1/invites/:code", (c) => {
+memberRoutes.get("/v1/invites/:code", async (c) => {
+  const db = dbOf(c);
   const code = c.req.param("code").toUpperCase();
-  const invite = invitesByCode.get(code);
+  const invite = await getInviteByCode(db, code);
   if (!invite || !inviteIsActive(invite)) {
     return c.json({ error: "invite_invalid" }, 404);
   }
-  const trip = trips.get(invite.tripId);
+  const trip = await getTrip(db, invite.tripId);
   if (!trip) return c.json({ error: "trip_not_found" }, 404);
   return c.json({
     code: invite.code,
@@ -209,12 +215,13 @@ memberRoutes.get("/v1/invites/:code", (c) => {
 });
 
 memberRoutes.post("/v1/invites/:code/accept", requireAuth, async (c) => {
+  const db = dbOf(c);
   const code = c.req.param("code").toUpperCase();
-  const invite = invitesByCode.get(code);
+  const invite = await getInviteByCode(db, code);
   if (!invite || !inviteIsActive(invite)) {
     return c.json({ error: "invite_invalid" }, 404);
   }
-  const trip = trips.get(invite.tripId);
+  const trip = await getTrip(db, invite.tripId);
   if (!trip) return c.json({ error: "trip_not_found" }, 404);
 
   const auth = c.get("auth")!;
@@ -225,7 +232,9 @@ memberRoutes.post("/v1/invites/:code/accept", requireAuth, async (c) => {
     body = {};
   }
 
-  const existing = listMembers(trip.id).find((m) => m.userId === auth.userId);
+  const existing = (await listMembers(db, trip.id)).find(
+    (m) => m.userId === auth.userId,
+  );
   if (existing) {
     return c.json({
       member: existing,
@@ -242,8 +251,8 @@ memberRoutes.post("/v1/invites/:code/accept", requireAuth, async (c) => {
     displayName: body.displayName?.trim() || auth.displayName,
     joinedAt: nowIso(),
   };
-  upsertMember(member);
-  saveInvite({ ...invite, useCount: invite.useCount + 1 });
+  await upsertMember(db, member);
+  await saveInvite(db, { ...invite, useCount: invite.useCount + 1 });
 
   return c.json({ member, trip, alreadyMember: false }, 201);
 });

@@ -11,8 +11,10 @@ import {
 import type { Context } from "hono";
 import type { AuthUser, AuthVariables } from "./auth.js";
 import { clerkConfigured } from "./auth.js";
+import type { Db } from "./db/client.js";
+import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
-import { listMembers, nowIso, trips } from "./store.js";
+import { listMembers, nowIso, updateTrip } from "./store.js";
 
 type AppContext = Context<{ Bindings: Bindings; Variables: AuthVariables }>;
 
@@ -29,24 +31,27 @@ export function publicWebOrigin(env: Bindings, requestUrl: string): string {
   return "http://localhost:3000";
 }
 
-export function tripMember(
+export async function tripMember(
+  db: Db,
   tripId: string,
   userId: string | undefined,
-): TripMember | undefined {
+): Promise<TripMember | undefined> {
   if (!userId) return undefined;
-  return memberForUser(listMembers(tripId), userId);
+  return memberForUser(await listMembers(db, tripId), userId);
 }
 
 /**
  * Reads: open in demo mode; with Clerk, require membership (or still allow
  * GET sample reads — handled by callers if needed).
  */
-export function assertCanView(
+export async function assertCanView(
   c: AppContext,
   tripId: string,
-): { ok: true; role?: TripRole; auth: AuthUser | null } | { ok: false; res: Response } {
+): Promise<
+  { ok: true; role?: TripRole; auth: AuthUser | null } | { ok: false; res: Response }
+> {
   const auth = c.get("auth");
-  const member = tripMember(tripId, auth?.userId);
+  const member = await tripMember(dbOf(c), tripId, auth?.userId);
   if (!clerkConfigured(c.env)) {
     return { ok: true, role: member?.role ?? "editor", auth };
   }
@@ -65,12 +70,13 @@ export function assertCanView(
   return { ok: true, role: member!.role, auth };
 }
 
-export function assertCanEdit(
+export async function assertCanEdit(
   c: AppContext,
   tripId: string,
-):
+): Promise<
   | { ok: true; role: TripRole; auth: AuthUser; member: TripMember }
-  | { ok: false; res: Response } {
+  | { ok: false; res: Response }
+> {
   const auth = c.get("auth");
   if (!auth) {
     return {
@@ -87,7 +93,8 @@ export function assertCanEdit(
     };
   }
 
-  const members = listMembers(tripId);
+  const db = dbOf(c);
+  const members = await listMembers(db, tripId);
   let member = memberForUser(members, auth.userId);
 
   // Demo convenience: first writer on an empty membership list becomes owner.
@@ -131,12 +138,13 @@ export function assertCanEdit(
   return { ok: true, role: member!.role, auth, member: member! };
 }
 
-export function assertCanManage(
+export async function assertCanManage(
   c: AppContext,
   tripId: string,
-):
+): Promise<
   | { ok: true; auth: AuthUser; member: TripMember }
-  | { ok: false; res: Response } {
+  | { ok: false; res: Response }
+> {
   const auth = c.get("auth");
   if (!auth) {
     return {
@@ -144,7 +152,7 @@ export function assertCanManage(
       res: c.json({ error: "unauthorized" }, 401),
     };
   }
-  const member = tripMember(tripId, auth.userId);
+  const member = await tripMember(dbOf(c), tripId, auth.userId);
   if (!canManageMembers(member?.role)) {
     return {
       ok: false,
@@ -154,11 +162,11 @@ export function assertCanManage(
   return { ok: true, auth, member: member! };
 }
 
-export function applyVersionOrConflict(
+export async function applyVersionOrConflict(
   c: AppContext,
   trip: Trip,
   expectedVersion: number | undefined,
-): { ok: true; trip: Trip } | { ok: false; res: Response } {
+): Promise<{ ok: true; trip: Trip } | { ok: false; res: Response }> {
   const result = bumpTripVersion(trip, expectedVersion, nowIso());
   if (!result.ok) {
     return {
@@ -174,7 +182,7 @@ export function applyVersionOrConflict(
     };
   }
   const next = result.trip!;
-  trips.set(next.id, next);
+  await updateTrip(dbOf(c), next);
   return { ok: true, trip: next };
 }
 
