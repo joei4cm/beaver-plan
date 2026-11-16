@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, Link } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -126,6 +126,20 @@ export default function TripDetailScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.eyebrow}>{trip.destination ?? "Beaver Plan"}</Text>
           <Text style={styles.title}>{trip.title}</Text>
+          <View style={styles.actionRow}>
+            <Link href={`/trips/${tripId}/journal`} asChild>
+              <Pressable style={styles.actionBtn}>
+                <Text style={styles.actionLabel}>{t(locale, "mobile.journal")}</Text>
+              </Pressable>
+            </Link>
+            <Link href={`/trips/${tripId}/share`} asChild>
+              <Pressable style={[styles.actionBtn, styles.actionPrimary]}>
+                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                  {t(locale, "mobile.share")}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
           <MiniMap stops={dayStops} legs={dayLegs} />
 
           <ScrollView
@@ -215,7 +229,33 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "600",
     color: colors.ink,
+    marginBottom: 12,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
     marginBottom: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  actionPrimary: {
+    backgroundColor: colors.river,
+    borderColor: colors.river,
+  },
+  actionLabel: {
+    color: colors.inkSoft,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  actionPrimaryLabel: {
+    color: colors.foam,
   },
   map: {
     height: 220,

@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** B — Maps / itinerary foundation (Google + Amap ports, planner UI, BFF proxy).
+**Slice:** C — Trip journal + multi-template share images (on top of A foundation + B maps).
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -15,14 +15,14 @@ Product plan (Agent Store / humans):
 
 | Path | Role |
 |------|------|
-| `apps/web` | Next.js — landing, trip list, **map trip planner** |
-| `apps/mobile` | Expo — splash + **itinerary viewer** for sample trip |
-| `apps/api` | Hono on Cloudflare Workers — trips + **Places / Directions BFF** |
-| `packages/core` | Domain + MapEngine / RoutingEngine (Google, Amap, demo) |
+| `apps/web` | Next.js — landing, trip planner, **journal**, **share studio** |
+| `apps/mobile` | Expo — itinerary + **journal capture/view** + **share sheet** |
+| `apps/api` | Hono on Cloudflare Workers — trips, maps BFF, **journal**, **media stub**, **share render** |
+| `packages/core` | Domain + MapEngine + **journal helpers** + **share SVG templates** |
 | `packages/ui-tokens` | Design tokens |
 | `packages/i18n` | zh-CN + en |
 
-**Out of scope here:** TapFeet IME, journal/share, collab, live translation (later slices).
+**Out of scope here:** TapFeet IME, collab, live translation, Baidu, Clerk WeChat (later slices).
 
 ---
 
@@ -31,7 +31,7 @@ Product plan (Agent Store / humans):
 - Node.js ≥ 20
 - [pnpm](https://pnpm.io) 10.x (`corepack enable` recommended)
 - For API deploy: Cloudflare account + Wrangler
-- Optional: Google Maps Platform + 高德开放平台 keys (see below)
+- Optional: Google Maps Platform + 高德开放平台 keys (see Slice B section)
 
 ---
 
@@ -52,12 +52,73 @@ cp .env.example apps/api/.dev.vars
 ```bash
 pnpm typecheck          # all packages
 pnpm dev:api            # http://127.0.0.1:8787
-pnpm dev:web            # http://localhost:3000  → /trips/sample-kyoto
-pnpm dev:mobile         # Expo Metro → sample itinerary viewer
+pnpm dev:web            # http://localhost:3000
+pnpm dev:mobile         # Expo Metro
 pnpm build
 ```
 
-Open **http://localhost:3000/trips/sample-kyoto** with the API running for the full planner demo.
+---
+
+## Demo Slice C locally (journal + share cards)
+
+1. Start API + web:
+
+```bash
+pnpm dev:api
+# other terminal
+pnpm dev:web
+```
+
+2. Open the seeded Kyoto trip planner:  
+   **http://localhost:3000/trips/sample-kyoto**
+
+3. **Journal** — **http://localhost:3000/trips/sample-kyoto/journal**  
+   - Day tabs with seeded short notes + placeholder photos  
+   - Add a caption, upload local images (stored in API memory), save
+
+4. **Share studio** — **http://localhost:3000/trips/sample-kyoto/share**  
+   - Pick day + one of three templates (`magazine-reel` 9:16, `path-square` 1:1, `day-film` 9:16)  
+   - Preview renders from trip/day + journal photos  
+   - **Download PNG** (SVG → canvas) or **System share** when the browser supports it
+
+5. Mobile (optional): `pnpm dev:mobile` → open sample trip → **记一笔** / **分享图**  
+   - Library picker uploads via `/v1/media`  
+   - Share sheet writes a temp SVG and opens `expo-sharing`
+
+Templates live in `packages/core/src/share.ts` (code components, not a designer).
+
+---
+
+## Media / R2 (Slice C stubs)
+
+Hosting stays **Cloudflare only**. Journal photos and share artifacts are **R2-ready** but currently use an **in-memory** store so local demo works without a bucket.
+
+| Today (dev) | Production path |
+|-------------|-----------------|
+| `POST /v1/media` (JSON base64 or multipart) → `Map` in Worker memory | Uncomment `[[r2_buckets]]` `MEDIA` in `apps/api/wrangler.toml` |
+| `GET /v1/media/:id` serves bytes | `MEDIA.put(key, bytes)` / public or signed URL |
+| `POST /v1/media/presign` returns stub upload instructions | Return R2 signed PUT URL |
+| Share `storageUrl` may be SVG data URL | Persist PNG/SVG object to R2, store public URL on `ShareArtifact` |
+
+Env placeholders (see `.env.example`): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`. Prefer the Wrangler R2 binding over S3-style keys when deploying.
+
+**Note:** In-memory media resets when the Worker/dev process restarts. Seeded Kyoto demo photos are recreated on first request via `ensureSampleTrip()`.
+
+---
+
+## Journal & share API
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/v1/trips/:id/journal` | Optional `?dayId=` / `?stopId=` |
+| `POST` | `/v1/trips/:id/journal` | `{ dayId?, stopId?, body, media? }` |
+| `PATCH/DELETE` | `/v1/trips/:id/journal/:entryId` | Update / remove |
+| `POST` | `/v1/media` | Upload stub (memory) |
+| `GET` | `/v1/media/:id` | Fetch bytes |
+| `POST` | `/v1/media/presign` | Stub until R2 |
+| `GET` | `/v1/share/templates` | Template metadata |
+| `POST` | `/v1/trips/:id/share` | Render SVG from day + journal; optional persist |
+| `GET` | `/v1/trips/:id/share` | Recent artifacts (metadata) |
 
 ---
 
@@ -68,11 +129,12 @@ Open **http://localhost:3000/trips/sample-kyoto** with the API running for the f
 | Trip planner UI, day tabs, stop order, map↔list highlight | ✅ curated Kyoto / CN POIs | ✅ same UI |
 | Place search / reverse geocode | ✅ demo catalog match | ✅ Google Places (New) or Amap REST |
 | Adjacent-stop directions + polyline | ✅ haversine demo path | ✅ Google Routes or Amap walk/transit/drive |
-| Engine preference Auto / Google / Amap | ✅ preference stored; Auto uses region hint | ✅ live vendor for resolved engine |
-| Mainland auto → Amap | ✅ region from CF country / zh-CN / timezone | ✅ same + live Amap when `AMAP_SERVER_KEY` set |
+| Journal notes + multi-photo | ✅ in-memory media | ✅ same (R2 when bound) |
+| Multi-template share SVG → PNG | ✅ three templates | ✅ same |
+| Engine preference Auto / Google / Amap | ✅ | ✅ live vendor |
 | Clerk auth | placeholder | still placeholder until Clerk keys |
 
-**Demo mode** is automatic when `GOOGLE_MAPS_SERVER_KEY` / `AMAP_SERVER_KEY` are missing. `/health` reports which map secrets are present.
+**Demo mode** for maps is automatic when `GOOGLE_MAPS_SERVER_KEY` / `AMAP_SERVER_KEY` are missing. `/health` reports map secrets + media storage mode.
 
 ---
 
@@ -86,7 +148,7 @@ Secrets belong in **`apps/api/.dev.vars`** locally and `wrangler secret put …`
 2. Enable **Places API (New)** and **Routes API**.
 3. Create an API key; restrict by IP / Workers if possible.
 4. Set `GOOGLE_MAPS_SERVER_KEY=…` in `.dev.vars`.
-5. Optional: `NEXT_PUBLIC_GOOGLE_MAPS_JS_KEY` for a future browser Maps JS overlay (HTTP referrer restricted). The Slice B planner renders an engine-agnostic SVG stage and does not require the JS key.
+5. Optional: `NEXT_PUBLIC_GOOGLE_MAPS_JS_KEY` for a future browser Maps JS overlay (HTTP referrer restricted). The planner renders an engine-agnostic SVG stage and does not require the JS key.
 
 ### Amap (高德)
 
@@ -133,6 +195,7 @@ cd apps/api
 pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY
 pnpm exec wrangler secret put AMAP_SERVER_KEY
 # optional: CLERK_SECRET_KEY, DATABASE_URL, …
+# Create R2 bucket beaver-plan-media, uncomment [[r2_buckets]] in wrangler.toml
 pnpm deploy
 ```
 

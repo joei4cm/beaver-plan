@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import type {
   Day,
   Leg,
@@ -276,6 +277,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Link
+              href={`/trips/${tripId}/journal`}
+              className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
+            >
+              {t(locale, "nav.journal")}
+            </Link>
+            <Link
+              href={`/trips/${tripId}/share`}
+              className="rounded-md bg-timber px-3 py-1.5 text-foam transition hover:brightness-110"
+            >
+              {t(locale, "nav.share")}
+            </Link>
             {(["auto", "google", "amap"] as const).map((opt) => (
               <button
                 key={opt}

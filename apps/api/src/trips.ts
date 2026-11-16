@@ -16,8 +16,10 @@ import {
 import type { Bindings } from "./env.js";
 import {
   daysByTrip,
+  journalByTrip,
   legsByTrip,
   nowIso,
+  shareByTrip,
   stopsByTrip,
   trips,
 } from "./store.js";
@@ -80,6 +82,8 @@ tripRoutes.post("/v1/trips", async (c) => {
   daysByTrip.set(id, []);
   stopsByTrip.set(id, []);
   legsByTrip.set(id, []);
+  journalByTrip.set(id, []);
+  shareByTrip.set(id, []);
 
   return c.json({ trip }, 201);
 });
@@ -113,6 +117,8 @@ tripRoutes.delete("/v1/trips/:id", (c) => {
   daysByTrip.delete(id);
   stopsByTrip.delete(id);
   legsByTrip.delete(id);
+  journalByTrip.delete(id);
+  shareByTrip.delete(id);
   return c.json({ ok: true });
 });
 
