@@ -11,12 +11,18 @@ import type {
   Stop,
   Trip,
 } from "@beaver/core";
-import { formatDistance, formatDuration, stopsForDay } from "@beaver/core";
+import {
+  formatDistance,
+  formatDuration,
+  stopsForDay,
+  summarizeTransfer,
+} from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { MapStage } from "./map-stage";
+import { TransferSteps } from "./transfer-steps";
 
 type TripPayload = {
   trip: Trip;
@@ -371,6 +377,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             onSelectStop={setSelectedStopId}
             engineLabel={engineLabel}
             modeLabel={modeLabel}
+            locale={locale}
           />
         </div>
 
@@ -409,6 +416,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
                 )
                 .join("  →  ")}
+            </p>
+          )}
+          {dayLegs.some((l) => l.transitSteps.length > 1) && (
+            <p className="text-xs text-river/90">
+              {t(locale, "planner.transfer.hint")}
             </p>
           )}
         </div>
@@ -526,13 +538,19 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       </div>
                     )}
                     {leg && (
-                      <div className="mt-2 text-xs text-river">
-                        → {formatDuration(leg.durationSec)} ·{" "}
-                        {formatDistance(leg.distanceM)} · {leg.mode}
-                        {leg.transitSteps[0]?.instruction
-                          ? ` · ${leg.transitSteps[0].instruction}`
-                          : ""}
-                      </div>
+                      <>
+                        <div className="mt-2 text-xs text-river">
+                          → {summarizeTransfer(leg)}
+                        </div>
+                        {(leg.mode === "transit" ||
+                          leg.transitSteps.length > 1) && (
+                          <TransferSteps
+                            leg={leg}
+                            locale={locale}
+                            variant="inline"
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col gap-1 opacity-70 transition group-hover:opacity-100">

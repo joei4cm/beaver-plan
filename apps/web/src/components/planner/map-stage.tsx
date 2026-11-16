@@ -1,6 +1,9 @@
 "use client";
 
 import type { Leg, Stop } from "@beaver/core";
+import { legPathSegments } from "@beaver/core";
+import type { Locale } from "@beaver/i18n";
+import { t } from "@beaver/i18n";
 import { boundsOf, polylineToPoints, project } from "@/lib/geo";
 
 type Props = {
@@ -10,10 +13,53 @@ type Props = {
   onSelectStop: (id: string) => void;
   engineLabel: string;
   modeLabel: string;
+  locale?: Locale;
 };
 
 const W = 960;
 const H = 720;
+
+function strokeForMode(mode: string): {
+  stroke: string;
+  strokeWidth: number;
+  dash?: string;
+  opacity: number;
+} {
+  switch (mode) {
+    case "walk":
+      return {
+        stroke: "rgba(247,250,248,0.72)",
+        strokeWidth: 2.5,
+        dash: "5 7",
+        opacity: 0.95,
+      };
+    case "transit":
+      return {
+        stroke: "#2a9d8f",
+        strokeWidth: 4,
+        opacity: 1,
+      };
+    case "transfer":
+      return {
+        stroke: "#b86b3c",
+        strokeWidth: 2.5,
+        dash: "3 5",
+        opacity: 0.9,
+      };
+    case "drive":
+      return {
+        stroke: "rgba(184,107,60,0.85)",
+        strokeWidth: 3.5,
+        opacity: 1,
+      };
+    default:
+      return {
+        stroke: "rgba(247,250,248,0.5)",
+        strokeWidth: 3,
+        opacity: 0.9,
+      };
+  }
+}
 
 export function MapStage({
   stops,
@@ -22,6 +68,7 @@ export function MapStage({
   onSelectStop,
   engineLabel,
   modeLabel,
+  locale = "zh-CN",
 }: Props) {
   const coords = stops.map((s) => ({ lat: s.place.lat, lng: s.place.lng }));
   const bounds = boundsOf(coords);
@@ -55,40 +102,59 @@ export function MapStage({
         aria-label="Trip map"
       >
         {legs.map((leg) => {
-          const pts = polylineToPoints(leg.polyline, bounds, W, H);
-          if (pts.length < 2) {
-            const from = stops.find((s) => s.id === leg.fromStopId);
-            const to = stops.find((s) => s.id === leg.toStopId);
-            if (!from || !to) return null;
-            const a = project(from.place, bounds, W, H);
-            const b = project(to.place, bounds, W, H);
+          const segments = legPathSegments(leg);
+          const rendered = segments.map((seg, si) => {
+            const pts = polylineToPoints(seg.polyline, bounds, W, H);
+            if (pts.length < 2) return null;
+            const style = strokeForMode(seg.mode);
+            const d = pts
+              .map(
+                (p, i) =>
+                  `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`,
+              )
+              .join(" ");
             return (
-              <line
-                key={leg.id}
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
-                stroke="rgba(247,250,248,0.45)"
-                strokeWidth={3}
+              <path
+                key={`${leg.id}-seg-${si}`}
+                d={d}
+                fill="none"
+                stroke={style.stroke}
+                strokeWidth={style.strokeWidth}
                 strokeLinecap="round"
-                strokeDasharray={leg.mode === "transit" ? "8 6" : undefined}
+                strokeLinejoin="round"
+                strokeDasharray={style.dash}
+                opacity={style.opacity}
               />
             );
-          }
-          const d = pts
-            .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
-            .join(" ");
+          });
+
+          if (rendered.some(Boolean)) return rendered;
+
+          // Fallback: straight line between stops when no usable polyline.
+          const from = stops.find((s) => s.id === leg.fromStopId);
+          const to = stops.find((s) => s.id === leg.toStopId);
+          if (!from || !to) return null;
+          const a = project(from.place, bounds, W, H);
+          const b = project(to.place, bounds, W, H);
+          const style = strokeForMode(
+            leg.mode === "walk"
+              ? "walk"
+              : leg.mode === "drive"
+                ? "drive"
+                : "transit",
+          );
           return (
-            <path
+            <line
               key={leg.id}
-              d={d}
-              fill="none"
-              stroke="rgba(247,250,248,0.55)"
-              strokeWidth={3.5}
+              x1={a.x}
+              y1={a.y}
+              x2={b.x}
+              y2={b.y}
+              stroke={style.stroke}
+              strokeWidth={style.strokeWidth}
               strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={leg.mode === "transit" ? "10 7" : undefined}
+              strokeDasharray={style.dash}
+              opacity={style.opacity}
             />
           );
         })}
@@ -138,6 +204,32 @@ export function MapStage({
         </span>
         <span className="text-[11px] text-foam/75">{modeLabel}</span>
       </div>
+
+      {legs.some((l) => legPathSegments(l).length > 0) && (
+        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap gap-3 rounded-md bg-river-deep/70 px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-foam/85 backdrop-blur">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-foam/70"
+              aria-hidden
+            />
+            {t(locale, "planner.transfer.walk")}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block h-0.5 w-4 bg-[#2a9d8f]"
+              aria-hidden
+            />
+            {t(locale, "planner.transfer.ride")}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-timber"
+              aria-hidden
+            />
+            {t(locale, "planner.transfer.change")}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

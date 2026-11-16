@@ -63,7 +63,19 @@ export const legs = pgTable("legs", {
   distanceM: integer("distance_m").notNull(),
   polyline: text("polyline"),
   transitSteps: jsonb("transit_steps")
-    .$type<{ instruction: string; mode: string; durationSec?: number }[]>()
+    .$type<
+      {
+        instruction: string;
+        mode: string;
+        durationSec?: number;
+        lineName?: string;
+        agency?: string;
+        vehicleType?: string;
+        fromStopName?: string;
+        toStopName?: string;
+        polyline?: string;
+      }[]
+    >()
     .notNull()
     .default([]),
 });

@@ -1,5 +1,6 @@
-import type { Day, Leg, Stop } from "./domain.js";
+import type { Day, Leg, Stop, TransitStep } from "./domain.js";
 import type { LatLng, RouteRequest, RoutingEngine } from "./ports.js";
+import { decodeSimplePolyline } from "./map/polyline.js";
 
 export function sortStops(stops: Stop[]): Stop[] {
   return [...stops].sort((a, b) => a.order - b.order);
@@ -109,4 +110,99 @@ export function formatDuration(sec: number): string {
 export function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+/** Normalize vendor step modes into a small UI vocabulary. */
+export function normalizeStepMode(
+  mode: string,
+): "walk" | "transit" | "transfer" | "drive" | "wait" | "other" {
+  const m = mode.trim().toUpperCase();
+  if (m === "WALK" || m === "WALKING") return "walk";
+  if (m === "TRANSIT" || m === "BUS" || m === "SUBWAY" || m === "TRAIN" || m === "RAIL" || m === "TRAM" || m === "FERRY")
+    return "transit";
+  if (m === "TRANSFER" || m === "CHANGE") return "transfer";
+  if (m === "DRIVE" || m === "DRIVING" || m === "CAR") return "drive";
+  if (m === "WAIT" || m === "WAITING") return "wait";
+  return "other";
+}
+
+/** Short label for a transfer step — prefers line name when present. */
+export function formatTransitStepLabel(step: TransitStep): string {
+  const kind = normalizeStepMode(step.mode);
+  if (kind === "transit" && step.lineName) {
+    const from = step.fromStopName;
+    const to = step.toStopName;
+    if (from && to) return `${step.lineName} · ${from} → ${to}`;
+    return step.lineName;
+  }
+  if (step.instruction.trim()) return step.instruction;
+  if (kind === "walk") return "Walk";
+  if (kind === "transfer") return "Transfer";
+  if (kind === "drive") return "Drive";
+  return step.mode;
+}
+
+export type PathSegment = {
+  mode: ReturnType<typeof normalizeStepMode>;
+  /** Raw engine mode string */
+  rawMode: string;
+  polyline?: string;
+  durationSec?: number;
+  lineName?: string;
+};
+
+/**
+ * Map-ready path segments: prefer per-step polylines (mode-styled),
+ * else a single segment from the leg polyline + leg mode.
+ */
+export function legPathSegments(leg: Leg): PathSegment[] {
+  const withPoly = leg.transitSteps.filter(
+    (s) => s.polyline && decodeSimplePolyline(s.polyline).length >= 2,
+  );
+  if (withPoly.length > 0) {
+    return withPoly.map((s) => ({
+      mode: normalizeStepMode(s.mode),
+      rawMode: s.mode,
+      polyline: s.polyline,
+      durationSec: s.durationSec,
+      lineName: s.lineName,
+    }));
+  }
+  return [
+    {
+      mode:
+        leg.mode === "walk"
+          ? "walk"
+          : leg.mode === "drive"
+            ? "drive"
+            : "transit",
+      rawMode: leg.mode.toUpperCase(),
+      polyline: leg.polyline,
+      durationSec: leg.durationSec,
+    },
+  ];
+}
+
+/** Compact transfer summary for mobile / list rows. */
+export function summarizeTransfer(leg: Leg): string {
+  if (leg.transitSteps.length === 0) {
+    return `${formatDuration(leg.durationSec)} · ${formatDistance(leg.distanceM)} · ${leg.mode}`;
+  }
+  const parts: string[] = [];
+  for (const step of leg.transitSteps) {
+    const kind = normalizeStepMode(step.mode);
+    if (kind === "transit" && step.lineName) {
+      parts.push(step.lineName);
+    } else if (kind === "walk") {
+      parts.push(
+        step.durationSec
+          ? `walk ${formatDuration(step.durationSec)}`
+          : "walk",
+      );
+    } else if (kind === "transfer") {
+      parts.push("transfer");
+    }
+  }
+  const chain = parts.length > 0 ? parts.join(" → ") : formatTransitStepLabel(leg.transitSteps[0]!);
+  return `${formatDuration(leg.durationSec)} · ${chain}`;
 }

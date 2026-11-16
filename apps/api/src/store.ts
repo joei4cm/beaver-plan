@@ -11,7 +11,11 @@ import type {
   TripMember,
   TripRole,
 } from "@beaver/core";
-import { DEMO_PLACES } from "@beaver/core";
+import {
+  DEMO_PLACES,
+  buildDemoTransitRoute,
+  buildDemoWalkOrDrive,
+} from "@beaver/core";
 import type { Db } from "./db/client.js";
 import {
   days as daysTable,
@@ -509,6 +513,14 @@ export async function ensureSampleTrip(
   if (existing) {
     // Re-upload demo placeholders so signed URLs work after bucket wipe / new env.
     if (s3) await seedSampleMedia(s3);
+    // Soft upgrade: empty legs → seed Kyoto multi-step transit for demo UX.
+    const legs = await listLegs(db, id);
+    if (legs.length === 0) {
+      const stops = await listStops(db, id);
+      if (stops.length >= 2) {
+        await replaceLegs(db, id, buildSampleKyotoLegs(stops));
+      }
+    }
     return;
   }
 
@@ -602,7 +614,7 @@ export async function ensureSampleTrip(
     },
   ];
   await replaceStops(db, id, stops);
-  await replaceLegs(db, id, []);
+  await replaceLegs(db, id, buildSampleKyotoLegs(stops));
 
   // Object keys stored in Neon; bytes uploaded when S3 is configured.
   const mediaKeys = {
@@ -646,6 +658,38 @@ export async function ensureSampleTrip(
   for (const entry of journal) {
     await insertJournal(db, entry);
   }
+}
+
+/** Multi-step transit demo legs for sample-kyoto (works without map keys). */
+function buildSampleKyotoLegs(stops: Stop[]): Leg[] {
+  const byId = new Map(stops.map((s) => [s.id, s]));
+  const pairs: Array<[string, string, "transit" | "walk"]> = [
+    ["stop-kiyomizu", "stop-gion", "transit"],
+    ["stop-fushimi", "stop-arashiyama", "transit"],
+  ];
+  const legs: Leg[] = [];
+  for (const [fromId, toId, mode] of pairs) {
+    const from = byId.get(fromId);
+    const to = byId.get(toId);
+    if (!from || !to) continue;
+    const origin = { lat: from.place.lat, lng: from.place.lng };
+    const dest = { lat: to.place.lat, lng: to.place.lng };
+    const result =
+      mode === "transit"
+        ? buildDemoTransitRoute(origin, dest, "zh-CN")
+        : buildDemoWalkOrDrive(origin, dest, "walk", true);
+    legs.push({
+      id: `leg-${fromId}-${toId}`,
+      fromStopId: fromId,
+      toStopId: toId,
+      mode,
+      durationSec: result.durationSec,
+      distanceM: result.distanceM,
+      polyline: result.polyline,
+      transitSteps: result.transitSteps,
+    });
+  }
+  return legs;
 }
 
 /** Upload Kyoto placeholder SVGs to S3 (idempotent overwrite). */
