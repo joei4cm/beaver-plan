@@ -20,7 +20,8 @@ import {
 } from "@beaver/core";
 import { colors } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
-import { fetchTrip } from "../../src/api";
+import type { TripMember, TripRole } from "@beaver/core";
+import { createInvite, fetchMembers, fetchTrip } from "../../src/api";
 
 const locale = "zh-CN" as const;
 
@@ -72,6 +73,9 @@ export default function TripDetailScreen() {
   const [stops, setStops] = useState<Stop[]>([]);
   const [legs, setLegs] = useState<Leg[]>([]);
   const [dayId, setDayId] = useState<string | null>(null);
+  const [members, setMembers] = useState<TripMember[]>([]);
+  const [yourRole, setYourRole] = useState<TripRole | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,12 +89,30 @@ export default function TripDetailScreen() {
       setStops(data.stops);
       setLegs(data.legs);
       setDayId(data.days[0]?.id ?? null);
+      setMembers(data.members ?? []);
+      setYourRole(data.yourRole ?? null);
+      try {
+        const m = await fetchMembers(tripId);
+        setMembers(m.members);
+        setYourRole(m.yourRole);
+      } catch {
+        /* members optional if offline */
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "load_failed");
     } finally {
       setLoading(false);
     }
   }, [tripId]);
+
+  async function onInvite() {
+    try {
+      const inv = await createInvite(tripId, "editor");
+      setInviteCode(inv.code);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "invite_failed");
+    }
+  }
 
   useEffect(() => {
     void load();
@@ -139,6 +161,27 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
             </Link>
+          </View>
+
+          <View style={styles.collabBox}>
+            <Text style={styles.collabTitle}>{t(locale, "collab.members")}</Text>
+            <Text style={styles.collabMeta}>
+              {members
+                .map((m) => m.displayName ?? m.userId)
+                .slice(0, 4)
+                .join(" · ") || "—"}
+              {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
+            </Text>
+            {(yourRole === "owner" || yourRole === "editor") && (
+              <Pressable style={styles.inviteBtn} onPress={() => void onInvite()}>
+                <Text style={styles.inviteLabel}>{t(locale, "collab.invite")}</Text>
+              </Pressable>
+            )}
+            {inviteCode ? (
+              <Text style={styles.inviteCode}>
+                {t(locale, "collab.shareHint")} {inviteCode}
+              </Text>
+            ) : null}
           </View>
           <MiniMap stops={dayStops} legs={dayLegs} />
 
@@ -257,6 +300,32 @@ const styles = StyleSheet.create({
   actionPrimaryLabel: {
     color: colors.foam,
   },
+  collabBox: {
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    gap: 6,
+  },
+  collabTitle: {
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  collabMeta: { fontSize: 14, color: colors.inkSoft },
+  inviteBtn: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    backgroundColor: colors.river,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  inviteLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
+  inviteCode: { marginTop: 4, fontSize: 12, color: colors.ink, fontFamily: "monospace" },
   map: {
     height: 220,
     borderRadius: 16,

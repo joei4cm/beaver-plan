@@ -14,6 +14,7 @@ import { formatDistance, formatDuration, stopsForDay } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
+import { TripMembersBar } from "@/components/collab/trip-members";
 import { MapStage } from "./map-stage";
 
 type TripPayload = {
@@ -141,13 +142,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   }
 
   async function addPlace(place: PlaceSummary) {
-    if (!dayId) return;
+    if (!dayId || !trip) return;
     setError(null);
     try {
       await apiSend(`/v1/trips/${tripId}/stops`, "POST", {
         dayId,
         place,
         engine: engineInfo?.engineId,
+        expectedVersion: trip.version,
       });
       setQuery("");
       setResults([]);
@@ -158,9 +160,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   }
 
   async function removeStop(stopId: string) {
+    if (!trip) return;
     setError(null);
     try {
-      await apiSend(`/v1/trips/${tripId}/stops/${stopId}`, "DELETE");
+      await apiSend(`/v1/trips/${tripId}/stops/${stopId}`, "DELETE", {
+        expectedVersion: trip.version,
+      });
       if (selectedStopId === stopId) setSelectedStopId(null);
       await refresh();
     } catch (e) {
@@ -169,7 +174,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   }
 
   async function moveStop(stopId: string, dir: -1 | 1) {
-    if (!dayId) return;
+    if (!dayId || !trip) return;
     const ordered = dayStops.map((s) => s.id);
     const idx = ordered.indexOf(stopId);
     const next = idx + dir;
@@ -182,6 +187,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       await apiSend(`/v1/trips/${tripId}/stops/reorder`, "PATCH", {
         dayId,
         orderedIds: swapped,
+        expectedVersion: trip.version,
       });
       await refresh();
     } catch (e) {
@@ -194,6 +200,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     try {
       const res = await apiSend<{ trip: Trip }>(`/v1/trips/${tripId}`, "PATCH", {
         mapEngine: next,
+        expectedVersion: trip.version,
       });
       setTrip(res.trip);
     } catch (e) {
@@ -305,6 +312,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             ))}
           </div>
         </header>
+
+        <TripMembersBar
+          tripId={tripId}
+          locale={locale}
+          tripVersion={trip.version}
+          onVersion={(v) =>
+            setTrip((prev) => (prev ? { ...prev, version: v } : prev))
+          }
+        />
 
         <div className="animate-fade min-h-0 flex-1" style={{ animationDelay: "60ms" }}>
           <MapStage

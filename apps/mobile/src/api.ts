@@ -6,6 +6,8 @@ import type {
   ShareTemplateMeta,
   Stop,
   Trip,
+  TripMember,
+  TripRole,
 } from "@beaver/core";
 
 const DEFAULT_BASE = "http://127.0.0.1:8787";
@@ -21,20 +23,105 @@ export type TripPayload = {
   days: Day[];
   stops: Stop[];
   legs: Leg[];
+  members?: TripMember[];
+  yourRole?: TripRole | null;
 };
 
+type ApiAuth = {
+  getToken?: () => Promise<string | null>;
+  demoUserId?: string;
+  demoDisplayName?: string;
+};
+
+let authBridge: ApiAuth = {
+  demoUserId: "demo-user",
+  demoDisplayName: "Demo Traveler",
+};
+
+export function setMobileApiAuth(next: ApiAuth) {
+  authBridge = next;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+  if (authBridge.getToken) {
+    const token = await authBridge.getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+      return headers;
+    }
+  }
+  if (authBridge.demoUserId) {
+    headers["X-Beaver-User-Id"] = authBridge.demoUserId;
+  }
+  if (authBridge.demoDisplayName) {
+    headers["X-Beaver-Display-Name"] = authBridge.demoDisplayName;
+  }
+  return headers;
+}
+
+async function apiGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${apiBase()}${path}`, {
+    headers: await authHeaders(),
+  });
+  if (!res.ok) throw new Error(`${path}_${res.status}`);
+  return (await res.json()) as T;
+}
+
+async function apiSend<T>(
+  path: string,
+  method: "POST" | "PATCH" | "DELETE",
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(`${apiBase()}${path}`, {
+    method,
+    headers: {
+      ...(await authHeaders()),
+      "Content-Type": "application/json",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${path}_${res.status}`);
+  return (await res.json()) as T;
+}
+
 export async function fetchTrip(id: string): Promise<TripPayload> {
-  const res = await fetch(`${apiBase()}/v1/trips/${id}`);
-  if (!res.ok) throw new Error(`trip_${res.status}`);
-  return (await res.json()) as TripPayload;
+  return apiGet<TripPayload>(`/v1/trips/${id}`);
+}
+
+export async function fetchMembers(
+  tripId: string,
+): Promise<{ members: TripMember[]; yourRole: TripRole | null }> {
+  return apiGet(`/v1/trips/${tripId}/members`);
+}
+
+export async function createInvite(
+  tripId: string,
+  role: "editor" | "viewer" = "editor",
+): Promise<{ code: string; inviteUrl: string }> {
+  return apiSend(`/v1/trips/${tripId}/invites`, "POST", { role });
+}
+
+export async function previewInvite(code: string): Promise<{
+  code: string;
+  role: TripRole;
+  trip: { id: string; title: string; destination?: string };
+}> {
+  return apiGet(`/v1/invites/${encodeURIComponent(code)}`);
+}
+
+export async function acceptInvite(
+  code: string,
+): Promise<{ trip: Trip; alreadyMember?: boolean }> {
+  return apiSend(`/v1/invites/${encodeURIComponent(code)}/accept`, "POST", {});
 }
 
 export async function fetchJournal(
   tripId: string,
 ): Promise<{ entries: JournalEntry[] }> {
-  const res = await fetch(`${apiBase()}/v1/trips/${tripId}/journal`);
-  if (!res.ok) throw new Error(`journal_${res.status}`);
-  return (await res.json()) as { entries: JournalEntry[] };
+  return apiGet(`/v1/trips/${tripId}/journal`);
 }
 
 export async function createJournalEntry(
@@ -46,13 +133,7 @@ export async function createJournalEntry(
     media?: string[];
   },
 ): Promise<{ entry: JournalEntry }> {
-  const res = await fetch(`${apiBase()}/v1/trips/${tripId}/journal`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`journal_create_${res.status}`);
-  return (await res.json()) as { entry: JournalEntry };
+  return apiSend(`/v1/trips/${tripId}/journal`, "POST", body);
 }
 
 export async function uploadMediaBase64(input: {
@@ -60,13 +141,7 @@ export async function uploadMediaBase64(input: {
   contentType: string;
   dataBase64: string;
 }): Promise<{ url: string }> {
-  const res = await fetch(`${apiBase()}/v1/media`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) throw new Error(`media_${res.status}`);
-  return (await res.json()) as { url: string };
+  return apiSend(`/v1/media`, "POST", input);
 }
 
 export async function renderShare(input: {
@@ -78,22 +153,12 @@ export async function renderShare(input: {
   svg: string;
   previewUrl: string;
 }> {
-  const res = await fetch(`${apiBase()}/v1/trips/${input.tripId}/share`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      templateId: input.templateId,
-      dayId: input.dayId,
-      mediaBaseUrl: apiBase(),
-      persist: true,
-    }),
+  return apiSend(`/v1/trips/${input.tripId}/share`, "POST", {
+    templateId: input.templateId,
+    dayId: input.dayId,
+    mediaBaseUrl: apiBase(),
+    persist: true,
   });
-  if (!res.ok) throw new Error(`share_${res.status}`);
-  return (await res.json()) as {
-    template: ShareTemplateMeta;
-    svg: string;
-    previewUrl: string;
-  };
 }
 
 export function resolveMediaUrl(url: string): string {

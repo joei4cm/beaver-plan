@@ -5,6 +5,8 @@ import type {
   ShareArtifact,
   Stop,
   Trip,
+  TripInvite,
+  TripMember,
 } from "@beaver/core";
 import { DEMO_PLACES } from "@beaver/core";
 import {
@@ -20,9 +22,42 @@ export const stopsByTrip = new Map<string, Stop[]>();
 export const legsByTrip = new Map<string, Leg[]>();
 export const journalByTrip = new Map<string, JournalEntry[]>();
 export const shareByTrip = new Map<string, ShareArtifact[]>();
+export const membersByTrip = new Map<string, TripMember[]>();
+/** Invite code → invite */
+export const invitesByCode = new Map<string, TripInvite>();
+export const inviteCodesByTrip = new Map<string, string[]>();
 
 export function nowIso() {
   return new Date().toISOString();
+}
+
+export function listMembers(tripId: string): TripMember[] {
+  return membersByTrip.get(tripId) ?? [];
+}
+
+export function upsertMember(member: TripMember) {
+  const list = [...(membersByTrip.get(member.tripId) ?? [])];
+  const idx = list.findIndex((m) => m.userId === member.userId);
+  if (idx >= 0) list[idx] = member;
+  else list.push(member);
+  membersByTrip.set(member.tripId, list);
+  return member;
+}
+
+export function removeMember(tripId: string, userId: string): boolean {
+  const list = membersByTrip.get(tripId) ?? [];
+  const next = list.filter((m) => m.userId !== userId);
+  if (next.length === list.length) return false;
+  membersByTrip.set(tripId, next);
+  return true;
+}
+
+export function saveInvite(invite: TripInvite) {
+  invitesByCode.set(invite.code, invite);
+  const codes = inviteCodesByTrip.get(invite.tripId) ?? [];
+  if (!codes.includes(invite.code)) {
+    inviteCodesByTrip.set(invite.tripId, [...codes, invite.code]);
+  }
 }
 
 /** Seed a Kyoto sample trip so Web/Mobile can open a planner without auth. */
@@ -45,6 +80,23 @@ export function ensureSampleTrip() {
     updatedAt: stamp,
   };
   trips.set(id, trip);
+
+  upsertMember({
+    id: "member-kyoto-owner",
+    tripId: id,
+    userId: "demo-user",
+    role: "owner",
+    displayName: "Demo Traveler",
+    joinedAt: stamp,
+  });
+  upsertMember({
+    id: "member-kyoto-viewer",
+    tripId: id,
+    userId: "demo-viewer",
+    role: "viewer",
+    displayName: "Companion",
+    joinedAt: stamp,
+  });
 
   const days: Day[] = [
     { id: "day-kyoto-1", tripId: id, date: "2026-04-10", note: "东山 · 清水寺一带" },

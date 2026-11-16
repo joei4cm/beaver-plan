@@ -13,18 +13,32 @@ import {
   type Stop,
   type Trip,
 } from "@beaver/core";
+import type { AuthVariables } from "./auth.js";
+import { requireAuth } from "./auth.js";
+import {
+  applyVersionOrConflict,
+  assertCanEdit,
+  assertCanManage,
+  assertCanView,
+  parseExpectedVersion,
+} from "./access.js";
 import type { Bindings } from "./env.js";
 import {
   daysByTrip,
   journalByTrip,
   legsByTrip,
+  listMembers,
   nowIso,
   shareByTrip,
   stopsByTrip,
   trips,
+  upsertMember,
 } from "./store.js";
 
-export const tripRoutes = new Hono<{ Bindings: Bindings }>();
+export const tripRoutes = new Hono<{
+  Bindings: Bindings;
+  Variables: AuthVariables;
+}>();
 
 function preferenceFrom(
   raw: string | undefined | MapEnginePreference,
@@ -36,22 +50,51 @@ function preferenceFrom(
 }
 
 tripRoutes.get("/v1/trips", (c) => {
+  const auth = c.get("auth");
+  const all = Array.from(trips.values());
+  const visible = auth
+    ? all.filter((trip) => {
+        const members = listMembers(trip.id);
+        return (
+          members.length === 0 ||
+          members.some((m) => m.userId === auth.userId) ||
+          trip.id === "sample-kyoto"
+        );
+      })
+    : all.filter((trip) => trip.id === "sample-kyoto");
   return c.json({
-    trips: Array.from(trips.values()),
-    auth: "Clerk placeholder — set CLERK_SECRET_KEY",
+    trips: visible,
+    authMode: auth?.demo ? "demo" : auth ? "clerk" : "anonymous",
   });
 });
 
 tripRoutes.get("/v1/trips/:id", (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
+  // Sample trip stays publicly readable for demos; other trips need membership when Clerk is on.
+  if (trip.id !== "sample-kyoto") {
+    const access = assertCanView(c, trip.id);
+    if (!access.ok) return access.res;
+  }
   const days = daysByTrip.get(trip.id) ?? [];
   const stops = sortStops(stopsByTrip.get(trip.id) ?? []);
   const legs = legsByTrip.get(trip.id) ?? [];
-  return c.json({ trip, days, stops, legs });
+  const auth = c.get("auth");
+  const members = listMembers(trip.id);
+  const yourRole =
+    members.find((m) => m.userId === auth?.userId)?.role ??
+    (trip.id === "sample-kyoto" ? "editor" : null);
+  return c.json({
+    trip,
+    days,
+    stops,
+    legs,
+    members,
+    yourRole,
+  });
 });
 
-tripRoutes.post("/v1/trips", async (c) => {
+tripRoutes.post("/v1/trips", requireAuth, async (c) => {
   let body: CreateTripInput;
   try {
     body = await c.req.json<CreateTripInput>();
@@ -63,6 +106,7 @@ tripRoutes.post("/v1/trips", async (c) => {
     return c.json({ error: "title_required" }, 400);
   }
 
+  const auth = c.get("auth")!;
   const id = crypto.randomUUID();
   const stamp = nowIso();
   const trip: Trip = {
@@ -84,35 +128,56 @@ tripRoutes.post("/v1/trips", async (c) => {
   legsByTrip.set(id, []);
   journalByTrip.set(id, []);
   shareByTrip.set(id, []);
+  upsertMember({
+    id: crypto.randomUUID(),
+    tripId: id,
+    userId: auth.userId,
+    role: "owner",
+    displayName: auth.displayName,
+    joinedAt: stamp,
+  });
 
-  return c.json({ trip }, 201);
+  return c.json({ trip, yourRole: "owner" as const }, 201);
 });
 
-tripRoutes.patch("/v1/trips/:id", async (c) => {
+tripRoutes.patch("/v1/trips/:id", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  let body: Partial<Pick<Trip, "title" | "mapEngine" | "locale" | "destination">>;
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let body: Partial<
+    Pick<Trip, "title" | "mapEngine" | "locale" | "destination">
+  > & { expectedVersion?: number; version?: number };
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
+
+  const bumped = applyVersionOrConflict(
+    c,
+    trip,
+    parseExpectedVersion(body),
+  );
+  if (!bumped.ok) return bumped.res;
+
   const next: Trip = {
-    ...trip,
-    title: body.title?.trim() || trip.title,
-    destination: body.destination ?? trip.destination,
-    locale: body.locale ?? trip.locale,
-    mapEngine: body.mapEngine ?? trip.mapEngine,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
+    ...bumped.trip,
+    title: body.title?.trim() || bumped.trip.title,
+    destination: body.destination ?? bumped.trip.destination,
+    locale: body.locale ?? bumped.trip.locale,
+    mapEngine: body.mapEngine ?? bumped.trip.mapEngine,
   };
   trips.set(trip.id, next);
   return c.json({ trip: next });
 });
 
-tripRoutes.delete("/v1/trips/:id", (c) => {
+tripRoutes.delete("/v1/trips/:id", requireAuth, (c) => {
   const id = c.req.param("id");
   if (!trips.has(id)) return c.json({ error: "not_found" }, 404);
+  const access = assertCanManage(c, id);
+  if (!access.ok) return access.res;
   trips.delete(id);
   daysByTrip.delete(id);
   stopsByTrip.delete(id);
@@ -129,12 +194,15 @@ type AddStopBody = {
   userNote?: string;
 };
 
-tripRoutes.post("/v1/trips/:id/stops", async (c) => {
+tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  let body: AddStopBody;
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let body: AddStopBody & { expectedVersion?: number };
   try {
-    body = await c.req.json<AddStopBody>();
+    body = await c.req.json<AddStopBody & { expectedVersion?: number }>();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
@@ -146,15 +214,22 @@ tripRoutes.post("/v1/trips/:id/stops", async (c) => {
     return c.json({ error: "day_not_found" }, 404);
   }
 
+  const bumped = applyVersionOrConflict(
+    c,
+    trip,
+    parseExpectedVersion(body),
+  );
+  if (!bumped.ok) return bumped.res;
+
   const engine =
     body.engine ??
     resolveMapEngine(
-      preferenceFrom(trip.mapEngine, c.env.DEFAULT_MAP_ENGINE),
+      preferenceFrom(bumped.trip.mapEngine, c.env.DEFAULT_MAP_ENGINE),
       (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false"
         ? inferRegionHint({
             cfCountry: c.req.header("cf-ipcountry"),
             acceptLanguage: c.req.header("accept-language"),
-            timezone: trip.timezone,
+            timezone: bumped.trip.timezone,
           })
         : "other",
     );
@@ -169,20 +244,17 @@ tripRoutes.post("/v1/trips/:id/stops", async (c) => {
     userNote: body.userNote,
     photos: [],
   };
-  const next = [...existing, stop];
-  stopsByTrip.set(trip.id, next);
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
-  });
-  return c.json({ stop }, 201);
+  stopsByTrip.set(trip.id, [...existing, stop]);
+  return c.json({ stop, tripVersion: bumped.trip.version }, 201);
 });
 
-tripRoutes.patch("/v1/trips/:id/stops/reorder", async (c) => {
+tripRoutes.patch("/v1/trips/:id/stops/reorder", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  let body: { dayId: string; orderedIds: string[] };
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let body: { dayId: string; orderedIds: string[]; expectedVersion?: number };
   try {
     body = await c.req.json();
   } catch {
@@ -191,26 +263,46 @@ tripRoutes.patch("/v1/trips/:id/stops/reorder", async (c) => {
   if (!body.dayId || !Array.isArray(body.orderedIds)) {
     return c.json({ error: "dayId_and_orderedIds_required" }, 400);
   }
+  const bumped = applyVersionOrConflict(
+    c,
+    trip,
+    parseExpectedVersion(body),
+  );
+  if (!bumped.ok) return bumped.res;
+
   const existing = stopsByTrip.get(trip.id) ?? [];
   const next = reorderStops(existing, body.dayId, body.orderedIds);
   stopsByTrip.set(trip.id, next);
   legsByTrip.set(trip.id, []);
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
+  return c.json({
+    stops: sortStops(next),
+    tripVersion: bumped.trip.version,
   });
-  return c.json({ stops: sortStops(next) });
 });
 
-tripRoutes.delete("/v1/trips/:id/stops/:stopId", (c) => {
+tripRoutes.delete("/v1/trips/:id/stops/:stopId", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let expectedVersion: number | undefined;
+  try {
+    const body = await c.req.json<{ expectedVersion?: number }>();
+    expectedVersion = body.expectedVersion;
+  } catch {
+    expectedVersion = undefined;
+  }
+
   const stopId = c.req.param("stopId");
   const existing = stopsByTrip.get(trip.id) ?? [];
   if (!existing.some((s) => s.id === stopId)) {
     return c.json({ error: "stop_not_found" }, 404);
   }
+
+  const bumped = applyVersionOrConflict(c, trip, expectedVersion);
+  if (!bumped.ok) return bumped.res;
+
   const removed = existing.find((s) => s.id === stopId)!;
   const filtered = existing.filter((s) => s.id !== stopId);
   const reindexed = filtered.map((s) =>
@@ -226,12 +318,7 @@ tripRoutes.delete("/v1/trips/:id/stops/:stopId", (c) => {
   );
   stopsByTrip.set(trip.id, reindexed);
   legsByTrip.set(trip.id, []);
-  trips.set(trip.id, {
-    ...trip,
-    version: trip.version + 1,
-    updatedAt: nowIso(),
-  });
-  return c.json({ ok: true });
+  return c.json({ ok: true, tripVersion: bumped.trip.version });
 });
 
 type RouteDayBody = {
@@ -240,9 +327,11 @@ type RouteDayBody = {
   engine?: MapEnginePreference;
 };
 
-tripRoutes.post("/v1/trips/:id/route-day", async (c) => {
+tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
   const trip = trips.get(c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
+  const access = assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
   let body: RouteDayBody;
   try {
     body = await c.req.json<RouteDayBody>();
