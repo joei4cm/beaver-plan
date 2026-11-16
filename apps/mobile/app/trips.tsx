@@ -1,5 +1,5 @@
-import { Stack } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Link, Stack } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 
@@ -11,10 +11,17 @@ export default function TripsScreen() {
       <Stack.Screen options={{ title: t(locale, "trips.title") }} />
       <Text style={styles.title}>{t(locale, "trips.title")}</Text>
       <Text style={styles.body}>{t(locale, "trips.empty")}</Text>
-      <View style={styles.sample}>
-        <Text style={styles.sampleTitle}>{t(locale, "trips.placeholder.kyoto")}</Text>
-        <Text style={styles.sampleMeta}>{t(locale, "trips.placeholder.kyotoMeta")}</Text>
-      </View>
+      <Link href="/trips/sample-kyoto" asChild>
+        <Pressable style={styles.sample}>
+          <Text style={styles.sampleTitle}>
+            {t(locale, "trips.placeholder.kyoto")}
+          </Text>
+          <Text style={styles.sampleMeta}>
+            {t(locale, "trips.placeholder.kyotoMeta")}
+          </Text>
+          <Text style={styles.cta}>{t(locale, "mobile.viewMap")} →</Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
@@ -52,5 +59,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 13,
     color: colors.inkSoft,
+  },
+  cta: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.river,
+    fontWeight: "600",
   },
 });

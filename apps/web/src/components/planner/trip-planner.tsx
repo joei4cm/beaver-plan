@@ -1,0 +1,520 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import type {
+  Day,
+  Leg,
+  MapEngineId,
+  PlaceSummary,
+  Stop,
+  Trip,
+} from "@beaver/core";
+import { formatDistance, formatDuration, stopsForDay } from "@beaver/core";
+import type { Locale } from "@beaver/i18n";
+import { t } from "@beaver/i18n";
+import { apiGet, apiSend } from "@/lib/api";
+import { MapStage } from "./map-stage";
+
+type TripPayload = {
+  trip: Trip;
+  days: Day[];
+  stops: Stop[];
+  legs: Leg[];
+};
+
+type SearchResponse = {
+  places: PlaceSummary[];
+  engineId: MapEngineId;
+  mode: "live" | "demo";
+  region: string;
+};
+
+type EngineResponse = {
+  preference: string;
+  region: string;
+  engineId: MapEngineId;
+  mode: "live" | "demo";
+};
+
+type Props = {
+  tripId: string;
+  locale: Locale;
+  initial: TripPayload | null;
+};
+
+type TravelMode = "walk" | "transit" | "drive";
+
+export function TripPlanner({ tripId, locale, initial }: Props) {
+  const [trip, setTrip] = useState<Trip | null>(initial?.trip ?? null);
+  const [days, setDays] = useState<Day[]>(initial?.days ?? []);
+  const [stops, setStops] = useState<Stop[]>(initial?.stops ?? []);
+  const [legs, setLegs] = useState<Leg[]>(initial?.legs ?? []);
+  const [dayId, setDayId] = useState<string | null>(
+    initial?.days[0]?.id ?? null,
+  );
+  const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PlaceSummary[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [engineInfo, setEngineInfo] = useState<EngineResponse | null>(null);
+  const [travelMode, setTravelMode] = useState<TravelMode>("transit");
+  const [routing, setRouting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const preference = trip?.mapEngine ?? "auto";
+
+  const dayStops = useMemo(
+    () => (dayId ? stopsForDay(stops, dayId) : []),
+    [stops, dayId],
+  );
+
+  const dayLegs = useMemo(() => {
+    const ids = new Set(dayStops.map((s) => s.id));
+    return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
+  }, [legs, dayStops]);
+
+  const refresh = useCallback(async () => {
+    const data = await apiGet<TripPayload>(`/v1/trips/${tripId}`);
+    setTrip(data.trip);
+    setDays(data.days);
+    setStops(data.stops);
+    setLegs(data.legs);
+    setDayId((prev) => prev ?? data.days[0]?.id ?? null);
+  }, [tripId]);
+
+  useEffect(() => {
+    if (initial) return;
+    startTransition(() => {
+      void refresh().catch((e: Error) => setError(e.message));
+    });
+  }, [initial, refresh]);
+
+  useEffect(() => {
+    void apiGet<EngineResponse>(
+      `/v1/maps/engine?preference=${encodeURIComponent(preference)}&timezone=${encodeURIComponent(trip?.timezone ?? "")}`,
+    )
+      .then(setEngineInfo)
+      .catch(() => setEngineInfo(null));
+  }, [preference, trip?.timezone]);
+
+  async function runSearch(text: string) {
+    const q = text.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    setError(null);
+    try {
+      const center = dayStops[0]?.place;
+      const params = new URLSearchParams({
+        q,
+        engine: preference,
+        language: locale,
+      });
+      if (center) {
+        params.set("lat", String(center.lat));
+        params.set("lng", String(center.lng));
+      }
+      if (trip?.timezone) params.set("timezone", trip.timezone);
+      const data = await apiGet<SearchResponse>(
+        `/v1/places/search?${params}`,
+      );
+      setResults(data.places);
+      setEngineInfo((prev) =>
+        prev
+          ? { ...prev, engineId: data.engineId, mode: data.mode, region: data.region }
+          : {
+              preference,
+              engineId: data.engineId,
+              mode: data.mode,
+              region: data.region,
+            },
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "search_failed");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function addPlace(place: PlaceSummary) {
+    if (!dayId) return;
+    setError(null);
+    try {
+      await apiSend(`/v1/trips/${tripId}/stops`, "POST", {
+        dayId,
+        place,
+        engine: engineInfo?.engineId,
+      });
+      setQuery("");
+      setResults([]);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "add_failed");
+    }
+  }
+
+  async function removeStop(stopId: string) {
+    setError(null);
+    try {
+      await apiSend(`/v1/trips/${tripId}/stops/${stopId}`, "DELETE");
+      if (selectedStopId === stopId) setSelectedStopId(null);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "delete_failed");
+    }
+  }
+
+  async function moveStop(stopId: string, dir: -1 | 1) {
+    if (!dayId) return;
+    const ordered = dayStops.map((s) => s.id);
+    const idx = ordered.indexOf(stopId);
+    const next = idx + dir;
+    if (idx < 0 || next < 0 || next >= ordered.length) return;
+    const swapped = [...ordered];
+    const tmp = swapped[idx]!;
+    swapped[idx] = swapped[next]!;
+    swapped[next] = tmp;
+    try {
+      await apiSend(`/v1/trips/${tripId}/stops/reorder`, "PATCH", {
+        dayId,
+        orderedIds: swapped,
+      });
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "reorder_failed");
+    }
+  }
+
+  async function setEnginePreference(next: Trip["mapEngine"]) {
+    if (!trip) return;
+    try {
+      const res = await apiSend<{ trip: Trip }>(`/v1/trips/${tripId}`, "PATCH", {
+        mapEngine: next,
+      });
+      setTrip(res.trip);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "engine_failed");
+    }
+  }
+
+  async function generateRoutes() {
+    if (!dayId) return;
+    setRouting(true);
+    setError(null);
+    try {
+      const res = await apiSend<{
+        legs: Leg[];
+        mode: "live" | "demo";
+        engineId: MapEngineId;
+      }>(`/v1/trips/${tripId}/route-day`, "POST", {
+        dayId,
+        mode: travelMode,
+        engine: preference,
+      });
+      setLegs((prev) => {
+        const ids = new Set(dayStops.map((s) => s.id));
+        const kept = prev.filter(
+          (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
+        );
+        return [...kept, ...res.legs];
+      });
+      setEngineInfo((prev) =>
+        prev
+          ? { ...prev, engineId: res.engineId, mode: res.mode }
+          : {
+              preference,
+              engineId: res.engineId,
+              mode: res.mode,
+              region: "other",
+            },
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "route_failed");
+    } finally {
+      setRouting(false);
+    }
+  }
+
+  if (!trip && pending) {
+    return (
+      <div className="px-6 py-20 text-ink-soft md:px-10">
+        {t(locale, "planner.loading")}
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="px-6 py-20 text-ink-soft md:px-10">
+        {error ?? t(locale, "planner.notFound")}
+      </div>
+    );
+  }
+
+  const engineLabel =
+    engineInfo?.engineId === "amap"
+      ? t(locale, "planner.engine.amap")
+      : t(locale, "planner.engine.google");
+  const modeLabel =
+    engineInfo?.mode === "live"
+      ? t(locale, "planner.mode.live")
+      : t(locale, "planner.mode.demo");
+
+  return (
+    <div className="mx-auto grid max-w-[1400px] gap-6 px-4 pb-16 pt-4 md:px-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:gap-8 lg:pt-6">
+      <section className="flex min-h-[520px] flex-col gap-4">
+        <header className="animate-rise flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-river/80">
+              {trip.destination ?? t(locale, "planner.trip")}
+            </p>
+            <h1 className="mt-1 font-display text-3xl tracking-tight text-ink md:text-4xl">
+              {trip.title}
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            {(["auto", "google", "amap"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => void setEnginePreference(opt)}
+                className={`rounded-md px-3 py-1.5 transition ${
+                  preference === opt
+                    ? "bg-river text-foam"
+                    : "border border-[color:var(--bp-line)] bg-foam/60 text-ink-soft hover:border-river/40"
+                }`}
+              >
+                {t(locale, `planner.pref.${opt}`)}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <div className="animate-fade min-h-0 flex-1" style={{ animationDelay: "60ms" }}>
+          <MapStage
+            stops={dayStops}
+            legs={dayLegs}
+            selectedStopId={selectedStopId}
+            onSelectStop={setSelectedStopId}
+            engineLabel={engineLabel}
+            modeLabel={modeLabel}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border border-[color:var(--bp-line)] bg-foam/70 p-1">
+            {(["walk", "transit", "drive"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setTravelMode(m)}
+                className={`rounded px-3 py-1.5 text-sm transition ${
+                  travelMode === m
+                    ? "bg-river text-foam"
+                    : "text-ink-soft hover:text-river"
+                }`}
+              >
+                {t(locale, `planner.mode.${m}`)}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            disabled={routing || dayStops.length < 2}
+            onClick={() => void generateRoutes()}
+            className="rounded-md bg-timber px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {routing
+              ? t(locale, "planner.routing")
+              : t(locale, "planner.generateRoutes")}
+          </button>
+          {dayLegs.length > 0 && (
+            <p className="text-sm text-ink-soft">
+              {dayLegs
+                .map(
+                  (l) =>
+                    `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                )
+                .join("  →  ")}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <aside className="animate-rise flex flex-col gap-5" style={{ animationDelay: "100ms" }}>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {days.map((day, i) => (
+            <button
+              key={day.id}
+              type="button"
+              onClick={() => {
+                setDayId(day.id);
+                setSelectedStopId(null);
+              }}
+              className={`shrink-0 rounded-md px-4 py-3 text-left transition ${
+                dayId === day.id
+                  ? "bg-river-deep text-foam"
+                  : "border border-[color:var(--bp-line)] bg-foam/50 text-ink-soft hover:border-river/35"
+              }`}
+            >
+              <div className="text-[11px] uppercase tracking-[0.14em] opacity-70">
+                {t(locale, "planner.day")} {i + 1}
+              </div>
+              <div className="mt-0.5 text-sm font-medium">{day.date}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="relative">
+          <label className="sr-only" htmlFor="poi-search">
+            {t(locale, "planner.search")}
+          </label>
+          <input
+            id="poi-search"
+            value={query}
+            onChange={(e) => {
+              const v = e.target.value;
+              setQuery(v);
+              void runSearch(v);
+            }}
+            placeholder={t(locale, "planner.searchPlaceholder")}
+            className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+          />
+          {searching && (
+            <span className="absolute right-3 top-3 text-xs text-ink-soft">
+              …
+            </span>
+          )}
+          {results.length > 0 && (
+            <ul className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-[color:var(--bp-line)] bg-foam shadow-lg">
+              {results.map((place) => (
+                <li key={place.enginePlaceId}>
+                  <button
+                    type="button"
+                    onClick={() => void addPlace(place)}
+                    className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition hover:bg-mist/50"
+                  >
+                    <span className="text-sm font-medium text-ink">
+                      {place.name}
+                    </span>
+                    {place.address && (
+                      <span className="text-xs text-ink-soft">
+                        {place.address}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <ol className="divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
+          {dayStops.length === 0 && (
+            <li className="py-8 text-sm text-ink-soft">
+              {t(locale, "planner.emptyDay")}
+            </li>
+          )}
+          {dayStops.map((stop, index) => {
+            const selected = selectedStopId === stop.id;
+            const leg = dayLegs.find((l) => l.fromStopId === stop.id);
+            return (
+              <li key={stop.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedStopId(stop.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedStopId(stop.id);
+                    }
+                  }}
+                  className={`group flex gap-3 py-4 transition ${
+                    selected ? "bg-mist/40" : "hover:bg-foam/50"
+                  }`}
+                >
+                  <span
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                      selected
+                        ? "bg-timber text-foam"
+                        : "bg-river/15 text-river-deep"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium text-ink">
+                      {stop.place.name}
+                    </div>
+                    {stop.place.address && (
+                      <div className="mt-0.5 truncate text-xs text-ink-soft">
+                        {stop.place.address}
+                      </div>
+                    )}
+                    {leg && (
+                      <div className="mt-2 text-xs text-river">
+                        → {formatDuration(leg.durationSec)} ·{" "}
+                        {formatDistance(leg.distanceM)} · {leg.mode}
+                        {leg.transitSteps[0]?.instruction
+                          ? ` · ${leg.transitSteps[0].instruction}`
+                          : ""}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1 opacity-70 transition group-hover:opacity-100">
+                    <button
+                      type="button"
+                      aria-label="Move up"
+                      className="px-1 text-ink-soft hover:text-river"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void moveStop(stop.id, -1);
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Move down"
+                      className="px-1 text-ink-soft hover:text-river"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void moveStop(stop.id, 1);
+                      }}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Remove"
+                      className="px-1 text-ink-soft hover:text-timber"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void removeStop(stop.id);
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+
+        {error && (
+          <p className="text-sm text-timber" role="alert">
+            {error}
+          </p>
+        )}
+        <p className="text-xs leading-relaxed text-ink-soft/80">
+          {t(locale, "planner.hint")}
+        </p>
+      </aside>
+    </div>
+  );
+}
