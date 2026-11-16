@@ -25,7 +25,11 @@ CLERK_WECHAT_ENABLED = "false"
 # R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (or use R2 binding above)
 # GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
 # AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
-# OPENAI_API_KEY (translation — Slice E)
+# OPENAI_API_KEY           — LLM translate + Whisper ASR + TTS + vision
+# DEEPGRAM_API_KEY         — optional ASR alternative
+# OPENAI_BASE_URL / OPENAI_CHAT_MODEL / OPENAI_ASR_MODEL / OPENAI_TTS_*
+# ASR_PROVIDER / LLM_PROVIDER / TTS_PROVIDER — openai|deepgram|edge|demo|auto
 #
 # Without CLERK_SECRET_KEY, BFF uses demo identity headers (X-Beaver-User-Id).
 # Without map secrets, /v1/places and /v1/directions use curated demo data.
+# Without OPENAI_/DEEPGRAM keys, /v1/translation/* serves scripted demo turns.

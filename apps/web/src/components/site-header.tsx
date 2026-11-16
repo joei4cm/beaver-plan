@@ -18,6 +18,9 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <Link href="/trips" className="transition hover:text-river">
           {t(locale, "nav.trips")}
         </Link>
+        <Link href="/translate" className="transition hover:text-river">
+          {t(locale, "nav.translate")}
+        </Link>
         <AuthControls locale={locale} />
       </nav>
     </header>

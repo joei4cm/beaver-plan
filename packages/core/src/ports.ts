@@ -79,24 +79,22 @@ export interface CollabPort {
   ): Promise<CollabSyncResult>;
 }
 
-export type TranslationMode = "live" | "batch";
-
-export type TranslationRequest = {
-  text: string;
-  sourceLocale: string;
-  targetLocale: string;
-  mode: TranslationMode;
-};
-
-export type TranslationResult = {
-  text: string;
-  provider: string;
-};
-
-/** Live translation — ASR/TTS/LLM wiring in Slice E. */
-export interface TranslationProvider {
-  translate(req: TranslationRequest): Promise<TranslationResult>;
-}
+export type {
+  TranslationMode,
+  TranslationRequest,
+  TranslationResult,
+} from "./translation/types.js";
+export type {
+  AsrProvider,
+  TtsProvider,
+  TranslationProvider,
+  VisionAssistProvider,
+} from "./translation/ports.js";
+import type {
+  TranslationRequest,
+  TranslationResult,
+} from "./translation/types.js";
+import type { TranslationProvider } from "./translation/ports.js";
 
 /** Stub map engine so apps can depend on the port today. */
 export class StubMapEngine implements MapEngine {
@@ -162,10 +160,12 @@ export class StubCollabPort implements CollabPort {
 }
 
 export class StubTranslationProvider implements TranslationProvider {
+  readonly id = "stub";
+
   async translate(req: TranslationRequest): Promise<TranslationResult> {
     return {
       text: `[stub:${req.sourceLocale}→${req.targetLocale}] ${req.text}`,
-      provider: "stub",
+      provider: this.id,
     };
   }
 }

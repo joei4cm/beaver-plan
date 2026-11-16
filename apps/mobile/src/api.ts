@@ -172,3 +172,63 @@ export function resolveMediaUrl(url: string): string {
   const base = apiBase();
   return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
 }
+
+export type TranslationStatus = {
+  mode: "live" | "demo";
+  asr: string;
+  llm: string;
+  tts: string;
+  vision: string;
+  featureEnabled: boolean;
+  locales: string[];
+};
+
+export type LiveTurnResponse = {
+  sourceText: string;
+  translatedText: string;
+  pair: { sourceLocale: string; targetLocale: string };
+  asrProvider: string;
+  translateProvider: string;
+  mode: "live" | "demo";
+  tts: {
+    audioBase64: string | null;
+    mimeType: string;
+    provider: string;
+    speakLocally: boolean;
+  } | null;
+};
+
+export type VisionResponse = {
+  sourceText: string;
+  translatedText: string | null;
+  provider: string;
+  mode: "live" | "demo";
+  visionMode: "ocr" | "caption";
+  pair: { sourceLocale: string; targetLocale: string };
+};
+
+export async function fetchTranslationStatus(): Promise<TranslationStatus> {
+  return apiGet("/v1/translation/status");
+}
+
+export async function runTranslationTurn(input: {
+  text?: string;
+  audioBase64?: string;
+  mimeType?: string;
+  sourceLocale: string;
+  targetLocale: string;
+  withTts?: boolean;
+  demoTurnIndex?: number;
+}): Promise<LiveTurnResponse> {
+  return apiSend("/v1/translation/turn", "POST", input);
+}
+
+export async function runVisionAssist(input: {
+  imageBase64?: string;
+  mimeType?: string;
+  mode: "ocr" | "caption";
+  sourceLocale: string;
+  targetLocale: string;
+}): Promise<VisionResponse> {
+  return apiSend("/v1/translation/vision", "POST", input);
+}

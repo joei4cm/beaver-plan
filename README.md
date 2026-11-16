@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** D — Multiplayer trips + Clerk auth (+ WeChat OAuth scaffolding)
+**Slice:** E — Live translation (ASR → LLM → TTS + camera assist)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -15,14 +15,14 @@ Product plan (Agent Store / humans):
 
 | Path | Role |
 |------|------|
-| `apps/web` | Next.js — landing, planner, journal, share, **invite / members**, Clerk |
-| `apps/mobile` | Expo — itinerary + journal + share + **invite accept** (+ Clerk when keyed) |
-| `apps/api` | Hono on Cloudflare Workers — trips, maps, journal, media, share, **membership** |
-| `packages/core` | Domain + MapEngine + journal/share + **collab helpers** |
+| `apps/web` | Next.js — landing, planner, journal, share, collab, **live translate companion** |
+| `apps/mobile` | Expo — itinerary + journal + share + invite + **conversation / camera translate** |
+| `apps/api` | Hono on Cloudflare Workers — trips, maps, journal, media, share, membership, **translation BFF** |
+| `packages/core` | Domain + MapEngine + journal/share/collab + **Translation ports** |
 | `packages/ui-tokens` | Design tokens |
 | `packages/i18n` | zh-CN + en |
 
-**Out of scope here:** live translation (Slice E), Baidu maps, CRDT / presence avatars.
+**Out of scope here:** Baidu maps, CRDT / presence avatars, offline ASR packs.
 
 ---
 
@@ -31,7 +31,7 @@ Product plan (Agent Store / humans):
 - Node.js ≥ 20
 - [pnpm](https://pnpm.io) 10.x (`corepack enable` recommended)
 - For API deploy: Cloudflare account + Wrangler
-- Optional: Clerk app keys; Google / Amap server keys
+- Optional: Clerk, Google / Amap, OpenAI / Deepgram keys
 
 ---
 
@@ -59,140 +59,94 @@ pnpm build
 
 ---
 
-## Auth — Clerk + WeChat (how to enable)
+## Live translation — LLM / ASR / TTS (Slice E)
 
-Secrets stay **server-side** (`CLERK_SECRET_KEY` in `apps/api/.dev.vars` / Wrangler). Clients only get publishable keys. **Do not commit real secrets.**
+Secrets stay **server-side** (`apps/api/.dev.vars` / `wrangler secret put`). Clients never embed provider keys. **Do not commit real secrets.**
 
-### 1. Create a Clerk application
+### Demo without keys (recommended first)
 
-1. Open [Clerk Dashboard](https://dashboard.clerk.com) → create an application.
-2. Enable Email (and optionally Apple / Google) under **User & Authentication**.
-3. Copy:
-   - Publishable key → `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (web) and `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (mobile)
-   - Secret key → `CLERK_SECRET_KEY` (API / Workers only)
-4. Optional but recommended for Workers JWT verify:
-   - `CLERK_PUBLISHABLE_KEY` (same as publishable) **or**
-   - `CLERK_JWT_ISSUER=https://<your-frontend-api>` (from Clerk → API keys / Frontend API)
+1. Leave `OPENAI_API_KEY` / `DEEPGRAM_API_KEY` empty.
+2. `pnpm dev:api` + `pnpm dev:web`
+3. Open **http://localhost:3000/translate**
+4. Click **下一句演示 / Next demo line**, or hold the mic (permission optional — falls back to scripted turns), or type a line.
+5. Mobile: `pnpm dev:mobile` → **实时翻译** — conversation tab + camera OCR/caption with overlay subtitles.
 
-### 2. Wire local env
+`/health` and `GET /v1/translation/status` report `mode: "demo"` with provider ids `demo-asr` / `demo-llm` / `demo-tts` / `demo-vision`.
+
+### Configure live providers
 
 ```bash
-# apps/web/.env.local
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_…
-NEXT_PUBLIC_CLERK_WECHAT_ENABLED=false
-
 # apps/api/.dev.vars
-CLERK_SECRET_KEY=sk_test_…
-CLERK_PUBLISHABLE_KEY=pk_test_…   # or CLERK_JWT_ISSUER=…
-PUBLIC_WEB_ORIGIN=http://localhost:3000
+FEATURE_TRANSLATION=true
+OPENAI_API_KEY=sk-…                 # OpenAI-compatible
+# OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_ASR_MODEL=whisper-1
+OPENAI_TTS_MODEL=tts-1
+OPENAI_TTS_VOICE=alloy
+
+# Optional Deepgram ASR instead of Whisper
+# DEEPGRAM_API_KEY=…
+# ASR_PROVIDER=deepgram
+
+# Pluggable selectors: auto | openai | deepgram | edge | demo
+ASR_PROVIDER=auto
+LLM_PROVIDER=auto
+TTS_PROVIDER=auto                   # edge = device/browser SpeechSynthesis
 ```
 
-Restart `pnpm dev:web` and `pnpm dev:api`. Sign-in UI appears at `/sign-in`. Trip **mutations** then require `Authorization: Bearer <Clerk session JWT>`.
+| Provider slot | `auto` behavior | Explicit options |
+|---------------|-----------------|------------------|
+| **LLM** | OpenAI chat if key set, else demo | `openai`, `demo` |
+| **ASR** | Deepgram if its key set, else OpenAI Whisper, else demo | `openai`, `deepgram`, `demo` |
+| **TTS** | OpenAI speech if key set, else Edge/local speak | `openai`, `edge`, `demo` |
+| **Vision** | OpenAI vision chat if key set, else demo OCR/caption | (follows LLM key) |
 
-### 3. WeChat login path (Clerk social connection)
+Restart `pnpm dev:api` after editing `.dev.vars`.
 
-WeChat credentials live in **Clerk + WeChat Open Platform**, not in this repo.
-
-1. Clerk Dashboard → **User & Authentication → Social connections → WeChat**.
-2. Create / use a [WeChat Open Platform](https://open.weixin.qq.com/) mobile/web application; paste AppID / AppSecret into Clerk (Clerk stores them).
-3. Copy the **redirect / callback URL** Clerk shows into the WeChat open platform authorized callbacks.
-4. In Beaver Plan env, surface the UI entry:
-
-```bash
-NEXT_PUBLIC_CLERK_WECHAT_ENABLED=true
-EXPO_PUBLIC_CLERK_WECHAT_ENABLED=true
-CLERK_WECHAT_ENABLED=true
-```
-
-5. Users pick WeChat in the Clerk sign-in panel (`/sign-in`). No placeholder AppID/secret is invented in code.
-
-If WeChat review or Clerk connector access is pending, leave the flags `false` — Email / Apple / Google still work once Clerk keys are set.
-
-### 4. Mobile (Expo)
-
-When `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` is a real `pk_…` key, `apps/mobile` wraps `ClerkProvider` + secure token cache. Without it, mobile uses the same demo identity headers as web.
-
----
-
-## Multiplayer trips (Slice D)
-
-Roles: **owner** / **editor** / **viewer**.
-
-| Action | owner | editor | viewer |
-|--------|-------|--------|--------|
-| View trip / members | ✅ | ✅ | ✅ |
-| Edit stops / journal / routes | ✅ | ✅ | ❌ |
-| Create invite link/code | ✅ | ✅ | ❌ |
-| Change roles / remove members / delete trip | ✅ | ❌ | ❌ |
-
-Conflict strategy: clients send `expectedVersion` on mutations. Mismatch → **409** `version_conflict` with `serverVersion` (refresh + retry). No CRDT.
-
-### Demo without Clerk keys
-
-1. `pnpm dev:api` + `pnpm dev:web`
-2. Open **http://localhost:3000/trips/sample-kyoto** — members bar shows seeded owner + companion.
-3. Click **邀请同行 / Invite** → copy link or `BP-……` code.
-4. Open the invite URL (or `/invite/<code>`). Accept joins as the demo identity (`X-Beaver-User-Id`, default `demo-user`).
-5. To simulate another person locally, set a different demo id in the browser console before accept is not required for the owner path — mint an invite, then call the API:
-
-```bash
-curl -s -X POST http://127.0.0.1:8787/v1/invites/BP-XXXXXX/accept \
-  -H 'content-type: application/json' \
-  -H 'x-beaver-user-id: friend-1' \
-  -H 'x-beaver-display-name: Friend' \
-  -d '{}'
-```
-
-### Membership API
+### Translation API
 
 | Method | Path | Notes |
 |--------|------|-------|
-| `GET` | `/v1/trips/:id/members` | List + `yourRole` |
-| `POST` | `/v1/trips/:id/invites` | `{ role?: "editor"\|"viewer" }` → code + URL |
-| `GET` | `/v1/trips/:id/invites` | Active invites (editor+) |
-| `POST` | `/v1/trips/:id/invites/:code/revoke` | Owner |
-| `PATCH/DELETE` | `/v1/trips/:id/members/:userId` | Owner role changes / remove |
-| `GET` | `/v1/invites/:code` | Public preview |
-| `POST` | `/v1/invites/:code/accept` | Auth required → join |
+| `GET` | `/v1/translation/status` | mode + provider ids + locales |
+| `POST` | `/v1/translation/translate` | `{ text, sourceLocale, targetLocale }` |
+| `POST` | `/v1/translation/asr` | `{ audioBase64, mimeType, locale? }` |
+| `POST` | `/v1/translation/tts` | `{ text, locale }` → audio or `speakLocally` |
+| `POST` | `/v1/translation/turn` | chunked live turn: audio and/or text → translate → TTS |
+| `POST` | `/v1/translation/vision` | `{ imageBase64?, mode: "ocr"\|"caption", locales }` |
 
-Trip content mutations (`POST/PATCH/DELETE` stops, trip patch, journal writes, …) require auth and **editor+**. Pass optional `expectedVersion`.
+Pipeline (packages/core): **ASR → TranslationProvider → TTS**, with optional **camera OCR / scene caption**.
+
+UX is chunked near-real-time (one utterance per `/turn`), not a perfect full-duplex stream — usable live assist for MVP.
+
+---
+
+## Auth — Clerk + WeChat
+
+See Slice D notes: without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat OAuth is configured in Clerk Dashboard (no fake AppID in this repo).
+
+---
+
+## Multiplayer trips
+
+Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still works on `/trips/sample-kyoto`.
 
 ---
 
 ## What works without keys vs with keys
 
-| Capability | No Clerk / map keys | With Clerk keys | With map keys |
-|------------|---------------------|-----------------|---------------|
-| Kyoto sample planner, journal, share | ✅ | ✅ (sign-in for mutations) | ✅ |
-| Members bar + invite link/code | ✅ demo identity | ✅ Clerk user id | — |
-| Accept invite / roles | ✅ `X-Beaver-User-Id` | ✅ Bearer JWT | — |
-| Sign-in UI + WeChat entry flag | scaffolding / demo panel | ✅ real Clerk (+ WeChat if enabled) | — |
-| Protected trip mutations | demo headers | JWT + membership | — |
-| Places / directions | demo catalog | — | Google / Amap live |
-
-`/health` reports `auth.mode` (`demo` \| `clerk`), `auth.wechatUi`, and map secret presence.
-
----
-
-## Demo Slice C locally (journal + share)
-
-Still available on the sample trip:
-
-- Journal — http://localhost:3000/trips/sample-kyoto/journal  
-- Share studio — http://localhost:3000/trips/sample-kyoto/share  
-
-See earlier slices for media/R2 stubs and map key setup.
+| Capability | No keys | With OpenAI / Deepgram | With Clerk / maps |
+|------------|---------|------------------------|-------------------|
+| Scripted bilingual translate UI (web + mobile) | ✅ | — | — |
+| Live ASR → LLM → TTS | demo | ✅ | — |
+| Camera OCR / caption | demo overlays | ✅ vision | — |
+| Kyoto planner / journal / share / collab | ✅ | — | ✅ when keyed |
 
 ---
 
 ## Maps keys (Google + Amap)
 
-Secrets belong in **`apps/api/.dev.vars`** locally and `wrangler secret put …` in production. Do not put server keys in `NEXT_PUBLIC_*`.
-
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `DEFAULT_MAP_ENGINE` | `google` | Used when preference is unset / `auto` base |
-| `MAP_AUTO_AMAP_CN` | `true` | Auto-switch to Amap for mainland CN |
+Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs.
 
 ---
 
@@ -202,11 +156,8 @@ Hosting is **Cloudflare only** (Workers + R2; no VPS).
 
 ```bash
 cd apps/api
-pnpm exec wrangler secret put CLERK_SECRET_KEY
-pnpm exec wrangler secret put CLERK_PUBLISHABLE_KEY
-pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY
-pnpm exec wrangler secret put AMAP_SERVER_KEY
-# optional: DATABASE_URL, …
+pnpm exec wrangler secret put OPENAI_API_KEY
+# optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY
 pnpm deploy
 ```
 
@@ -215,8 +166,8 @@ pnpm deploy
 ## i18n
 
 - Default locale: **zh-CN**; full **en** in `packages/i18n`.
-- Web: `bp_locale` cookie.
-- Mobile shell: zh-CN for now.
+- Live translation source/target locales are independent of UI locale.
+- Web: `bp_locale` cookie. Mobile shell: zh-CN for now.
 
 ---
 

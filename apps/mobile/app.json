@@ -13,13 +13,21 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "plan.beaver.app"
+      "bundleIdentifier": "plan.beaver.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Beaver Plan needs the microphone for live conversation translation.",
+        "NSCameraUsageDescription": "Beaver Plan needs the camera for menu OCR and scene captions."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0f4339"
       },
-      "package": "plan.beaver.app"
+      "package": "plan.beaver.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -28,6 +36,14 @@
         {
           "photosPermission": "Allow Beaver Plan to attach trip journal photos.",
           "cameraPermission": "Allow Beaver Plan to capture trip journal photos."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Beaver Plan to use the camera for live translation captions.",
+          "microphonePermission": "Allow Beaver Plan to record speech for live translation.",
+          "recordAudioAndroid": true
         }
       ]
     ],

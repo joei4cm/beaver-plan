@@ -51,10 +51,10 @@ export default async function HomePage() {
             {t(locale, "cta.startPlanning")}
           </Link>
           <Link
-            href="/trips"
+            href="/translate"
             className="rounded-md border border-[color:var(--bp-line)] bg-foam/50 px-5 py-3 text-sm text-ink-soft backdrop-blur-sm transition hover:border-river/40 hover:text-river"
           >
-            {t(locale, "cta.viewTrips")}
+            {t(locale, "nav.translate")}
           </Link>
         </div>
       </div>

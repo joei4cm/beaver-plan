@@ -12,12 +12,19 @@ export default function HomeScreen() {
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>{brand.en}</Text>
         <Text style={styles.brand}>{t(locale, "mobile.splash")}</Text>
-        <Text style={styles.hint}>{t(locale, "mobile.homeHint")}</Text>
+        <Text style={styles.hint}>
+          {t(locale, "mobile.homeHint")} · {t(locale, "mobile.translate")}
+        </Text>
       </View>
       <View style={styles.actions}>
         <Link href="/trips/sample-kyoto" asChild>
           <Pressable style={styles.primary}>
             <Text style={styles.primaryLabel}>{t(locale, "mobile.viewMap")}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/translate" asChild>
+          <Pressable style={styles.translate}>
+            <Text style={styles.primaryLabel}>{t(locale, "mobile.translate")}</Text>
           </Pressable>
         </Link>
         <Link href="/trips" asChild>
@@ -67,6 +74,13 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.river,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  translate: {
+    marginTop: 10,
+    backgroundColor: colors.riverDeep,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
