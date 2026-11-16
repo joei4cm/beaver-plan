@@ -148,6 +148,12 @@ export async function renderShare(input: {
   tripId: string;
   templateId: ShareTemplateId;
   dayId?: string;
+  style?: {
+    coverTitle?: string;
+    coverSubtitle?: string;
+    accentColor?: string;
+    titleScale?: number;
+  };
 }): Promise<{
   template: ShareTemplateMeta;
   svg: string;
@@ -158,6 +164,7 @@ export async function renderShare(input: {
     dayId: input.dayId,
     mediaBaseUrl: apiBase(),
     persist: true,
+    style: input.style,
   });
 }
 

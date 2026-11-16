@@ -144,10 +144,27 @@ export type UpdateJournalInput = {
   stopId?: string | null;
 };
 
-/** MVP share templates — WeChat Moments / Xiaohongshu friendly. */
-export type ShareTemplateId = "magazine-reel" | "path-square" | "day-film";
+/** Share templates — WeChat Moments / Xiaohongshu friendly. */
+export type ShareTemplateId =
+  | "magazine-reel"
+  | "path-square"
+  | "day-film"
+  | "story-panel"
+  | "stamp-square";
 
 export type ShareAspect = "9:16" | "1:1";
+
+/** Session-only light edits applied before SVG/PNG export. */
+export type ShareStyle = {
+  /** Override cover title (defaults to trip title). */
+  coverTitle?: string;
+  /** Override subtitle line (defaults to destination / day label). */
+  coverSubtitle?: string;
+  /** Accent hex, e.g. #b86b3c. */
+  accentColor?: string;
+  /** Title size multiplier, typically 0.8–1.35. */
+  titleScale?: number;
+};
 
 export type ShareArtifact = {
   id: string;
