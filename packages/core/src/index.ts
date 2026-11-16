@@ -5,4 +5,5 @@ export * from "./itinerary.js";
 export * from "./journal.js";
 export * from "./share.js";
 export * from "./collab.js";
+export * from "./templates.js";
 export * from "./translation/index.js";

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   Day,
   Leg,
@@ -47,6 +48,7 @@ type Props = {
 type TravelMode = "walk" | "transit" | "drive";
 
 export function TripPlanner({ tripId, locale, initial }: Props) {
+  const router = useRouter();
   const [trip, setTrip] = useState<Trip | null>(initial?.trip ?? null);
   const [days, setDays] = useState<Day[]>(initial?.days ?? []);
   const [stops, setStops] = useState<Stop[]>(initial?.stops ?? []);
@@ -63,6 +65,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const [routing, setRouting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [duplicating, setDuplicating] = useState(false);
+  const [copyJournal, setCopyJournal] = useState(false);
 
   const preference = trip?.mapEngine ?? "auto";
 
@@ -246,6 +250,22 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     }
   }
 
+  async function duplicateTrip() {
+    setDuplicating(true);
+    setError(null);
+    try {
+      const res = await apiSend<{ trip: Trip }>(
+        `/v1/trips/${tripId}/duplicate`,
+        "POST",
+        { copyJournal },
+      );
+      router.push(`/trips/${res.trip.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "duplicate_failed");
+      setDuplicating(false);
+    }
+  }
+
   if (!trip && pending) {
     return (
       <div className="px-6 py-20 text-ink-soft md:px-10">
@@ -296,6 +316,27 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             >
               {t(locale, "nav.share")}
             </Link>
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-2 py-1.5 text-ink-soft">
+              <input
+                type="checkbox"
+                checked={copyJournal}
+                onChange={(e) => setCopyJournal(e.target.checked)}
+                className="accent-[color:var(--bp-river,#1f6b5c)]"
+              />
+              <span className="hidden sm:inline">
+                {t(locale, "planner.copyJournal")}
+              </span>
+            </label>
+            <button
+              type="button"
+              disabled={duplicating}
+              onClick={() => void duplicateTrip()}
+              className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river disabled:opacity-40"
+            >
+              {duplicating
+                ? t(locale, "planner.duplicating")
+                : t(locale, "planner.duplicate")}
+            </button>
             {(["auto", "google", "amap"] as const).map((opt) => (
               <button
                 key={opt}
