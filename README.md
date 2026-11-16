@@ -76,6 +76,8 @@ pnpm --filter @beaver/api db:migrate
 | `share_artifacts` | Generated share cards (SVG data URL for now) |
 | `trip_members` | Collab roles (owner / editor / viewer) |
 | `trip_invites` | Invite codes |
+| `trip_comments` | Trip / stop comments (+ `@` display-name mentions) |
+| `trip_activity_events` | Append-only collab activity timeline |
 
 On first request with a working DB, the API idempotently seeds **`sample-kyoto`** (same demo shape as before). Existing demo flows (`/trips/sample-kyoto`, journal, share, invites) keep the same JSON shapes. Empty sample legs are soft-upgraded to **multi-step Kyoto transit** (清水寺→祗园 bus; 伏见→岚山 JR transfer) so the planner shows transfer steps without map keys.
 
@@ -217,6 +219,30 @@ Without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat 
 ## Multiplayer trips
 
 Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still works on `/trips/sample-kyoto`.
+
+### Comments + activity timeline
+
+Phase 2 step 5 — trip (and optional stop) comments with simple `@DisplayName` mentions, plus an append-only activity rail. Viewers can read; only editor+ can post. No websockets — poll/refresh is enough.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/v1/trips/:id/comments` | Membership (sample-kyoto open). Optional `?stopId=` |
+| `POST` | `/v1/trips/:id/comments` | Auth + **edit**. Body `{ body, stopId? }`. Parses `@` mentions against member display names |
+| `GET` | `/v1/trips/:id/activity` | Newest first. Optional `?limit=` (default 40) |
+
+Activity hooks: invite created, member joined, stop added, comment posted, day-fill applied. `sample-kyoto` seeds a short thread + timeline when empty.
+
+**Web demo (after Neon migrate):** set `DATABASE_URL` in `apps/api/.dev.vars`, then:
+
+```bash
+pnpm --filter @beaver/api db:migrate
+pnpm typecheck
+pnpm --filter @beaver/core test                 # mention + role unit smoke (no DB)
+pnpm --filter @beaver/api smoke:collab-schema   # migration/schema smoke (no DB)
+pnpm dev
+```
+
+Open **http://localhost:3000/trips/sample-kyoto** → **评论与动态** panel (companions bar above). Switch Comments / Activity; type `@` to mention; viewers see a read-only note.
 
 ---
 

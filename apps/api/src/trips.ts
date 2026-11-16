@@ -28,6 +28,7 @@ import {
 import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
+  appendActivity,
   deleteTripCascade,
   getTrip,
   insertJournal,
@@ -39,6 +40,7 @@ import {
   listMembers,
   listStops,
   listTrips,
+  makeActivityEvent,
   nowIso,
   replaceDays,
   replaceLegs,
@@ -389,6 +391,22 @@ tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
     photos: [],
   };
   await insertStop(db, trip.id, stop);
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId: trip.id,
+      type: "stop_added",
+      actorUserId: access.auth.userId,
+      actorDisplayName:
+        access.member.displayName ?? access.auth.displayName ?? undefined,
+      summary: `Added ${stop.place.name}`,
+      payload: {
+        stopId: stop.id,
+        dayId: stop.dayId,
+        placeName: stop.place.name,
+      },
+    }),
+  );
   return c.json({ stop, tripVersion: bumped.trip.version }, 201);
 });
 

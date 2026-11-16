@@ -140,6 +140,32 @@ export const tripInvites = pgTable(
   (t) => [uniqueIndex("trip_invites_code_uidx").on(t.code)],
 );
 
+export const tripComments = pgTable("trip_comments", {
+  id: text("id").primaryKey(),
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  stopId: text("stop_id"),
+  authorUserId: text("author_user_id").notNull(),
+  authorDisplayName: text("author_display_name"),
+  body: text("body").notNull(),
+  mentions: jsonb("mentions").$type<string[]>().notNull().default([]),
+  createdAt: text("created_at").notNull(),
+});
+
+export const tripActivityEvents = pgTable("trip_activity_events", {
+  id: text("id").primaryKey(),
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  actorUserId: text("actor_user_id").notNull(),
+  actorDisplayName: text("actor_display_name"),
+  summary: text("summary").notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown> | null>(),
+  createdAt: text("created_at").notNull(),
+});
+
 export const schema = {
   trips,
   days,
@@ -149,4 +175,6 @@ export const schema = {
   shareArtifacts,
   tripMembers,
   tripInvites,
+  tripComments,
+  tripActivityEvents,
 };

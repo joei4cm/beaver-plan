@@ -9,6 +9,7 @@ import {
 } from "./db/context.js";
 import { DatabaseConfigError } from "./db/client.js";
 import type { Bindings } from "./env.js";
+import { commentRoutes } from "./comments.js";
 import { dayFillRoutes } from "./day-fill.js";
 import { journalRoutes } from "./journal.js";
 import { mapsRoutes } from "./maps.js";
@@ -144,7 +145,7 @@ app.get("/health", (c) => {
       driver: "neon-http + drizzle",
       required: true,
       note: hasDb
-        ? "Trips / journal / members / invites / share artifacts persist in Neon Postgres"
+        ? "Trips / journal / members / invites / comments / activity / share artifacts persist in Neon Postgres"
         : "Set DATABASE_URL (Neon) — trip APIs return 503 until configured",
     },
     maps: {
@@ -171,6 +172,7 @@ app.route("/", mapsRoutes);
 app.route("/", tripRoutes);
 app.route("/", templateRoutes);
 app.route("/", memberRoutes);
+app.route("/", commentRoutes);
 app.route("/", journalRoutes);
 app.route("/", mediaRoutes);
 app.route("/", shareRoutes);

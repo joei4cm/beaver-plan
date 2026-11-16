@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type {
+  ActivityEvent,
+  ActivityEventType,
   Day,
   JournalEntry,
   Leg,
@@ -7,6 +9,7 @@ import type {
   ShareArtifact,
   Stop,
   Trip,
+  TripComment,
   TripInvite,
   TripMember,
   TripRole,
@@ -23,6 +26,8 @@ import {
   legs as legsTable,
   shareArtifacts as shareTable,
   stops as stopsTable,
+  tripActivityEvents as activityTable,
+  tripComments as commentsTable,
   tripInvites as invitesTable,
   tripMembers as membersTable,
   trips as tripsTable,
@@ -180,6 +185,32 @@ function rowToInvite(row: typeof invitesTable.$inferSelect): TripInvite {
     revokedAt: row.revokedAt ?? undefined,
     maxUses: row.maxUses ?? undefined,
     useCount: row.useCount,
+  };
+}
+
+function rowToComment(row: typeof commentsTable.$inferSelect): TripComment {
+  return {
+    id: row.id,
+    tripId: row.tripId,
+    stopId: row.stopId ?? undefined,
+    authorUserId: row.authorUserId,
+    authorDisplayName: row.authorDisplayName ?? undefined,
+    body: row.body,
+    mentions: row.mentions ?? [],
+    createdAt: row.createdAt,
+  };
+}
+
+function rowToActivity(row: typeof activityTable.$inferSelect): ActivityEvent {
+  return {
+    id: row.id,
+    tripId: row.tripId,
+    type: row.type as ActivityEventType,
+    actorUserId: row.actorUserId,
+    actorDisplayName: row.actorDisplayName ?? undefined,
+    summary: row.summary,
+    payload: row.payload ?? undefined,
+    createdAt: row.createdAt,
   };
 }
 
@@ -500,6 +531,93 @@ export async function inviteCodeExists(db: Db, code: string): Promise<boolean> {
   return Boolean(found);
 }
 
+/* ── comments / activity ───────────────────────────────────────────────── */
+
+export async function listComments(
+  db: Db,
+  tripId: string,
+  stopId?: string,
+): Promise<TripComment[]> {
+  const rows = await db
+    .select()
+    .from(commentsTable)
+    .where(eq(commentsTable.tripId, tripId))
+    .orderBy(asc(commentsTable.createdAt));
+  const all = rows.map(rowToComment);
+  if (!stopId) return all;
+  return all.filter((c) => c.stopId === stopId);
+}
+
+export async function insertComment(
+  db: Db,
+  comment: TripComment,
+): Promise<TripComment> {
+  await db.insert(commentsTable).values({
+    id: comment.id,
+    tripId: comment.tripId,
+    stopId: comment.stopId ?? null,
+    authorUserId: comment.authorUserId,
+    authorDisplayName: comment.authorDisplayName ?? null,
+    body: comment.body,
+    mentions: comment.mentions ?? [],
+    createdAt: comment.createdAt,
+  });
+  return comment;
+}
+
+export async function listActivity(
+  db: Db,
+  tripId: string,
+  limit = 50,
+): Promise<ActivityEvent[]> {
+  const capped = Math.max(1, Math.min(100, limit));
+  const rows = await db
+    .select()
+    .from(activityTable)
+    .where(eq(activityTable.tripId, tripId))
+    .orderBy(desc(activityTable.createdAt))
+    .limit(capped);
+  return rows.map(rowToActivity);
+}
+
+export async function appendActivity(
+  db: Db,
+  event: ActivityEvent,
+): Promise<ActivityEvent> {
+  await db.insert(activityTable).values({
+    id: event.id,
+    tripId: event.tripId,
+    type: event.type,
+    actorUserId: event.actorUserId,
+    actorDisplayName: event.actorDisplayName ?? null,
+    summary: event.summary,
+    payload: event.payload ?? null,
+    createdAt: event.createdAt,
+  });
+  return event;
+}
+
+export function makeActivityEvent(input: {
+  tripId: string;
+  type: ActivityEventType;
+  actorUserId: string;
+  actorDisplayName?: string;
+  summary: string;
+  payload?: Record<string, unknown>;
+  createdAt?: string;
+}): ActivityEvent {
+  return {
+    id: crypto.randomUUID(),
+    tripId: input.tripId,
+    type: input.type,
+    actorUserId: input.actorUserId,
+    actorDisplayName: input.actorDisplayName,
+    summary: input.summary,
+    payload: input.payload,
+    createdAt: input.createdAt ?? nowIso(),
+  };
+}
+
 /* ── sample seed ───────────────────────────────────────────────────────── */
 
 /** Seed Kyoto demo trip (idempotent). Demo photo bytes go to S3 when configured. */
@@ -521,6 +639,7 @@ export async function ensureSampleTrip(
         await replaceLegs(db, id, buildSampleKyotoLegs(stops));
       }
     }
+    await seedSampleCollabIfEmpty(db, id);
     return;
   }
 
@@ -658,6 +777,77 @@ export async function ensureSampleTrip(
   for (const entry of journal) {
     await insertJournal(db, entry);
   }
+
+  await seedSampleCollabIfEmpty(db, id);
+}
+
+/** Seed demo comments + activity once (idempotent when already present). */
+async function seedSampleCollabIfEmpty(db: Db, tripId: string): Promise<void> {
+  const existingComments = await listComments(db, tripId);
+  const existingActivity = await listActivity(db, tripId, 5);
+  if (existingComments.length > 0 || existingActivity.length > 0) return;
+
+  const stamp = "2026-04-09T08:00:00.000Z";
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId,
+      type: "member_joined",
+      actorUserId: "demo-user",
+      actorDisplayName: "Demo Traveler",
+      summary: "Demo Traveler joined as owner",
+      payload: { role: "owner" },
+      createdAt: stamp,
+    }),
+  );
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId,
+      type: "member_joined",
+      actorUserId: "demo-viewer",
+      actorDisplayName: "Companion",
+      summary: "Companion joined as viewer",
+      payload: { role: "viewer" },
+      createdAt: "2026-04-09T08:05:00.000Z",
+    }),
+  );
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId,
+      type: "stop_added",
+      actorUserId: "demo-user",
+      actorDisplayName: "Demo Traveler",
+      summary: "Added 清水寺",
+      payload: { stopId: "stop-kiyomizu", placeName: "清水寺" },
+      createdAt: "2026-04-09T09:00:00.000Z",
+    }),
+  );
+
+  const comment: TripComment = {
+    id: "comment-kyoto-1",
+    tripId,
+    stopId: "stop-kiyomizu",
+    authorUserId: "demo-user",
+    authorDisplayName: "Demo Traveler",
+    body: "@Companion morning visit — arrive before the crowds at 清水寺?",
+    mentions: ["Companion"],
+    createdAt: "2026-04-09T10:15:00.000Z",
+  };
+  await insertComment(db, comment);
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId,
+      type: "comment_added",
+      actorUserId: comment.authorUserId,
+      actorDisplayName: comment.authorDisplayName,
+      summary: "Demo Traveler commented on 清水寺",
+      payload: { commentId: comment.id, stopId: comment.stopId },
+      createdAt: comment.createdAt,
+    }),
+  );
 }
 
 /** Multi-step transit demo legs for sample-kyoto (works without map keys). */

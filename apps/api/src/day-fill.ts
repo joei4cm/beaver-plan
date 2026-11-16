@@ -24,9 +24,11 @@ import {
 import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
+  appendActivity,
   getTrip,
   listDays,
   listStops,
+  makeActivityEvent,
   nowIso,
   replaceDays,
   replaceLegs,
@@ -229,6 +231,24 @@ dayFillRoutes.post("/v1/trips/:id/day-fill/apply", async (c) => {
     endDate: dates.endDate ?? bumped.trip.endDate,
     updatedAt: nowIso(),
   });
+
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId: trip.id,
+      type: "day_fill_applied",
+      actorUserId: access.auth.userId,
+      actorDisplayName:
+        access.member.displayName ?? access.auth.displayName ?? undefined,
+      summary: `Day fill applied · ${days.length} days · ${stops.length} stops`,
+      payload: {
+        days: days.length,
+        stops: stops.length,
+        mode: body.proposal.mode,
+        provider: body.proposal.provider,
+      },
+    }),
+  );
 
   return c.json({
     trip: nextTrip,
