@@ -160,3 +160,6 @@ export type CreateTripInput = {
   timezone?: string;
   locale?: Trip["locale"];
 };
+
+/** Re-export session shape for domain consumers (Slice E). */
+export type { TranslationSession, LanguagePair } from "./translation/types.js";

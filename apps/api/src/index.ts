@@ -8,8 +8,10 @@ import { mapsRoutes } from "./maps.js";
 import { mediaRoutes } from "./media.js";
 import { memberRoutes } from "./members.js";
 import { shareRoutes } from "./share.js";
+import { translationRoutes } from "./translation.js";
 import { tripRoutes } from "./trips.js";
 import { ensureSampleTrip, nowIso } from "./store.js";
+import { createTranslationStack, reportTranslationCapabilities } from "@beaver/core";
 
 const app = new Hono<{ Bindings: Bindings; Variables: AuthVariables }>();
 
@@ -50,6 +52,18 @@ app.get("/health", (c) => {
   const wechat =
     (c.env.CLERK_WECHAT_ENABLED ?? c.env.NEXT_PUBLIC_CLERK_WECHAT_ENABLED) ===
     "true";
+  const translationEnabled = (c.env.FEATURE_TRANSLATION ?? "true") !== "false";
+  const translation = reportTranslationCapabilities(
+    createTranslationStack({
+      openaiApiKey: c.env.OPENAI_API_KEY,
+      openaiBaseUrl: c.env.OPENAI_BASE_URL,
+      deepgramApiKey: c.env.DEEPGRAM_API_KEY,
+      asrProvider: c.env.ASR_PROVIDER,
+      llmProvider: c.env.LLM_PROVIDER,
+      ttsProvider: c.env.TTS_PROVIDER,
+    }),
+    translationEnabled,
+  );
   return c.json({
     status: t(locale, "api.health"),
     app: c.env.APP_NAME ?? "Beaver Plan",
@@ -63,6 +77,7 @@ app.get("/health", (c) => {
       google: Boolean(c.env.GOOGLE_MAPS_SERVER_KEY),
       amap: Boolean(c.env.AMAP_SERVER_KEY),
     },
+    translation,
     media: {
       storage: "memory",
       r2Ready: true,
@@ -77,5 +92,6 @@ app.route("/", memberRoutes);
 app.route("/", journalRoutes);
 app.route("/", mediaRoutes);
 app.route("/", shareRoutes);
+app.route("/", translationRoutes);
 
 export default app;

@@ -161,6 +161,13 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
             </Link>
+            <Link href="/translate" asChild>
+              <Pressable style={[styles.actionBtn, styles.actionTranslate]}>
+                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                  {t(locale, "mobile.translate")}
+                </Text>
+              </Pressable>
+            </Link>
           </View>
 
           <View style={styles.collabBox}>
@@ -291,6 +298,10 @@ const styles = StyleSheet.create({
   actionPrimary: {
     backgroundColor: colors.river,
     borderColor: colors.river,
+  },
+  actionTranslate: {
+    backgroundColor: colors.riverDeep,
+    borderColor: colors.riverDeep,
   },
   actionLabel: {
     color: colors.inkSoft,

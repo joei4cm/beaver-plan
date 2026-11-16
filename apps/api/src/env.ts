@@ -18,6 +18,21 @@ export type Bindings = {
   PUBLIC_WEB_ORIGIN?: string;
   GOOGLE_MAPS_SERVER_KEY?: string;
   AMAP_SERVER_KEY?: string;
+  /** OpenAI-compatible API key (LLM / Whisper / TTS / vision). */
+  OPENAI_API_KEY?: string;
+  /** Optional OpenAI-compatible base, e.g. https://api.openai.com/v1 */
+  OPENAI_BASE_URL?: string;
+  OPENAI_CHAT_MODEL?: string;
+  OPENAI_ASR_MODEL?: string;
+  OPENAI_TTS_MODEL?: string;
+  OPENAI_TTS_VOICE?: string;
+  DEEPGRAM_API_KEY?: string;
+  /** openai | deepgram | demo | auto */
+  ASR_PROVIDER?: string;
+  /** openai | demo | auto */
+  LLM_PROVIDER?: string;
+  /** openai | edge | demo | auto */
+  TTS_PROVIDER?: string;
 };
 
 export type { AuthVariables as AppVariables } from "./auth.js";
