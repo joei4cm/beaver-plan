@@ -9,6 +9,7 @@ import {
 } from "./db/context.js";
 import { DatabaseConfigError } from "./db/client.js";
 import type { Bindings } from "./env.js";
+import { dayFillRoutes } from "./day-fill.js";
 import { journalRoutes } from "./journal.js";
 import { mapsRoutes } from "./maps.js";
 import { mediaRoutes } from "./media.js";
@@ -18,7 +19,12 @@ import { translationRoutes } from "./translation.js";
 import { templateRoutes } from "./templates.js";
 import { tripRoutes } from "./trips.js";
 import { ensureSampleTrip, nowIso } from "./store.js";
-import { createTranslationStack, reportTranslationCapabilities } from "@beaver/core";
+import {
+  createDayFillStack,
+  createTranslationStack,
+  reportDayFillCapabilities,
+  reportTranslationCapabilities,
+} from "@beaver/core";
 import { isS3Configured } from "./s3.js";
 
 const app = new Hono<{ Bindings: Bindings; Variables: AuthVariables }>();
@@ -114,6 +120,14 @@ app.get("/health", (c) => {
     }),
     translationEnabled,
   );
+  const dayFill = reportDayFillCapabilities(
+    createDayFillStack({
+      openaiApiKey: c.env.OPENAI_API_KEY,
+      openaiBaseUrl: c.env.OPENAI_BASE_URL,
+      openaiChatModel: c.env.OPENAI_CHAT_MODEL,
+      llmProvider: c.env.LLM_PROVIDER,
+    }),
+  );
   const hasDb = Boolean(c.env.DATABASE_URL?.trim());
   const hasS3 = isS3Configured(c.env);
   return c.json({
@@ -140,6 +154,7 @@ app.get("/health", (c) => {
       autoAmapCn: (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false",
     },
     translation,
+    dayFill,
     media: {
       storage: hasS3 ? "s3" : "unconfigured",
       configured: hasS3,
@@ -160,5 +175,6 @@ app.route("/", journalRoutes);
 app.route("/", mediaRoutes);
 app.route("/", shareRoutes);
 app.route("/", translationRoutes);
+app.route("/", dayFillRoutes);
 
 export default app;
