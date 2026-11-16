@@ -1,0 +1,67 @@
+@import "@beaver/ui-tokens/css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper text-ink font-body antialiased;
+    background-image:
+      radial-gradient(ellipse 90% 60% at 10% -10%, rgba(31, 107, 92, 0.18), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(184, 107, 60, 0.12), transparent 50%),
+      linear-gradient(180deg, #f7faf8 0%, #f3efe6 42%, #e8efe9 100%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(31, 107, 92, 0.22);
+  }
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: bp-rise var(--bp-duration) var(--bp-ease) both;
+  }
+
+  .animate-fade {
+    animation: bp-fade calc(var(--bp-duration) + 80ms) var(--bp-ease) both;
+  }
+
+  .animate-drift {
+    animation: bp-drift 14s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes bp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bp-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2%, 1.5%, 0) scale(1.03);
+  }
+}

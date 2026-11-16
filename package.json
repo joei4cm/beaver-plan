@@ -1,0 +1,26 @@
+{
+  "name": "beaver-plan",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Beaver Plan / 海狸旅行 — map-first travel OS",
+  "packageManager": "pnpm@10.33.4",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @beaver/web --filter @beaver/api dev",
+    "dev:web": "pnpm --filter @beaver/web dev",
+    "dev:mobile": "pnpm --filter @beaver/mobile start",
+    "dev:api": "pnpm --filter @beaver/api dev",
+    "build": "pnpm -r --filter=!@beaver/mobile build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r --if-present lint"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd",
+      "sharp"
+    ]
+  }
+}

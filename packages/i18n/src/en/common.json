@@ -1,0 +1,21 @@
+{
+  "brand": "Beaver Plan",
+  "brandEn": "Beaver Plan",
+  "tagline": "Plan a trip worth walking",
+  "nav.home": "Home",
+  "nav.trips": "Trips",
+  "nav.signIn": "Sign in",
+  "cta.startPlanning": "Start planning",
+  "cta.viewTrips": "View trips",
+  "landing.support": "Pick places on a beautiful map, build days you can walk, journal on the road, and share.",
+  "trips.title": "Your trips",
+  "trips.empty": "No trips yet. Create one and lay out the days on the map.",
+  "trips.new": "New trip",
+  "trips.placeholder.kyoto": "Kyoto · 5 days",
+  "trips.placeholder.kyotoMeta": "Sample · account not connected",
+  "trips.placeholder.osaka": "Osaka weekend",
+  "trips.placeholder.osakaMeta": "Sample · collab coming soon",
+  "mobile.splash": "Beaver Plan",
+  "mobile.homeHint": "On the road: Today · Next stop · Journal",
+  "api.health": "ok"
+}

@@ -1,0 +1,21 @@
+{
+  "brand": "海狸旅行",
+  "brandEn": "Beaver Plan",
+  "tagline": "地图上认真规划的一次旅行",
+  "nav.home": "首页",
+  "nav.trips": "行程",
+  "nav.signIn": "登录",
+  "cta.startPlanning": "开始规划",
+  "cta.viewTrips": "查看行程",
+  "landing.support": "点选地点、排出可走的日程，旅途中记一笔、生成分享图。",
+  "trips.title": "我的行程",
+  "trips.empty": "还没有行程。创建一次旅行，在地图上把日子排好。",
+  "trips.new": "新建行程",
+  "trips.placeholder.kyoto": "京都五日",
+  "trips.placeholder.kyotoMeta": "示例 · 尚未连接账户",
+  "trips.placeholder.osaka": "大阪周末",
+  "trips.placeholder.osakaMeta": "示例 · 协作即将到来",
+  "mobile.splash": "海狸旅行",
+  "mobile.homeHint": "在路上：今日 · 下一站 · 记一笔",
+  "api.health": "正常"
+}
