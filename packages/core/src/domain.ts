@@ -81,10 +81,29 @@ export type Stop = {
   photos: string[];
 };
 
+/** Normalized travel mode on a transfer step (engines may still send variants). */
+export type TransitStepKind =
+  | "WALK"
+  | "TRANSIT"
+  | "TRANSFER"
+  | "DRIVE"
+  | "WAIT";
+
 export type TransitStep = {
   instruction: string;
+  /** Prefer WALK | TRANSIT | TRANSFER | DRIVE | WAIT; engines may send vendor strings. */
   mode: string;
   durationSec?: number;
+  /** Transit line / route name when present (e.g. "JR 奈良線", "市巴士 100"). */
+  lineName?: string;
+  /** Operator / agency (e.g. "JR西日本", "京都市交通局"). */
+  agency?: string;
+  /** Vehicle type hint: BUS | SUBWAY | TRAIN | TRAM | FERRY | … */
+  vehicleType?: string;
+  fromStopName?: string;
+  toStopName?: string;
+  /** Simple `lat,lng;…` polyline for this step — enables mode-styled map segments. */
+  polyline?: string;
 };
 
 export type Leg = {

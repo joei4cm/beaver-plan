@@ -77,9 +77,9 @@ pnpm --filter @beaver/api db:migrate
 | `trip_members` | Collab roles (owner / editor / viewer) |
 | `trip_invites` | Invite codes |
 
-On first request with a working DB, the API idempotently seeds **`sample-kyoto`** (same demo shape as before). Existing demo flows (`/trips/sample-kyoto`, journal, share, invites) keep the same JSON shapes.
+On first request with a working DB, the API idempotently seeds **`sample-kyoto`** (same demo shape as before). Existing demo flows (`/trips/sample-kyoto`, journal, share, invites) keep the same JSON shapes. Empty sample legs are soft-upgraded to **multi-step Kyoto transit** (清水寺→祗园 bus; 伏见→岚山 JR transfer) so the planner shows transfer steps without map keys.
 
-**Smoke after migrate:** `pnpm dev:api` → `GET /health` should show `database.configured: true` → `GET /v1/trips/sample-kyoto` returns days/stops/members → open web planner on sample trip.
+**Smoke after migrate:** `pnpm dev:api` → `GET /health` should show `database.configured: true` → `GET /v1/trips/sample-kyoto` returns days/stops/members/legs → open web planner on `/trips/sample-kyoto` → Day 1 / Day 2 show walk→line→transfer step lists and mode-styled polylines.
 
 ### Media / R2 (S3-compatible API)
 
@@ -249,7 +249,7 @@ Full enablement checklist + smoke matrix: [`docs/keys-integration.md`](docs/keys
 
 ## Maps keys (Google + Amap)
 
-Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai`.
+Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs with **rich multi-step transit** (line names, agencies, per-step polylines). With live keys, Google / Amap Directions still normalize into the same `transitSteps` shape. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai`.
 
 ---
 

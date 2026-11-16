@@ -10,9 +10,10 @@ import {
 } from "react-native";
 import {
   decodeSimplePolyline,
-  formatDistance,
   formatDuration,
+  normalizeStepMode,
   stopsForDay,
+  summarizeTransfer,
   type Day,
   type Leg,
   type Stop,
@@ -240,10 +241,32 @@ export default function TripDetailScreen() {
                     <Text style={styles.stopAddr}>{stop.place.address}</Text>
                   ) : null}
                   {leg ? (
-                    <Text style={styles.leg}>
-                      → {formatDuration(leg.durationSec)} ·{" "}
-                      {formatDistance(leg.distanceM)} · {leg.mode}
-                    </Text>
+                    <View style={styles.legBlock}>
+                      <Text style={styles.leg}>→ {summarizeTransfer(leg)}</Text>
+                      {leg.transitSteps.length > 1 ? (
+                        <View style={styles.stepList}>
+                          {leg.transitSteps.map((step, si) => {
+                            const kind = normalizeStepMode(step.mode);
+                            const label =
+                              kind === "transit" && step.lineName
+                                ? step.lineName
+                                : kind === "walk"
+                                  ? t(locale, "planner.transfer.walk")
+                                  : kind === "transfer"
+                                    ? t(locale, "planner.transfer.change")
+                                    : step.instruction || step.mode;
+                            return (
+                              <Text key={`${leg.id}-m-${si}`} style={styles.stepLine}>
+                                {label}
+                                {step.durationSec
+                                  ? ` · ${formatDuration(step.durationSec)}`
+                                  : ""}
+                              </Text>
+                            );
+                          })}
+                        </View>
+                      ) : null}
+                    </View>
                   ) : null}
                 </View>
               </View>
@@ -411,7 +434,16 @@ const styles = StyleSheet.create({
   stopBody: { flex: 1 },
   stopName: { fontSize: 16, fontWeight: "500", color: colors.ink },
   stopAddr: { marginTop: 3, fontSize: 12, color: colors.inkSoft },
-  leg: { marginTop: 6, fontSize: 12, color: colors.river },
+  legBlock: { marginTop: 6, gap: 4 },
+  leg: { fontSize: 12, color: colors.river },
+  stepList: {
+    marginTop: 2,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.mist,
+    gap: 2,
+  },
+  stepLine: { fontSize: 11, color: colors.inkSoft, lineHeight: 16 },
   hint: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   error: { color: colors.timber, fontSize: 14 },
   retry: {

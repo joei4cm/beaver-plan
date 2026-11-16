@@ -7,9 +7,10 @@ import type {
   PlaceSummary,
   RouteRequest,
   RouteResult,
+  RouteTransitStep,
   RoutingEngine,
 } from "../ports.js";
-import { encodeSimplePolyline } from "./demo.js";
+import { encodeSimplePolyline, googleEncodedToSimple } from "./demo.js";
 
 export type GoogleMapsConfig = {
   apiKey: string;
@@ -190,7 +191,7 @@ export class GoogleRoutingEngine implements RoutingEngine {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": this.key,
           "X-Goog-FieldMask":
-            "routes.duration,routes.distanceMeters,routes.polyline,routes.legs.steps.navigationInstruction,routes.legs.steps.travelMode,routes.legs.steps.staticDuration",
+            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.polyline.encodedPolyline,routes.legs.steps.transitDetails",
         },
         body: JSON.stringify({
           origin: {
@@ -227,6 +228,19 @@ export class GoogleRoutingEngine implements RoutingEngine {
             navigationInstruction?: { instructions?: string };
             travelMode?: string;
             staticDuration?: string;
+            polyline?: { encodedPolyline?: string };
+            transitDetails?: {
+              stopDetails?: {
+                departureStop?: { name?: string };
+                arrivalStop?: { name?: string };
+              };
+              transitLine?: {
+                name?: string;
+                nameShort?: string;
+                agencies?: Array<{ name?: string }>;
+                vehicle?: { type?: string; name?: { text?: string } };
+              };
+            };
           }>;
         }>;
       }>;
@@ -242,17 +256,41 @@ export class GoogleRoutingEngine implements RoutingEngine {
     }
 
     const durationSec = parseDurationSec(route.duration);
-    const steps =
-      route.legs?.[0]?.steps?.map((s) => ({
-        instruction: s.navigationInstruction?.instructions ?? "",
-        mode: s.travelMode ?? travelMode,
-        durationSec: parseDurationSec(s.staticDuration),
-      })) ?? [];
+    const steps: RouteTransitStep[] = (route.legs?.[0]?.steps ?? []).map(
+      (s) => {
+        const td = s.transitDetails;
+        const line = td?.transitLine;
+        const lineName = line?.nameShort || line?.name;
+        const agency = line?.agencies?.[0]?.name;
+        const vehicleType = line?.vehicle?.type;
+        const fromStopName = td?.stopDetails?.departureStop?.name;
+        const toStopName = td?.stopDetails?.arrivalStop?.name;
+        const mode = s.travelMode ?? travelMode;
+        let instruction = s.navigationInstruction?.instructions ?? "";
+        if (mode === "TRANSIT" && lineName) {
+          const from = fromStopName ?? "?";
+          const to = toStopName ?? "?";
+          instruction = instruction || `${lineName} · ${from} → ${to}`;
+        }
+        const stepPoly = googleEncodedToSimple(s.polyline?.encodedPolyline);
+        return {
+          instruction,
+          mode,
+          durationSec: parseDurationSec(s.staticDuration),
+          ...(lineName ? { lineName } : {}),
+          ...(agency ? { agency } : {}),
+          ...(vehicleType ? { vehicleType } : {}),
+          ...(fromStopName ? { fromStopName } : {}),
+          ...(toStopName ? { toStopName } : {}),
+          ...(stepPoly ? { polyline: stepPoly } : {}),
+        };
+      },
+    );
 
-    // Prefer Google encoded polyline when present; also expose a simple fallback.
+    // Prefer simple polyline (from Google encoded) so map can style segments.
     const encoded = route.polyline?.encodedPolyline;
     const polyline =
-      encoded ??
+      googleEncodedToSimple(encoded) ??
       encodeSimplePolyline([req.origin, req.destination]);
 
     return {

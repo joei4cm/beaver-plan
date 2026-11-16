@@ -9,8 +9,18 @@ export {
   DemoRoutingEngine,
   encodeSimplePolyline,
   decodeSimplePolyline,
+  decodeGoogleEncodedPolyline,
+  googleEncodedToSimple,
+  interpolatePath,
+  haversineM,
+  pointAlong,
 } from "./demo.js";
 export { DEMO_PLACES, searchDemoPlaces } from "./demo-data.js";
+export {
+  buildDemoTransitRoute,
+  buildDemoWalkOrDrive,
+  buildGenericDemoTransit,
+} from "./demo-transit.js";
 export { GoogleMapEngine, GoogleRoutingEngine, type GoogleMapsConfig } from "./google.js";
 export { AmapMapEngine, AmapRoutingEngine, type AmapConfig } from "./amap.js";
 export {

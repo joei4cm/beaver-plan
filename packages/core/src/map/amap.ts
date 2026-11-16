@@ -246,23 +246,45 @@ export class AmapRoutingEngine implements RoutingEngine {
 
     for (const seg of transit.segments ?? []) {
       if (seg.walking?.steps) {
+        const walkPts: LatLng[] = [];
+        let walkInstruction = "Walk";
         for (const step of seg.walking.steps) {
-          transitSteps.push({
-            instruction: step.instruction ?? "Walk",
-            mode: "WALK",
-            durationSec: undefined,
-          });
+          walkInstruction = step.instruction ?? walkInstruction;
+          appendAmapPolyline(walkPts, step.polyline);
           appendAmapPolyline(polyPoints, step.polyline);
         }
+        transitSteps.push({
+          instruction: walkInstruction,
+          mode: "WALK",
+          durationSec: seg.walking.duration
+            ? Number(seg.walking.duration)
+            : undefined,
+          ...(walkPts.length >= 2
+            ? { polyline: encodeSimplePolyline(walkPts) }
+            : {}),
+        });
       }
       const line = seg.bus?.buslines?.[0];
       if (line) {
+        const fromStop = line.departure_stop?.name ?? "?";
+        const toStop = line.arrival_stop?.name ?? "?";
+        const lineName = line.name ?? "Transit";
+        const linePts: LatLng[] = [];
+        appendAmapPolyline(linePts, line.polyline);
+        appendAmapPolyline(polyPoints, line.polyline);
         transitSteps.push({
-          instruction: `${line.name ?? "Transit"} · ${line.departure_stop?.name ?? "?"} → ${line.arrival_stop?.name ?? "?"}`,
+          instruction: `${lineName} · ${fromStop} → ${toStop}`,
           mode: "TRANSIT",
           durationSec: line.duration ? Number(line.duration) : undefined,
+          lineName,
+          agency: "Amap",
+          vehicleType: "BUS",
+          fromStopName: line.departure_stop?.name,
+          toStopName: line.arrival_stop?.name,
+          ...(linePts.length >= 2
+            ? { polyline: encodeSimplePolyline(linePts) }
+            : {}),
         });
-        appendAmapPolyline(polyPoints, line.polyline);
       }
     }
     polyPoints.push(req.destination);

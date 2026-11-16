@@ -43,15 +43,24 @@ export type RouteRequest = {
   language?: string;
 };
 
+export type RouteTransitStep = {
+  instruction: string;
+  mode: string;
+  durationSec?: number;
+  lineName?: string;
+  agency?: string;
+  vehicleType?: string;
+  fromStopName?: string;
+  toStopName?: string;
+  /** Simple `lat,lng;…` polyline for mode-styled map segments. */
+  polyline?: string;
+};
+
 export type RouteResult = {
   durationSec: number;
   distanceM: number;
   polyline?: string;
-  transitSteps: Array<{
-    instruction: string;
-    mode: string;
-    durationSec?: number;
-  }>;
+  transitSteps: RouteTransitStep[];
 };
 
 /** Directions / transit port — Google + Amap (+ demo) in Slice B. */
