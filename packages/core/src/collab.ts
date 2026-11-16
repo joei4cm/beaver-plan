@@ -90,3 +90,52 @@ export function memberForUser(
 ): TripMember | undefined {
   return members.find((m) => m.userId === userId);
 }
+
+/**
+ * Match `@Display Name` tokens against known member display names.
+ * Longer names win so `@Demo Traveler` beats `@Demo`.
+ */
+export function parseMentions(
+  body: string,
+  memberDisplayNames: string[],
+): string[] {
+  const names = [
+    ...new Set(
+      memberDisplayNames
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0)
+        .sort((a, b) => b.length - a.length),
+    ),
+  ];
+  if (names.length === 0 || !body.includes("@")) return [];
+
+  const covered = new Array<boolean>(body.length).fill(false);
+  const found = new Set<string>();
+  for (const name of names) {
+    const needle = `@${name}`;
+    let from = 0;
+    while (from < body.length) {
+      const idx = body.indexOf(needle, from);
+      if (idx < 0) break;
+      const end = idx + needle.length;
+      const alreadyCovered = covered.slice(idx, end).some(Boolean);
+      if (!alreadyCovered) {
+        const before = idx === 0 ? " " : body[idx - 1]!;
+        const after = end >= body.length ? " " : body[end]!;
+        const boundaryBefore = !/[\w\u4e00-\u9fff]/.test(before);
+        const boundaryAfter = !/[\w\u4e00-\u9fff]/.test(after);
+        if (boundaryBefore && boundaryAfter) {
+          found.add(name);
+          for (let i = idx; i < end; i += 1) covered[i] = true;
+        }
+      }
+      from = idx + 1;
+    }
+  }
+  return [...found];
+}
+
+/** Viewer cannot mutate; editor+ can comment / invite / edit. */
+export function canCommentOnTrip(role: TripRole | undefined): boolean {
+  return canEditTrip(role);
+}

@@ -40,6 +40,45 @@ export type AcceptInviteInput = {
   displayName?: string;
 };
 
+/** Trip / stop discussion thread — not a journal caption. */
+export type TripComment = {
+  id: string;
+  tripId: string;
+  /** Optional stop anchor; omit for trip-level comments. */
+  stopId?: string;
+  authorUserId: string;
+  authorDisplayName?: string;
+  body: string;
+  /** Display names matched via `@Name` in body. */
+  mentions: string[];
+  createdAt: string;
+};
+
+export type CreateTripCommentInput = {
+  body: string;
+  stopId?: string;
+};
+
+/** Append-only collaboration timeline (not a social feed). */
+export type ActivityEventType =
+  | "member_joined"
+  | "invite_created"
+  | "stop_added"
+  | "comment_added"
+  | "day_fill_applied";
+
+export type ActivityEvent = {
+  id: string;
+  tripId: string;
+  type: ActivityEventType;
+  actorUserId: string;
+  actorDisplayName?: string;
+  /** Short human summary for the timeline rail. */
+  summary: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+};
+
 export type Trip = {
   id: string;
   title: string;

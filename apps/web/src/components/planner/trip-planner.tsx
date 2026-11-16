@@ -20,6 +20,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
+import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
@@ -367,6 +368,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           tripVersion={trip.version}
           onVersion={(v) =>
             setTrip((prev) => (prev ? { ...prev, version: v } : prev))
+          }
+        />
+
+        <TripCollabPanel
+          tripId={tripId}
+          locale={locale}
+          selectedStopId={selectedStopId}
+          selectedStopName={
+            dayStops.find((s) => s.id === selectedStopId)?.place.name
           }
         />
 

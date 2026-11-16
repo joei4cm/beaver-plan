@@ -20,11 +20,13 @@ import {
 import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
+  appendActivity,
   getInviteByCode,
   getTrip,
   inviteCodeExists,
   listInvites,
   listMembers,
+  makeActivityEvent,
   nowIso,
   removeMember,
   saveInvite,
@@ -97,6 +99,19 @@ memberRoutes.post("/v1/trips/:id/invites", requireAuth, async (c) => {
     useCount: 0,
   };
   await saveInvite(db, invite);
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId: trip.id,
+      type: "invite_created",
+      actorUserId: access.auth.userId,
+      actorDisplayName:
+        access.member.displayName ?? access.auth.displayName ?? undefined,
+      summary: `Invite created for ${role}`,
+      payload: { inviteId: invite.id, code, role },
+      createdAt: stamp,
+    }),
+  );
 
   const origin = publicWebOrigin(c.env, c.req.url);
   const path = invitePath(code);
@@ -253,6 +268,18 @@ memberRoutes.post("/v1/invites/:code/accept", requireAuth, async (c) => {
   };
   await upsertMember(db, member);
   await saveInvite(db, { ...invite, useCount: invite.useCount + 1 });
+  await appendActivity(
+    db,
+    makeActivityEvent({
+      tripId: trip.id,
+      type: "member_joined",
+      actorUserId: member.userId,
+      actorDisplayName: member.displayName,
+      summary: `${member.displayName ?? member.userId} joined as ${member.role}`,
+      payload: { role: member.role, inviteCode: invite.code },
+      createdAt: member.joinedAt,
+    }),
+  );
 
   return c.json({ member, trip, alreadyMember: false }, 201);
 });
