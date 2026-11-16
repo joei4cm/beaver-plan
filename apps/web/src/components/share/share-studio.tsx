@@ -1,0 +1,353 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import type {
+  Day,
+  JournalEntry,
+  ShareTemplateId,
+  ShareTemplateMeta,
+  Stop,
+  Trip,
+} from "@beaver/core";
+import { SHARE_TEMPLATES, stopsForDay } from "@beaver/core";
+import type { Locale } from "@beaver/i18n";
+import { t } from "@beaver/i18n";
+import { apiBase, apiGet, apiSend } from "@/lib/api";
+import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
+import { resolveMediaUrl } from "@/lib/media-url";
+
+type TripPayload = {
+  trip: Trip;
+  days: Day[];
+  stops: Stop[];
+};
+
+type RenderResponse = {
+  template: ShareTemplateMeta;
+  svg: string;
+  previewUrl: string;
+};
+
+type Props = {
+  tripId: string;
+  locale: Locale;
+  initialTrip: TripPayload | null;
+};
+
+export function ShareStudio({ tripId, locale, initialTrip }: Props) {
+  const [trip, setTrip] = useState<Trip | null>(initialTrip?.trip ?? null);
+  const [days, setDays] = useState<Day[]>(initialTrip?.days ?? []);
+  const [stops, setStops] = useState<Stop[]>(initialTrip?.stops ?? []);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [dayId, setDayId] = useState<string | null>(
+    initialTrip?.days[0]?.id ?? null,
+  );
+  const [templateId, setTemplateId] = useState<ShareTemplateId>("magazine-reel");
+  const [preview, setPreview] = useState<RenderResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const templates = SHARE_TEMPLATES;
+
+  const load = useCallback(async () => {
+    const [tripData, journal] = await Promise.all([
+      initialTrip
+        ? Promise.resolve(initialTrip)
+        : apiGet<TripPayload>(`/v1/trips/${tripId}`),
+      apiGet<{ entries: JournalEntry[] }>(`/v1/trips/${tripId}/journal`),
+    ]);
+    setTrip(tripData.trip);
+    setDays(tripData.days);
+    setStops(tripData.stops);
+    setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
+    setEntries(journal.entries);
+  }, [initialTrip, tripId]);
+
+  useEffect(() => {
+    startTransition(() => {
+      void load().catch((e: Error) => setError(e.message));
+    });
+  }, [load]);
+
+  const dayStops = useMemo(
+    () => (dayId ? stopsForDay(stops, dayId) : []),
+    [stops, dayId],
+  );
+
+  const photoCount = useMemo(() => {
+    const urls = new Set<string>();
+    for (const e of entries) {
+      if (dayId && e.dayId !== dayId && !dayStops.some((s) => s.id === e.stopId)) {
+        continue;
+      }
+      for (const u of e.media) urls.add(u);
+    }
+    return urls.size;
+  }, [entries, dayId, dayStops]);
+
+  const render = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiSend<RenderResponse>(
+        `/v1/trips/${tripId}/share`,
+        "POST",
+        {
+          templateId,
+          dayId: dayId ?? undefined,
+          mediaBaseUrl: apiBase(),
+          persist: true,
+        },
+      );
+      setPreview(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "render_failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [tripId, templateId, dayId]);
+
+  useEffect(() => {
+    if (!trip) return;
+    void render();
+  }, [trip, templateId, dayId, render]);
+
+  async function downloadPng() {
+    if (!preview) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await svgToPngBlob(
+        preview.svg,
+        preview.template.width,
+        preview.template.height,
+      );
+      downloadBlob(
+        blob,
+        `beaver-plan-${preview.template.id}-${tripId}.png`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "png_failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function shareNative() {
+    if (!preview || typeof navigator === "undefined" || !navigator.share) {
+      await downloadPng();
+      return;
+    }
+    setBusy(true);
+    try {
+      const blob = await svgToPngBlob(
+        preview.svg,
+        preview.template.width,
+        preview.template.height,
+      );
+      const file = new File(
+        [blob],
+        `beaver-plan-${preview.template.id}.png`,
+        { type: "image/png" },
+      );
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: trip?.title ?? "Beaver Plan",
+          text: locale === "zh-CN" ? "海狸旅行 · 行程分享" : "Beaver Plan share",
+        });
+      } else {
+        await downloadPng();
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      setError(e instanceof Error ? e.message : "share_failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!trip && pending) {
+    return (
+      <div className="px-6 py-20 text-ink-soft md:px-10">
+        {t(locale, "share.loading")}
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="px-6 py-20 text-ink-soft md:px-10">
+        {error ?? t(locale, "planner.notFound")}
+      </div>
+    );
+  }
+
+  const active = templates.find((x) => x.id === templateId)!;
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-6">
+      <header className="animate-rise flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-river/80">
+            {t(locale, "share.eyebrow")}
+          </p>
+          <h1 className="mt-2 font-display text-4xl tracking-tight text-ink md:text-5xl">
+            {t(locale, "share.title")}
+          </h1>
+          <p className="mt-3 max-w-xl text-ink-soft">
+            {t(locale, "share.support")}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/trips/${tripId}/journal`}
+            className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-4 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+          >
+            {t(locale, "share.toJournal")}
+          </Link>
+          <Link
+            href={`/trips/${tripId}`}
+            className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-4 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+          >
+            {t(locale, "journal.backPlanner")}
+          </Link>
+        </div>
+      </header>
+
+      <div className="mt-8 flex gap-2 overflow-x-auto pb-1">
+        {days.map((day, i) => (
+          <button
+            key={day.id}
+            type="button"
+            onClick={() => setDayId(day.id)}
+            className={`shrink-0 rounded-md px-4 py-2 text-left transition ${
+              dayId === day.id
+                ? "bg-river-deep text-foam"
+                : "border border-[color:var(--bp-line)] bg-foam/70 text-ink-soft hover:border-river/40"
+            }`}
+          >
+            <span className="block text-[11px] uppercase tracking-wider opacity-80">
+              {t(locale, "planner.day")} {i + 1}
+            </span>
+            <span className="text-sm font-medium">{day.date}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
+        <div className="animate-fade flex flex-col items-center">
+          <div
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[20px] border border-[color:var(--bp-line)] bg-river-deep/90 shadow-[0_30px_80px_-40px_rgba(15,67,57,0.65)]"
+            style={{
+              aspectRatio: `${active.width} / ${active.height}`,
+            }}
+          >
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview.previewUrl}
+                alt={
+                  locale === "zh-CN" ? active.nameZh : active.nameEn
+                }
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-foam/70">
+                {busy ? t(locale, "share.rendering") : t(locale, "share.loading")}
+              </div>
+            )}
+          </div>
+          <p className="mt-4 text-center text-sm text-ink-soft">
+            {trip.title} · {photoCount} {t(locale, "share.photos")} ·{" "}
+            {dayStops.map((s) => s.place.name).slice(0, 3).join(" · ")}
+          </p>
+        </div>
+
+        <aside className="animate-rise space-y-5" style={{ animationDelay: "100ms" }}>
+          <h2 className="font-display text-2xl text-ink">
+            {t(locale, "share.pickTemplate")}
+          </h2>
+          <div className="space-y-3">
+            {templates.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => setTemplateId(tpl.id)}
+                className={`w-full rounded-[14px] border px-4 py-4 text-left transition ${
+                  templateId === tpl.id
+                    ? "border-river bg-river/10"
+                    : "border-[color:var(--bp-line)] bg-foam/60 hover:border-river/40"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-display text-xl text-ink">
+                    {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
+                  </span>
+                  <span className="font-mono text-xs text-ink-soft">
+                    {tpl.aspect}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          {error && <p className="text-sm text-timber">{error}</p>}
+
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              type="button"
+              disabled={busy || !preview}
+              onClick={() => void downloadPng()}
+              className="rounded-md bg-river px-4 py-3 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-40"
+            >
+              {t(locale, "share.downloadPng")}
+            </button>
+            <button
+              type="button"
+              disabled={busy || !preview}
+              onClick={() => void shareNative()}
+              className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-4 py-3 text-sm text-ink-soft transition hover:border-river/40 hover:text-river disabled:opacity-40"
+            >
+              {t(locale, "share.systemShare")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void render()}
+              className="rounded-md px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
+            >
+              {t(locale, "share.refresh")}
+            </button>
+          </div>
+
+          <p className="text-xs leading-relaxed text-ink-soft/80">
+            {t(locale, "share.demoHint")}
+          </p>
+
+          {entries[0]?.media[0] ? (
+            <div className="flex gap-2 overflow-x-auto pt-2">
+              {entries
+                .flatMap((e) => e.media)
+                .slice(0, 5)
+                .map((url) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={url}
+                    src={resolveMediaUrl(url)}
+                    alt=""
+                    className="h-14 w-10 shrink-0 object-cover"
+                  />
+                ))}
+            </div>
+          ) : null}
+        </aside>
+      </div>
+    </div>
+  );
+}

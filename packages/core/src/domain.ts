@@ -75,19 +75,53 @@ export type JournalEntry = {
   tripId: string;
   dayId?: string;
   stopId?: string;
+  /** Short note — magazine caption, not a form field dump. */
   body: string;
+  /** Media URLs (R2 public URL or `/v1/media/:id` stub). */
   media: string[];
   createdAt: string;
+  updatedAt: string;
 };
+
+export type CreateJournalInput = {
+  dayId?: string;
+  stopId?: string;
+  body: string;
+  media?: string[];
+};
+
+export type UpdateJournalInput = {
+  body?: string;
+  media?: string[];
+  dayId?: string | null;
+  stopId?: string | null;
+};
+
+/** MVP share templates — WeChat Moments / Xiaohongshu friendly. */
+export type ShareTemplateId = "magazine-reel" | "path-square" | "day-film";
+
+export type ShareAspect = "9:16" | "1:1";
 
 export type ShareArtifact = {
   id: string;
   tripId: string;
-  templateId: string;
+  templateId: ShareTemplateId;
+  dayId?: string;
   width: number;
   height: number;
+  /** SVG data URL or R2 object URL when persisted. */
   storageUrl?: string;
   createdAt: string;
+};
+
+export type MediaObject = {
+  id: string;
+  contentType: string;
+  /** In-memory bytes (R2 binding later). */
+  bytes: Uint8Array;
+  createdAt: string;
+  /** Optional trip scoping for cleanup. */
+  tripId?: string;
 };
 
 export type CreateTripInput = {

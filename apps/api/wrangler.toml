@@ -3,7 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2025-03-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Bindings (configure in Cloudflare dashboard / secrets):
+# Media / R2 (Slice C): uncomment when the bucket exists. Until then,
+# apps/api keeps journal photos + share previews in-memory (dev / demo).
 # [[r2_buckets]]
 # binding = "MEDIA"
 # bucket_name = "beaver-plan-media"

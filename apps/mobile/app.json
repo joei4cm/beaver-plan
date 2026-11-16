@@ -21,7 +21,16 @@
       },
       "package": "plan.beaver.app"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Beaver Plan to attach trip journal photos.",
+          "cameraPermission": "Allow Beaver Plan to capture trip journal photos."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }
