@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Beaver Plan",
+    "slug": "beaver-plan",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "beaverplan",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0f4339",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "plan.beaver.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f4339"
+      },
+      "package": "plan.beaver.app"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

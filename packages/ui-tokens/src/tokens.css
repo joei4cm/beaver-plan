@@ -1,0 +1,43 @@
+/**
+ * Beaver Plan / 海狸旅行 — design tokens
+ * Visual direction: river-slate + warm timber (not purple/cream tropes).
+ */
+:root {
+  /* Brand */
+  --bp-brand: "Beaver Plan";
+  --bp-brand-zh: "海狸旅行";
+
+  /* Color */
+  --bp-ink: #14201c;
+  --bp-ink-soft: #2a3a34;
+  --bp-paper: #f3efe6;
+  --bp-mist: #d8e2dc;
+  --bp-river: #1f6b5c;
+  --bp-river-deep: #0f4339;
+  --bp-timber: #b86b3c;
+  --bp-foam: #f7faf8;
+  --bp-line: rgba(20, 32, 28, 0.12);
+  --bp-focus: #2a9d8f;
+
+  /* Typography */
+  --bp-font-display: "Fraunces", "Songti SC", "Noto Serif SC", Georgia, serif;
+  --bp-font-body: "Sora", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --bp-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Space */
+  --bp-space-1: 0.25rem;
+  --bp-space-2: 0.5rem;
+  --bp-space-3: 0.75rem;
+  --bp-space-4: 1rem;
+  --bp-space-5: 1.5rem;
+  --bp-space-6: 2rem;
+  --bp-space-7: 3rem;
+  --bp-space-8: 4.5rem;
+
+  /* Radius / motion */
+  --bp-radius-sm: 6px;
+  --bp-radius-md: 12px;
+  --bp-radius-lg: 20px;
+  --bp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --bp-duration: 420ms;
+}

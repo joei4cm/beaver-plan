@@ -1,0 +1,24 @@
+name = "beaver-plan-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Bindings (configure in Cloudflare dashboard / secrets):
+# [[r2_buckets]]
+# binding = "MEDIA"
+# bucket_name = "beaver-plan-media"
+
+[vars]
+APP_NAME = "Beaver Plan"
+DEFAULT_LOCALE = "zh-CN"
+DEFAULT_MAP_ENGINE = "google"
+MAP_AUTO_AMAP_CN = "true"
+FEATURE_TRANSLATION = "true"
+
+# Secrets (wrangler secret put …) — never commit values:
+# CLERK_SECRET_KEY
+# DATABASE_URL
+# R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (or use R2 binding above)
+# GOOGLE_MAPS_SERVER_KEY
+# AMAP_SERVER_KEY
+# OPENAI_API_KEY (translation — Slice E)

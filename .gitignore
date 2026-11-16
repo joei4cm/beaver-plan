@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build / cache
+dist
+.next
+.turbo
+.wrangler
+.expo
+web-build
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+.dev.vars
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Logs & coverage
+*.log
+coverage
+.nyc_output
+
+# Mobile
+apps/mobile/ios
+apps/mobile/android
+*.jks
+*.p8
+*.p12
+*.mobileprovision
