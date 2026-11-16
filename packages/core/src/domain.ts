@@ -161,5 +161,20 @@ export type CreateTripInput = {
   locale?: Trip["locale"];
 };
 
+/** Clone an existing trip — structure + stops by default; optional journal text. */
+export type DuplicateTripInput = {
+  /** Copy journal captions without photos/media. Default false. */
+  copyJournal?: boolean;
+  /** Override title; default is locale-aware "Copy of …" / "副本 · …". */
+  title?: string;
+};
+
+/** Materialize a city template into a new owned trip. */
+export type CreateFromTemplateInput = {
+  title?: string;
+  /** YYYY-MM-DD; default = today (UTC). */
+  startDate?: string;
+};
+
 /** Re-export session shape for domain consumers (Slice E). */
 export type { TranslationSession, LanguagePair } from "./translation/types.js";

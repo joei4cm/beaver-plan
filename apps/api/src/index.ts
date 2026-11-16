@@ -15,6 +15,7 @@ import { mediaRoutes } from "./media.js";
 import { memberRoutes } from "./members.js";
 import { shareRoutes } from "./share.js";
 import { translationRoutes } from "./translation.js";
+import { templateRoutes } from "./templates.js";
 import { tripRoutes } from "./trips.js";
 import { ensureSampleTrip, nowIso } from "./store.js";
 import { createTranslationStack, reportTranslationCapabilities } from "@beaver/core";
@@ -45,8 +46,10 @@ app.use(
 app.use("*", async (c, next) => {
   const path = new URL(c.req.url).pathname;
   // Health/maps/translation can answer without DB; trip-shaped routes cannot.
+  // Template catalog is code-seeded (GET); creating from a template writes Neon.
   const needsDb =
     path.startsWith("/v1/trips") ||
+    (path.startsWith("/v1/templates") && c.req.method !== "GET") ||
     path.startsWith("/v1/invites") ||
     path.startsWith("/v1/share");
   if (!needsDb) {
@@ -151,6 +154,7 @@ app.get("/health", (c) => {
 
 app.route("/", mapsRoutes);
 app.route("/", tripRoutes);
+app.route("/", templateRoutes);
 app.route("/", memberRoutes);
 app.route("/", journalRoutes);
 app.route("/", mediaRoutes);

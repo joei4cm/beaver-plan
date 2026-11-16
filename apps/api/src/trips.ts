@@ -8,6 +8,9 @@ import {
   sortStops,
   toPlaceRef,
   type CreateTripInput,
+  type Day,
+  type DuplicateTripInput,
+  type JournalEntry,
   type MapEnginePreference,
   type PlaceSummary,
   type Stop,
@@ -27,14 +30,17 @@ import type { Bindings } from "./env.js";
 import {
   deleteTripCascade,
   getTrip,
+  insertJournal,
   insertStop,
   insertTrip,
   listDays,
+  listJournal,
   listLegs,
   listMembers,
   listStops,
   listTrips,
   nowIso,
+  replaceDays,
   replaceLegs,
   replaceStops,
   updateTrip,
@@ -192,6 +198,136 @@ tripRoutes.delete("/v1/trips/:id", requireAuth, async (c) => {
   if (!access.ok) return access.res;
   await deleteTripCascade(db, id);
   return c.json({ ok: true });
+});
+
+/**
+ * Duplicate a trip the user can view.
+ * Default: copy days + stops (no stop photos, no legs, no media).
+ * Optional copyJournal: journal body text only (empty media[]).
+ * New trip: fresh id/version; sole member = current user as owner.
+ */
+tripRoutes.post("/v1/trips/:id/duplicate", requireAuth, async (c) => {
+  const db = dbOf(c);
+  const source = await getTrip(db, c.req.param("id"));
+  if (!source) return c.json({ error: "not_found" }, 404);
+  // Sample stays readable; others need view access when Clerk is on.
+  if (source.id !== "sample-kyoto") {
+    const access = await assertCanView(c, source.id);
+    if (!access.ok) return access.res;
+  }
+
+  let body: DuplicateTripInput = {};
+  try {
+    const text = await c.req.text();
+    if (text.trim()) body = JSON.parse(text) as DuplicateTripInput;
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  const auth = c.get("auth")!;
+  const stamp = nowIso();
+  const copyJournal = Boolean(body.copyJournal);
+  const locale = source.locale;
+  const defaultTitle =
+    locale === "en" ? `Copy of ${source.title}` : `副本 · ${source.title}`;
+  const title = body.title?.trim() || defaultTitle;
+
+  const tripId = crypto.randomUUID();
+  const trip: Trip = {
+    id: tripId,
+    title,
+    destination: source.destination,
+    startDate: source.startDate,
+    endDate: source.endDate,
+    timezone: source.timezone,
+    locale: source.locale,
+    mapEngine: source.mapEngine,
+    version: 1,
+    createdAt: stamp,
+    updatedAt: stamp,
+  };
+  await insertTrip(db, trip);
+  await upsertMember(db, {
+    id: crypto.randomUUID(),
+    tripId,
+    userId: auth.userId,
+    role: "owner",
+    displayName: auth.displayName,
+    joinedAt: stamp,
+  });
+
+  const sourceDays = await listDays(db, source.id);
+  const dayIdMap = new Map<string, string>();
+  const days: Day[] = sourceDays.map((d) => {
+    const id = crypto.randomUUID();
+    dayIdMap.set(d.id, id);
+    return {
+      id,
+      tripId,
+      date: d.date,
+      note: d.note,
+    };
+  });
+  await replaceDays(db, tripId, days);
+
+  const sourceStops = sortStops(await listStops(db, source.id));
+  const stopIdMap = new Map<string, string>();
+  const stops: Stop[] = [];
+  for (const s of sourceStops) {
+    const newDayId = dayIdMap.get(s.dayId);
+    if (!newDayId) continue;
+    const id = crypto.randomUUID();
+    stopIdMap.set(s.id, id);
+    stops.push({
+      id,
+      dayId: newDayId,
+      order: s.order,
+      place: { ...s.place },
+      userNote: s.userNote,
+      photos: [],
+    });
+  }
+  await replaceStops(db, tripId, stops);
+  await replaceLegs(db, tripId, []);
+
+  let journalCopied = 0;
+  if (copyJournal) {
+    const entries = await listJournal(db, source.id);
+    for (const entry of entries) {
+      const next: JournalEntry = {
+        id: crypto.randomUUID(),
+        tripId,
+        dayId: entry.dayId ? dayIdMap.get(entry.dayId) : undefined,
+        stopId: entry.stopId ? stopIdMap.get(entry.stopId) : undefined,
+        body: entry.body,
+        media: [],
+        createdAt: stamp,
+        updatedAt: stamp,
+      };
+      // Drop orphan day/stop refs if mapping missed.
+      if (entry.dayId && !next.dayId) continue;
+      if (entry.stopId && !next.stopId) continue;
+      await insertJournal(db, next);
+      journalCopied += 1;
+    }
+  }
+
+  return c.json(
+    {
+      trip,
+      days,
+      stops,
+      legs: [],
+      yourRole: "owner" as const,
+      copied: {
+        days: days.length,
+        stops: stops.length,
+        journal: journalCopied,
+        copyJournal,
+      },
+    },
+    201,
+  );
 });
 
 type AddStopBody = {

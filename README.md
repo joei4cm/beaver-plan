@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** Post-MVP — Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
+**Slice:** Phase 2 started — trip duplicate + city playbooks; Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -217,6 +217,20 @@ Without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat 
 ## Multiplayer trips
 
 Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still works on `/trips/sample-kyoto`.
+
+---
+
+## Trip duplicate + city playbooks (城市玩法)
+
+Phase 2 step 1 — clone a trip or materialize a read-only city skeleton into a new owned trip (Neon).
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `POST` | `/v1/trips/:id/duplicate` | Auth required. Body `{ copyJournal?: boolean, title?: string }`. Default copies days + stops (no photos/legs); optional journal **text only**. New id/version; sole member = you as owner. |
+| `GET` | `/v1/templates` | Code-seeded catalog (Kyoto 3-day, Shanghai weekend, Hangzhou lake). No DB required. |
+| `POST` | `/v1/templates/:id/create` | Auth required. Body `{ title?, startDate? }`. Creates days/stops from the template. |
+
+**Web demo:** `/trips` → **城市玩法** “用此玩法”, or **复制行程** (optional “同时复制日记文字”); trip planner header also has **复制**.
 
 ---
 
