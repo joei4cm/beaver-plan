@@ -133,6 +133,8 @@ app.get("/health", (c) => {
     maps: {
       google: Boolean(c.env.GOOGLE_MAPS_SERVER_KEY),
       amap: Boolean(c.env.AMAP_SERVER_KEY),
+      defaultEngine: c.env.DEFAULT_MAP_ENGINE ?? "auto",
+      autoAmapCn: (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false",
     },
     translation,
     media: {

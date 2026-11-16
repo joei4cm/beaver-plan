@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 APP_NAME = "Beaver Plan"
 DEFAULT_LOCALE = "zh-CN"
-DEFAULT_MAP_ENGINE = "google"
+DEFAULT_MAP_ENGINE = "auto"
 MAP_AUTO_AMAP_CN = "true"
 FEATURE_TRANSLATION = "true"
 PUBLIC_WEB_ORIGIN = "http://localhost:3000"

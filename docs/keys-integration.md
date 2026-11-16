@@ -1,0 +1,314 @@
+# Live keys integration checklist
+
+Practical steps for Michael to turn on real Clerk, maps, Neon, R2, and translation providers. No secrets belong in git — only placeholders in `.env.example` / `apps/api/.dev.vars.example`.
+
+**Prerequisites already on `main`:** Neon/Postgres (Drizzle) + R2 media via S3-compatible API.
+
+---
+
+## 0. Copy env templates
+
+```bash
+pnpm install
+cp .env.example apps/web/.env.local
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+# Mobile (Expo reads EXPO_PUBLIC_* from env / app config):
+# copy the EXPO_PUBLIC_* lines into your shell or a local .env that Metro loads
+```
+
+| File | Used by |
+|------|---------|
+| `apps/web/.env.local` | Next.js (`NEXT_PUBLIC_*`, `CLERK_SECRET_KEY`) |
+| `apps/api/.dev.vars` | Wrangler / Workers (`DATABASE_URL`, `S3_*`, map + LLM secrets) |
+| Expo `EXPO_PUBLIC_*` | Mobile client only |
+
+Restart `pnpm dev:api` / `pnpm dev:web` / `pnpm dev:mobile` after every env change.
+
+---
+
+## 1. Clerk (web + Expo) + WeChat
+
+### Dashboard
+
+1. Create an application at [dashboard.clerk.com](https://dashboard.clerk.com).
+2. Copy **Publishable key** (`pk_test_…` / `pk_live_…`) and **Secret key** (`sk_…`).
+3. Note the Frontend API host (also encoded in the publishable key) — used as JWT issuer, e.g. `https://your-app.clerk.accounts.dev`.
+
+### Web (`apps/web/.env.local`)
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_…
+CLERK_SECRET_KEY=sk_test_…
+NEXT_PUBLIC_CLERK_WECHAT_ENABLED=false   # flip after WeChat is wired
+```
+
+### API (`apps/api/.dev.vars`)
+
+```bash
+CLERK_SECRET_KEY=sk_test_…              # enables JWT-gated trip mutations
+CLERK_PUBLISHABLE_KEY=pk_test_…         # or set CLERK_JWT_ISSUER explicitly
+# CLERK_JWT_ISSUER=https://your-app.clerk.accounts.dev
+CLERK_WECHAT_ENABLED=false
+PUBLIC_WEB_ORIGIN=http://localhost:3000
+```
+
+Without `CLERK_SECRET_KEY` on the API, trip mutations stay in **demo** mode (`X-Beaver-User-Id` → `demo-user`).
+
+### Expo
+
+```bash
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_…
+EXPO_PUBLIC_CLERK_WECHAT_ENABLED=false
+EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8787
+```
+
+### WeChat social connection
+
+WeChat credentials live in **Clerk + WeChat Open Platform**, not in this repo (no fake AppID/secret).
+
+1. Clerk Dashboard → **User & Authentication → Social connections → WeChat**.
+2. Paste WeChat Open Platform AppID / AppSecret into Clerk.
+3. Copy Clerk’s callback URL into the WeChat open platform authorized redirect URIs.
+4. Enable the connection in Clerk, then set:
+   - `NEXT_PUBLIC_CLERK_WECHAT_ENABLED=true`
+   - `EXPO_PUBLIC_CLERK_WECHAT_ENABLED=true`
+   - `CLERK_WECHAT_ENABLED=true` (API `/health` → `auth.wechatUi: true`)
+5. Web: open `/sign-in` — WeChat entry appears. Mobile: same flag surfaces the WeChat path.
+
+### Smoke
+
+| Check | Expect |
+|-------|--------|
+| No Clerk keys | `/health` → `auth.mode: "demo"`; planner works with demo headers |
+| Keys set | `/health` → `auth.clerk: true`, `auth.mode: "clerk"` |
+| Web signed in | Bearer JWT accepted on trip mutations; unsigned → 401 |
+| WeChat flags on | UI shows WeChat entry; OAuth completes via Clerk |
+
+---
+
+## 2. Google Maps + Amap (mainland auto-switch)
+
+Server keys stay in **`apps/api/.dev.vars`** — never in client bundles.
+
+```bash
+# Google Maps Platform — enable Places API (New) + Routes API
+GOOGLE_MAPS_SERVER_KEY=…
+
+# 高德开放平台 — Web服务 key
+AMAP_SERVER_KEY=…
+
+# Product rule: preference `auto` → Google outside CN, Amap in mainland CN
+DEFAULT_MAP_ENGINE=auto
+MAP_AUTO_AMAP_CN=true
+
+# Optional browser / native SDK keys (reserved; BFF is source of truth today)
+# NEXT_PUBLIC_GOOGLE_MAPS_JS_KEY=
+# NEXT_PUBLIC_AMAP_JS_KEY=
+# EXPO_PUBLIC_AMAP_KEY=
+```
+
+Region inference uses Cloudflare `CF-IPCountry`, then timezone (`Asia/Shanghai`…), then `Accept-Language: zh-CN`. Manual trip preference `google` / `amap` always wins over auto.
+
+### Smoke — mainland auto-switch
+
+```bash
+# Outside CN heuristic → google
+curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=auto&timezone=America/Los_Angeles'
+# → engineId: "google", region: "other"
+
+# Mainland heuristic → amap
+curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=auto&timezone=Asia/Shanghai'
+# → engineId: "amap", region: "mainland_cn"
+
+# Override always wins
+curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=google&timezone=Asia/Shanghai'
+# → engineId: "google"
+```
+
+With live keys: Places search / directions should return `mode: "live"` (not demo POIs). Without keys: curated Kyoto / CN demo data still works.
+
+`/health` → `maps.google` / `maps.amap` booleans + `maps.defaultEngine` / `maps.autoAmapCn`.
+
+---
+
+## 3. Neon `DATABASE_URL` + migrate
+
+Required for trips / journal metadata / members / invites / share artifacts. Missing → HTTP **503** (no memory fallback).
+
+1. Create a project at [console.neon.tech](https://console.neon.tech).
+2. Copy the **pooled** (`-pooler`) connection string.
+3. Put it in `apps/api/.dev.vars`:
+
+```bash
+DATABASE_URL=postgresql://user:password@ep-xxxx-pooler…/neondb?sslmode=require
+```
+
+4. Apply schema:
+
+```bash
+pnpm --filter @beaver/api db:migrate
+# empty DB first time alternative: pnpm --filter @beaver/api db:push
+```
+
+5. Prod: `cd apps/api && pnpm exec wrangler secret put DATABASE_URL`
+
+### Smoke
+
+```bash
+pnpm dev:api
+curl -s http://127.0.0.1:8787/health | jq '.database'
+# → configured: true
+curl -s http://127.0.0.1:8787/v1/trips/sample-kyoto | jq '.trip.id,.days|length'
+# → "sample-kyoto" + seeded days (idempotent seed on first DB request)
+```
+
+---
+
+## 4. R2 S3 vars + CORS
+
+Journal photos + share SVG objects use **Cloudflare R2** via the **S3-compatible API**. Neon stores object keys only.
+
+```bash
+S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=…
+S3_SECRET_ACCESS_KEY=…
+S3_BUCKET=beaver-plan-media
+S3_REGION=auto
+# Optional public CDN (skips signed GET):
+# S3_PUBLIC_BASE_URL=https://media.example.com
+```
+
+`R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` aliases are accepted.
+
+### CORS (browser signed PUT)
+
+In the R2 bucket CORS settings:
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Without CORS, web journal falls back to `POST /v1/media` (still writes to R2). Mobile always uses the BFF upload path.
+
+### Smoke
+
+```bash
+curl -s http://127.0.0.1:8787/health | jq '.media'
+# → configured: true, storage: "s3"
+```
+
+Web: `/trips/sample-kyoto/journal` → demo photos load → upload a photo → save → Share studio export.
+
+---
+
+## 5. OpenAI / Deepgram (or Edge TTS)
+
+Secrets in `apps/api/.dev.vars` only.
+
+```bash
+FEATURE_TRANSLATION=true
+OPENAI_API_KEY=sk-…
+# OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_ASR_MODEL=whisper-1
+OPENAI_TTS_MODEL=tts-1
+OPENAI_TTS_VOICE=alloy
+
+# Optional Deepgram ASR
+# DEEPGRAM_API_KEY=…
+# ASR_PROVIDER=deepgram
+
+ASR_PROVIDER=auto
+LLM_PROVIDER=auto
+TTS_PROVIDER=auto          # or edge = device/browser SpeechSynthesis
+```
+
+| Slot | `auto` | Explicit |
+|------|--------|----------|
+| LLM | OpenAI chat if key, else demo | `openai`, `demo` |
+| ASR | Deepgram if key, else Whisper, else demo | `openai`, `deepgram`, `demo` |
+| TTS | OpenAI speech if key, else edge/local | `openai`, `edge`, `demo` |
+| Vision | OpenAI vision if key, else demo | (follows LLM key) |
+
+### Smoke — demo → live
+
+```bash
+# Before keys
+curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.providers'
+# → mode: "demo"
+
+# After OPENAI_API_KEY (+ restart API)
+curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.providers'
+# → mode: "live" (or mixed), providers not demo-*
+
+curl -s -X POST http://127.0.0.1:8787/v1/translation/translate \
+  -H 'content-type: application/json' \
+  -d '{"text":"你好","sourceLocale":"zh-CN","targetLocale":"en"}'
+```
+
+UI: `http://localhost:3000/translate` — next-demo line still works; mic / typed line should hit live providers when keyed. Mobile → **实时翻译**.
+
+---
+
+## 6. End-to-end smoke matrix
+
+Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
+
+| # | Surface | Command / UI | Pass criteria |
+|---|---------|--------------|---------------|
+| 1 | Health | `GET /health` | `database.configured`, `media.configured`; auth/maps/translation flags match env |
+| 2 | Sample trip | `GET /v1/trips/sample-kyoto` | Seeded Kyoto days/stops/members |
+| 3 | Planner | Web `/trips/sample-kyoto` | Map + stops render |
+| 4 | Maps engine | `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` | `engineId: "amap"` when `MAP_AUTO_AMAP_CN=true` |
+| 5 | Journal upload | Web journal → photo → save | Object in R2; Neon entry has media key; `GET /v1/media/:id` redirects/streams |
+| 6 | Share | Share studio → export | Card generates; SVG may persist under `share/…` |
+| 7 | Translate demo | `/translate` without LLM keys | Scripted bilingual turns |
+| 8 | Translate live | Same UI / `POST /v1/translation/translate` with keys | `mode: "live"`; non-demo providers |
+| 9 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
+| 10 | Mobile | Expo itinerary / journal / translate | Hits same API base URL |
+
+---
+
+## 7. Production (Cloudflare Workers)
+
+```bash
+cd apps/api
+pnpm exec wrangler secret put DATABASE_URL
+pnpm exec wrangler secret put S3_ACCESS_KEY_ID
+pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
+# also: S3_ENDPOINT or R2_ACCOUNT_ID, S3_BUCKET, S3_REGION=auto
+pnpm exec wrangler secret put CLERK_SECRET_KEY
+pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY
+pnpm exec wrangler secret put AMAP_SERVER_KEY
+pnpm exec wrangler secret put OPENAI_API_KEY
+# optional: DEEPGRAM_API_KEY, CLERK_JWT_ISSUER, …
+pnpm --filter @beaver/api db:migrate   # same Neon DB
+pnpm deploy
+```
+
+Update R2 CORS `AllowedOrigins` for the real web origin. Set `PUBLIC_WEB_ORIGIN` to the production web URL (wrangler var or secret).
+
+---
+
+## Var index (no secrets)
+
+Authoritative templates: root [`.env.example`](../.env.example) and [`apps/api/.dev.vars.example`](../apps/api/.dev.vars.example).
+
+| Area | Vars |
+|------|------|
+| Clerk web | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_WECHAT_ENABLED` |
+| Clerk API | `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY` / `CLERK_JWT_ISSUER`, `CLERK_WECHAT_ENABLED`, `PUBLIC_WEB_ORIGIN` |
+| Clerk Expo | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`, `EXPO_PUBLIC_CLERK_WECHAT_ENABLED` |
+| API base | `NEXT_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_API_BASE_URL` |
+| Neon | `DATABASE_URL` |
+| R2 / S3 | `S3_ENDPOINT` or `R2_ACCOUNT_ID`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, optional `S3_PUBLIC_BASE_URL` (+ `R2_*` aliases) |
+| Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
+| Translation | `FEATURE_TRANSLATION`, `OPENAI_*`, `DEEPGRAM_API_KEY`, `ASR_PROVIDER`, `LLM_PROVIDER`, `TTS_PROVIDER` |
