@@ -28,7 +28,7 @@ export type Address = {
   countryCode?: string;
 };
 
-/** Map / Places port — Google + Amap adapters land in Slice B. */
+/** Map / Places port — Google + Amap (+ demo fallback) in Slice B. */
 export interface MapEngine {
   readonly id: MapEngineId;
   searchPlaces(q: PlaceQuery): Promise<PlaceSummary[]>;
@@ -54,7 +54,7 @@ export type RouteResult = {
   }>;
 };
 
-/** Directions / transit port — implemented in Slice B. */
+/** Directions / transit port — Google + Amap (+ demo) in Slice B. */
 export interface RoutingEngine {
   readonly id: MapEngineId;
   route(req: RouteRequest): Promise<RouteResult>;

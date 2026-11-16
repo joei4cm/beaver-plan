@@ -15,9 +15,14 @@ export default function HomeScreen() {
         <Text style={styles.hint}>{t(locale, "mobile.homeHint")}</Text>
       </View>
       <View style={styles.actions}>
-        <Link href="/trips" asChild>
+        <Link href="/trips/sample-kyoto" asChild>
           <Pressable style={styles.primary}>
-            <Text style={styles.primaryLabel}>{t(locale, "cta.viewTrips")}</Text>
+            <Text style={styles.primaryLabel}>{t(locale, "mobile.viewMap")}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/trips" asChild>
+          <Pressable style={styles.secondary}>
+            <Text style={styles.secondaryLabel}>{t(locale, "cta.viewTrips")}</Text>
           </Pressable>
         </Link>
       </View>
@@ -68,6 +73,20 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     color: colors.foam,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  secondary: {
+    marginTop: 10,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: colors.foam,
+  },
+  secondaryLabel: {
+    color: colors.inkSoft,
     fontSize: 15,
     fontWeight: "600",
   },

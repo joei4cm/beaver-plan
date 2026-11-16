@@ -19,6 +19,8 @@ FEATURE_TRANSLATION = "true"
 # CLERK_SECRET_KEY
 # DATABASE_URL
 # R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (or use R2 binding above)
-# GOOGLE_MAPS_SERVER_KEY
-# AMAP_SERVER_KEY
+# GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
+# AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
 # OPENAI_API_KEY (translation — Slice E)
+#
+# Without map secrets, /v1/places and /v1/directions use curated demo data.

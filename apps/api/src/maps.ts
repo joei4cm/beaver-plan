@@ -1,0 +1,192 @@
+import { Hono } from "hono";
+import {
+  createEngineBundle,
+  inferRegionHint,
+  resolveMapEngine,
+  type MapEnginePreference,
+  type LatLng,
+} from "@beaver/core";
+import type { Bindings } from "./env.js";
+
+export const mapsRoutes = new Hono<{ Bindings: Bindings }>();
+
+function preferenceFrom(
+  raw: string | undefined,
+  fallback: string,
+): MapEnginePreference {
+  const v = (raw ?? fallback ?? "auto").toLowerCase();
+  if (v === "google" || v === "amap" || v === "auto") return v;
+  return "auto";
+}
+
+function keysFrom(env: Bindings) {
+  return {
+    googleServerKey: env.GOOGLE_MAPS_SERVER_KEY,
+    amapServerKey: env.AMAP_SERVER_KEY,
+  };
+}
+
+function bundleFor(
+  c: { env: Bindings; req: { header: (n: string) => string | undefined } },
+  preference: MapEnginePreference,
+  timezone?: string | null,
+) {
+  const autoEnabled = (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false";
+  const region = autoEnabled
+    ? inferRegionHint({
+        cfCountry: c.req.header("cf-ipcountry"),
+        acceptLanguage: c.req.header("accept-language"),
+        timezone,
+      })
+    : ("other" as const);
+  const engineId = resolveMapEngine(preference, region);
+  const bundle = createEngineBundle(engineId, keysFrom(c.env));
+  return { ...bundle, region, preference };
+}
+
+/** Resolve which engine would be used (for settings UI). */
+mapsRoutes.get("/v1/maps/engine", (c) => {
+  const preference = preferenceFrom(
+    c.req.query("preference"),
+    c.env.DEFAULT_MAP_ENGINE,
+  );
+  const resolved = bundleFor(c, preference, c.req.query("timezone"));
+  return c.json({
+    preference: resolved.preference,
+    region: resolved.region,
+    engineId: resolved.engineId,
+    mode: resolved.mode,
+    autoAmapCn: (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false",
+  });
+});
+
+mapsRoutes.get("/v1/places/search", async (c) => {
+  const text = (c.req.query("q") ?? "").trim();
+  if (!text) return c.json({ error: "q_required" }, 400);
+
+  const preference = preferenceFrom(
+    c.req.query("engine"),
+    c.env.DEFAULT_MAP_ENGINE,
+  );
+  const nearLat = c.req.query("lat");
+  const nearLng = c.req.query("lng");
+  const near =
+    nearLat && nearLng
+      ? { lat: Number(nearLat), lng: Number(nearLng) }
+      : undefined;
+
+  const { map, mode, engineId, region } = bundleFor(
+    c,
+    preference,
+    c.req.query("timezone"),
+  );
+
+  try {
+    const places = await map.searchPlaces({
+      text,
+      near:
+        near && Number.isFinite(near.lat) && Number.isFinite(near.lng)
+          ? near
+          : undefined,
+      language: c.req.query("language") ?? "zh-CN",
+    });
+    return c.json({ places, engineId, mode, region });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "search_failed";
+    return c.json({ error: message, engineId, mode }, 502);
+  }
+});
+
+mapsRoutes.get("/v1/places/:id", async (c) => {
+  const preference = preferenceFrom(
+    c.req.query("engine"),
+    c.env.DEFAULT_MAP_ENGINE,
+  );
+  const { map, mode, engineId } = bundleFor(
+    c,
+    preference,
+    c.req.query("timezone"),
+  );
+  try {
+    const place = await map.getPlaceDetails(c.req.param("id"));
+    return c.json({ place, engineId, mode });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "details_failed";
+    return c.json({ error: message, engineId, mode }, 502);
+  }
+});
+
+mapsRoutes.get("/v1/geocode/reverse", async (c) => {
+  const lat = Number(c.req.query("lat"));
+  const lng = Number(c.req.query("lng"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return c.json({ error: "lat_lng_required" }, 400);
+  }
+  const preference = preferenceFrom(
+    c.req.query("engine"),
+    c.env.DEFAULT_MAP_ENGINE,
+  );
+  const { map, mode, engineId } = bundleFor(
+    c,
+    preference,
+    c.req.query("timezone"),
+  );
+  try {
+    const address = await map.reverseGeocode({ lat, lng });
+    return c.json({ address, engineId, mode });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "geocode_failed";
+    return c.json({ error: message, engineId, mode }, 502);
+  }
+});
+
+type DirectionsBody = {
+  origin: LatLng;
+  destination: LatLng;
+  mode?: "walk" | "transit" | "drive";
+  engine?: MapEnginePreference;
+  language?: string;
+  timezone?: string;
+};
+
+mapsRoutes.post("/v1/directions", async (c) => {
+  let body: DirectionsBody;
+  try {
+    body = await c.req.json<DirectionsBody>();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+  if (
+    !body.origin ||
+    !body.destination ||
+    !Number.isFinite(body.origin.lat) ||
+    !Number.isFinite(body.origin.lng) ||
+    !Number.isFinite(body.destination.lat) ||
+    !Number.isFinite(body.destination.lng)
+  ) {
+    return c.json({ error: "origin_destination_required" }, 400);
+  }
+
+  const preference = preferenceFrom(
+    body.engine,
+    c.env.DEFAULT_MAP_ENGINE,
+  );
+  const { routing, mode, engineId, region } = bundleFor(
+    c,
+    preference,
+    body.timezone,
+  );
+
+  try {
+    const route = await routing.route({
+      origin: body.origin,
+      destination: body.destination,
+      mode: body.mode ?? "walk",
+      language: body.language ?? "zh-CN",
+    });
+    return c.json({ route, engineId, mode, region });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "directions_failed";
+    return c.json({ error: message, engineId, mode }, 502);
+  }
+});

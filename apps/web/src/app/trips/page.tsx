@@ -19,6 +19,7 @@ const samples = [
     titleKey: "trips.placeholder.osaka" as const,
     metaKey: "trips.placeholder.osakaMeta" as const,
     accent: "from-timber/25 to-paper",
+    disabled: true,
   },
 ];
 
@@ -34,14 +35,12 @@ export default async function TripsPage() {
           </h1>
           <p className="mt-3 max-w-lg text-ink-soft">{t(locale, "trips.empty")}</p>
         </div>
-        <button
-          type="button"
-          disabled
-          title="Clerk + API trip create — Slice A stub"
-          className="cursor-not-allowed rounded-md bg-river/40 px-4 py-2.5 text-sm text-foam"
+        <Link
+          href="/trips/sample-kyoto"
+          className="rounded-md bg-river px-4 py-2.5 text-sm text-foam transition hover:bg-river-deep"
         >
-          {t(locale, "trips.new")}
-        </button>
+          {t(locale, "trips.openSample")}
+        </Link>
       </div>
 
       <ul className="mt-12 space-y-0 divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
@@ -51,26 +50,43 @@ export default async function TripsPage() {
             className="animate-rise group relative"
             style={{ animationDelay: `${index * 70 + 60}ms` }}
           >
-            <Link
-              href={`/trips#${trip.id}`}
-              className="flex items-stretch gap-0 transition hover:bg-foam/40"
-            >
-              <div
-                className={`hidden w-28 shrink-0 bg-gradient-to-br ${trip.accent} sm:block`}
-                aria-hidden
-              />
-              <div className="flex flex-1 flex-col gap-1 px-1 py-7 sm:px-6">
-                <span className="font-display text-2xl text-ink transition group-hover:text-river">
-                  {t(locale, trip.titleKey)}
-                </span>
-                <span className="text-sm text-ink-soft/80">
-                  {t(locale, trip.metaKey)}
-                </span>
+            {"disabled" in trip && trip.disabled ? (
+              <div className="flex items-stretch gap-0 opacity-55">
+                <div
+                  className={`hidden w-28 shrink-0 bg-gradient-to-br ${trip.accent} sm:block`}
+                  aria-hidden
+                />
+                <div className="flex flex-1 flex-col gap-1 px-1 py-7 sm:px-6">
+                  <span className="font-display text-2xl text-ink">
+                    {t(locale, trip.titleKey)}
+                  </span>
+                  <span className="text-sm text-ink-soft/80">
+                    {t(locale, trip.metaKey)}
+                  </span>
+                </div>
               </div>
-              <span className="flex items-center pr-2 text-river opacity-0 transition group-hover:opacity-100 sm:pr-4">
-                →
-              </span>
-            </Link>
+            ) : (
+              <Link
+                href={`/trips/${trip.id}`}
+                className="flex items-stretch gap-0 transition hover:bg-foam/40"
+              >
+                <div
+                  className={`hidden w-28 shrink-0 bg-gradient-to-br ${trip.accent} sm:block`}
+                  aria-hidden
+                />
+                <div className="flex flex-1 flex-col gap-1 px-1 py-7 sm:px-6">
+                  <span className="font-display text-2xl text-ink transition group-hover:text-river">
+                    {t(locale, trip.titleKey)}
+                  </span>
+                  <span className="text-sm text-ink-soft/80">
+                    {t(locale, trip.metaKey)}
+                  </span>
+                </div>
+                <span className="flex items-center pr-2 text-river opacity-0 transition group-hover:opacity-100 sm:pr-4">
+                  →
+                </span>
+              </Link>
+            )}
           </li>
         ))}
       </ul>
