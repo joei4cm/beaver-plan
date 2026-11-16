@@ -1,0 +1,42 @@
+# Cloudflare Workers / Wrangler local secrets — copy to apps/api/.dev.vars
+# Never commit real values. Full checklist: docs/keys-integration.md
+
+# ── Required for trip APIs ─────────────────────────────────────────────────
+DATABASE_URL=postgresql://user:password@ep-xxxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# ── Required for journal / share media (R2 via S3 API) ─────────────────────
+S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_BUCKET=beaver-plan-media
+S3_REGION=auto
+# S3_PUBLIC_BASE_URL=https://media.example.com
+# R2_* aliases also work: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
+
+# ── Clerk (optional — without secret, demo identity headers) ───────────────
+CLERK_SECRET_KEY=
+CLERK_PUBLISHABLE_KEY=
+# CLERK_JWT_ISSUER=https://your-app.clerk.accounts.dev
+CLERK_WECHAT_ENABLED=false
+PUBLIC_WEB_ORIGIN=http://localhost:3000
+
+# ── Maps (optional — without keys, curated demo POIs) ──────────────────────
+GOOGLE_MAPS_SERVER_KEY=
+AMAP_SERVER_KEY=
+DEFAULT_MAP_ENGINE=auto
+MAP_AUTO_AMAP_CN=true
+
+# ── Live translation (optional — without keys, scripted demo turns) ────────
+FEATURE_TRANSLATION=true
+OPENAI_API_KEY=
+# OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_ASR_MODEL=whisper-1
+OPENAI_TTS_MODEL=tts-1
+OPENAI_TTS_VOICE=alloy
+DEEPGRAM_API_KEY=
+ASR_PROVIDER=auto
+LLM_PROVIDER=auto
+TTS_PROVIDER=auto
+
+DEFAULT_LOCALE=zh-CN

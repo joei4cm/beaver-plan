@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** Post-MVP — Neon/Postgres + R2 media (S3-compatible API)
+**Slice:** Post-MVP — Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -44,10 +44,12 @@ git clone https://github.com/joei4cm/beaver-plan.git
 cd beaver-plan
 pnpm install
 cp .env.example apps/web/.env.local
-cp .env.example apps/api/.dev.vars
+cp apps/api/.dev.vars.example apps/api/.dev.vars
 # Optional mobile:
 # EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8787
 ```
+
+**Turn on real services:** follow [`docs/keys-integration.md`](docs/keys-integration.md) (Clerk / WeChat, Google+Amap, Neon, R2 CORS, OpenAI/Deepgram, smoke matrix).
 
 ### Neon / Postgres (required for trips)
 
@@ -208,7 +210,7 @@ UX is chunked near-real-time (one utterance per `/turn`), not a perfect full-dup
 
 ## Auth — Clerk + WeChat
 
-See Slice D notes: without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat OAuth is configured in Clerk Dashboard (no fake AppID in this repo).
+Without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat OAuth is configured in Clerk Dashboard (no fake AppID in this repo). Step-by-step: [`docs/keys-integration.md`](docs/keys-integration.md#1-clerk-web--expo--wechat).
 
 ---
 
@@ -227,11 +229,13 @@ Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still
 | Camera OCR / caption | demo overlays | ✅ vision | — |
 | Kyoto planner / journal / share / collab | ✅ Neon `DATABASE_URL` + R2 `S3_*` for photos | — | ✅ when keyed |
 
+Full enablement checklist + smoke matrix: [`docs/keys-integration.md`](docs/keys-integration.md).
+
 ---
 
 ## Maps keys (Google + Amap)
 
-Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs.
+Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai`.
 
 ---
 
