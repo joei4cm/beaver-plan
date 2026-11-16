@@ -5,12 +5,13 @@ import Link from "next/link";
 import type {
   Day,
   JournalEntry,
+  ShareStyle,
   ShareTemplateId,
   ShareTemplateMeta,
   Stop,
   Trip,
 } from "@beaver/core";
-import { SHARE_TEMPLATES, stopsForDay } from "@beaver/core";
+import { SHARE_ACCENT_PRESETS, SHARE_TEMPLATES, stopsForDay } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiBase, apiGet, apiSend } from "@/lib/api";
@@ -35,6 +36,8 @@ type Props = {
   initialTrip: TripPayload | null;
 };
 
+const DEFAULT_ACCENT = SHARE_ACCENT_PRESETS[0];
+
 export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [trip, setTrip] = useState<Trip | null>(initialTrip?.trip ?? null);
   const [days, setDays] = useState<Day[]>(initialTrip?.days ?? []);
@@ -44,12 +47,27 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     initialTrip?.days[0]?.id ?? null,
   );
   const [templateId, setTemplateId] = useState<ShareTemplateId>("magazine-reel");
+  const [coverTitle, setCoverTitle] = useState("");
+  const [coverSubtitle, setCoverSubtitle] = useState("");
+  const [accentColor, setAccentColor] = useState<string>(DEFAULT_ACCENT);
+  const [titleScale, setTitleScale] = useState(1);
+  const [editSeeded, setEditSeeded] = useState(false);
   const [preview, setPreview] = useState<RenderResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const templates = SHARE_TEMPLATES;
+
+  const stylePayload = useMemo((): ShareStyle => {
+    const style: ShareStyle = {
+      accentColor,
+      titleScale,
+    };
+    if (coverTitle.trim()) style.coverTitle = coverTitle.trim();
+    if (coverSubtitle.trim()) style.coverSubtitle = coverSubtitle.trim();
+    return style;
+  }, [accentColor, coverSubtitle, coverTitle, titleScale]);
 
   const load = useCallback(async () => {
     const [tripData, journal] = await Promise.all([
@@ -63,7 +81,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     setStops(tripData.stops);
     setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
     setEntries(journal.entries);
-  }, [initialTrip, tripId]);
+    if (!editSeeded) {
+      setCoverTitle(tripData.trip.title);
+      setCoverSubtitle(tripData.trip.destination ?? "");
+      setEditSeeded(true);
+    }
+  }, [editSeeded, initialTrip, tripId]);
 
   useEffect(() => {
     startTransition(() => {
@@ -99,6 +122,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           dayId: dayId ?? undefined,
           mediaBaseUrl: apiBase(),
           persist: true,
+          style: stylePayload,
         },
       );
       setPreview(res);
@@ -107,12 +131,23 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     } finally {
       setBusy(false);
     }
-  }, [tripId, templateId, dayId]);
+  }, [tripId, templateId, dayId, stylePayload]);
 
   useEffect(() => {
+    if (!trip || !editSeeded) return;
+    const timer = window.setTimeout(() => {
+      void render();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [trip, templateId, dayId, stylePayload, editSeeded, render]);
+
+  function resetEdits() {
     if (!trip) return;
-    void render();
-  }, [trip, templateId, dayId, render]);
+    setCoverTitle(trip.title);
+    setCoverSubtitle(trip.destination ?? "");
+    setAccentColor(DEFAULT_ACCENT);
+    setTitleScale(1);
+  }
 
   async function downloadPng() {
     if (!preview) return;
@@ -296,6 +331,98 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </button>
             ))}
           </div>
+
+          <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="font-display text-2xl text-ink">
+                {t(locale, "share.lightEdit")}
+              </h2>
+              <button
+                type="button"
+                onClick={resetEdits}
+                className="text-xs text-ink-soft underline-offset-4 hover:text-river hover:underline"
+              >
+                {t(locale, "share.resetEdit")}
+              </button>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs uppercase tracking-wider text-ink-soft">
+                {t(locale, "share.coverTitle")}
+              </span>
+              <input
+                type="text"
+                value={coverTitle}
+                maxLength={80}
+                onChange={(e) => setCoverTitle(e.target.value)}
+                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50"
+              />
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs uppercase tracking-wider text-ink-soft">
+                {t(locale, "share.coverSubtitle")}
+              </span>
+              <input
+                type="text"
+                value={coverSubtitle}
+                maxLength={100}
+                onChange={(e) => setCoverSubtitle(e.target.value)}
+                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50"
+              />
+            </label>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs uppercase tracking-wider text-ink-soft">
+                  {t(locale, "share.accentColor")}
+                </span>
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="h-8 w-10 cursor-pointer rounded border border-[color:var(--bp-line)] bg-transparent"
+                  aria-label={t(locale, "share.accentColor")}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SHARE_ACCENT_PRESETS.map((hex) => (
+                  <button
+                    key={hex}
+                    type="button"
+                    onClick={() => setAccentColor(hex)}
+                    className={`h-7 w-7 rounded-full border transition ${
+                      accentColor.toLowerCase() === hex.toLowerCase()
+                        ? "border-ink ring-2 ring-river/40"
+                        : "border-[color:var(--bp-line)]"
+                    }`}
+                    style={{ backgroundColor: hex }}
+                    aria-label={hex}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <label className="block space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs uppercase tracking-wider text-ink-soft">
+                  {t(locale, "share.titleScale")}
+                </span>
+                <span className="font-mono text-xs text-ink-soft">
+                  {titleScale.toFixed(2)}×
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0.8}
+                max={1.3}
+                step={0.05}
+                value={titleScale}
+                onChange={(e) => setTitleScale(Number(e.target.value))}
+                className="w-full accent-[color:var(--bp-river,#1f6b5c)]"
+              />
+            </label>
+          </section>
 
           {error && <p className="text-sm text-timber">{error}</p>}
 

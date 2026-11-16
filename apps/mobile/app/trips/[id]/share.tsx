@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, Stack } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -9,9 +9,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
+  SHARE_ACCENT_PRESETS,
   SHARE_TEMPLATES,
   type Day,
   type ShareTemplateId,
@@ -22,6 +24,7 @@ import { t } from "@beaver/i18n";
 import { fetchTrip, renderShare } from "../../../src/api";
 
 const locale = "zh-CN" as const;
+const DEFAULT_ACCENT = SHARE_ACCENT_PRESETS[0];
 
 export default function ShareScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,11 +34,25 @@ export default function ShareScreen() {
   const [dayId, setDayId] = useState<string | null>(null);
   const [templateId, setTemplateId] =
     useState<ShareTemplateId>("magazine-reel");
+  const [coverTitle, setCoverTitle] = useState("");
+  const [coverSubtitle, setCoverSubtitle] = useState("");
+  const [accentColor, setAccentColor] = useState<string>(DEFAULT_ACCENT);
+  const [titleScale, setTitleScale] = useState(1);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [svg, setSvg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const stylePayload = useMemo(
+    () => ({
+      coverTitle: coverTitle.trim() || undefined,
+      coverSubtitle: coverSubtitle.trim() || undefined,
+      accentColor,
+      titleScale,
+    }),
+    [accentColor, coverSubtitle, coverTitle, titleScale],
+  );
 
   const loadTrip = useCallback(async () => {
     setLoading(true);
@@ -44,6 +61,8 @@ export default function ShareScreen() {
       setTrip(data.trip);
       setDays(data.days);
       setDayId(data.days[0]?.id ?? null);
+      setCoverTitle(data.trip.title);
+      setCoverSubtitle(data.trip.destination ?? "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "load_failed");
     } finally {
@@ -59,6 +78,7 @@ export default function ShareScreen() {
         tripId,
         templateId,
         dayId: dayId ?? undefined,
+        style: stylePayload,
       });
       setPreviewUrl(res.previewUrl);
       setSvg(res.svg);
@@ -67,7 +87,7 @@ export default function ShareScreen() {
     } finally {
       setBusy(false);
     }
-  }, [tripId, templateId, dayId]);
+  }, [tripId, templateId, dayId, stylePayload]);
 
   useEffect(() => {
     void loadTrip();
@@ -75,7 +95,10 @@ export default function ShareScreen() {
 
   useEffect(() => {
     if (!trip) return;
-    void refreshPreview();
+    const timer = setTimeout(() => {
+      void refreshPreview();
+    }, 350);
+    return () => clearTimeout(timer);
   }, [trip, refreshPreview]);
 
   async function shareOut() {
@@ -180,6 +203,62 @@ export default function ShareScreen() {
             </Pressable>
           ))}
 
+          <Text style={styles.section}>{t(locale, "share.lightEdit")}</Text>
+          <Text style={styles.fieldLabel}>{t(locale, "share.coverTitle")}</Text>
+          <TextInput
+            value={coverTitle}
+            onChangeText={setCoverTitle}
+            style={styles.input}
+            placeholderTextColor={colors.inkSoft}
+          />
+          <Text style={styles.fieldLabel}>
+            {t(locale, "share.coverSubtitle")}
+          </Text>
+          <TextInput
+            value={coverSubtitle}
+            onChangeText={setCoverSubtitle}
+            style={styles.input}
+            placeholderTextColor={colors.inkSoft}
+          />
+          <Text style={styles.fieldLabel}>{t(locale, "share.accentColor")}</Text>
+          <View style={styles.accentRow}>
+            {SHARE_ACCENT_PRESETS.map((hex) => (
+              <Pressable
+                key={hex}
+                onPress={() => setAccentColor(hex)}
+                style={[
+                  styles.accentDot,
+                  { backgroundColor: hex },
+                  accentColor === hex && styles.accentDotActive,
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.fieldLabel}>
+            {t(locale, "share.titleScale")} · {titleScale.toFixed(2)}×
+          </Text>
+          <View style={styles.scaleRow}>
+            {[0.85, 1, 1.15, 1.3].map((s) => (
+              <Pressable
+                key={s}
+                onPress={() => setTitleScale(s)}
+                style={[
+                  styles.scaleChip,
+                  titleScale === s && styles.scaleChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.scaleChipLabel,
+                    titleScale === s && styles.scaleChipLabelActive,
+                  ]}
+                >
+                  {s.toFixed(2)}×
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
           <Pressable
             style={[styles.primary, busy && styles.disabled]}
             disabled={busy}
@@ -267,8 +346,60 @@ const styles = StyleSheet.create({
   },
   templateName: { fontSize: 17, fontWeight: "600", color: colors.ink },
   templateMeta: { marginTop: 4, fontSize: 13, color: colors.inkSoft },
-  primary: {
+  section: {
+    marginTop: 12,
+    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  fieldLabel: {
     marginTop: 8,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  input: {
+    marginTop: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: colors.foam,
+    color: colors.ink,
+    fontSize: 15,
+  },
+  accentRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
+  accentDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  accentDotActive: {
+    borderWidth: 2,
+    borderColor: colors.ink,
+  },
+  scaleRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
+  scaleChip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.foam,
+  },
+  scaleChipActive: {
+    backgroundColor: colors.riverDeep,
+    borderColor: colors.riverDeep,
+  },
+  scaleChipLabel: { fontSize: 13, color: colors.inkSoft },
+  scaleChipLabelActive: { color: colors.foam },
+  primary: {
+    marginTop: 16,
     backgroundColor: colors.river,
     borderRadius: 10,
     paddingVertical: 14,

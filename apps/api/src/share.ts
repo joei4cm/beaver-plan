@@ -10,6 +10,7 @@ import {
   svgToDataUrl,
   type ShareArtifact,
   type ShareSnapshot,
+  type ShareStyle,
   type ShareTemplateId,
 } from "@beaver/core";
 import { dbOf } from "./db/context.js";
@@ -49,7 +50,30 @@ type RenderBody = {
   photoUrls?: string[];
   note?: string;
   persist?: boolean;
+  /** Session light-edit: cover title/subtitle, accent, title scale. */
+  style?: ShareStyle;
 };
+
+function normalizeShareStyle(raw: ShareStyle | undefined): ShareStyle | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const style: ShareStyle = {};
+  if (typeof raw.coverTitle === "string") {
+    style.coverTitle = raw.coverTitle.slice(0, 80);
+  }
+  if (typeof raw.coverSubtitle === "string") {
+    style.coverSubtitle = raw.coverSubtitle.slice(0, 100);
+  }
+  if (
+    typeof raw.accentColor === "string" &&
+    /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw.accentColor.trim())
+  ) {
+    style.accentColor = raw.accentColor.trim();
+  }
+  if (typeof raw.titleScale === "number" && Number.isFinite(raw.titleScale)) {
+    style.titleScale = Math.min(1.4, Math.max(0.75, raw.titleScale));
+  }
+  return Object.keys(style).length > 0 ? style : undefined;
+}
 
 function bytesToDataUrl(contentType: string, bytes: Uint8Array): string {
   let binary = "";
@@ -132,6 +156,7 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
   );
 
   const dayIndex = day ? days.findIndex((d) => d.id === day.id) + 1 : undefined;
+  const style = normalizeShareStyle(body.style);
   const snap: ShareSnapshot = {
     tripTitle: trip.title,
     destination: trip.destination,
@@ -155,6 +180,7 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
       lng: s.place.lng,
     })),
     locale: trip.locale,
+    style,
   };
 
   const svg = renderShareSvg(template.id, snap);
