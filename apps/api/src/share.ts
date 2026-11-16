@@ -12,15 +12,17 @@ import {
   type ShareSnapshot,
   type ShareTemplateId,
 } from "@beaver/core";
+import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import { mediaById } from "./media-store.js";
 import {
-  daysByTrip,
-  journalByTrip,
+  getTrip,
+  insertShare,
+  listDays,
+  listJournal,
+  listShare,
+  listStops,
   nowIso,
-  shareByTrip,
-  stopsByTrip,
-  trips,
 } from "./store.js";
 
 export const shareRoutes = new Hono<{ Bindings: Bindings }>();
@@ -67,7 +69,8 @@ function resolvePhotoUrl(
 }
 
 shareRoutes.post("/v1/trips/:id/share", async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
 
   let body: RenderBody;
@@ -80,13 +83,13 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
   const template = getShareTemplate(body.templateId);
   if (!template) return c.json({ error: "unknown_template" }, 400);
 
-  const days = daysByTrip.get(trip.id) ?? [];
+  const days = await listDays(db, trip.id);
   const day =
     (body.dayId ? days.find((d) => d.id === body.dayId) : undefined) ??
     days[0];
-  const allStops = sortStops(stopsByTrip.get(trip.id) ?? []);
+  const allStops = sortStops(await listStops(db, trip.id));
   const dayStops = day ? stopsForDay(allStops, day.id) : allStops;
-  const entries = journalByTrip.get(trip.id) ?? [];
+  const entries = await listJournal(db, trip.id);
   const dayEntries = day
     ? journalForDay(
         entries,
@@ -145,8 +148,7 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
       storageUrl: dataUrl,
       createdAt: nowIso(),
     };
-    const list = shareByTrip.get(trip.id) ?? [];
-    shareByTrip.set(trip.id, [artifact, ...list].slice(0, 20));
+    await insertShare(db, artifact);
   }
 
   return c.json({
@@ -164,10 +166,11 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
   });
 });
 
-shareRoutes.get("/v1/trips/:id/share", (c) => {
-  const trip = trips.get(c.req.param("id"));
+shareRoutes.get("/v1/trips/:id/share", async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const artifacts = shareByTrip.get(trip.id) ?? [];
+  const artifacts = await listShare(db, trip.id);
   return c.json({
     artifacts: artifacts.map((a) => ({
       ...a,

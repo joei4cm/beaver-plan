@@ -22,16 +22,22 @@ import {
   assertCanView,
   parseExpectedVersion,
 } from "./access.js";
+import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
 import {
-  daysByTrip,
-  journalByTrip,
-  legsByTrip,
+  deleteTripCascade,
+  getTrip,
+  insertStop,
+  insertTrip,
+  listDays,
+  listLegs,
   listMembers,
+  listStops,
+  listTrips,
   nowIso,
-  shareByTrip,
-  stopsByTrip,
-  trips,
+  replaceLegs,
+  replaceStops,
+  updateTrip,
   upsertMember,
 } from "./store.js";
 
@@ -49,38 +55,45 @@ function preferenceFrom(
   return "auto";
 }
 
-tripRoutes.get("/v1/trips", (c) => {
+tripRoutes.get("/v1/trips", async (c) => {
+  const db = dbOf(c);
   const auth = c.get("auth");
-  const all = Array.from(trips.values());
-  const visible = auth
-    ? all.filter((trip) => {
-        const members = listMembers(trip.id);
-        return (
-          members.length === 0 ||
-          members.some((m) => m.userId === auth.userId) ||
-          trip.id === "sample-kyoto"
-        );
-      })
-    : all.filter((trip) => trip.id === "sample-kyoto");
+  const all = await listTrips(db);
+  const visible = [];
+  for (const trip of all) {
+    if (!auth) {
+      if (trip.id === "sample-kyoto") visible.push(trip);
+      continue;
+    }
+    const members = await listMembers(db, trip.id);
+    if (
+      members.length === 0 ||
+      members.some((m) => m.userId === auth.userId) ||
+      trip.id === "sample-kyoto"
+    ) {
+      visible.push(trip);
+    }
+  }
   return c.json({
     trips: visible,
     authMode: auth?.demo ? "demo" : auth ? "clerk" : "anonymous",
   });
 });
 
-tripRoutes.get("/v1/trips/:id", (c) => {
-  const trip = trips.get(c.req.param("id"));
+tripRoutes.get("/v1/trips/:id", async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
   // Sample trip stays publicly readable for demos; other trips need membership when Clerk is on.
   if (trip.id !== "sample-kyoto") {
-    const access = assertCanView(c, trip.id);
+    const access = await assertCanView(c, trip.id);
     if (!access.ok) return access.res;
   }
-  const days = daysByTrip.get(trip.id) ?? [];
-  const stops = sortStops(stopsByTrip.get(trip.id) ?? []);
-  const legs = legsByTrip.get(trip.id) ?? [];
+  const days = await listDays(db, trip.id);
+  const stops = sortStops(await listStops(db, trip.id));
+  const legs = await listLegs(db, trip.id);
   const auth = c.get("auth");
-  const members = listMembers(trip.id);
+  const members = await listMembers(db, trip.id);
   const yourRole =
     members.find((m) => m.userId === auth?.userId)?.role ??
     (trip.id === "sample-kyoto" ? "editor" : null);
@@ -106,6 +119,7 @@ tripRoutes.post("/v1/trips", requireAuth, async (c) => {
     return c.json({ error: "title_required" }, 400);
   }
 
+  const db = dbOf(c);
   const auth = c.get("auth")!;
   const id = crypto.randomUUID();
   const stamp = nowIso();
@@ -122,13 +136,8 @@ tripRoutes.post("/v1/trips", requireAuth, async (c) => {
     createdAt: stamp,
     updatedAt: stamp,
   };
-  trips.set(id, trip);
-  daysByTrip.set(id, []);
-  stopsByTrip.set(id, []);
-  legsByTrip.set(id, []);
-  journalByTrip.set(id, []);
-  shareByTrip.set(id, []);
-  upsertMember({
+  await insertTrip(db, trip);
+  await upsertMember(db, {
     id: crypto.randomUUID(),
     tripId: id,
     userId: auth.userId,
@@ -141,9 +150,10 @@ tripRoutes.post("/v1/trips", requireAuth, async (c) => {
 });
 
 tripRoutes.patch("/v1/trips/:id", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   let body: Partial<
@@ -155,7 +165,7 @@ tripRoutes.patch("/v1/trips/:id", requireAuth, async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const bumped = applyVersionOrConflict(
+  const bumped = await applyVersionOrConflict(
     c,
     trip,
     parseExpectedVersion(body),
@@ -169,21 +179,18 @@ tripRoutes.patch("/v1/trips/:id", requireAuth, async (c) => {
     locale: body.locale ?? bumped.trip.locale,
     mapEngine: body.mapEngine ?? bumped.trip.mapEngine,
   };
-  trips.set(trip.id, next);
+  await updateTrip(db, next);
   return c.json({ trip: next });
 });
 
-tripRoutes.delete("/v1/trips/:id", requireAuth, (c) => {
+tripRoutes.delete("/v1/trips/:id", requireAuth, async (c) => {
+  const db = dbOf(c);
   const id = c.req.param("id");
-  if (!trips.has(id)) return c.json({ error: "not_found" }, 404);
-  const access = assertCanManage(c, id);
+  const trip = await getTrip(db, id);
+  if (!trip) return c.json({ error: "not_found" }, 404);
+  const access = await assertCanManage(c, id);
   if (!access.ok) return access.res;
-  trips.delete(id);
-  daysByTrip.delete(id);
-  stopsByTrip.delete(id);
-  legsByTrip.delete(id);
-  journalByTrip.delete(id);
-  shareByTrip.delete(id);
+  await deleteTripCascade(db, id);
   return c.json({ ok: true });
 });
 
@@ -195,9 +202,10 @@ type AddStopBody = {
 };
 
 tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   let body: AddStopBody & { expectedVersion?: number };
@@ -209,12 +217,12 @@ tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
   if (!body.dayId || !body.place?.enginePlaceId) {
     return c.json({ error: "day_and_place_required" }, 400);
   }
-  const days = daysByTrip.get(trip.id) ?? [];
+  const days = await listDays(db, trip.id);
   if (!days.some((d) => d.id === body.dayId)) {
     return c.json({ error: "day_not_found" }, 404);
   }
 
-  const bumped = applyVersionOrConflict(
+  const bumped = await applyVersionOrConflict(
     c,
     trip,
     parseExpectedVersion(body),
@@ -234,7 +242,7 @@ tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
         : "other",
     );
 
-  const existing = stopsByTrip.get(trip.id) ?? [];
+  const existing = await listStops(db, trip.id);
   const dayStops = existing.filter((s) => s.dayId === body.dayId);
   const stop: Stop = {
     id: crypto.randomUUID(),
@@ -244,14 +252,15 @@ tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
     userNote: body.userNote,
     photos: [],
   };
-  stopsByTrip.set(trip.id, [...existing, stop]);
+  await insertStop(db, trip.id, stop);
   return c.json({ stop, tripVersion: bumped.trip.version }, 201);
 });
 
 tripRoutes.patch("/v1/trips/:id/stops/reorder", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   let body: { dayId: string; orderedIds: string[]; expectedVersion?: number };
@@ -263,17 +272,17 @@ tripRoutes.patch("/v1/trips/:id/stops/reorder", requireAuth, async (c) => {
   if (!body.dayId || !Array.isArray(body.orderedIds)) {
     return c.json({ error: "dayId_and_orderedIds_required" }, 400);
   }
-  const bumped = applyVersionOrConflict(
+  const bumped = await applyVersionOrConflict(
     c,
     trip,
     parseExpectedVersion(body),
   );
   if (!bumped.ok) return bumped.res;
 
-  const existing = stopsByTrip.get(trip.id) ?? [];
+  const existing = await listStops(db, trip.id);
   const next = reorderStops(existing, body.dayId, body.orderedIds);
-  stopsByTrip.set(trip.id, next);
-  legsByTrip.set(trip.id, []);
+  await replaceStops(db, trip.id, next);
+  await replaceLegs(db, trip.id, []);
   return c.json({
     stops: sortStops(next),
     tripVersion: bumped.trip.version,
@@ -281,9 +290,10 @@ tripRoutes.patch("/v1/trips/:id/stops/reorder", requireAuth, async (c) => {
 });
 
 tripRoutes.delete("/v1/trips/:id/stops/:stopId", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
 
   let expectedVersion: number | undefined;
@@ -295,12 +305,12 @@ tripRoutes.delete("/v1/trips/:id/stops/:stopId", requireAuth, async (c) => {
   }
 
   const stopId = c.req.param("stopId");
-  const existing = stopsByTrip.get(trip.id) ?? [];
+  const existing = await listStops(db, trip.id);
   if (!existing.some((s) => s.id === stopId)) {
     return c.json({ error: "stop_not_found" }, 404);
   }
 
-  const bumped = applyVersionOrConflict(c, trip, expectedVersion);
+  const bumped = await applyVersionOrConflict(c, trip, expectedVersion);
   if (!bumped.ok) return bumped.res;
 
   const removed = existing.find((s) => s.id === stopId)!;
@@ -316,8 +326,8 @@ tripRoutes.delete("/v1/trips/:id/stops/:stopId", requireAuth, async (c) => {
         }
       : s,
   );
-  stopsByTrip.set(trip.id, reindexed);
-  legsByTrip.set(trip.id, []);
+  await replaceStops(db, trip.id, reindexed);
+  await replaceLegs(db, trip.id, []);
   return c.json({ ok: true, tripVersion: bumped.trip.version });
 });
 
@@ -328,9 +338,10 @@ type RouteDayBody = {
 };
 
 tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
-  const trip = trips.get(c.req.param("id"));
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
-  const access = assertCanEdit(c, trip.id);
+  const access = await assertCanEdit(c, trip.id);
   if (!access.ok) return access.res;
   let body: RouteDayBody;
   try {
@@ -359,7 +370,7 @@ tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
   });
 
   const dayStops = sortStops(
-    (stopsByTrip.get(trip.id) ?? []).filter((s) => s.dayId === body.dayId),
+    (await listStops(db, trip.id)).filter((s) => s.dayId === body.dayId),
   );
   if (dayStops.length < 2) {
     return c.json({
@@ -377,11 +388,11 @@ tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
       body.mode ?? "transit",
       trip.locale,
     );
-    const otherLegs = (legsByTrip.get(trip.id) ?? []).filter(
+    const otherLegs = (await listLegs(db, trip.id)).filter(
       (l) => !dayStops.some((s) => s.id === l.fromStopId),
     );
     const nextLegs = [...otherLegs, ...legs];
-    legsByTrip.set(trip.id, nextLegs);
+    await replaceLegs(db, trip.id, nextLegs);
     return c.json({ legs, engineId, mode: bundle.mode, region });
   } catch (err) {
     const message = err instanceof Error ? err.message : "route_failed";

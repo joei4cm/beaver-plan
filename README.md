@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** E — Live translation (ASR → LLM → TTS + camera assist)
+**Slice:** Post-MVP — Neon/Postgres persistence (Drizzle) for trips / journal / members
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -32,6 +32,7 @@ Product plan (Agent Store / humans):
 - [pnpm](https://pnpm.io) 10.x (`corepack enable` recommended)
 - For API deploy: Cloudflare account + Wrangler
 - Optional: Clerk, Google / Amap, OpenAI / Deepgram keys
+- **Required for trip APIs:** a Neon (or any Postgres) `DATABASE_URL`
 
 ---
 
@@ -47,10 +48,42 @@ cp .env.example apps/api/.dev.vars
 # EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8787
 ```
 
+### Neon / Postgres (required for trips)
+
+Trip, day, stop, leg, journal, share-artifact, membership, and invite data live in **Neon Postgres** via **Drizzle** (`@neondatabase/serverless` HTTP driver — Cloudflare Workers compatible). There is **no silent in-memory fallback** for those tables: missing `DATABASE_URL` → HTTP **503** on `/v1/trips`, `/v1/invites`, `/v1/share` (maps / translation / health still respond). Journal **photo bytes** remain in-memory until the R2 PR.
+
+1. Create a free project at [console.neon.tech](https://console.neon.tech).
+2. Copy the connection string (prefer the **pooled** / `-pooler` host for Workers).
+3. Put it in `apps/api/.dev.vars` as `DATABASE_URL=…` (and `wrangler secret put DATABASE_URL` for deploy).
+4. Apply schema + migrations:
+
+```bash
+pnpm --filter @beaver/api db:migrate
+# or first-time push against an empty DB:
+# pnpm --filter @beaver/api db:push
+```
+
+| Table | Purpose |
+|-------|---------|
+| `trips` | Trip headers + optimistic `version` |
+| `days` | Itinerary days |
+| `stops` | Places on a day (engine place ref columns) |
+| `legs` | Routed walk/transit/drive segments |
+| `journal_entries` | Trip journal notes + media URL list |
+| `share_artifacts` | Generated share cards (SVG data URL for now) |
+| `trip_members` | Collab roles (owner / editor / viewer) |
+| `trip_invites` | Invite codes |
+
+On first request with a working DB, the API idempotently seeds **`sample-kyoto`** (same demo shape as before). Existing demo flows (`/trips/sample-kyoto`, journal, share, invites) keep the same JSON shapes.
+
+**Smoke after migrate:** `pnpm dev:api` → `GET /health` should show `database.configured: true` → `GET /v1/trips/sample-kyoto` returns days/stops/members → open web planner on sample trip.
+
 ### Scripts
 
 ```bash
 pnpm typecheck          # all packages
+pnpm --filter @beaver/api db:migrate   # apply Drizzle migrations to Neon
+pnpm --filter @beaver/api db:generate  # after schema edits
 pnpm dev:api            # http://127.0.0.1:8787
 pnpm dev:web            # http://localhost:3000
 pnpm dev:mobile         # Expo Metro
@@ -140,7 +173,7 @@ Roles owner / editor / viewer; version conflicts → 409. Demo invite flow still
 | Scripted bilingual translate UI (web + mobile) | ✅ | — | — |
 | Live ASR → LLM → TTS | demo | ✅ | — |
 | Camera OCR / caption | demo overlays | ✅ vision | — |
-| Kyoto planner / journal / share / collab | ✅ | — | ✅ when keyed |
+| Kyoto planner / journal / share / collab | ✅ with Neon `DATABASE_URL` | — | ✅ when keyed |
 
 ---
 
@@ -156,8 +189,10 @@ Hosting is **Cloudflare only** (Workers + R2; no VPS).
 
 ```bash
 cd apps/api
+pnpm exec wrangler secret put DATABASE_URL   # Neon connection string (required)
 pnpm exec wrangler secret put OPENAI_API_KEY
 # optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY
+pnpm --filter @beaver/api db:migrate        # against the same Neon DB
 pnpm deploy
 ```
 

@@ -2,6 +2,12 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { t, type Locale } from "@beaver/i18n";
 import { attachAuth, clerkConfigured, type AuthVariables } from "./auth.js";
+import {
+  databaseMissingResponse,
+  dbOf,
+  isDatabaseConfigError,
+} from "./db/context.js";
+import { DatabaseConfigError } from "./db/client.js";
 import type { Bindings } from "./env.js";
 import { journalRoutes } from "./journal.js";
 import { mapsRoutes } from "./maps.js";
@@ -31,10 +37,50 @@ app.use(
   }),
 );
 
-/** Seed demo trip after the Worker runtime clock is available. */
+/**
+ * Persistence requires Neon/Postgres. No silent in-memory fallback for trips.
+ * Media bytes remain in-memory until the R2 PR.
+ */
 app.use("*", async (c, next) => {
-  ensureSampleTrip();
+  const path = new URL(c.req.url).pathname;
+  // Health/maps/translation can answer without DB; trip-shaped routes cannot.
+  const needsDb =
+    path.startsWith("/v1/trips") ||
+    path.startsWith("/v1/invites") ||
+    path.startsWith("/v1/share");
+  if (!needsDb) {
+    await next();
+    return;
+  }
+  if (!c.env.DATABASE_URL?.trim()) {
+    return databaseMissingResponse(c);
+  }
+  try {
+    await ensureSampleTrip(dbOf(c));
+  } catch (err) {
+    if (isDatabaseConfigError(err)) return databaseMissingResponse(c);
+    const message = err instanceof Error ? err.message : "database_error";
+    return c.json(
+      {
+        error: "database_unavailable",
+        message,
+        hint: "Check DATABASE_URL / Neon project status, then pnpm --filter @beaver/api db:migrate",
+      },
+      503,
+    );
+  }
   await next();
+});
+
+app.onError((err, c) => {
+  if (err instanceof DatabaseConfigError || isDatabaseConfigError(err)) {
+    return databaseMissingResponse(c);
+  }
+  console.error(err);
+  return c.json(
+    { error: "internal_error", message: err instanceof Error ? err.message : "error" },
+    500,
+  );
 });
 
 app.use("*", attachAuth);
@@ -64,6 +110,7 @@ app.get("/health", (c) => {
     }),
     translationEnabled,
   );
+  const hasDb = Boolean(c.env.DATABASE_URL?.trim());
   return c.json({
     status: t(locale, "api.health"),
     app: c.env.APP_NAME ?? "Beaver Plan",
@@ -72,6 +119,14 @@ app.get("/health", (c) => {
       clerk: clerkConfigured(c.env),
       wechatUi: wechat,
       mode: clerkConfigured(c.env) ? "clerk" : "demo",
+    },
+    database: {
+      configured: hasDb,
+      driver: "neon-http + drizzle",
+      required: true,
+      note: hasDb
+        ? "Trips / journal / members / invites / share artifacts persist in Neon Postgres"
+        : "Set DATABASE_URL (Neon) — trip APIs return 503 until configured",
     },
     maps: {
       google: Boolean(c.env.GOOGLE_MAPS_SERVER_KEY),

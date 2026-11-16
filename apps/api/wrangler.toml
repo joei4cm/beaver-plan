@@ -21,7 +21,7 @@ CLERK_WECHAT_ENABLED = "false"
 # Secrets (wrangler secret put …) — never commit values:
 # CLERK_SECRET_KEY         — enables JWT-gated trip mutations
 # CLERK_PUBLISHABLE_KEY / CLERK_JWT_ISSUER — JWKS verification
-# DATABASE_URL
+# DATABASE_URL             — Neon Postgres (required for trips/journal/members)
 # R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (or use R2 binding above)
 # GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
 # AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
@@ -31,5 +31,6 @@ CLERK_WECHAT_ENABLED = "false"
 # ASR_PROVIDER / LLM_PROVIDER / TTS_PROVIDER — openai|deepgram|edge|demo|auto
 #
 # Without CLERK_SECRET_KEY, BFF uses demo identity headers (X-Beaver-User-Id).
+# Without DATABASE_URL, /v1/trips|/v1/invites|/v1/share return 503 (no memory fallback).
 # Without map secrets, /v1/places and /v1/directions use curated demo data.
 # Without OPENAI_/DEEPGRAM keys, /v1/translation/* serves scripted demo turns.

@@ -11,6 +11,8 @@
     "dev:api": "pnpm --filter @beaver/api dev",
     "build": "pnpm -r --filter=!@beaver/mobile build",
     "typecheck": "pnpm -r typecheck",
+    "db:migrate": "pnpm --filter @beaver/api db:migrate",
+    "db:generate": "pnpm --filter @beaver/api db:generate",
     "lint": "pnpm -r --if-present lint"
   },
   "engines": {
