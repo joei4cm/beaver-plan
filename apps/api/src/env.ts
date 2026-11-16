@@ -9,6 +9,23 @@ export type Bindings = {
    * Local: apps/api/.dev.vars — Prod: `wrangler secret put DATABASE_URL`
    */
   DATABASE_URL?: string;
+  /**
+   * S3-compatible object storage (Cloudflare R2 via S3 API tokens).
+   * Prefer S3_*; R2_* aliases accepted. Missing → /v1/media* returns 503.
+   */
+  S3_ENDPOINT?: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+  S3_BUCKET?: string;
+  S3_REGION?: string;
+  S3_PUBLIC_BASE_URL?: string;
+  /** Alias: builds endpoint https://{id}.r2.cloudflarestorage.com */
+  R2_ACCOUNT_ID?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET?: string;
+  R2_REGION?: string;
+  R2_PUBLIC_BASE_URL?: string;
   /** When set (real sk_…), trip mutations require a Clerk Bearer JWT. */
   CLERK_SECRET_KEY?: string;
   /** Optional; used with jose to derive JWKS issuer if CLERK_JWT_ISSUER unset. */

@@ -1,19 +1,52 @@
-import type { MediaObject } from "@beaver/core";
+import type { S3Config } from "./s3.js";
+import { putObject } from "./s3.js";
 
 /**
- * In-memory media stub (Slice C).
- * Production path: bind R2 bucket as `MEDIA` and PUT objects with the same key shape.
- * See README — Media / R2.
+ * Object-key helpers for journal / share media.
+ * Bytes live in S3-compatible storage (Cloudflare R2). Neon stores the key strings.
+ *
+ * Key shape is flat (`media/{id}`, `share/{id}.svg`) so `/v1/media/:id` routes cleanly.
  */
-export const mediaById = new Map<string, MediaObject>();
 
-/** Tiny PNG (1×1 river green) used only if SVG placeholders fail — not for UI. */
-export const TINY_PNG = Uint8Array.from(
-  atob(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  ),
-  (c) => c.charCodeAt(0),
-);
+/** Canonical object key for a media id. */
+export function mediaObjectKey(id: string): string {
+  const safe = id.replace(/[^a-zA-Z0-9._-]/g, "");
+  return `media/${safe}`;
+}
+
+export function shareObjectKey(id: string): string {
+  const safe = id.replace(/[^a-zA-Z0-9._-]/g, "");
+  return `share/${safe}.svg`;
+}
+
+/** Stable BFF path clients can use in <img src> (redirects to signed GET). */
+export function mediaPublicPath(id: string): string {
+  return `/v1/media/${id}`;
+}
+
+/** Extract media id from a stored key, legacy path, or bare id. */
+export function mediaIdFromRef(ref: string): string | null {
+  if (!ref || ref.startsWith("data:") || ref.startsWith("blob:")) return null;
+  if (ref.startsWith("http://") || ref.startsWith("https://")) {
+    const m = ref.match(/\/v1\/media\/([^/?#]+)/);
+    return m?.[1] ?? null;
+  }
+  const pathMatch = ref.match(/^(?:\/v1\/media\/|media\/)([^/?#]+)$/);
+  if (pathMatch) return pathMatch[1] ?? null;
+  if (/^[a-zA-Z0-9._-]+$/.test(ref)) return ref;
+  return null;
+}
+
+/** Resolve a DB-stored media ref to an object key. */
+export function mediaKeyFromRef(ref: string): string | null {
+  if (!ref || ref.startsWith("data:")) return null;
+  if (ref.startsWith("media/") || ref.startsWith("share/")) {
+    return ref.replace(/^\//, "");
+  }
+  const id = mediaIdFromRef(ref);
+  if (!id) return null;
+  return mediaObjectKey(id);
+}
 
 export function makePlaceholderSvg(opts: {
   title: string;
@@ -55,24 +88,27 @@ function escapeXml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function putMedia(input: {
-  bytes: Uint8Array;
-  contentType: string;
-  tripId?: string;
-  id?: string;
-}): MediaObject {
+/** Upload bytes to S3 and return the object key (stored in Neon). */
+export async function putMediaObject(
+  cfg: S3Config,
+  input: {
+    bytes: Uint8Array;
+    contentType: string;
+    /** Kept for API compatibility; not embedded in the key. */
+    tripId?: string;
+    id?: string;
+  },
+): Promise<{ id: string; key: string; url: string }> {
   const id = input.id ?? crypto.randomUUID();
-  const obj: MediaObject = {
-    id,
+  const key = mediaObjectKey(id);
+  await putObject(cfg, {
+    key,
+    body: input.bytes,
     contentType: input.contentType,
-    bytes: input.bytes,
-    createdAt: new Date().toISOString(),
-    tripId: input.tripId,
+  });
+  return {
+    id,
+    key,
+    url: mediaPublicPath(id),
   };
-  mediaById.set(id, obj);
-  return obj;
-}
-
-export function mediaPublicPath(id: string): string {
-  return `/v1/media/${id}`;
 }

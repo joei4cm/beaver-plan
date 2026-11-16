@@ -17,6 +17,7 @@
     "@beaver/core": "workspace:*",
     "@beaver/i18n": "workspace:*",
     "@neondatabase/serverless": "^1.2.1",
+    "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.7.5",
     "jose": "^6.2.17"

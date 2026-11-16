@@ -23,11 +23,13 @@ import {
   tripMembers as membersTable,
   trips as tripsTable,
 } from "./db/schema.js";
+import type { Bindings } from "./env.js";
 import {
   makePlaceholderSvg,
-  mediaPublicPath,
-  putMedia,
+  mediaObjectKey,
+  putMediaObject,
 } from "./media-store.js";
+import { isS3Configured, requireS3Config, type S3Config } from "./s3.js";
 
 export function nowIso() {
   return new Date().toISOString();
@@ -496,13 +498,17 @@ export async function inviteCodeExists(db: Db, code: string): Promise<boolean> {
 
 /* ── sample seed ───────────────────────────────────────────────────────── */
 
-/** Seed Kyoto demo trip (idempotent). Media stubs stay in-memory until R2. */
-export async function ensureSampleTrip(db: Db): Promise<void> {
+/** Seed Kyoto demo trip (idempotent). Demo photo bytes go to S3 when configured. */
+export async function ensureSampleTrip(
+  db: Db,
+  env?: Bindings,
+): Promise<void> {
   const id = "sample-kyoto";
+  const s3 = env && isS3Configured(env) ? requireS3Config(env) : null;
   const existing = await getTrip(db, id);
   if (existing) {
-    // Re-seed in-memory media placeholders so /v1/media/:id works after Worker restart.
-    seedSampleMedia(id);
+    // Re-upload demo placeholders so signed URLs work after bucket wipe / new env.
+    if (s3) await seedSampleMedia(s3);
     return;
   }
 
@@ -598,7 +604,14 @@ export async function ensureSampleTrip(db: Db): Promise<void> {
   await replaceStops(db, id, stops);
   await replaceLegs(db, id, []);
 
-  const mediaPaths = seedSampleMedia(id);
+  // Object keys stored in Neon; bytes uploaded when S3 is configured.
+  const mediaKeys = {
+    kiyomizu: mediaObjectKey("demo-photo-kiyomizu"),
+    gion: mediaObjectKey("demo-photo-gion"),
+    fushimi: mediaObjectKey("demo-photo-fushimi"),
+    arashiyama: mediaObjectKey("demo-photo-arashiyama"),
+  };
+  if (s3) await seedSampleMedia(s3);
 
   const journal: JournalEntry[] = [
     {
@@ -606,7 +619,7 @@ export async function ensureSampleTrip(db: Db): Promise<void> {
       tripId: id,
       dayId: "day-kyoto-1",
       body: "清晨爬上清水舞台，雾气还挂在屋檐上。",
-      media: [mediaPaths.kiyomizu, mediaPaths.gion],
+      media: [mediaKeys.kiyomizu, mediaKeys.gion],
       createdAt: "2026-04-10T09:20:00.000Z",
       updatedAt: "2026-04-10T09:20:00.000Z",
     },
@@ -616,7 +629,7 @@ export async function ensureSampleTrip(db: Db): Promise<void> {
       dayId: "day-kyoto-1",
       stopId: "stop-gion",
       body: "巷子里的灯笼一盏盏亮起来。",
-      media: [mediaPaths.gion],
+      media: [mediaKeys.gion],
       createdAt: "2026-04-10T18:40:00.000Z",
       updatedAt: "2026-04-10T18:40:00.000Z",
     },
@@ -625,7 +638,7 @@ export async function ensureSampleTrip(db: Db): Promise<void> {
       tripId: id,
       dayId: "day-kyoto-2",
       body: "千本鸟居与竹林，一天两条路径。",
-      media: [mediaPaths.fushimi, mediaPaths.arashiyama],
+      media: [mediaKeys.fushimi, mediaKeys.arashiyama],
       createdAt: "2026-04-11T16:10:00.000Z",
       updatedAt: "2026-04-11T16:10:00.000Z",
     },
@@ -635,51 +648,44 @@ export async function ensureSampleTrip(db: Db): Promise<void> {
   }
 }
 
-function seedSampleMedia(tripId: string) {
-  const m1 = putMedia({
-    id: "demo-photo-kiyomizu",
-    bytes: makePlaceholderSvg({
+/** Upload Kyoto placeholder SVGs to S3 (idempotent overwrite). */
+async function seedSampleMedia(cfg: S3Config): Promise<void> {
+  const specs = [
+    {
+      id: "demo-photo-kiyomizu",
       title: "清水寺",
       subtitle: "East Kyoto · morning mist",
-      tone: "river",
-    }),
-    contentType: "image/svg+xml",
-    tripId,
-  });
-  const m2 = putMedia({
-    id: "demo-photo-gion",
-    bytes: makePlaceholderSvg({
+      tone: "river" as const,
+    },
+    {
+      id: "demo-photo-gion",
       title: "祇园",
       subtitle: "Lantern lanes",
-      tone: "timber",
-    }),
-    contentType: "image/svg+xml",
-    tripId,
-  });
-  const m3 = putMedia({
-    id: "demo-photo-fushimi",
-    bytes: makePlaceholderSvg({
+      tone: "timber" as const,
+    },
+    {
+      id: "demo-photo-fushimi",
       title: "伏见稻荷",
       subtitle: "Torii path",
-      tone: "mist",
-    }),
-    contentType: "image/svg+xml",
-    tripId,
-  });
-  const m4 = putMedia({
-    id: "demo-photo-arashiyama",
-    bytes: makePlaceholderSvg({
+      tone: "mist" as const,
+    },
+    {
+      id: "demo-photo-arashiyama",
       title: "岚山",
       subtitle: "Bamboo light",
-      tone: "river",
-    }),
-    contentType: "image/svg+xml",
-    tripId,
-  });
-  return {
-    kiyomizu: mediaPublicPath(m1.id),
-    gion: mediaPublicPath(m2.id),
-    fushimi: mediaPublicPath(m3.id),
-    arashiyama: mediaPublicPath(m4.id),
-  };
+      tone: "river" as const,
+    },
+  ];
+  for (const spec of specs) {
+    await putMediaObject(cfg, {
+      id: spec.id,
+      bytes: makePlaceholderSvg({
+        title: spec.title,
+        subtitle: spec.subtitle,
+        tone: spec.tone,
+      }),
+      contentType: "image/svg+xml",
+      tripId: "sample-kyoto",
+    });
+  }
 }

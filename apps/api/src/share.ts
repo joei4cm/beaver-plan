@@ -14,7 +14,17 @@ import {
 } from "@beaver/core";
 import { dbOf } from "./db/context.js";
 import type { Bindings } from "./env.js";
-import { mediaById } from "./media-store.js";
+import {
+  mediaKeyFromRef,
+  shareObjectKey,
+} from "./media-store.js";
+import {
+  getObject,
+  isS3Configured,
+  putObject,
+  requireS3Config,
+  signedGetUrl,
+} from "./s3.js";
 import {
   getTrip,
   insertShare,
@@ -49,22 +59,34 @@ function bytesToDataUrl(contentType: string, bytes: Uint8Array): string {
   return `data:${contentType};base64,${btoa(binary)}`;
 }
 
-/** Prefer inlining `/v1/media/:id` so SVG preview + PNG export are self-contained. */
-function resolvePhotoUrl(
+/** Prefer inlining media so SVG preview + PNG export are self-contained. */
+async function resolvePhotoUrl(
   url: string,
   base: string | undefined,
   requestOrigin: string,
-): string {
+  env: Bindings,
+): Promise<string> {
   if (url.startsWith("data:")) return url;
 
-  const mediaMatch = url.match(/\/v1\/media\/([^/?#]+)/);
-  if (mediaMatch) {
-    const obj = mediaById.get(mediaMatch[1]!);
-    if (obj) return bytesToDataUrl(obj.contentType, obj.bytes);
+  const key = mediaKeyFromRef(url);
+  if (key && isS3Configured(env)) {
+    try {
+      const cfg = requireS3Config(env);
+      const obj = await getObject(cfg, key);
+      if (obj) return bytesToDataUrl(obj.contentType, obj.body);
+    } catch {
+      // fall through to absolute URL
+    }
   }
 
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
   const root = (base ?? requestOrigin).replace(/\/$/, "");
+  if (key) {
+    // BFF proxy path so absolute URL still works if S3 fetch failed
+    const id = key.replace(/^media\//, "");
+    return `${root}/v1/media/${id}?proxy=1`;
+  }
   return url.startsWith("/") ? `${root}${url}` : `${root}/${url}`;
 }
 
@@ -103,8 +125,10 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
     body.photoUrls && body.photoUrls.length > 0
       ? body.photoUrls
       : collectJournalPhotos(dayEntries, 6);
-  const photos = rawPhotos.map((u) =>
-    resolvePhotoUrl(u, body.mediaBaseUrl, requestOrigin),
+  const photos = await Promise.all(
+    rawPhotos.map((u) =>
+      resolvePhotoUrl(u, body.mediaBaseUrl, requestOrigin, c.env),
+    ),
   );
 
   const dayIndex = day ? days.findIndex((d) => d.id === day.id) + 1 : undefined;
@@ -138,14 +162,32 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
 
   let artifact: ShareArtifact | undefined;
   if (body.persist !== false) {
+    const artifactId = crypto.randomUUID();
+    let storageUrl = dataUrl;
+    // Prefer persisting SVG object key in Neon when S3 is configured.
+    if (isS3Configured(c.env)) {
+      try {
+        const cfg = requireS3Config(c.env);
+        const key = shareObjectKey(artifactId);
+        const bytes = new TextEncoder().encode(svg);
+        await putObject(cfg, {
+          key,
+          body: bytes,
+          contentType: "image/svg+xml",
+        });
+        storageUrl = key;
+      } catch {
+        storageUrl = dataUrl;
+      }
+    }
     artifact = {
-      id: crypto.randomUUID(),
+      id: artifactId,
       tripId: trip.id,
       templateId: template.id,
       dayId: day?.id,
       width: template.width,
       height: template.height,
-      storageUrl: dataUrl,
+      storageUrl,
       createdAt: nowIso(),
     };
     await insertShare(db, artifact);
@@ -155,7 +197,6 @@ shareRoutes.post("/v1/trips/:id/share", async (c) => {
     template,
     snapshot: {
       ...snap,
-      // avoid echoing huge data URLs twice
       photos: snap.photos,
     },
     svg,
@@ -171,13 +212,48 @@ shareRoutes.get("/v1/trips/:id/share", async (c) => {
   const trip = await getTrip(db, c.req.param("id"));
   if (!trip) return c.json({ error: "not_found" }, 404);
   const artifacts = await listShare(db, trip.id);
-  return c.json({
-    artifacts: artifacts.map((a) => ({
-      ...a,
-      storageUrl: a.storageUrl?.startsWith("data:")
-        ? `${a.storageUrl.slice(0, 48)}…`
-        : a.storageUrl,
-      hasPreview: Boolean(a.storageUrl),
-    })),
-  });
+
+  let resolveSigned: ((key: string) => Promise<string | undefined>) | null =
+    null;
+  if (isS3Configured(c.env)) {
+    const cfg = requireS3Config(c.env);
+    resolveSigned = async (key: string) => {
+      try {
+        return await signedGetUrl(cfg, { key, expiresInSec: 3600 });
+      } catch {
+        return undefined;
+      }
+    };
+  }
+
+  const mapped = await Promise.all(
+    artifacts.map(async (a) => {
+      const raw = a.storageUrl;
+      if (!raw) {
+        return { ...a, hasPreview: false };
+      }
+      if (raw.startsWith("data:")) {
+        return {
+          ...a,
+          storageUrl: `${raw.slice(0, 48)}…`,
+          hasPreview: true,
+        };
+      }
+      if (
+        (raw.startsWith("share/") || raw.startsWith("media/")) &&
+        resolveSigned
+      ) {
+        const signed = await resolveSigned(raw);
+        return {
+          ...a,
+          storageUrl: signed ?? raw,
+          key: raw,
+          hasPreview: Boolean(signed ?? raw),
+        };
+      }
+      return { ...a, hasPreview: Boolean(raw) };
+    }),
+  );
+
+  return c.json({ artifacts: mapped });
 });
