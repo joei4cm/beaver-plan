@@ -1,4 +1,4 @@
-/** Shared design tokens for Beaver Plan / 海狸旅行. */
+/** Shared design tokens for Beaver Plan / 海狸旅行 — Horizon Cartograph (redesign v2). */
 
 export const brand = {
   en: "Beaver Plan",
@@ -7,24 +7,28 @@ export const brand = {
   taglineEn: "Plan a trip worth walking",
 } as const;
 
+/**
+ * Cool atlas palette — fog paper, navy ink, lagoon primary, vermillion signal.
+ * Deliberately not cream+terracotta, not purple SaaS, not dark-by-default.
+ */
 export const colors = {
-  ink: "#101a17",
-  inkSoft: "#3a4a43",
-  paper: "#f2eee4",
-  mist: "#d5e0d9",
-  river: "#1a6557",
-  riverDeep: "#0c3a32",
-  timber: "#b56536",
-  foam: "#f8faf8",
-  line: "rgba(16, 26, 23, 0.11)",
-  focus: "#2a9d8f",
-  shadow: "rgba(12, 58, 50, 0.14)",
-  shadowDeep: "rgba(12, 58, 50, 0.28)",
+  ink: "#0B1420",
+  inkSoft: "#5A6574",
+  paper: "#F3F5F7",
+  mist: "#E1E7EE",
+  river: "#0C7C78",
+  riverDeep: "#064A4F",
+  timber: "#E84E2F",
+  foam: "#FAFBFC",
+  line: "rgba(11, 20, 32, 0.1)",
+  focus: "#19A8A1",
+  shadow: "rgba(11, 20, 32, 0.1)",
+  shadowDeep: "rgba(11, 20, 32, 0.22)",
 } as const;
 
 export const fonts = {
-  display: '"Fraunces", "Songti SC", "Noto Serif SC", Georgia, serif',
-  body: '"Sora", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+  display: '"Syne", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+  body: '"Outfit", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
   mono: '"IBM Plex Mono", ui-monospace, monospace',
 } as const;
 
@@ -40,17 +44,17 @@ export const space = {
 } as const;
 
 export const radius = {
-  sm: 6,
-  md: 12,
-  lg: 20,
+  sm: 4,
+  md: 10,
+  lg: 16,
 } as const;
 
 export const motion = {
   ease: "cubic-bezier(0.22, 1, 0.36, 1)",
   easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
-  durationFastMs: 180,
-  durationMs: 380,
-  durationSlowMs: 560,
+  durationFastMs: 200,
+  durationMs: 420,
+  durationSlowMs: 640,
 } as const;
 
 export const tokens = { brand, colors, fonts, space, radius, motion } as const;

@@ -37,8 +37,8 @@ export default function HomeScreen() {
           </Pressable>
         </Link>
         <Link href="/trips" asChild>
-          <Pressable style={styles.secondary}>
-            <Text style={styles.secondaryLabel}>{t(locale, "cta.viewTrips")}</Text>
+          <Pressable style={styles.ghost}>
+            <Text style={styles.ghostLabel}>{t(locale, "cta.viewTrips")}</Text>
           </Pressable>
         </Link>
       </View>
@@ -53,81 +53,94 @@ const styles = StyleSheet.create({
   },
   hero: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-end",
     paddingHorizontal: 28,
+    paddingBottom: 36,
     backgroundColor: colors.riverDeep,
     overflow: "hidden",
   },
   heroWash: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "transparent",
-    borderBottomWidth: 120,
-    borderBottomColor: "rgba(26, 101, 87, 0.35)",
+    borderBottomWidth: 160,
+    borderBottomColor: "rgba(12, 124, 120, 0.28)",
   },
   eyebrow: {
-    color: "rgba(248, 250, 248, 0.62)",
-    letterSpacing: 3.2,
+    color: "rgba(250, 251, 252, 0.55)",
+    letterSpacing: 3.6,
     textTransform: "uppercase",
-    fontSize: 12,
-    marginBottom: 14,
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 16,
   },
   brand: {
     color: colors.foam,
-    fontSize: 46,
-    fontWeight: "600",
-    letterSpacing: -0.6,
+    fontSize: 52,
+    fontWeight: "800",
+    letterSpacing: -1.2,
+    lineHeight: 56,
   },
   tagline: {
-    marginTop: 14,
-    color: "rgba(248, 250, 248, 0.92)",
+    marginTop: 16,
+    color: "rgba(250, 251, 252, 0.92)",
     fontSize: 18,
     lineHeight: 26,
     fontWeight: "500",
     maxWidth: 300,
   },
   hint: {
-    marginTop: 12,
-    color: "rgba(248, 250, 248, 0.72)",
-    fontSize: 15,
-    lineHeight: 22,
+    marginTop: 10,
+    color: "rgba(250, 251, 252, 0.62)",
+    fontSize: 14,
+    lineHeight: 21,
     maxWidth: 300,
   },
   actions: {
     padding: 24,
-    paddingTop: 20,
+    paddingTop: 22,
     backgroundColor: colors.paper,
     gap: 0,
   },
   primary: {
-    backgroundColor: colors.river,
+    backgroundColor: colors.timber,
     borderRadius: radius.md,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: "center",
   },
   translate: {
     marginTop: 10,
-    backgroundColor: colors.riverDeep,
+    backgroundColor: colors.ink,
     borderRadius: radius.md,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: "center",
   },
   primaryLabel: {
     color: colors.foam,
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   secondary: {
     marginTop: 10,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: "center",
     backgroundColor: colors.foam,
   },
   secondaryLabel: {
     color: colors.inkSoft,
     fontSize: 15,
+    fontWeight: "600",
+  },
+  ghost: {
+    marginTop: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  ghostLabel: {
+    color: colors.river,
+    fontSize: 14,
     fontWeight: "600",
   },
 });

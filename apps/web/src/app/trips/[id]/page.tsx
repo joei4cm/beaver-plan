@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { Day, Leg, Stop, Trip } from "@beaver/core";
 import { getLocale } from "@/lib/locale";
 import { apiBase } from "@/lib/api";
+import { sampleKyotoFixture } from "@/lib/sample-kyoto";
 import { TripPlanner } from "@/components/planner/trip-planner";
 
 type Params = { params: Promise<{ id: string }> };
@@ -21,7 +22,10 @@ async function loadTrip(id: string): Promise<{
     const res = await fetch(`${apiBase()}/v1/trips/${id}`, {
       cache: "no-store",
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (id === "sample-kyoto") return sampleKyotoFixture();
+      return null;
+    }
     return (await res.json()) as {
       trip: Trip;
       days: Day[];
@@ -29,6 +33,7 @@ async function loadTrip(id: string): Promise<{
       legs: Leg[];
     };
   } catch {
+    if (id === "sample-kyoto") return sampleKyotoFixture();
     return null;
   }
 }

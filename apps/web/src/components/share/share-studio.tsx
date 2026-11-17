@@ -223,13 +223,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const active = templates.find((x) => x.id === templateId)!;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-6">
-      <header className="animate-rise flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
+      <header className="animate-rise flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-8">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-river/80">
-            {t(locale, "share.eyebrow")}
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+            Beaver Plan · {t(locale, "share.eyebrow")}
           </p>
-          <h1 className="mt-2 font-display text-4xl tracking-tight text-ink md:text-5xl">
+          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
             {t(locale, "share.title")}
           </h1>
           <p className="mt-3 max-w-xl text-ink-soft">
@@ -239,35 +239,35 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/trips/${tripId}/journal`}
-            className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-4 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
           >
             {t(locale, "share.toJournal")}
           </Link>
           <Link
             href={`/trips/${tripId}`}
-            className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-4 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
           >
             {t(locale, "journal.backPlanner")}
           </Link>
         </div>
       </header>
 
-      <div className="mt-8 flex gap-2 overflow-x-auto pb-1">
+      <div className="mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
         {days.map((day, i) => (
           <button
             key={day.id}
             type="button"
             onClick={() => setDayId(day.id)}
-            className={`shrink-0 rounded-md px-4 py-2 text-left transition ${
+            className={`shrink-0 px-5 py-3 text-left transition ${
               dayId === day.id
-                ? "bg-river-deep text-foam"
-                : "border border-[color:var(--bp-line)] bg-foam/70 text-ink-soft hover:border-river/40"
+                ? "bg-ink text-foam"
+                : "text-ink-soft hover:bg-mist/40 hover:text-ink"
             }`}
           >
-            <span className="block text-[11px] uppercase tracking-wider opacity-80">
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
               {t(locale, "planner.day")} {i + 1}
             </span>
-            <span className="text-sm font-medium">{day.date}</span>
+            <span className="text-sm font-semibold">{day.date}</span>
           </button>
         ))}
       </div>
@@ -275,7 +275,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         <div className="animate-fade flex flex-col items-center">
           <div
-            className="relative w-full max-w-[420px] overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-river-deep/90 shadow-bp"
+            className="animate-sheet-in relative w-full max-w-[420px] overflow-hidden border border-[color:var(--bp-line)] bg-ink shadow-bp"
             style={{
               aspectRatio: `${active.width} / ${active.height}`,
             }}

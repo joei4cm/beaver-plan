@@ -47,7 +47,10 @@ export function TripMembersBar({
 
   useEffect(() => {
     startTransition(() => {
-      void refresh().catch((e: Error) => setError(e.message));
+      void refresh().catch((e: Error) => {
+        // Soft-fail when Neon is absent — avoid red 503 blobs on demo shell.
+        if (!/503/.test(e.message)) setError(e.message);
+      });
     });
   }, [refresh]);
 
@@ -80,7 +83,7 @@ export function TripMembersBar({
   const canInvite = yourRole === "owner" || yourRole === "editor";
 
   return (
-    <div className="animate-fade rounded-md border border-[color:var(--bp-line)] bg-foam/55 px-3 py-3 backdrop-blur-sm">
+    <div className="animate-fade border border-[color:var(--bp-line)] bg-foam/40 px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <span className="text-[11px] uppercase tracking-[0.16em] text-river/80">

@@ -13,9 +13,9 @@ function AppStack() {
       <MobileAuthBridge />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.riverDeep },
+          headerStyle: { backgroundColor: colors.ink },
           headerTintColor: colors.foam,
-          headerTitleStyle: { fontWeight: "600" },
+          headerTitleStyle: { fontWeight: "700" },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.paper },
         }}
