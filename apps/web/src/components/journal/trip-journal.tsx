@@ -315,14 +315,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-8 md:pt-6">
-      <header className="animate-rise flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
+      <header className="animate-rise flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-8">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-river/80">
-            {t(locale, "journal.eyebrow")}
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+            Beaver Plan · {t(locale, "journal.eyebrow")}
             {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
           </p>
-          <h1 className="mt-2 font-display text-4xl tracking-tight text-ink md:text-5xl">
+          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
             {trip.title}
           </h1>
           <p className="mt-3 max-w-xl text-ink-soft">
@@ -343,20 +343,20 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/trips/${tripId}`}
-            className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-4 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
           >
             {t(locale, "journal.backPlanner")}
           </Link>
           <Link
             href={`/trips/${tripId}/share`}
-            className="rounded-md bg-river px-4 py-2 text-sm font-medium text-foam transition hover:bg-river-deep"
+            className="rounded-bp bg-timber px-4 py-2 text-sm font-semibold text-foam transition hover:brightness-110"
           >
             {t(locale, "journal.toShare")}
           </Link>
         </div>
       </header>
 
-      <div className="mt-8 flex gap-2 overflow-x-auto pb-1">
+      <div className="mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
         {days.map((day, i) => (
           <button
             key={day.id}
@@ -365,16 +365,16 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               setDayId(day.id);
               setStopId("");
             }}
-            className={`shrink-0 rounded-md px-4 py-2 text-left transition ${
+            className={`shrink-0 px-5 py-3 text-left transition ${
               dayId === day.id
-                ? "bg-river-deep text-foam"
-                : "border border-[color:var(--bp-line)] bg-foam/70 text-ink-soft hover:border-river/40"
+                ? "bg-ink text-foam"
+                : "text-ink-soft hover:bg-mist/40 hover:text-ink"
             }`}
           >
-            <span className="block text-[11px] uppercase tracking-wider opacity-80">
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
               {t(locale, "planner.day")} {i + 1}
             </span>
-            <span className="text-sm font-medium">{day.date}</span>
+            <span className="text-sm font-semibold">{day.date}</span>
           </button>
         ))}
       </div>
@@ -385,8 +385,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       >
         <div className="space-y-8">
           {visible.length === 0 && (
-            <div className="animate-fade rounded-bp-lg border border-dashed border-river/25 bg-foam/35 px-6 py-14">
-              <p className="font-display text-2xl text-ink md:text-3xl">
+            <div className="animate-fade border border-dashed border-river/30 px-6 py-14">
+              <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
                 {t(locale, "journal.empty")}
               </p>
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
@@ -442,8 +442,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           })}
         </div>
 
-        <aside className="h-fit rounded-[20px] border border-[color:var(--bp-line)] bg-foam/55 p-5 backdrop-blur-sm lg:sticky lg:top-6">
-          <h2 className="font-display text-2xl text-ink">
+        <aside className="h-fit border border-[color:var(--bp-line)] bg-foam/70 p-5 lg:sticky lg:top-6">
+          <h2 className="font-display text-2xl font-semibold text-ink">
             {t(locale, "journal.compose")}
           </h2>
           <p className="mt-1 text-sm text-ink-soft">

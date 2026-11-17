@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Sora } from "next/font/google";
+import { Outfit, Syne } from "next/font/google";
 import { brand } from "@beaver/ui-tokens";
 import { AuthBridge } from "@/components/auth/auth-bridge";
 import { BeaverClerkProvider } from "@/components/providers/clerk-provider";
@@ -8,16 +8,18 @@ import { clerkPublishableKey } from "@/lib/clerk";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Syne({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-syne",
   display: "swap",
+  weight: ["500", "600", "700", "800"],
 });
 
-const body = Sora({
+const body = Outfit({
   subsets: ["latin"],
-  variable: "--font-sora",
+  variable: "--font-outfit",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -43,9 +45,9 @@ export default async function RootLayout({
       style={
         {
           "--bp-font-display":
-            'var(--font-fraunces), "Songti SC", Georgia, serif',
+            'var(--font-syne), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
           "--bp-font-body":
-            'var(--font-sora), "PingFang SC", system-ui, sans-serif',
+            'var(--font-outfit), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
         } as React.CSSProperties
       }
     >

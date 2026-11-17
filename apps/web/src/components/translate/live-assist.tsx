@@ -515,14 +515,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
   return (
     <div className="mx-auto max-w-3xl px-6 pb-24 pt-8 md:px-10">
-      <div className="animate-rise">
-        <p className="text-xs uppercase tracking-[0.22em] text-river/75">
+      <div className="animate-rise border-b border-[color:var(--bp-line)] pb-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
           Beaver Plan · 海狸旅行
         </p>
-        <p className="mt-3 text-sm uppercase tracking-[0.2em] text-river-deep/80">
+        <p className="mt-4 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-ink-soft">
           {t(locale, "translate.eyebrow")}
         </p>
-        <h1 className="mt-3 font-display text-4xl tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
           {t(locale, "translate.title")}
         </h1>
         <p className="mt-4 max-w-xl text-ink-soft">

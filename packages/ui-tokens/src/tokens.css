@@ -1,29 +1,30 @@
 /**
- * Beaver Plan / 海狸旅行 — design tokens
- * Visual direction: river-slate + warm timber (travel magazine, not purple/cream tropes).
+ * Beaver Plan / 海狸旅行 — design tokens (redesign v2)
+ * Direction: Horizon Cartograph — cool fog atlas + lagoon + vermillion signal.
+ * Not cream/Fraunces/terracotta; not purple AI; not dark-mode spam.
  */
 :root {
   /* Brand */
   --bp-brand: "Beaver Plan";
   --bp-brand-zh: "海狸旅行";
 
-  /* Color — slightly deeper ink, clearer river hierarchy */
-  --bp-ink: #101a17;
-  --bp-ink-soft: #3a4a43;
-  --bp-paper: #f2eee4;
-  --bp-mist: #d5e0d9;
-  --bp-river: #1a6557;
-  --bp-river-deep: #0c3a32;
-  --bp-timber: #b56536;
-  --bp-foam: #f8faf8;
-  --bp-line: rgba(16, 26, 23, 0.11);
-  --bp-focus: #2a9d8f;
-  --bp-shadow: rgba(12, 58, 50, 0.14);
-  --bp-shadow-deep: rgba(12, 58, 50, 0.28);
+  /* Color */
+  --bp-ink: #0b1420;
+  --bp-ink-soft: #5a6574;
+  --bp-paper: #f3f5f7;
+  --bp-mist: #e1e7ee;
+  --bp-river: #0c7c78;
+  --bp-river-deep: #064a4f;
+  --bp-timber: #e84e2f;
+  --bp-foam: #fafbfc;
+  --bp-line: rgba(11, 20, 32, 0.1);
+  --bp-focus: #19a8a1;
+  --bp-shadow: rgba(11, 20, 32, 0.1);
+  --bp-shadow-deep: rgba(11, 20, 32, 0.22);
 
-  /* Typography */
-  --bp-font-display: "Fraunces", "Songti SC", "Noto Serif SC", Georgia, serif;
-  --bp-font-body: "Sora", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  /* Typography — geometric editorial (Syne) + clean body (Outfit) */
+  --bp-font-display: "Syne", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --bp-font-body: "Outfit", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
   --bp-font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   /* Type scale */
@@ -32,7 +33,7 @@
   --bp-text-md: 1rem;
   --bp-text-lg: 1.125rem;
   --bp-text-xl: 1.35rem;
-  --bp-text-display: clamp(2.5rem, 5vw, 4.25rem);
+  --bp-text-display: clamp(2.75rem, 7vw, 5.5rem);
 
   /* Space */
   --bp-space-1: 0.25rem;
@@ -44,13 +45,13 @@
   --bp-space-7: 3rem;
   --bp-space-8: 4.5rem;
 
-  /* Radius / elevation / motion */
-  --bp-radius-sm: 6px;
-  --bp-radius-md: 12px;
-  --bp-radius-lg: 20px;
+  /* Radius / elevation / motion — sharper, less soft-card */
+  --bp-radius-sm: 4px;
+  --bp-radius-md: 10px;
+  --bp-radius-lg: 16px;
   --bp-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --bp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --bp-duration-fast: 180ms;
-  --bp-duration: 380ms;
-  --bp-duration-slow: 560ms;
+  --bp-duration-fast: 200ms;
+  --bp-duration: 420ms;
+  --bp-duration-slow: 640ms;
 }

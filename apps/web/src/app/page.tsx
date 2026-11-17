@@ -5,64 +5,71 @@ import { getLocale } from "@/lib/locale";
 
 export default async function HomePage() {
   const locale = await getLocale();
-  const brandName = locale === "zh-CN" ? brand.zh : brand.en;
-  const brandAlt = locale === "zh-CN" ? brand.en : brand.zh;
+  const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
+  const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const tagline = locale === "zh-CN" ? brand.taglineZh : brand.taglineEn;
 
   return (
-    <section className="relative min-h-[calc(100vh-4.5rem)] overflow-hidden">
-      {/* Full-bleed atmospheric plane */}
+    <section className="relative min-h-[calc(100vh-4.25rem)] overflow-hidden">
+      {/* Full-bleed atlas hero plane */}
       <div
         aria-hidden
         className="animate-drift pointer-events-none absolute inset-0 -z-10"
         style={{
           backgroundImage: `
-            linear-gradient(125deg, rgba(12, 58, 50, 0.62) 0%, rgba(16, 26, 23, 0.28) 42%, transparent 72%),
-            radial-gradient(ellipse 85% 70% at 72% 38%, rgba(213, 224, 217, 0.28), transparent 58%),
-            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a6557' fill-opacity='0.055'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+            linear-gradient(115deg, rgba(6, 74, 79, 0.92) 0%, rgba(11, 20, 32, 0.55) 38%, rgba(11, 20, 32, 0.18) 68%, transparent 88%),
+            radial-gradient(ellipse 90% 70% at 78% 42%, rgba(25, 168, 161, 0.28), transparent 55%),
+            radial-gradient(ellipse 50% 40% at 20% 80%, rgba(232, 78, 47, 0.18), transparent 50%),
+            linear-gradient(160deg, #064a4f 0%, #0b1420 55%, #1a2a38 100%)
           `,
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-[58%] bg-gradient-to-l from-river-deep/45 via-river/18 to-transparent"
+        className="bp-topo pointer-events-none absolute inset-0 -z-10 opacity-40 mix-blend-soft-light"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-[62%] bg-gradient-to-l from-river/25 via-transparent to-transparent"
       />
 
-      <div className="mx-auto flex max-w-6xl flex-col justify-center px-6 pb-20 pt-10 md:min-h-[calc(100vh-5rem)] md:px-10 md:pb-28 md:pt-6">
-        <p className="animate-fade text-sm uppercase tracking-[0.26em] text-river-deep/75">
-          {brandAlt}
-        </p>
-        <h1 className="animate-rise mt-5 max-w-3xl font-display text-5xl leading-[1.02] tracking-tight text-ink md:text-7xl">
-          {brandName}
-        </h1>
-        <p
-          className="animate-rise mt-3 max-w-xl font-display text-xl text-river-deep/90 md:text-2xl"
-          style={{ animationDelay: "60ms" }}
-        >
-          {tagline}
-        </p>
-        <p
-          className="animate-rise mt-5 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg"
-          style={{ animationDelay: "110ms" }}
-        >
-          {t(locale, "landing.support")}
-        </p>
-        <div
-          className="animate-rise mt-10 flex flex-wrap items-center gap-4"
-          style={{ animationDelay: "160ms" }}
-        >
-          <Link
-            href="/trips"
-            className="rounded-bp bg-river px-5 py-3 text-sm font-medium text-foam shadow-bp-soft transition duration-bp ease-bp hover:bg-river-deep"
+      <div className="mx-auto flex max-w-6xl flex-col justify-end px-6 pb-16 pt-16 md:min-h-[calc(100vh-4.25rem)] md:justify-center md:px-10 md:pb-28 md:pt-8">
+        <div className="max-w-3xl text-foam">
+          <p className="animate-fade text-[0.7rem] font-medium uppercase tracking-[0.34em] text-foam/55 md:text-xs">
+            {brandSecondary}
+          </p>
+          <h1 className="animate-rise mt-4 font-display text-[clamp(3.25rem,9vw,6.25rem)] font-extrabold leading-[0.92] tracking-[-0.03em] text-foam">
+            {brandPrimary}
+          </h1>
+          <p
+            className="animate-rise mt-6 max-w-md text-lg font-light leading-snug text-foam/88 md:text-2xl"
+            style={{ animationDelay: "70ms" }}
           >
-            {t(locale, "cta.startPlanning")}
-          </Link>
-          <Link
-            href="/translate"
-            className="rounded-bp border border-[color:var(--bp-line)] bg-foam/55 px-5 py-3 text-sm text-ink-soft backdrop-blur-sm transition duration-bp-fast ease-bp hover:border-river/40 hover:text-river"
+            {tagline}
+          </p>
+          <p
+            className="animate-rise mt-4 max-w-md text-sm leading-relaxed text-foam/60 md:text-base"
+            style={{ animationDelay: "120ms" }}
           >
-            {t(locale, "nav.translate")}
-          </Link>
+            {t(locale, "landing.support")}
+          </p>
+          <div
+            className="animate-rise mt-10 flex flex-wrap items-center gap-3"
+            style={{ animationDelay: "180ms" }}
+          >
+            <Link
+              href="/trips"
+              className="rounded-bp bg-timber px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp hover:brightness-110"
+            >
+              {t(locale, "cta.startPlanning")}
+            </Link>
+            <Link
+              href="/translate"
+              className="rounded-bp border border-foam/25 bg-foam/5 px-6 py-3.5 text-sm font-medium text-foam/90 backdrop-blur-sm transition duration-bp-fast ease-bp hover:border-foam/50 hover:bg-foam/10"
+            >
+              {t(locale, "nav.translate")}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

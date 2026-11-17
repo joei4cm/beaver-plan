@@ -304,77 +304,80 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       : t(locale, "planner.mode.demo");
 
   return (
-    <div className="mx-auto grid max-w-[1400px] gap-6 px-4 pb-16 pt-4 md:px-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:gap-8 lg:pt-6">
-      <section className="flex min-h-[520px] flex-col gap-4">
-        <header className="animate-rise flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-river/80">
-              {trip.destination ?? t(locale, "planner.trip")}
-            </p>
-            <h1 className="mt-1 font-display text-3xl tracking-tight text-ink md:text-4xl">
-              {trip.title}
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <OfflinePinControl
-              tripId={tripId}
-              locale={locale}
-              trip={trip}
-              days={days}
-              stops={stops}
-              legs={legs}
-              compact
+    <div className="mx-auto max-w-[1480px] px-3 pb-16 pt-2 md:px-6 lg:px-8 lg:pt-4">
+      {/* Title rail — brand-adjacent, not dashboard chrome */}
+      <header className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
+        <div>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
+            Beaver Plan · {trip.destination ?? t(locale, "planner.trip")}
+          </p>
+          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tight text-ink md:text-5xl">
+            {trip.title}
+          </h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <OfflinePinControl
+            tripId={tripId}
+            locale={locale}
+            trip={trip}
+            days={days}
+            stops={stops}
+            legs={legs}
+            compact
+          />
+          <Link
+            href={`/trips/${tripId}/journal`}
+            className="px-3 py-1.5 text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+          >
+            {t(locale, "nav.journal")}
+          </Link>
+          <Link
+            href={`/trips/${tripId}/share`}
+            className="rounded-bp bg-timber px-3.5 py-1.5 font-semibold text-foam transition hover:brightness-110"
+          >
+            {t(locale, "nav.share")}
+          </Link>
+          <label className="flex cursor-pointer items-center gap-1.5 px-2 py-1.5 text-ink-soft">
+            <input
+              type="checkbox"
+              checked={copyJournal}
+              onChange={(e) => setCopyJournal(e.target.checked)}
+              className="accent-[color:var(--bp-river)]"
             />
-            <Link
-              href={`/trips/${tripId}/journal`}
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
-            >
-              {t(locale, "nav.journal")}
-            </Link>
-            <Link
-              href={`/trips/${tripId}/share`}
-              className="rounded-md bg-timber px-3 py-1.5 text-foam transition hover:brightness-110"
-            >
-              {t(locale, "nav.share")}
-            </Link>
-            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-2 py-1.5 text-ink-soft">
-              <input
-                type="checkbox"
-                checked={copyJournal}
-                onChange={(e) => setCopyJournal(e.target.checked)}
-                className="accent-[color:var(--bp-river,#1f6b5c)]"
-              />
-              <span className="hidden sm:inline">
-                {t(locale, "planner.copyJournal")}
-              </span>
-            </label>
-            <button
-              type="button"
-              disabled={duplicating}
-              onClick={() => void duplicateTrip()}
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river disabled:opacity-40"
-            >
-              {duplicating
-                ? t(locale, "planner.duplicating")
-                : t(locale, "planner.duplicate")}
-            </button>
+            <span className="hidden sm:inline">
+              {t(locale, "planner.copyJournal")}
+            </span>
+          </label>
+          <button
+            type="button"
+            disabled={duplicating}
+            onClick={() => void duplicateTrip()}
+            className="px-3 py-1.5 text-ink-soft transition hover:text-river disabled:opacity-40"
+          >
+            {duplicating
+              ? t(locale, "planner.duplicating")
+              : t(locale, "planner.duplicate")}
+          </button>
+          <div className="ml-1 flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
             {(["auto", "google", "amap", "baidu"] as const).map((opt) => (
               <button
                 key={opt}
                 type="button"
                 onClick={() => void setEnginePreference(opt)}
-                className={`rounded-md px-3 py-1.5 transition ${
+                className={`px-2.5 py-1.5 text-xs font-medium transition ${
                   preference === opt
-                    ? "bg-river text-foam"
-                    : "border border-[color:var(--bp-line)] bg-foam/60 text-ink-soft hover:border-river/40"
+                    ? "bg-ink text-foam"
+                    : "bg-foam/40 text-ink-soft hover:text-river"
                 }`}
               >
                 {t(locale, `planner.pref.${opt}`)}
               </button>
             ))}
           </div>
-        </header>
+        </div>
+      </header>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <TripMembersBar
           tripId={tripId}
           locale={locale}
@@ -383,74 +386,266 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             setTrip((prev) => (prev ? { ...prev, version: v } : prev))
           }
         />
+      </div>
 
-        <TripCollabPanel
-          tripId={tripId}
-          locale={locale}
-          selectedStopId={selectedStopId}
-          selectedStopName={
-            dayStops.find((s) => s.id === selectedStopId)?.place.name
-          }
-        />
+      {/* One composition: map stage + itinerary column */}
+      <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam/40 shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
+        <section className="relative flex min-h-[420px] flex-col">
+          <div
+            className="animate-fade min-h-0 flex-1"
+            style={{ animationDelay: "60ms" }}
+          >
+            <MapStage
+              stops={dayStops}
+              legs={dayLegs}
+              selectedStopId={selectedStopId}
+              onSelectStop={setSelectedStopId}
+              engineLabel={engineLabel}
+              modeLabel={modeLabel}
+              locale={locale}
+            />
+          </div>
 
-        <div className="animate-fade min-h-0 flex-1" style={{ animationDelay: "60ms" }}>
-          <MapStage
-            stops={dayStops}
-            legs={dayLegs}
-            selectedStopId={selectedStopId}
-            onSelectStop={setSelectedStopId}
-            engineLabel={engineLabel}
-            modeLabel={modeLabel}
-            locale={locale}
-          />
-        </div>
+          <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 backdrop-blur-sm">
+            <div className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
+              {(["walk", "transit", "drive"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setTravelMode(m)}
+                  className={`px-3 py-1.5 text-sm font-medium transition ${
+                    travelMode === m
+                      ? "bg-river text-foam"
+                      : "text-ink-soft hover:text-river"
+                  }`}
+                >
+                  {t(locale, `planner.mode.${m}`)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              disabled={routing || dayStops.length < 2}
+              onClick={() => void generateRoutes()}
+              className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {routing
+                ? t(locale, "planner.routing")
+                : t(locale, "planner.generateRoutes")}
+            </button>
+            {dayLegs.length > 0 && (
+              <p className="text-sm text-ink-soft">
+                {dayLegs
+                  .map(
+                    (l) =>
+                      `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                  )
+                  .join("  →  ")}
+              </p>
+            )}
+            {dayLegs.some((l) => l.transitSteps.length > 1) && (
+              <p className="text-xs text-river">
+                {t(locale, "planner.transfer.hint")}
+              </p>
+            )}
+          </div>
+        </section>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-md border border-[color:var(--bp-line)] bg-foam/70 p-1">
-            {(["walk", "transit", "drive"] as const).map((m) => (
+        <aside
+          className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/90 lg:border-l lg:border-t-0"
+          style={{ animationDelay: "100ms" }}
+        >
+          <div className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
+            {days.map((day, i) => (
               <button
-                key={m}
+                key={day.id}
                 type="button"
-                onClick={() => setTravelMode(m)}
-                className={`rounded px-3 py-1.5 text-sm transition ${
-                  travelMode === m
-                    ? "bg-river text-foam"
-                    : "text-ink-soft hover:text-river"
+                onClick={() => {
+                  setDayId(day.id);
+                  setSelectedStopId(null);
+                }}
+                className={`shrink-0 px-5 py-3.5 text-left transition ${
+                  dayId === day.id
+                    ? "bg-ink text-foam"
+                    : "text-ink-soft hover:bg-mist/40 hover:text-ink"
                 }`}
               >
-                {t(locale, `planner.mode.${m}`)}
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
+                  {t(locale, "planner.day")} {i + 1}
+                </div>
+                <div className="mt-0.5 text-sm font-semibold">{day.date}</div>
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            disabled={routing || dayStops.length < 2}
-            onClick={() => void generateRoutes()}
-            className="rounded-md bg-timber px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {routing
-              ? t(locale, "planner.routing")
-              : t(locale, "planner.generateRoutes")}
-          </button>
-          {dayLegs.length > 0 && (
-            <p className="text-sm text-ink-soft">
-              {dayLegs
-                .map(
-                  (l) =>
-                    `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
-                )
-                .join("  →  ")}
-            </p>
-          )}
-          {dayLegs.some((l) => l.transitSteps.length > 1) && (
-            <p className="text-xs text-river/90">
-              {t(locale, "planner.transfer.hint")}
-            </p>
-          )}
-        </div>
-      </section>
 
-      <aside className="animate-rise flex flex-col gap-5" style={{ animationDelay: "100ms" }}>
+          <div className="relative border-b border-[color:var(--bp-line)] px-4 py-3">
+            <label className="sr-only" htmlFor="poi-search">
+              {t(locale, "planner.search")}
+            </label>
+            <input
+              id="poi-search"
+              value={query}
+              onChange={(e) => {
+                const v = e.target.value;
+                setQuery(v);
+                void runSearch(v);
+              }}
+              placeholder={t(locale, "planner.searchPlaceholder")}
+              className="w-full border-0 bg-transparent px-1 py-2 text-sm text-ink outline-none ring-0 placeholder:text-ink-soft/45 focus:outline-none"
+            />
+            {searching && (
+              <span className="absolute right-4 top-4 text-xs text-ink-soft">
+                …
+              </span>
+            )}
+            {results.length > 0 && (
+              <ul className="absolute left-0 right-0 top-full z-20 max-h-64 overflow-auto border border-[color:var(--bp-line)] bg-foam shadow-bp">
+                {results.map((place) => (
+                  <li key={place.enginePlaceId}>
+                    <button
+                      type="button"
+                      onClick={() => void addPlace(place)}
+                      className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition hover:bg-mist/60"
+                    >
+                      <span className="text-sm font-medium text-ink">
+                        {place.name}
+                      </span>
+                      {place.address && (
+                        <span className="text-xs text-ink-soft">
+                          {place.address}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <ol className="flex-1 overflow-y-auto">
+            {dayStops.length === 0 && (
+              <li className="animate-fade px-5 py-12">
+                <p className="font-display text-2xl font-semibold text-ink">
+                  {t(locale, "planner.emptyDay")}
+                </p>
+                <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "planner.emptyDayHint")}
+                </p>
+              </li>
+            )}
+            {dayStops.map((stop, index) => {
+              const selected = selectedStopId === stop.id;
+              const leg = dayLegs.find((l) => l.fromStopId === stop.id);
+              return (
+                <li key={stop.id} className="border-b border-[color:var(--bp-line)]">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedStopId(stop.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedStopId(stop.id);
+                      }
+                    }}
+                    className={`group flex gap-3 px-4 py-4 transition duration-bp-fast ease-bp-out ${
+                      selected
+                        ? "animate-stop-select"
+                        : "hover:bg-mist/30"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center text-xs font-bold ${
+                        selected
+                          ? "bg-timber text-foam"
+                          : "bg-ink text-foam"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold text-ink">
+                        {stop.place.name}
+                      </div>
+                      {stop.place.address && (
+                        <div className="mt-0.5 truncate text-xs text-ink-soft">
+                          {stop.place.address}
+                        </div>
+                      )}
+                      {leg && (
+                        <>
+                          <div className="mt-2 text-xs font-medium text-river">
+                            → {summarizeTransfer(leg)}
+                          </div>
+                          {(leg.mode === "transit" ||
+                            leg.transitSteps.length > 1) && (
+                            <TransferSteps
+                              leg={leg}
+                              locale={locale}
+                              variant="inline"
+                            />
+                          )}
+                        </>
+                      )}
+                      <BookingLinkChips
+                        links={stop.bookingLinks}
+                        locale={locale}
+                      />
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-1 opacity-50 transition group-hover:opacity-100">
+                      <button
+                        type="button"
+                        aria-label="Move up"
+                        className="px-1 text-ink-soft hover:text-river"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void moveStop(stop.id, -1);
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Move down"
+                        className="px-1 text-ink-soft hover:text-river"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void moveStop(stop.id, 1);
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Remove"
+                        className="px-1 text-ink-soft hover:text-timber"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void removeStop(stop.id);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+
+          {error && (
+            <p className="px-4 py-2 text-sm text-timber" role="alert">
+              {error}
+            </p>
+          )}
+          <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
+            {t(locale, "planner.hint")}
+          </p>
+        </aside>
+      </div>
+
+      {/* Secondary tools — below the composition, not card soup in the hero */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <DayFillPanel
           tripId={tripId}
           locale={locale}
@@ -461,7 +656,6 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           }}
           onError={(message) => setError(message || null)}
         />
-
         <BookingPanel
           tripId={tripId}
           locale={locale}
@@ -473,194 +667,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           }}
           onError={(message) => setError(message || null)}
         />
+      </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {days.map((day, i) => (
-            <button
-              key={day.id}
-              type="button"
-              onClick={() => {
-                setDayId(day.id);
-                setSelectedStopId(null);
-              }}
-              className={`shrink-0 rounded-md px-4 py-3 text-left transition ${
-                dayId === day.id
-                  ? "bg-river-deep text-foam"
-                  : "border border-[color:var(--bp-line)] bg-foam/50 text-ink-soft hover:border-river/35"
-              }`}
-            >
-              <div className="text-[11px] uppercase tracking-[0.14em] opacity-70">
-                {t(locale, "planner.day")} {i + 1}
-              </div>
-              <div className="mt-0.5 text-sm font-medium">{day.date}</div>
-            </button>
-          ))}
-        </div>
-
-        <div className="relative">
-          <label className="sr-only" htmlFor="poi-search">
-            {t(locale, "planner.search")}
-          </label>
-          <input
-            id="poi-search"
-            value={query}
-            onChange={(e) => {
-              const v = e.target.value;
-              setQuery(v);
-              void runSearch(v);
-            }}
-            placeholder={t(locale, "planner.searchPlaceholder")}
-            className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
-          />
-          {searching && (
-            <span className="absolute right-3 top-3 text-xs text-ink-soft">
-              …
-            </span>
-          )}
-          {results.length > 0 && (
-            <ul className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-[color:var(--bp-line)] bg-foam shadow-lg">
-              {results.map((place) => (
-                <li key={place.enginePlaceId}>
-                  <button
-                    type="button"
-                    onClick={() => void addPlace(place)}
-                    className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition hover:bg-mist/50"
-                  >
-                    <span className="text-sm font-medium text-ink">
-                      {place.name}
-                    </span>
-                    {place.address && (
-                      <span className="text-xs text-ink-soft">
-                        {place.address}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <ol className="divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
-          {dayStops.length === 0 && (
-            <li className="animate-fade px-1 py-10">
-              <p className="font-display text-xl text-ink md:text-2xl">
-                {t(locale, "planner.emptyDay")}
-              </p>
-              <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
-                {t(locale, "planner.emptyDayHint")}
-              </p>
-            </li>
-          )}
-          {dayStops.map((stop, index) => {
-            const selected = selectedStopId === stop.id;
-            const leg = dayLegs.find((l) => l.fromStopId === stop.id);
-            return (
-              <li key={stop.id}>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedStopId(stop.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedStopId(stop.id);
-                    }
-                  }}
-                  className={`group flex gap-3 py-4 pl-1 transition duration-bp-fast ease-bp-out ${
-                    selected
-                      ? "animate-stop-select bg-mist/45"
-                      : "hover:bg-foam/50"
-                  }`}
-                >
-                  <span
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                      selected
-                        ? "bg-timber text-foam"
-                        : "bg-river/15 text-river-deep"
-                    }`}
-                  >
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-ink">
-                      {stop.place.name}
-                    </div>
-                    {stop.place.address && (
-                      <div className="mt-0.5 truncate text-xs text-ink-soft">
-                        {stop.place.address}
-                      </div>
-                    )}
-                    {leg && (
-                      <>
-                        <div className="mt-2 text-xs text-river">
-                          → {summarizeTransfer(leg)}
-                        </div>
-                        {(leg.mode === "transit" ||
-                          leg.transitSteps.length > 1) && (
-                          <TransferSteps
-                            leg={leg}
-                            locale={locale}
-                            variant="inline"
-                          />
-                        )}
-                      </>
-                    )}
-                    <BookingLinkChips
-                      links={stop.bookingLinks}
-                      locale={locale}
-                    />
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-1 opacity-70 transition group-hover:opacity-100">
-                    <button
-                      type="button"
-                      aria-label="Move up"
-                      className="px-1 text-ink-soft hover:text-river"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void moveStop(stop.id, -1);
-                      }}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Move down"
-                      className="px-1 text-ink-soft hover:text-river"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void moveStop(stop.id, 1);
-                      }}
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Remove"
-                      className="px-1 text-ink-soft hover:text-timber"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void removeStop(stop.id);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-
-        {error && (
-          <p className="text-sm text-timber" role="alert">
-            {error}
-          </p>
-        )}
-        <p className="text-xs leading-relaxed text-ink-soft/80">
-          {t(locale, "planner.hint")}
-        </p>
-      </aside>
+      <div className="mt-6">
+        <TripCollabPanel
+          tripId={tripId}
+          locale={locale}
+          selectedStopId={selectedStopId}
+          selectedStopName={
+            dayStops.find((s) => s.id === selectedStopId)?.place.name
+          }
+        />
+      </div>
     </div>
   );
 }

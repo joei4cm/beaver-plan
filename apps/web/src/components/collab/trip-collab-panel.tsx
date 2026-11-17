@@ -72,7 +72,9 @@ export function TripCollabPanel({
 
   useEffect(() => {
     startTransition(() => {
-      void refresh().catch((e: Error) => setError(e.message));
+      void refresh().catch((e: Error) => {
+        if (!/503/.test(e.message)) setError(e.message);
+      });
     });
     const id = window.setInterval(() => {
       void refresh().catch(() => undefined);
