@@ -15,7 +15,9 @@ function preferenceFrom(
   fallback: string,
 ): MapEnginePreference {
   const v = (raw ?? fallback ?? "auto").toLowerCase();
-  if (v === "google" || v === "amap" || v === "auto") return v;
+  if (v === "google" || v === "amap" || v === "baidu" || v === "auto") {
+    return v;
+  }
   return "auto";
 }
 
@@ -23,6 +25,7 @@ function keysFrom(env: Bindings) {
   return {
     googleServerKey: env.GOOGLE_MAPS_SERVER_KEY,
     amapServerKey: env.AMAP_SERVER_KEY,
+    baiduServerKey: env.BAIDU_MAP_SERVER_KEY,
   };
 }
 

@@ -23,6 +23,7 @@ export {
 } from "./demo-transit.js";
 export { GoogleMapEngine, GoogleRoutingEngine, type GoogleMapsConfig } from "./google.js";
 export { AmapMapEngine, AmapRoutingEngine, type AmapConfig } from "./amap.js";
+export { BaiduMapEngine, BaiduRoutingEngine, type BaiduConfig } from "./baidu.js";
 export {
   createEngineBundle,
   type MapKeyBag,

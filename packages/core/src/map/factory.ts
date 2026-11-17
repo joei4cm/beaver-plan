@@ -1,12 +1,14 @@
 import type { MapEngineId } from "../domain.js";
 import type { MapEngine, RoutingEngine } from "../ports.js";
 import { AmapMapEngine, AmapRoutingEngine } from "./amap.js";
+import { BaiduMapEngine, BaiduRoutingEngine } from "./baidu.js";
 import { DemoMapEngine, DemoRoutingEngine } from "./demo.js";
 import { GoogleMapEngine, GoogleRoutingEngine } from "./google.js";
 
 export type MapKeyBag = {
   googleServerKey?: string;
   amapServerKey?: string;
+  baiduServerKey?: string;
   fetch?: typeof fetch;
 };
 
@@ -40,6 +42,15 @@ export function createEngineBundle(
     return {
       map: new AmapMapEngine(cfg),
       routing: new AmapRoutingEngine(cfg),
+      mode: "live",
+      engineId,
+    };
+  }
+  if (engineId === "baidu" && keys.baiduServerKey) {
+    const cfg = { apiKey: keys.baiduServerKey, fetch: keys.fetch };
+    return {
+      map: new BaiduMapEngine(cfg),
+      routing: new BaiduRoutingEngine(cfg),
       mode: "live",
       engineId,
     };
