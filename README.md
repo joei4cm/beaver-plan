@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** Phase 3 started — deep offline trip cache + journal-first sync; Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
+**Slice:** Phase 3 — deep offline + translation enhancements on main; OTA booking deep links + demo search stub; Neon + R2; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -23,7 +23,7 @@ Product plan (Agent Store / humans):
 | `packages/ui-tokens` | Design tokens |
 | `packages/i18n` | zh-CN + en |
 
-**Out of scope here:** CRDT / presence avatars, offline ASR packs, full Baidu/Google offline map tile SDKs, OTA booking.
+**Out of scope here:** CRDT / presence avatars, offline ASR packs, full Baidu/Google offline map tile SDKs, OTA payment capture / full inventory sync.
 
 ---
 
@@ -351,7 +351,7 @@ Practical offline for **on-the-road journal**, not a full offline maps vendor pa
 | **Conflicts** | Trip `expectedVersion` when present; on `409 version_conflict`, refresh version and retry, then omit version → **last-write-wins**. No CRDT. |
 | **Map stub** | Cached stop coordinates + last polylines only. **Not** Baidu/Google/Amap offline tile SDKs. |
 
-**Limits (honest):** no OTA booking; no full offline map tiles; media bytes for queued photos live in the device KV until flush (keep picks small); unpin deletes the local cache (pending queue for that trip stays until flushed or cleared by sync).
+**Limits (honest):** no full offline map tiles; media bytes for queued photos live in the device KV until flush (keep picks small); unpin deletes the local cache (pending queue for that trip stays until flushed or cleared by sync).
 
 **Airplane-mode demo**
 
@@ -363,6 +363,21 @@ Practical offline for **on-the-road journal**, not a full offline maps vendor pa
 6. Go back online → queue flushes automatically (or tap **Sync now**). Refresh journal — server entries match; local `local-*` ids replaced.
 
 Shared logic: `packages/offline` (`OfflineTripStore`, `flushOfflineQueue`). Adapters: `apps/web/src/lib/offline/*`, `apps/mobile/src/offline/*`.
+
+---
+
+## OTA / bookings (Phase 3 — first cut)
+
+Practical deep links — **not** a marketplace or payment flow.
+
+| Piece | Behavior |
+|-------|----------|
+| **Stop `bookingLinks`** | Hotel / flight / ticket URL + optional provider label. Edit in web planner **预订** panel; chips on stop list; mobile opens externally via `Linking`. |
+| **Search stub** | `POST /v1/booking/search` `{ city, checkIn?, checkOut?, kind? }` → demo hotel/activity suggestions (no keys). |
+| **Pluggable env** | `OTA_PROVIDER`, `AMADEUS_API_KEY` / `AMADEUS_API_SECRET`, `BOOKING_AFFILIATE_ID` — document + mode `configured` when set; still mock catalog until a live adapter. See [`docs/keys-integration.md`](docs/keys-integration.md). |
+| **Neon** | Migration `0002_stop_booking_links` adds `stops.booking_links` jsonb. |
+
+**Out of scope:** payment capture, inventory sync, full OTA checkout.
 
 ---
 

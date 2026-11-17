@@ -49,6 +49,17 @@ export const stops = pgTable("stops", {
   placeRaw: jsonb("place_raw"),
   userNote: text("user_note"),
   photos: jsonb("photos").$type<string[]>().notNull().default([]),
+  /** Hotel / flight / ticket deep links — see BookingLink in @beaver/core. */
+  bookingLinks: jsonb("booking_links")
+    .$type<
+      {
+        kind: "hotel" | "flight" | "ticket";
+        url: string;
+        providerLabel?: string;
+      }[]
+    >()
+    .notNull()
+    .default([]),
 });
 
 export const legs = pgTable("legs", {

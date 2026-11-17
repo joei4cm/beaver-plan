@@ -112,6 +112,17 @@ export type PlaceRef = {
   raw?: unknown;
 };
 
+/** External booking deep link on a stop — no payment capture. */
+export type BookingLinkKind = "hotel" | "flight" | "ticket";
+
+export type BookingLink = {
+  kind: BookingLinkKind;
+  /** Absolute http(s) URL opened externally. */
+  url: string;
+  /** e.g. Booking.com, Expedia, Klook — shown as a short label. */
+  providerLabel?: string;
+};
+
 export type Stop = {
   id: string;
   dayId: string;
@@ -119,6 +130,8 @@ export type Stop = {
   place: PlaceRef;
   userNote?: string;
   photos: string[];
+  /** Optional hotel / flight / ticket deep links (OTA first cut). */
+  bookingLinks: BookingLink[];
 };
 
 /** Normalized travel mode on a transfer step (engines may still send variants). */

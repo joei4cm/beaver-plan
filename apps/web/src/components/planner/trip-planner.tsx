@@ -23,6 +23,7 @@ import { apiGet, apiSend } from "@/lib/api";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
+import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
 import { TransferSteps } from "./transfer-steps";
@@ -461,6 +462,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           onError={(message) => setError(message || null)}
         />
 
+        <BookingPanel
+          tripId={tripId}
+          locale={locale}
+          trip={trip}
+          stop={dayStops.find((s) => s.id === selectedStopId) ?? null}
+          destinationHint={trip.destination}
+          onSaved={async () => {
+            await refresh();
+          }}
+          onError={(message) => setError(message || null)}
+        />
+
         <div className="flex gap-2 overflow-x-auto pb-1">
           {days.map((day, i) => (
             <button
@@ -586,6 +599,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         )}
                       </>
                     )}
+                    <BookingLinkChips
+                      links={stop.bookingLinks}
+                      locale={locale}
+                    />
                   </div>
                   <div className="flex shrink-0 flex-col gap-1 opacity-70 transition group-hover:opacity-100">
                     <button

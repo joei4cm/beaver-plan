@@ -9,6 +9,7 @@ import {
 } from "./db/context.js";
 import { DatabaseConfigError } from "./db/client.js";
 import type { Bindings } from "./env.js";
+import { bookingRoutes } from "./booking.js";
 import { commentRoutes } from "./comments.js";
 import { dayFillRoutes } from "./day-fill.js";
 import { journalRoutes } from "./journal.js";
@@ -21,8 +22,10 @@ import { templateRoutes } from "./templates.js";
 import { tripRoutes } from "./trips.js";
 import { ensureSampleTrip, nowIso } from "./store.js";
 import {
+  createBookingStack,
   createDayFillStack,
   createTranslationStack,
+  reportBookingCapabilities,
   reportDayFillCapabilities,
   reportTranslationCapabilities,
 } from "@beaver/core";
@@ -129,6 +132,14 @@ app.get("/health", (c) => {
       llmProvider: c.env.LLM_PROVIDER,
     }),
   );
+  const booking = reportBookingCapabilities(
+    createBookingStack({
+      otaProvider: c.env.OTA_PROVIDER,
+      amadeusApiKey: c.env.AMADEUS_API_KEY,
+      amadeusApiSecret: c.env.AMADEUS_API_SECRET,
+      bookingAffiliateId: c.env.BOOKING_AFFILIATE_ID,
+    }),
+  );
   const hasDb = Boolean(c.env.DATABASE_URL?.trim());
   const hasS3 = isS3Configured(c.env);
   return c.json({
@@ -157,6 +168,15 @@ app.get("/health", (c) => {
     },
     translation,
     dayFill,
+    booking: {
+      ...booking,
+      keys: {
+        amadeus: Boolean(
+          c.env.AMADEUS_API_KEY?.trim() && c.env.AMADEUS_API_SECRET?.trim(),
+        ),
+        bookingAffiliate: Boolean(c.env.BOOKING_AFFILIATE_ID?.trim()),
+      },
+    },
     media: {
       storage: hasS3 ? "s3" : "unconfigured",
       configured: hasS3,
@@ -179,5 +199,6 @@ app.route("/", mediaRoutes);
 app.route("/", shareRoutes);
 app.route("/", translationRoutes);
 app.route("/", dayFillRoutes);
+app.route("/", bookingRoutes);
 
 export default app;

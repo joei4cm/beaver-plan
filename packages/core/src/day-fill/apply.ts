@@ -55,6 +55,7 @@ export function materializeDayFill(
         place,
         userNote: s.userNote,
         photos: [],
+        bookingLinks: [],
       });
     });
   }

@@ -320,6 +320,30 @@ curl -s http://127.0.0.1:8787/v1/day-fill/status | jq '.mode,.provider'
 
 UI: `/trips/sample-kyoto` → **智能填天** → generate draft → preview → apply.
 
+### OTA / booking stub (预订) — optional affiliate env
+
+Deep links live on stops (`bookingLinks`: hotel / flight / ticket URL + provider label). Search is a **mock catalog** without keys; Amadeus / Booking affiliate vars are documented for a future live adapter (no fake secrets, no payment capture).
+
+```bash
+# Demo (no OTA keys)
+curl -s http://127.0.0.1:8787/v1/booking/status | jq '.mode,.provider,.keys'
+# → demo / demo-booking
+
+curl -s -X POST http://127.0.0.1:8787/v1/booking/search \
+  -H 'content-type: application/json' \
+  -d '{"city":"Kyoto","checkIn":"2026-04-10","checkOut":"2026-04-12","kind":"all"}' \
+  | jq '.mode,.suggestions[0]'
+
+# Optional later (still mock catalog today — marks mode "configured"):
+# AMADEUS_API_KEY=… AMADEUS_API_SECRET=…   # Amadeus self-service
+# BOOKING_AFFILIATE_ID=…                   # Booking.com affiliate aid
+# OTA_PROVIDER=auto|demo|amadeus|booking
+```
+
+UI: `/trips/sample-kyoto` → select a stop → **预订** panel → save links / open external / apply a suggestion. Mobile trip detail shows booking chips and opens URLs externally.
+
+Neon: run `pnpm --filter @beaver/api db:migrate` for `stops.booking_links` (`0002_stop_booking_links`).
+
 ---
 
 ## 6. End-to-end smoke matrix
@@ -338,8 +362,9 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | 8 | Translate live | Same UI / `POST /v1/translation/translate` with keys | `mode: "live"`; non-demo providers |
 | 9 | Day-fill demo | `/trips/sample-kyoto` 智能填天 without key | Draft preview; apply updates days/stops |
 | 10 | Day-fill live | Same + `OPENAI_API_KEY` | `dayFill.mode: "live"`; LLM propose |
-| 11 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
-| 12 | Mobile | Expo itinerary / journal / translate | Hits same API base URL |
+| 11 | Booking demo | `POST /v1/booking/search` + planner 预订 | Suggestions; save stop `bookingLinks`; open external |
+| 12 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
+| 13 | Mobile | Expo itinerary / journal / translate / booking chips | Hits same API base URL |
 
 ---
 
@@ -380,3 +405,4 @@ Authoritative templates: root [`.env.example`](../.env.example) and [`apps/api/.
 | Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `BAIDU_MAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
 | Translation | `FEATURE_TRANSLATION`, `OPENAI_*`, `DEEPGRAM_API_KEY`, `ASR_PROVIDER`, `LLM_PROVIDER`, `TTS_PROVIDER` |
 | Day-fill | same `OPENAI_*` + `LLM_PROVIDER` (demo when key unset) |
+| OTA / booking | `OTA_PROVIDER`, `AMADEUS_API_KEY`, `AMADEUS_API_SECRET`, `BOOKING_AFFILIATE_ID` (demo search without keys; live adapter later) |
