@@ -210,5 +210,18 @@
   "translate.permissionCamera": "需要相机权限才能镜头辅助。",
   "translate.error": "翻译暂时不可用，请稍后重试。",
   "translate.webSupport": "桌面调试：麦克风或打字 → 同一套 BFF。",
-  "translate.nextDemo": "下一句演示"
+  "translate.nextDemo": "下一句演示",
+  "offline.pin": "离线固定",
+  "offline.pinned": "已固定离线",
+  "offline.unpin": "取消固定",
+  "offline.working": "处理中…",
+  "offline.online": "在线",
+  "offline.offline": "离线",
+  "offline.pending": "待同步 {n} 条",
+  "offline.syncNow": "立即同步",
+  "offline.pinHint": "缓存本行程的天/站/日记文字与最近路线折线，方便飞行模式阅读。",
+  "offline.statusHint": "日记离线写入会进队列，联网后自动冲刷。不下载完整地图瓦片——仅站点坐标与最近折线。",
+  "offline.savedLocal": "已离线保存，联网后同步",
+  "offline.cachedRead": "正在读取已固定缓存",
+  "offline.limits": "离线范围：行程缓存 + 日记优先队列；不含百度/谷歌离线瓦片包；冲突按行程版本后写覆盖（LWW）。"
 }

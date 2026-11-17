@@ -21,8 +21,17 @@ import {
 } from "@beaver/core";
 import { colors } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
-import type { TripMember, TripRole } from "@beaver/core";
-import { createInvite, fetchMembers, fetchTrip } from "../../src/api";
+import type { JournalEntry, TripMember, TripRole } from "@beaver/core";
+import type { OfflinePinStatus } from "@beaver/offline";
+import { createInvite, fetchJournal, fetchMembers, fetchTrip } from "../../src/api";
+import {
+  flushJournalQueue,
+  getPinStatus,
+  isDeviceOnline,
+  pinTripForOffline,
+  readCachedTrip,
+  unpinTripOffline,
+} from "../../src/offline/trip-offline";
 
 const locale = "zh-CN" as const;
 
@@ -79,11 +88,30 @@ export default function TripDetailScreen() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [pinStatus, setPinStatus] = useState<OfflinePinStatus | null>(null);
+  const [pinBusy, setPinBusy] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+
+  const refreshPin = useCallback(async () => {
+    try {
+      setPinStatus(await getPinStatus(tripId));
+    } catch {
+      setPinStatus(null);
+    }
+  }, [tripId]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      if (isDeviceOnline()) {
+        try {
+          await flushJournalQueue();
+        } catch {
+          /* keep queue */
+        }
+      }
       const data = await fetchTrip(tripId);
       setTrip(data.trip);
       setDays(data.days);
@@ -92,6 +120,13 @@ export default function TripDetailScreen() {
       setDayId(data.days[0]?.id ?? null);
       setMembers(data.members ?? []);
       setYourRole(data.yourRole ?? null);
+      setFromCache(false);
+      try {
+        const j = await fetchJournal(tripId);
+        setJournal(j.entries);
+      } catch {
+        /* journal optional for pin snapshot */
+      }
       try {
         const m = await fetchMembers(tripId);
         setMembers(m.members);
@@ -99,12 +134,26 @@ export default function TripDetailScreen() {
       } catch {
         /* members optional if offline */
       }
+      await refreshPin();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "load_failed");
+      const cached = await readCachedTrip(tripId);
+      if (cached) {
+        setTrip(cached.trip);
+        setDays(cached.days);
+        setStops(cached.stops);
+        setLegs(cached.legs);
+        setJournal(cached.journal);
+        setDayId(cached.days[0]?.id ?? null);
+        setFromCache(true);
+        setError(null);
+        await refreshPin();
+      } else {
+        setError(e instanceof Error ? e.message : "load_failed");
+      }
     } finally {
       setLoading(false);
     }
-  }, [tripId]);
+  }, [refreshPin, tripId]);
 
   async function onInvite() {
     try {
@@ -112,6 +161,29 @@ export default function TripDetailScreen() {
       setInviteCode(inv.code);
     } catch (e) {
       setError(e instanceof Error ? e.message : "invite_failed");
+    }
+  }
+
+  async function onTogglePin() {
+    if (!trip) return;
+    setPinBusy(true);
+    try {
+      if (pinStatus?.pinned) {
+        await unpinTripOffline(tripId);
+      } else {
+        await pinTripForOffline({
+          trip,
+          days,
+          stops,
+          legs,
+          journal,
+        });
+      }
+      await refreshPin();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "pin_failed");
+    } finally {
+      setPinBusy(false);
     }
   }
 
@@ -147,8 +219,44 @@ export default function TripDetailScreen() {
       )}
       {!loading && trip && (
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.eyebrow}>{trip.destination ?? "Beaver Plan"}</Text>
+          <Text style={styles.eyebrow}>
+            {trip.destination ?? "Beaver Plan"}
+            {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
+          </Text>
           <Text style={styles.title}>{trip.title}</Text>
+          <Pressable
+            style={[
+              styles.pinBtn,
+              pinStatus?.pinned ? styles.pinBtnActive : null,
+            ]}
+            disabled={pinBusy}
+            onPress={() => void onTogglePin()}
+          >
+            <Text
+              style={[
+                styles.pinLabel,
+                pinStatus?.pinned ? styles.pinLabelActive : null,
+              ]}
+            >
+              {pinBusy
+                ? t(locale, "offline.working")
+                : pinStatus?.pinned
+                  ? t(locale, "offline.pinned")
+                  : t(locale, "offline.pin")}
+            </Text>
+            <Text style={styles.pinMeta}>
+              {(pinStatus?.online ?? isDeviceOnline())
+                ? t(locale, "offline.online")
+                : t(locale, "offline.offline")}
+              {(pinStatus?.pendingMutations ?? 0) > 0
+                ? ` · ${t(locale, "offline.pending").replace(
+                    "{n}",
+                    String(pinStatus?.pendingMutations ?? 0),
+                  )}`
+                : ""}
+            </Text>
+          </Pressable>
+          <Text style={styles.pinHint}>{t(locale, "offline.statusHint")}</Text>
           <View style={styles.actionRow}>
             <Link href={`/trips/${tripId}/journal`} asChild>
               <Pressable style={styles.actionBtn}>
@@ -303,6 +411,38 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.ink,
     marginBottom: 12,
+  },
+  pinBtn: {
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  pinBtnActive: {
+    backgroundColor: colors.river,
+    borderColor: colors.river,
+  },
+  pinLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.inkSoft,
+  },
+  pinLabelActive: {
+    color: colors.foam,
+  },
+  pinMeta: {
+    marginTop: 4,
+    fontSize: 12,
+    color: colors.inkSoft,
+  },
+  pinHint: {
+    marginBottom: 14,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.inkSoft,
   },
   actionRow: {
     flexDirection: "row",

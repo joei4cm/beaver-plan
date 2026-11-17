@@ -29,8 +29,22 @@ import {
   resolveMediaUrl,
   uploadMediaBase64,
 } from "../../../src/api";
+import {
+  enqueueJournalCreate,
+  flushJournalQueue,
+  isDeviceOnline,
+  isOfflineTransportError,
+  readCachedTrip,
+} from "../../../src/offline/trip-offline";
 
 const locale = "zh-CN" as const;
+
+type LocalPhoto = {
+  id: string;
+  contentType: string;
+  dataBase64: string;
+  preview: string;
+};
 
 export default function JournalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,14 +56,24 @@ export default function JournalScreen() {
   const [dayId, setDayId] = useState<string | null>(null);
   const [body, setBody] = useState("");
   const [pendingMedia, setPendingMedia] = useState<string[]>([]);
+  const [pendingLocal, setPendingLocal] = useState<LocalPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      if (isDeviceOnline()) {
+        try {
+          await flushJournalQueue();
+        } catch {
+          /* keep queue */
+        }
+      }
       const [tripData, journal] = await Promise.all([
         fetchTrip(tripId),
         fetchJournal(tripId),
@@ -59,8 +83,21 @@ export default function JournalScreen() {
       setStops(tripData.stops);
       setEntries(journal.entries);
       setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
+      setFromCache(false);
+      setInfo(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "load_failed");
+      const cached = await readCachedTrip(tripId);
+      if (cached) {
+        setTrip(cached.trip);
+        setDays(cached.days);
+        setStops(cached.stops);
+        setEntries(cached.journal);
+        setDayId((prev) => prev ?? cached.days[0]?.id ?? null);
+        setFromCache(true);
+        setInfo(t(locale, "offline.cachedRead"));
+      } else {
+        setError(e instanceof Error ? e.message : "load_failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -98,6 +135,23 @@ export default function JournalScreen() {
     });
     if (picked.canceled) return;
     try {
+      if (!isDeviceOnline()) {
+        const locals: LocalPhoto[] = [];
+        for (const asset of picked.assets.slice(0, 4)) {
+          const b64 = await FileSystem.readAsStringAsync(asset.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          const contentType = asset.mimeType ?? "image/jpeg";
+          locals.push({
+            id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            contentType,
+            dataBase64: b64,
+            preview: `data:${contentType};base64,${b64}`,
+          });
+        }
+        setPendingLocal((prev) => [...prev, ...locals].slice(0, 8));
+        return;
+      }
       const urls: string[] = [];
       for (const asset of picked.assets.slice(0, 4)) {
         const b64 = await FileSystem.readAsStringAsync(asset.uri, {
@@ -112,30 +166,91 @@ export default function JournalScreen() {
       }
       setPendingMedia((prev) => [...prev, ...urls].slice(0, 8));
     } catch (e) {
+      if (isOfflineTransportError(e)) {
+        try {
+          const locals: LocalPhoto[] = [];
+          for (const asset of picked.assets.slice(0, 4)) {
+            const b64 = await FileSystem.readAsStringAsync(asset.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            const contentType = asset.mimeType ?? "image/jpeg";
+            locals.push({
+              id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              contentType,
+              dataBase64: b64,
+              preview: `data:${contentType};base64,${b64}`,
+            });
+          }
+          setPendingLocal((prev) => [...prev, ...locals].slice(0, 8));
+          setInfo(t(locale, "offline.savedLocal"));
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
       setError(e instanceof Error ? e.message : "upload_failed");
     }
   }
 
   async function save() {
-    if (!body.trim() && pendingMedia.length === 0) return;
+    if (!body.trim() && pendingMedia.length === 0 && pendingLocal.length === 0) {
+      return;
+    }
     setSaving(true);
     setError(null);
+    setInfo(null);
+
+    const finishLocal = async () => {
+      const queued = await enqueueJournalCreate({
+        tripId,
+        body: body.trim(),
+        dayId: dayId ?? undefined,
+        mediaKeys: pendingMedia,
+        pendingPhotos: pendingLocal.map((p) => ({
+          id: p.id,
+          contentType: p.contentType,
+          dataBase64: p.dataBase64,
+        })),
+        expectedVersion: trip?.version,
+      });
+      setEntries((prev) => [...prev, queued.localEntry]);
+      setBody("");
+      setPendingMedia([]);
+      setPendingLocal([]);
+      setInfo(t(locale, "offline.savedLocal"));
+    };
+
     try {
+      if (!isDeviceOnline()) {
+        await finishLocal();
+        return;
+      }
       await createJournalEntry(tripId, {
         dayId: dayId ?? undefined,
         body: body.trim(),
         media: pendingMedia,
+        expectedVersion: trip?.version,
       });
       setBody("");
       setPendingMedia([]);
+      setPendingLocal([]);
       const journal = await fetchJournal(tripId);
       setEntries(journal.entries);
     } catch (e) {
+      if (isOfflineTransportError(e)) {
+        await finishLocal();
+        return;
+      }
       setError(e instanceof Error ? e.message : "save_failed");
     } finally {
       setSaving(false);
     }
   }
+
+  const previewMedia = [
+    ...pendingMedia.map((url) => ({ key: url, uri: resolveMediaUrl(url) })),
+    ...pendingLocal.map((p) => ({ key: p.id, uri: p.preview })),
+  ];
 
   return (
     <View style={styles.root}>
@@ -146,7 +261,10 @@ export default function JournalScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.eyebrow}>{t(locale, "journal.eyebrow")}</Text>
+          <Text style={styles.eyebrow}>
+            {t(locale, "journal.eyebrow")}
+            {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
+          </Text>
           <Text style={styles.title}>{trip?.title ?? "—"}</Text>
           <Text style={styles.support}>{t(locale, "journal.support")}</Text>
 
@@ -178,7 +296,12 @@ export default function JournalScreen() {
 
           {visible.map((entry) => (
             <View key={entry.id} style={styles.entry}>
-              <Text style={styles.entryBody}>{entry.body || "·"}</Text>
+              <Text style={styles.entryBody}>
+                {entry.body || "·"}
+                {entry.id.startsWith("local-")
+                  ? ` (${t(locale, "offline.pending").replace("{n}", "1")})`
+                  : ""}
+              </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {entry.media.map((url) => (
                   <Image
@@ -222,17 +345,18 @@ export default function JournalScreen() {
                 </Text>
               </Pressable>
             </View>
-            {pendingMedia.length > 0 && (
+            {previewMedia.length > 0 && (
               <ScrollView horizontal style={{ marginTop: 12 }}>
-                {pendingMedia.map((url) => (
+                {previewMedia.map((item) => (
                   <Image
-                    key={url}
-                    source={{ uri: resolveMediaUrl(url) }}
+                    key={item.key}
+                    source={{ uri: item.uri }}
                     style={styles.thumb}
                   />
                 ))}
               </ScrollView>
             )}
+            {info ? <Text style={styles.info}>{info}</Text> : null}
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </View>
         </ScrollView>
@@ -343,4 +467,5 @@ const styles = StyleSheet.create({
   secondaryLabel: { color: colors.river, fontWeight: "600" },
   disabled: { opacity: 0.45 },
   error: { marginTop: 10, color: colors.timber, fontSize: 13 },
+  info: { marginTop: 10, color: colors.river, fontSize: 13 },
 });

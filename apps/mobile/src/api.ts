@@ -131,8 +131,9 @@ export async function createJournalEntry(
     stopId?: string;
     body: string;
     media?: string[];
+    expectedVersion?: number;
   },
-): Promise<{ entry: JournalEntry }> {
+): Promise<{ entry: JournalEntry; tripVersion?: number }> {
   return apiSend(`/v1/trips/${tripId}/journal`, "POST", body);
 }
 

@@ -59,12 +59,18 @@ importers:
       '@beaver/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@beaver/offline':
+        specifier: workspace:*
+        version: link:../../packages/offline
       '@beaver/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
       '@clerk/clerk-expo':
         specifier: ^2.20.0
         version: 2.20.0(a485d88f89bf11e34d2190b2dcccb5ee)
+      '@react-native-async-storage/async-storage':
+        specifier: 1.23.1
+        version: 1.23.1(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))
       expo:
         specifier: ~52.0.39
         version: 52.0.49(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@expo/metro-runtime@4.0.1(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6)))(bufferutil@4.2.0)(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))(react@18.3.1)(utf-8-validate@6.0.6)
@@ -138,6 +144,9 @@ importers:
       '@beaver/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@beaver/offline':
+        specifier: workspace:*
+        version: link:../../packages/offline
       '@beaver/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
@@ -184,6 +193,19 @@ importers:
 
   packages/i18n:
     devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  packages/offline:
+    dependencies:
+      '@beaver/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsx:
+        specifier: ^4.19.3
+        version: 4.23.15
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
@@ -1592,7 +1614,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.28':
     resolution: {integrity: sha512-lvt72KNitGuixYD2l3SZmRKVu2G4zJpmg5V7WfUBNpmUU5oODBw/6qmiJ6kSLAlfDozscUk+BBGknBBzxUrwrA==}
@@ -2066,8 +2088,8 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0 || ^18.0
 
-  '@react-native-async-storage/async-storage@1.24.0':
-    resolution: {integrity: sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g==}
+  '@react-native-async-storage/async-storage@1.23.1':
+    resolution: {integrity: sha512-Qd2kQ3yi6Y3+AcUlrHxSLlnBvpdCEMVGFlVBneVOjaFaPU61g1huc38g339ysXspwY1QZA2aNhrk/KlHGO+ewA==}
     peerDependencies:
       react-native: ^0.0.0-0 || >=0.60 <1.0
 
@@ -8312,11 +8334,10 @@ snapshots:
       '@radix-ui/react-compose-refs': 1.0.0(react@18.3.1)
       react: 18.3.1
 
-  '@react-native-async-storage/async-storage@1.24.0(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))':
+  '@react-native-async-storage/async-storage@1.23.1(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))':
     dependencies:
       merge-options: 3.0.4
       react-native: 0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6)
-    optional: true
 
   '@react-native/assets-registry@0.76.7': {}
 
@@ -8682,7 +8703,7 @@ snapshots:
       react-native: 0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6)
       tslib: 2.9.1
     optionalDependencies:
-      '@react-native-async-storage/async-storage': 1.24.0(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))
+      '@react-native-async-storage/async-storage': 1.23.1(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))
     transitivePeerDependencies:
       - bufferutil
       - fastestsmallesttextencoderdecoder
@@ -8700,7 +8721,7 @@ snapshots:
       qrcode: 1.5.4
       tslib: 2.9.1
     optionalDependencies:
-      '@react-native-async-storage/async-storage': 1.24.0(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))
+      '@react-native-async-storage/async-storage': 1.23.1(react-native@0.76.7(@babel/core@7.29.13)(@babel/preset-env@7.29.14(@babel/core@7.29.13))(@types/react@18.3.31)(bufferutil@4.2.0)(react@18.3.1)(utf-8-validate@6.0.6))
     transitivePeerDependencies:
       - bufferutil
       - fastestsmallesttextencoderdecoder
@@ -11024,8 +11045,7 @@ snapshots:
 
   is-path-inside@3.0.3: {}
 
-  is-plain-obj@2.1.0:
-    optional: true
+  is-plain-obj@2.1.0: {}
 
   is-plain-object@2.0.4:
     dependencies:
@@ -11358,7 +11378,6 @@ snapshots:
   merge-options@3.0.4:
     dependencies:
       is-plain-obj: 2.1.0
-    optional: true
 
   merge-stream@2.0.0: {}
 

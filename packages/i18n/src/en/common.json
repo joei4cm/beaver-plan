@@ -210,5 +210,18 @@
   "translate.permissionCamera": "Camera permission is needed for lens assist.",
   "translate.error": "Translation unavailable — try again shortly.",
   "translate.webSupport": "Desktop debug: mic or type → same BFF.",
-  "translate.nextDemo": "Next demo line"
+  "translate.nextDemo": "Next demo line",
+  "offline.pin": "Pin for offline",
+  "offline.pinned": "Pinned offline",
+  "offline.unpin": "Unpin",
+  "offline.working": "Working…",
+  "offline.online": "Online",
+  "offline.offline": "Offline",
+  "offline.pending": "{n} queued",
+  "offline.syncNow": "Sync now",
+  "offline.pinHint": "Cache this trip’s days, stops, journal text, and last-known route lines for airplane mode.",
+  "offline.statusHint": "Journal notes queue offline and flush when you reconnect. Full vendor map tiles are not downloaded — only stop pins + last polylines.",
+  "offline.savedLocal": "Saved offline — will sync when online",
+  "offline.cachedRead": "Reading pinned cache",
+  "offline.limits": "Offline limits: trip cache + journal queue only; no Baidu/Google offline tile packs; conflicts use last-write-wins with trip version."
 }

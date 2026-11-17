@@ -22,6 +22,7 @@ import { t } from "@beaver/i18n";
 import { apiGet, apiSend } from "@/lib/api";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
+import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
 import { TransferSteps } from "./transfer-steps";
@@ -314,6 +315,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
+            <OfflinePinControl
+              tripId={tripId}
+              locale={locale}
+              trip={trip}
+              days={days}
+              stops={stops}
+              legs={legs}
+              compact
+            />
             <Link
               href={`/trips/${tripId}/journal`}
               className="rounded-md border border-[color:var(--bp-line)] bg-foam/60 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
