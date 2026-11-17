@@ -15,6 +15,7 @@
     "db:generate": "pnpm --filter @beaver/api db:generate",
     "smoke:neon-r2": "pnpm --filter @beaver/api smoke:neon-r2",
     "smoke:clerk": "pnpm --filter @beaver/api smoke:clerk",
+    "smoke:maps": "pnpm --filter @beaver/api smoke:maps",
     "lint": "pnpm -r --if-present lint"
   },
   "engines": {

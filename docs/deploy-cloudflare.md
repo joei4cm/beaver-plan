@@ -112,7 +112,7 @@ pnpm exec wrangler secret put CLERK_PUBLISHABLE_KEY --env "$ENV"
 # pnpm exec wrangler secret put CLERK_JWT_ISSUER --env "$ENV"
 # WeChat UI flag is a non-secret wrangler var: CLERK_WECHAT_ENABLED=true in [env.*.vars]
 
-# Maps (optional — demo POIs without)
+# Maps (optional — demo POIs without). Smoke: pnpm smoke:maps
 pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY --env "$ENV"
 pnpm exec wrangler secret put AMAP_SERVER_KEY --env "$ENV"
 pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY --env "$ENV"

@@ -130,7 +130,17 @@ Region inference uses Cloudflare `CF-IPCountry`, then timezone (`Asia/Shanghai`�
 
 ### Smoke — mainland auto-switch
 
+Operator runbook (copy-paste): [`maps-keys-smoke.md`](./maps-keys-smoke.md).
+
 ```bash
+# Dry-run (no secrets — safe in CI):
+pnpm smoke:maps
+
+# Live (API up; demo or live per key presence):
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:maps
+EXPECT_LIVE=1 EXPECT_GOOGLE=1 EXPECT_AMAP=1 EXPECT_BAIDU=1 \
+  API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:maps
+
 # Outside CN heuristic → google
 curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=auto&timezone=America/Los_Angeles'
 # → engineId: "google", region: "other"
@@ -387,7 +397,7 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | 1c | Ops smoke | `GET /v1/ops/smoke` + `SMOKE_TOKEN` | `ok: true` (db `select 1` + R2 round-trip); 404 if token unset |
 | 2 | Sample trip | `GET /v1/trips/sample-kyoto` | Seeded Kyoto days/stops/members |
 | 3 | Planner | Web `/trips/sample-kyoto` | Map + stops render |
-| 4 | Maps engine | `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` | `engineId: "amap"` when `MAP_AUTO_AMAP_CN=true` |
+| 4 | Maps engine | `pnpm smoke:maps` + `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` | Dry-run OK; live preference + places/directions (demo or live); `engineId: "amap"` when `MAP_AUTO_AMAP_CN=true` |
 | 5 | Journal upload | Web journal → photo → save | Object in R2; Neon entry has media key; `GET /v1/media/:id` redirects/streams |
 | 6 | Share | Share studio → export | Card generates; SVG may persist under `share/…` |
 | 7 | Translate demo | `/translate` without LLM keys | Scripted bilingual turns |
