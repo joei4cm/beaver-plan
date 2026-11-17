@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { t, type Locale } from "@beaver/i18n";
-import { attachAuth, clerkConfigured, type AuthVariables } from "./auth.js";
+import {
+  attachAuth,
+  clerkConfigured,
+  clerkIssuer,
+  clerkSecretConfigured,
+  type AuthVariables,
+} from "./auth.js";
 import {
   databaseMissingResponse,
   dbOf,
@@ -173,9 +179,17 @@ app.get("/health", (c) => {
       workers: true,
     },
     auth: {
+      /** Fully ready: secret + JWT issuer (publishable key or CLERK_JWT_ISSUER). */
       clerk: clerkConfigured(c.env),
+      secretConfigured: clerkSecretConfigured(c.env),
+      jwtIssuerConfigured: Boolean(clerkIssuer(c.env)),
       wechatUi: wechat,
       mode: clerkConfigured(c.env) ? "clerk" : "demo",
+      note: clerkConfigured(c.env)
+        ? "Trip mutations require Authorization: Bearer <Clerk session JWT>"
+        : clerkSecretConfigured(c.env) && !clerkIssuer(c.env)
+          ? "CLERK_SECRET_KEY set but issuer missing — set CLERK_PUBLISHABLE_KEY or CLERK_JWT_ISSUER (staying in demo)"
+          : "Demo identity via X-Beaver-User-Id (default demo-user)",
     },
     database: {
       configured: hasDb,

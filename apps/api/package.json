@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "smoke:collab-schema": "tsx scripts/smoke-collab-schema.mjs",
-    "smoke:neon-r2": "tsx scripts/smoke-neon-r2.mjs"
+    "smoke:neon-r2": "tsx scripts/smoke-neon-r2.mjs",
+    "smoke:clerk": "tsx scripts/smoke-clerk.mjs"
   },
   "dependencies": {
     "@beaver/core": "workspace:*",

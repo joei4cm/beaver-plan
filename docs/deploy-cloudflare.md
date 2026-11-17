@@ -106,9 +106,11 @@ pnpm exec wrangler secret put S3_REGION --env "$ENV"             # usually "auto
 # pnpm exec wrangler secret put SMOKE_TOKEN --env "$ENV"         # optional ops smoke
 
 # Auth (optional — without these, demo identity headers)
+# Need secret + publishable (or CLERK_JWT_ISSUER) for auth.mode=clerk. Smoke: pnpm smoke:clerk
 pnpm exec wrangler secret put CLERK_SECRET_KEY --env "$ENV"
 pnpm exec wrangler secret put CLERK_PUBLISHABLE_KEY --env "$ENV"
 # pnpm exec wrangler secret put CLERK_JWT_ISSUER --env "$ENV"
+# WeChat UI flag is a non-secret wrangler var: CLERK_WECHAT_ENABLED=true in [env.*.vars]
 
 # Maps (optional — demo POIs without)
 pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY --env "$ENV"

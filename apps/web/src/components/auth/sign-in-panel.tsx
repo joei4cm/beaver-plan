@@ -4,15 +4,19 @@ import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
+import { WeChatOAuthTrigger } from "./wechat-oauth-trigger";
 
 export function SignInPanel({
   locale,
   clerkReady,
   wechatEnabled,
+  oauthStrategy,
 }: {
   locale: Locale;
   clerkReady: boolean;
   wechatEnabled: boolean;
+  /** From `/sign-in?strategy=` — e.g. oauth_wechat */
+  oauthStrategy?: string | null;
 }) {
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
 
@@ -53,25 +57,36 @@ export function SignInPanel({
           ) : (
             <p>{t(locale, "auth.wechatHint")}</p>
           )}
-          <Link href="/trips" className="inline-block text-river hover:underline">
+          {clerkReady && wechatEnabled && (
+            <Link
+              href="/sign-in?strategy=oauth_wechat"
+              className="inline-flex rounded-md border border-river/40 bg-foam/80 px-3 py-2 text-river transition hover:border-river hover:bg-foam"
+            >
+              {t(locale, "auth.wechat")}
+            </Link>
+          )}
+          <Link href="/trips" className="block text-river hover:underline">
             ← {t(locale, "nav.trips")}
           </Link>
         </div>
 
         <div className="min-h-[320px]">
           {clerkReady ? (
-            <SignIn
-              routing="path"
-              path="/sign-in"
-              signUpUrl="/sign-in"
-              fallbackRedirectUrl="/trips"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border border-[color:var(--bp-line)] bg-foam/80",
-                },
-              }}
-            />
+            <>
+              <WeChatOAuthTrigger locale={locale} strategy={oauthStrategy} />
+              <SignIn
+                routing="path"
+                path="/sign-in"
+                signUpUrl="/sign-in"
+                fallbackRedirectUrl="/trips"
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "shadow-none border border-[color:var(--bp-line)] bg-foam/80",
+                  },
+                }}
+              />
+            </>
           ) : (
             <div className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 p-6">
               <p className="font-display text-xl text-ink">
