@@ -44,4 +44,10 @@ TTS_PROVIDER=auto
 # Chunked partial ASR is default (POST /v1/translation/partial).
 # Optional live streams: see GET /v1/translation/streaming (Deepgram WS / OpenAI Realtime).
 
+# ── OTA / booking stub (optional — demo catalog without keys; no checkout) ─
+OTA_PROVIDER=auto
+AMADEUS_API_KEY=
+AMADEUS_API_SECRET=
+BOOKING_AFFILIATE_ID=
+
 DEFAULT_LOCALE=zh-CN

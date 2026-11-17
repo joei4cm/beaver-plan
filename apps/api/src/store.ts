@@ -88,6 +88,7 @@ function rowToStop(row: typeof stopsTable.$inferSelect): Stop {
     place,
     userNote: row.userNote ?? undefined,
     photos: row.photos ?? [],
+    bookingLinks: row.bookingLinks ?? [],
   };
 }
 
@@ -106,6 +107,7 @@ function stopValues(tripId: string, stop: Stop) {
     placeRaw: stop.place.raw ?? null,
     userNote: stop.userNote ?? null,
     photos: stop.photos ?? [],
+    bookingLinks: stop.bookingLinks ?? [],
   };
 }
 
@@ -702,6 +704,13 @@ export async function ensureSampleTrip(
       order: 0,
       place: pick("demo-kiyomizu"),
       photos: [],
+      bookingLinks: [
+        {
+          kind: "ticket",
+          url: "https://example.com/demo/tickets/kiyomizu-night",
+          providerLabel: "DemoTickets",
+        },
+      ],
     },
     {
       id: "stop-gion",
@@ -709,6 +718,7 @@ export async function ensureSampleTrip(
       order: 1,
       place: pick("demo-gion"),
       photos: [],
+      bookingLinks: [],
     },
     {
       id: "stop-fushimi",
@@ -716,6 +726,7 @@ export async function ensureSampleTrip(
       order: 0,
       place: pick("demo-fushimi"),
       photos: [],
+      bookingLinks: [],
     },
     {
       id: "stop-arashiyama",
@@ -723,6 +734,13 @@ export async function ensureSampleTrip(
       order: 1,
       place: pick("demo-arashiyama"),
       photos: [],
+      bookingLinks: [
+        {
+          kind: "hotel",
+          url: "https://example.com/demo/hotels/higashiyama-ryokan",
+          providerLabel: "DemoStay",
+        },
+      ],
     },
     {
       id: "stop-nishiki",
@@ -730,6 +748,7 @@ export async function ensureSampleTrip(
       order: 0,
       place: pick("demo-nishiki"),
       photos: [],
+      bookingLinks: [],
     },
   ];
   await replaceStops(db, id, stops);

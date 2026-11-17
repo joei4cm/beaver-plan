@@ -21,6 +21,7 @@ describe("buildMapSnapshot", () => {
           lng: 135.7,
         },
         photos: [],
+        bookingLinks: [],
       },
     ];
     const legs: Leg[] = [

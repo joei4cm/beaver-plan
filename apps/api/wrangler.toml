@@ -37,3 +37,6 @@ CLERK_WECHAT_ENABLED = "false"
 # Without S3/R2 credentials, /v1/media* return 503 (no silent in-memory media).
 # Without map secrets, /v1/places and /v1/directions use curated demo data.
 # Without OPENAI_/DEEPGRAM keys, /v1/translation/* serves scripted demo turns.
+# OTA / booking (optional): OTA_PROVIDER, AMADEUS_API_KEY, AMADEUS_API_SECRET,
+#   BOOKING_AFFILIATE_ID — without keys POST /v1/booking/search is demo catalog.
+#   No payment capture; live Amadeus/Booking adapter is future work.

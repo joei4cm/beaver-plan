@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   createEngineBundle,
   inferRegionHint,
+  normalizeBookingLinks,
   reorderStops,
   resolveMapEngine,
   routeAdjacentStops,
@@ -289,6 +290,7 @@ tripRoutes.post("/v1/trips/:id/duplicate", requireAuth, async (c) => {
       place: { ...s.place },
       userNote: s.userNote,
       photos: [],
+      bookingLinks: s.bookingLinks?.map((b) => ({ ...b })) ?? [],
     });
   }
   await replaceStops(db, tripId, stops);
@@ -391,6 +393,7 @@ tripRoutes.post("/v1/trips/:id/stops", requireAuth, async (c) => {
     place: toPlaceRef(engine, body.place),
     userNote: body.userNote,
     photos: [],
+    bookingLinks: [],
   };
   await insertStop(db, trip.id, stop);
   await appendActivity(
@@ -441,6 +444,65 @@ tripRoutes.patch("/v1/trips/:id/stops/reorder", requireAuth, async (c) => {
   await replaceLegs(db, trip.id, []);
   return c.json({
     stops: sortStops(next),
+    tripVersion: bumped.trip.version,
+  });
+});
+
+type PatchStopBody = {
+  userNote?: string | null;
+  bookingLinks?: unknown;
+  expectedVersion?: number;
+};
+
+/** Update stop note / booking deep links (hotel · flight · ticket). */
+tripRoutes.patch("/v1/trips/:id/stops/:stopId", requireAuth, async (c) => {
+  const db = dbOf(c);
+  const trip = await getTrip(db, c.req.param("id"));
+  if (!trip) return c.json({ error: "not_found" }, 404);
+  const access = await assertCanEdit(c, trip.id);
+  if (!access.ok) return access.res;
+
+  let body: PatchStopBody;
+  try {
+    body = await c.req.json<PatchStopBody>();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  const stopId = c.req.param("stopId");
+  const existing = await listStops(db, trip.id);
+  const current = existing.find((s) => s.id === stopId);
+  if (!current) return c.json({ error: "stop_not_found" }, 404);
+
+  if (body.userNote === undefined && body.bookingLinks === undefined) {
+    return c.json({ error: "nothing_to_update" }, 400);
+  }
+
+  const bumped = await applyVersionOrConflict(
+    c,
+    trip,
+    parseExpectedVersion(body),
+  );
+  if (!bumped.ok) return bumped.res;
+
+  const nextStop: Stop = {
+    ...current,
+    userNote:
+      body.userNote === undefined
+        ? current.userNote
+        : body.userNote === null || body.userNote === ""
+          ? undefined
+          : String(body.userNote).slice(0, 2000),
+    bookingLinks:
+      body.bookingLinks === undefined
+        ? current.bookingLinks ?? []
+        : normalizeBookingLinks(body.bookingLinks),
+  };
+
+  const next = existing.map((s) => (s.id === stopId ? nextStop : s));
+  await replaceStops(db, trip.id, next);
+  return c.json({
+    stop: nextStop,
     tripVersion: bumped.trip.version,
   });
 });

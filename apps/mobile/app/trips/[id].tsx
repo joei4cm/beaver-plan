@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, Stack, Link } from "expo-router";
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
   normalizeStepMode,
   stopsForDay,
   summarizeTransfer,
+  type BookingLinkKind,
   type Day,
   type Leg,
   type Stop,
@@ -376,6 +378,32 @@ export default function TripDetailScreen() {
                       ) : null}
                     </View>
                   ) : null}
+                  {(stop.bookingLinks ?? []).length > 0 ? (
+                    <View style={styles.bookingBlock}>
+                      <Text style={styles.bookingTitle}>
+                        {t(locale, "mobile.booking")}
+                      </Text>
+                      {(stop.bookingLinks ?? []).map((link) => (
+                        <Pressable
+                          key={`${link.kind}-${link.url}`}
+                          style={styles.bookingChip}
+                          onPress={() => void Linking.openURL(link.url)}
+                        >
+                          <Text style={styles.bookingChipText}>
+                            {t(
+                              locale,
+                              `planner.booking.kind.${link.kind as BookingLinkKind}`,
+                            )}
+                            {link.providerLabel
+                              ? ` · ${link.providerLabel}`
+                              : ""}
+                            {" · "}
+                            {t(locale, "mobile.bookingOpen")}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : null}
                 </View>
               </View>
             );
@@ -584,6 +612,23 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   stepLine: { fontSize: 11, color: colors.inkSoft, lineHeight: 16 },
+  bookingBlock: { marginTop: 8, gap: 6 },
+  bookingTitle: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  bookingChip: {
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(31,107,92,0.35)",
+    backgroundColor: "rgba(31,107,92,0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  bookingChipText: { fontSize: 12, color: colors.river, fontWeight: "500" },
   hint: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   error: { color: colors.timber, fontSize: 14 },
   retry: {

@@ -57,6 +57,18 @@ export type Bindings = {
   LLM_PROVIDER?: string;
   /** openai | edge | demo | auto */
   TTS_PROVIDER?: string;
+  /**
+   * OTA / booking search stub — optional.
+   * Without keys: curated demo hotels/activities.
+   * With keys: mode "configured" (still mock catalog until a live adapter is wired).
+   * Never put real secrets in git — use wrangler secrets / .dev.vars locally.
+   */
+  /** amadeus | booking | demo | auto */
+  OTA_PROVIDER?: string;
+  AMADEUS_API_KEY?: string;
+  AMADEUS_API_SECRET?: string;
+  /** Booking.com affiliate aid (document / stub only). */
+  BOOKING_AFFILIATE_ID?: string;
 };
 
 export type { AuthVariables as AppVariables } from "./auth.js";

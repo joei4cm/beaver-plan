@@ -15,6 +15,13 @@
       "when": 1794900000000,
       "tag": "0001_collab_comments_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795000000000,
+      "tag": "0002_stop_booking_links",
+      "breakpoints": true
     }
   ]
 }

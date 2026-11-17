@@ -124,6 +124,7 @@ templateRoutes.post("/v1/templates/:id/create", requireAuth, async (c) => {
         place: placeRefForTemplateStop(s),
         userNote: s.userNote,
         photos: [],
+        bookingLinks: [],
       });
     });
   }
