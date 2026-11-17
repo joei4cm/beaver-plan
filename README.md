@@ -4,7 +4,7 @@ Map-first travel OS — plan on a beautiful map, walk real routes, journal on th
 
 **Brand:** Beaver Plan / 海狸旅行  
 **Repo:** https://github.com/joei4cm/beaver-plan  
-**Slice:** Phase 2 started — trip duplicate + city playbooks; Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
+**Slice:** Phase 3 started — deep offline trip cache + journal-first sync; Neon + R2 on main; live keys checklist in [`docs/keys-integration.md`](docs/keys-integration.md)
 
 Product plan (Agent Store / humans):  
 `docs/beaverplan-product-plan.md` in the BeaverPlan Cursor Project Agent Store.
@@ -19,10 +19,11 @@ Product plan (Agent Store / humans):
 | `apps/mobile` | Expo — itinerary + journal + share + invite + **conversation / camera translate** |
 | `apps/api` | Hono on Cloudflare Workers — trips, maps, journal, media, share, membership, **translation BFF** |
 | `packages/core` | Domain + MapEngine + journal/share/collab + **Translation ports** |
+| `packages/offline` | Deep offline trip cache + journal-first sync queue (IndexedDB / AsyncStorage adapters in apps) |
 | `packages/ui-tokens` | Design tokens |
 | `packages/i18n` | zh-CN + en |
 
-**Out of scope here:** CRDT / presence avatars, offline ASR packs, Phase 3 offline / OTA.
+**Out of scope here:** CRDT / presence avatars, offline ASR packs, full Baidu/Google offline map tile SDKs, OTA booking.
 
 ---
 
@@ -318,6 +319,32 @@ pnpm exec wrangler secret put OPENAI_API_KEY
 pnpm --filter @beaver/api db:migrate        # against the same Neon DB
 pnpm deploy
 ```
+
+---
+
+## Deep offline (Phase 3 — first cut)
+
+Practical offline for **on-the-road journal**, not a full offline maps vendor pack.
+
+| Piece | Behavior |
+|-------|----------|
+| **Pin trip for offline** | Web planner/journal + mobile trip detail. Caches trip / days / stops / journal text + last-known stop pins & route polylines into **IndexedDB** (web) or **AsyncStorage** (Expo). |
+| **Journal-first sync** | When offline (or network fails), note + photo mutations enqueue locally; optimistic entries show in the journal. On reconnect, queue flushes FIFO (upload pending photos → create/delete journal). |
+| **Conflicts** | Trip `expectedVersion` when present; on `409 version_conflict`, refresh version and retry, then omit version → **last-write-wins**. No CRDT. |
+| **Map stub** | Cached stop coordinates + last polylines only. **Not** Baidu/Google/Amap offline tile SDKs. |
+
+**Limits (honest):** no OTA booking; no full offline map tiles; media bytes for queued photos live in the device KV until flush (keep picks small); unpin deletes the local cache (pending queue for that trip stays until flushed or cleared by sync).
+
+**Airplane-mode demo**
+
+1. Online: open `/trips/sample-kyoto` (or mobile trip) → **Pin for offline** → confirm status shows pinned.
+2. Open Journal, optionally add a note while online once so cache has journal shape.
+3. DevTools → Network → Offline (or OS airplane mode).
+4. Reload journal / trip — pinned cache still shows days/stops/notes; MiniMap still draws cached pins/polylines.
+5. Add a journal note (+ optional photo). UI shows “saved offline” / queued.
+6. Go back online → queue flushes automatically (or tap **Sync now**). Refresh journal — server entries match; local `local-*` ids replaced.
+
+Shared logic: `packages/offline` (`OfflineTripStore`, `flushOfflineQueue`). Adapters: `apps/web/src/lib/offline/*`, `apps/mobile/src/offline/*`.
 
 ---
 

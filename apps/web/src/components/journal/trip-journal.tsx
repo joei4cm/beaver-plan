@@ -2,17 +2,27 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import type { Day, JournalEntry, Stop, Trip } from "@beaver/core";
+import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
 import { journalForDay, stopsForDay } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { apiGet, apiSend } from "@/lib/api";
-import { resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
+import { fileToBase64, resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
+import {
+  enqueueJournalCreate,
+  enqueueJournalDelete,
+  flushJournalQueue,
+  isBrowserOnline,
+  isOfflineTransportError,
+  readCachedTrip,
+} from "@/lib/offline/trip-offline";
 
 type TripPayload = {
   trip: Trip;
   days: Day[];
   stops: Stop[];
+  legs?: Leg[];
 };
 
 type Props = {
@@ -21,10 +31,18 @@ type Props = {
   initialTrip: TripPayload | null;
 };
 
+type PendingLocalPhoto = {
+  id: string;
+  contentType: string;
+  dataBase64: string;
+  preview: string;
+};
+
 export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [trip, setTrip] = useState<Trip | null>(initialTrip?.trip ?? null);
   const [days, setDays] = useState<Day[]>(initialTrip?.days ?? []);
   const [stops, setStops] = useState<Stop[]>(initialTrip?.stops ?? []);
+  const [legs, setLegs] = useState<Leg[]>(initialTrip?.legs ?? []);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [dayId, setDayId] = useState<string | null>(
     initialTrip?.days[0]?.id ?? null,
@@ -32,8 +50,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [stopId, setStopId] = useState<string | "">("");
   const [body, setBody] = useState("");
   const [pendingMedia, setPendingMedia] = useState<string[]>([]);
+  const [pendingLocalPhotos, setPendingLocalPhotos] = useState<
+    PendingLocalPhoto[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const loadJournal = useCallback(async () => {
@@ -41,6 +64,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       `/v1/trips/${tripId}/journal`,
     );
     setEntries(data.entries);
+    setFromCache(false);
+    return data.entries;
   }, [tripId]);
 
   const loadTrip = useCallback(async () => {
@@ -48,21 +73,67 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     setTrip(data.trip);
     setDays(data.days);
     setStops(data.stops);
+    setLegs(data.legs ?? []);
     setDayId((prev) => prev ?? data.days[0]?.id ?? null);
+    setFromCache(false);
+    return data;
   }, [tripId]);
+
+  const loadFromCache = useCallback(async () => {
+    const cached = await readCachedTrip(tripId);
+    if (!cached) return false;
+    setTrip(cached.trip);
+    setDays(cached.days);
+    setStops(cached.stops);
+    setLegs(cached.legs);
+    setEntries(cached.journal);
+    setDayId((prev) => prev ?? cached.days[0]?.id ?? null);
+    setFromCache(true);
+    setInfo(t(locale, "offline.cachedRead"));
+    return true;
+  }, [locale, tripId]);
 
   useEffect(() => {
     startTransition(() => {
       void (async () => {
         try {
           if (!initialTrip) await loadTrip();
+          else if (initialTrip.legs) setLegs(initialTrip.legs);
           await loadJournal();
+          if (isBrowserOnline()) {
+            try {
+              await flushJournalQueue();
+              await loadJournal();
+            } catch {
+              /* keep queue */
+            }
+          }
         } catch (e) {
-          setError(e instanceof Error ? e.message : "load_failed");
+          const ok = await loadFromCache();
+          if (!ok) {
+            setError(e instanceof Error ? e.message : "load_failed");
+          }
         }
       })();
     });
-  }, [initialTrip, loadJournal, loadTrip]);
+  }, [initialTrip, loadFromCache, loadJournal, loadTrip]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      void (async () => {
+        try {
+          await flushJournalQueue();
+          await loadTrip();
+          await loadJournal();
+          setInfo(null);
+        } catch {
+          /* stay on cache */
+        }
+      })();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [loadJournal, loadTrip]);
 
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
@@ -81,34 +152,110 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   async function onPickFiles(files: FileList | null) {
     if (!files?.length) return;
     setError(null);
-    const uploaded: string[] = [];
+    setInfo(null);
     try {
+      if (!isBrowserOnline()) {
+        const locals: PendingLocalPhoto[] = [];
+        for (const file of Array.from(files).slice(0, 6)) {
+          const dataBase64 = await fileToBase64(file);
+          const contentType = file.type || "image/jpeg";
+          locals.push({
+            id: crypto.randomUUID(),
+            contentType,
+            dataBase64,
+            preview: `data:${contentType};base64,${dataBase64}`,
+          });
+        }
+        setPendingLocalPhotos((prev) => [...prev, ...locals].slice(0, 8));
+        return;
+      }
+      const uploaded: string[] = [];
       for (const file of Array.from(files).slice(0, 6)) {
         const key = await uploadJournalPhoto(file, tripId);
         uploaded.push(key);
       }
       setPendingMedia((prev) => [...prev, ...uploaded].slice(0, 8));
     } catch (e) {
+      if (isOfflineTransportError(e)) {
+        try {
+          const locals: PendingLocalPhoto[] = [];
+          for (const file of Array.from(files).slice(0, 6)) {
+            const dataBase64 = await fileToBase64(file);
+            const contentType = file.type || "image/jpeg";
+            locals.push({
+              id: crypto.randomUUID(),
+              contentType,
+              dataBase64,
+              preview: `data:${contentType};base64,${dataBase64}`,
+            });
+          }
+          setPendingLocalPhotos((prev) => [...prev, ...locals].slice(0, 8));
+          setInfo(t(locale, "offline.savedLocal"));
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
       setError(e instanceof Error ? e.message : "upload_failed");
     }
   }
 
   async function saveEntry() {
-    if (!body.trim() && pendingMedia.length === 0) return;
+    if (!body.trim() && pendingMedia.length === 0 && pendingLocalPhotos.length === 0) {
+      return;
+    }
     setSaving(true);
     setError(null);
-    try {
-      await apiSend(`/v1/trips/${tripId}/journal`, "POST", {
-        dayId: dayId ?? undefined,
-        stopId: stopId || undefined,
-        body: body.trim(),
-        media: pendingMedia,
+    setInfo(null);
+    const payload = {
+      dayId: dayId ?? undefined,
+      stopId: stopId || undefined,
+      body: body.trim(),
+      media: pendingMedia,
+      expectedVersion: trip?.version,
+    };
+
+    const finishLocal = async () => {
+      const queued = await enqueueJournalCreate({
+        tripId,
+        body: payload.body,
+        dayId: payload.dayId,
+        stopId: payload.stopId,
+        mediaKeys: pendingMedia,
+        pendingPhotos: pendingLocalPhotos.map((p) => ({
+          id: p.id,
+          contentType: p.contentType,
+          dataBase64: p.dataBase64,
+        })),
+        expectedVersion: trip?.version,
       });
+      setEntries((prev) => [...prev, queued.localEntry]);
       setBody("");
       setPendingMedia([]);
+      setPendingLocalPhotos([]);
+      setStopId("");
+      setInfo(t(locale, "offline.savedLocal"));
+    };
+
+    try {
+      if (!isBrowserOnline()) {
+        await finishLocal();
+        return;
+      }
+      await apiSend(`/v1/trips/${tripId}/journal`, "POST", payload);
+      setBody("");
+      setPendingMedia([]);
+      setPendingLocalPhotos([]);
       setStopId("");
       await loadJournal();
+      if (trip) {
+        setTrip({ ...trip, version: trip.version + 1 });
+      }
     } catch (e) {
+      if (isOfflineTransportError(e)) {
+        await finishLocal();
+        return;
+      }
       setError(e instanceof Error ? e.message : "save_failed");
     } finally {
       setSaving(false);
@@ -117,9 +264,31 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
 
   async function removeEntry(entryId: string) {
     try {
-      await apiSend(`/v1/trips/${tripId}/journal/${entryId}`, "DELETE");
+      if (!isBrowserOnline()) {
+        await enqueueJournalDelete({
+          tripId,
+          entryId,
+          expectedVersion: trip?.version,
+        });
+        setEntries((prev) => prev.filter((e) => e.id !== entryId));
+        setInfo(t(locale, "offline.savedLocal"));
+        return;
+      }
+      await apiSend(`/v1/trips/${tripId}/journal/${entryId}`, "DELETE", {
+        expectedVersion: trip?.version,
+      });
       await loadJournal();
     } catch (e) {
+      if (isOfflineTransportError(e)) {
+        await enqueueJournalDelete({
+          tripId,
+          entryId,
+          expectedVersion: trip?.version,
+        });
+        setEntries((prev) => prev.filter((e) => e.id !== entryId));
+        setInfo(t(locale, "offline.savedLocal"));
+        return;
+      }
       setError(e instanceof Error ? e.message : "delete_failed");
     }
   }
@@ -140,12 +309,18 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     );
   }
 
+  const previewMedia = [
+    ...pendingMedia.map((url) => ({ key: url, src: resolveMediaUrl(url) })),
+    ...pendingLocalPhotos.map((p) => ({ key: p.id, src: p.preview })),
+  ];
+
   return (
     <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-8 md:pt-6">
       <header className="animate-rise flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-river/80">
             {t(locale, "journal.eyebrow")}
+            {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
           </p>
           <h1 className="mt-2 font-display text-4xl tracking-tight text-ink md:text-5xl">
             {trip.title}
@@ -153,6 +328,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           <p className="mt-3 max-w-xl text-ink-soft">
             {t(locale, "journal.support")}
           </p>
+          <div className="mt-4">
+            <OfflinePinControl
+              tripId={tripId}
+              locale={locale}
+              trip={trip}
+              days={days}
+              stops={stops}
+              legs={legs}
+              journal={entries}
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -216,6 +402,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     {stop?.place.name ??
                       days.find((d) => d.id === entry.dayId)?.note ??
                       t(locale, "journal.dayNote")}
+                    {entry.id.startsWith("local-")
+                      ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
+                      : ""}
                   </p>
                   <button
                     type="button"
@@ -296,13 +485,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             />
           </label>
 
-          {pendingMedia.length > 0 && (
+          {previewMedia.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {pendingMedia.map((url) => (
+              {previewMedia.map((item) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  key={url}
-                  src={resolveMediaUrl(url)}
+                  key={item.key}
+                  src={item.src}
                   alt=""
                   className="h-16 w-12 object-cover"
                 />
@@ -310,11 +499,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </div>
           )}
 
+          {info && <p className="mt-3 text-sm text-river">{info}</p>}
           {error && <p className="mt-3 text-sm text-timber">{error}</p>}
 
           <button
             type="button"
-            disabled={saving || (!body.trim() && pendingMedia.length === 0)}
+            disabled={
+              saving ||
+              (!body.trim() &&
+                pendingMedia.length === 0 &&
+                pendingLocalPhotos.length === 0)
+            }
             onClick={() => void saveEntry()}
             className="mt-5 w-full rounded-md bg-timber px-4 py-3 text-sm font-medium text-foam transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
