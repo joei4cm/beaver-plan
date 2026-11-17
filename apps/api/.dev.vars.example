@@ -41,5 +41,7 @@ DEEPGRAM_API_KEY=
 ASR_PROVIDER=auto
 LLM_PROVIDER=auto
 TTS_PROVIDER=auto
+# Chunked partial ASR is default (POST /v1/translation/partial).
+# Optional live streams: see GET /v1/translation/streaming (Deepgram WS / OpenAI Realtime).
 
 DEFAULT_LOCALE=zh-CN

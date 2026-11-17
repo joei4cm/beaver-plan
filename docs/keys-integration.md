@@ -259,15 +259,38 @@ TTS_PROVIDER=auto          # or edge = device/browser SpeechSynthesis
 | TTS | OpenAI speech if key, else edge/local | `openai`, `edge`, `demo` |
 | Vision | OpenAI vision if key, else demo | (follows LLM key) |
 
+### Streaming / lower-latency (optional)
+
+No extra env vars required for the default **chunked** path (`POST /v1/translation/partial` + finalize `/turn`).
+
+```bash
+# Documented provider settings (safe — no secrets)
+curl -s http://127.0.0.1:8787/v1/translation/streaming | jq '.mode,.deepgram,.openaiRealtime'
+
+# Deepgram live WS (when DEEPGRAM_API_KEY set):
+#   wss://api.deepgram.com/v1/listen?<listenQuery>
+#   Header: Authorization: Token $DEEPGRAM_API_KEY
+#   interim_results=true, endpointing=300
+
+# OpenAI Realtime (when OPENAI_API_KEY set):
+#   wss://api.openai.com/v1/realtime — mint ephemeral secret server-side first
+#   Whisper (/audio/transcriptions) stays the batch finalizer for /turn
+```
+
+Primary travel locales (UI + API): `zh-CN`, `en`, `ja`, `ko`, `fr`, `es`, `de` (+ `th`/`vi`). Phrasebook works offline without keys.
+
 ### Smoke — demo → live
 
 ```bash
 # Before keys
-curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.providers'
-# → mode: "demo"
+curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.streamingMode,.offlineAssist,.primaryLocales'
+# → mode: "demo", streamingMode: "chunked", offlineAssist: "phrasebook"
+
+# Phrasebook (no keys)
+curl -s 'http://127.0.0.1:8787/v1/translation/phrasebook?sourceLocale=zh-CN&targetLocale=ja' | jq '.count,.phrases[0]'
 
 # After OPENAI_API_KEY (+ restart API)
-curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.providers'
+curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.asr,.llm,.tts'
 # → mode: "live" (or mixed), providers not demo-*
 
 curl -s -X POST http://127.0.0.1:8787/v1/translation/translate \
@@ -275,7 +298,7 @@ curl -s -X POST http://127.0.0.1:8787/v1/translation/translate \
   -d '{"text":"你好","sourceLocale":"zh-CN","targetLocale":"en"}'
 ```
 
-UI: `http://localhost:3000/translate` — next-demo line still works; mic / typed line should hit live providers when keyed. Mobile → **实时翻译**.
+UI: `http://localhost:3000/translate` — next-demo line, phrasebook, and offline queue still work without keys; mic shows chunked partials; typed line hits live providers when keyed. Mobile → **实时翻译**.
 
 ### Day-fill (智能填天) — same OpenAI key
 

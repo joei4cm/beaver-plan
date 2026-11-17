@@ -3,11 +3,17 @@ import {
   createTranslationStack,
   decodeAudioBase64,
   encodeAudioBase64,
+  getStreamingProviderSettings,
+  listPhrasebook,
   normalizePair,
+  offlinePhraseTranslate,
+  PRIMARY_TRANSLATION_LOCALES,
   reportTranslationCapabilities,
   runLiveTurn,
+  runPartialAsr,
   TRANSLATION_LOCALES,
   type LanguagePair,
+  type PhraseCategory,
 } from "@beaver/core";
 import type { Bindings } from "./env.js";
 
@@ -49,6 +55,8 @@ translationRoutes.get("/v1/translation/status", (c) => {
   return c.json({
     ...reportTranslationCapabilities(stack, enabled),
     locales: TRANSLATION_LOCALES,
+    primaryLocales: PRIMARY_TRANSLATION_LOCALES,
+    streaming: getStreamingProviderSettings(),
     keys: {
       openai: Boolean(c.env.OPENAI_API_KEY),
       deepgram: Boolean(c.env.DEEPGRAM_API_KEY),
@@ -57,7 +65,114 @@ translationRoutes.get("/v1/translation/status", (c) => {
 });
 
 translationRoutes.get("/v1/translation/locales", (c) => {
-  return c.json({ locales: TRANSLATION_LOCALES });
+  return c.json({
+    locales: TRANSLATION_LOCALES,
+    primaryLocales: PRIMARY_TRANSLATION_LOCALES,
+  });
+});
+
+/** Documented streaming / partial-ASR provider settings (no secrets). */
+translationRoutes.get("/v1/translation/streaming", (c) => {
+  return c.json({
+    ...getStreamingProviderSettings(),
+    keys: {
+      openai: Boolean(c.env.OPENAI_API_KEY),
+      deepgram: Boolean(c.env.DEEPGRAM_API_KEY),
+    },
+    notes: {
+      chunked:
+        "Clients use MediaRecorder timeslices + POST /v1/translation/partial for optimistic transcripts, then finalize with /turn.",
+      deepgram:
+        "Connect to deepgram.liveUrl?listenQuery with Authorization: Token <DEEPGRAM_API_KEY> for live interim results.",
+      openaiRealtime:
+        "Use OpenAI Realtime WS after minting an ephemeral secret server-side; Whisper remains the batch finalizer.",
+    },
+  });
+});
+
+/** Cached travel phrasebook — works without LLM keys (offline-friendly). */
+translationRoutes.get("/v1/translation/phrasebook", (c) => {
+  const sourceLocale = c.req.query("sourceLocale") ?? "zh-CN";
+  const targetLocale = c.req.query("targetLocale") ?? "en";
+  const category = c.req.query("category") as PhraseCategory | undefined;
+  const phrases = listPhrasebook(sourceLocale, targetLocale, category);
+  return c.json({
+    pair: normalizePair(sourceLocale, targetLocale),
+    count: phrases.length,
+    phrases,
+  });
+});
+
+/** Offline stub: phrasebook lookup without calling live LLM. */
+translationRoutes.post("/v1/translation/offline-assist", async (c) => {
+  const body = await c.req.json<{
+    text?: string;
+    sourceLocale?: string;
+    targetLocale?: string;
+  }>();
+  const text = (body.text ?? "").trim();
+  if (!text) return c.json({ error: "text_required" }, 400);
+  const pair = pairFromBody(body);
+  const hit = offlinePhraseTranslate(text, pair.sourceLocale, pair.targetLocale);
+  if (!hit) {
+    return c.json({
+      hit: false,
+      pair,
+      sourceText: text,
+      translatedText: null,
+      queuedSuggested: true,
+    });
+  }
+  return c.json({
+    hit: true,
+    pair: hit.pair,
+    sourceText: hit.sourceText,
+    translatedText: hit.translatedText,
+    phraseId: hit.id,
+    category: hit.category,
+    queuedSuggested: false,
+  });
+});
+
+/** Chunked / interim ASR for optimistic UI while the mic is held. */
+translationRoutes.post("/v1/translation/partial", async (c) => {
+  if (!featureOn(c.env)) return c.json({ error: "translation_disabled" }, 503);
+
+  const body = await c.req.json<{
+    audioBase64?: string;
+    mimeType?: string;
+    locale?: string;
+    targetLocale?: string;
+    sessionId?: string;
+    sequence?: number;
+    demoTurnIndex?: number;
+  }>();
+
+  const stack = stackFrom(c.env);
+  const audio = body.audioBase64
+    ? decodeAudioBase64(body.audioBase64)
+    : new Uint8Array();
+
+  try {
+    const partial = await runPartialAsr(stack, {
+      audio,
+      mimeType: body.mimeType ?? "audio/webm",
+      locale: body.locale,
+      targetLocale: body.targetLocale,
+      sessionId: body.sessionId,
+      sequence: body.sequence,
+      demoTurnIndex: body.demoTurnIndex,
+    });
+    return c.json({
+      ...partial,
+      mode: stack.mode,
+      sessionId: body.sessionId ?? null,
+      sequence: body.sequence ?? 0,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "partial_asr_failed";
+    return c.json({ error: message, mode: stack.mode }, 502);
+  }
 });
 
 /** Plain text translate. */

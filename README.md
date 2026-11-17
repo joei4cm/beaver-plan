@@ -198,16 +198,32 @@ Restart `pnpm dev:api` after editing `.dev.vars`.
 
 | Method | Path | Notes |
 |--------|------|-------|
-| `GET` | `/v1/translation/status` | mode + provider ids + locales |
+| `GET` | `/v1/translation/status` | mode + provider ids + locales + streaming/offline flags |
+| `GET` | `/v1/translation/locales` | all locales + `primaryLocales` (zh-CN, en, ja, ko, fr, es, de) |
+| `GET` | `/v1/translation/streaming` | Deepgram live WS + OpenAI Realtime settings (no secrets) |
+| `GET` | `/v1/translation/phrasebook` | cached travel phrases for a language pair |
+| `POST` | `/v1/translation/offline-assist` | phrasebook stub translate / queue hint |
+| `POST` | `/v1/translation/partial` | interim / timeslice ASR for optimistic UI |
 | `POST` | `/v1/translation/translate` | `{ text, sourceLocale, targetLocale }` |
 | `POST` | `/v1/translation/asr` | `{ audioBase64, mimeType, locale? }` |
 | `POST` | `/v1/translation/tts` | `{ text, locale }` → audio or `speakLocally` |
-| `POST` | `/v1/translation/turn` | chunked live turn: audio and/or text → translate → TTS |
+| `POST` | `/v1/translation/turn` | finalize turn: audio and/or text → translate → TTS |
 | `POST` | `/v1/translation/vision` | `{ imageBase64?, mode: "ocr"\|"caption", locales }` |
 
 Pipeline (packages/core): **ASR → TranslationProvider → TTS**, with optional **camera OCR / scene caption**.
 
-UX is chunked near-real-time (one utterance per `/turn`), not a perfect full-duplex stream — usable live assist for MVP.
+### Lower-latency path (Phase 3)
+
+- **Default:** chunked MediaRecorder timeslices (~900 ms) + `POST /v1/translation/partial`, then finalize on `/turn`. Web also uses browser `SpeechRecognition` interim results when available.
+- **Deepgram streaming:** `GET /v1/translation/streaming` returns `wss://api.deepgram.com/v1/listen` query (`interim_results=true`, `endpointing=300`). Connect with `Authorization: Token <DEEPGRAM_API_KEY>`.
+- **OpenAI Realtime:** same endpoint documents `wss://api.openai.com/v1/realtime` + model hint. Mint an ephemeral client secret from the BFF before connecting; Whisper remains the batch finalizer.
+- Not full-duplex by default — optimistic partials + utterance finalize is the practical live assist.
+
+### Semi-offline assist
+
+- Cached **travel phrasebook** (greetings / directions / food / shopping / emergency / lodging) for primary locales — works with no keys and on airplane mode.
+- Clients queue free-form phrases locally when offline or when live translate fails; flush with `/turn` when back online.
+- Not full on-device ASR packs (Expo / browser interim only where cheap).
 
 ---
 
@@ -290,6 +306,8 @@ Same UI. Set `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL`, `OPENAI_CHAT_MODEL`
 |------------|---------|------------------------|-------------------|
 | Scripted bilingual translate UI (web + mobile) | ✅ | — | — |
 | Live ASR → LLM → TTS | demo | ✅ | — |
+| Multi-locale pairs (ja/ko/fr/es/de) + phrasebook offline | ✅ | — | — |
+| Chunked partial ASR / streaming provider docs | ✅ | optional Realtime WS | — |
 | Camera OCR / caption | demo overlays | ✅ vision | — |
 | Smart day-fill (智能填天) | scripted demo | ✅ LLM propose | — |
 | Kyoto planner / journal / share / collab | ✅ Neon `DATABASE_URL` + R2 `S3_*` for photos | — | ✅ when keyed |

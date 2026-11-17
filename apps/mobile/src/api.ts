@@ -194,6 +194,9 @@ export type TranslationStatus = {
   vision: string;
   featureEnabled: boolean;
   locales: string[];
+  primaryLocales?: string[];
+  streamingMode?: string;
+  offlineAssist?: string;
 };
 
 export type LiveTurnResponse = {
@@ -244,4 +247,40 @@ export async function runVisionAssist(input: {
   targetLocale: string;
 }): Promise<VisionResponse> {
   return apiSend("/v1/translation/vision", "POST", input);
+}
+
+export type PhrasebookItem = {
+  id: string;
+  category: string;
+  key: string;
+  sourceText: string;
+  translatedText: string;
+};
+
+export async function fetchPhrasebook(input: {
+  sourceLocale: string;
+  targetLocale: string;
+  category?: string;
+}): Promise<PhrasebookItem[]> {
+  const q = new URLSearchParams({
+    sourceLocale: input.sourceLocale,
+    targetLocale: input.targetLocale,
+  });
+  if (input.category) q.set("category", input.category);
+  const res = await apiGet<{ phrases: PhrasebookItem[] }>(
+    `/v1/translation/phrasebook?${q.toString()}`,
+  );
+  return res.phrases;
+}
+
+export async function runPartialAsr(input: {
+  audioBase64?: string;
+  mimeType?: string;
+  locale: string;
+  targetLocale: string;
+  sessionId?: string;
+  sequence?: number;
+  demoTurnIndex?: number;
+}): Promise<{ text: string; isFinal: boolean; provider: string }> {
+  return apiSend("/v1/translation/partial", "POST", input);
 }

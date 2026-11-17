@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -15,20 +15,32 @@ import * as FileSystem from "expo-file-system";
 import * as Speech from "expo-speech";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  PRIMARY_TRANSLATION_LOCALES,
   TRANSLATION_LOCALES,
+  enqueueTranslation,
+  listPhrasebook,
+  listQueuedTranslations,
   localeLabel,
+  offlinePhraseTranslate,
+  pendingQueueCount,
   swapPair,
+  type PhraseCategory,
+  type PhrasebookLookup,
+  type QueuedTranslation,
   type TranslationLocale,
 } from "@beaver/core";
 import { colors } from "@beaver/ui-tokens";
-import { t } from "@beaver/i18n";
+import { t, type MessageKey } from "@beaver/i18n";
 import {
+  fetchPhrasebook,
   fetchTranslationStatus,
+  runPartialAsr,
   runTranslationTurn,
   runVisionAssist,
   type LiveTurnResponse,
   type TranslationStatus,
 } from "../src/api";
+import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
 
 const uiLocale = "zh-CN" as const;
 
@@ -39,8 +51,17 @@ type TurnRow = {
   id: string;
   sourceText: string;
   translatedText: string;
-  mode: "live" | "demo";
+  mode: "live" | "demo" | "offline";
 };
+
+const CATEGORY_KEYS: PhraseCategory[] = [
+  "greetings",
+  "directions",
+  "food",
+  "shopping",
+  "emergency",
+  "lodging",
+];
 
 export default function TranslateScreen() {
   const [tab, setTab] = useState<Tab>("conversation");
@@ -61,6 +82,18 @@ export default function TranslateScreen() {
   const [camPermission, requestCamPermission] = useCameraPermissions();
   const recordingRef = useRef<Audio.Recording | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const queueStore = useMemo(() => createMobileOfflineQueueStore(), []);
+  const [partialText, setPartialText] = useState("");
+  const [phrases, setPhrases] = useState<PhrasebookLookup[]>([]);
+  const [phraseCategory, setPhraseCategory] =
+    useState<PhraseCategory>("greetings");
+  const [queue, setQueue] = useState<QueuedTranslation[]>([]);
+  const partialTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sequenceRef = useRef(0);
+
+  const refreshQueue = useCallback(async () => {
+    setQueue(await listQueuedTranslations(queueStore));
+  }, [queueStore]);
 
   useEffect(() => {
     void fetchTranslationStatus()
@@ -74,9 +107,36 @@ export default function TranslateScreen() {
           vision: "demo-vision",
           featureEnabled: true,
           locales: [...TRANSLATION_LOCALES],
+          primaryLocales: [...PRIMARY_TRANSLATION_LOCALES],
+          streamingMode: "chunked",
+          offlineAssist: "phrasebook",
         }),
       );
-  }, []);
+    void refreshQueue();
+  }, [refreshQueue]);
+
+  useEffect(() => {
+    void fetchPhrasebook({
+      sourceLocale,
+      targetLocale,
+      category: phraseCategory,
+    })
+      .then((rows) =>
+        setPhrases(
+          rows.map((r) => ({
+            id: r.id,
+            category: r.category as PhraseCategory,
+            key: r.key,
+            sourceText: r.sourceText,
+            translatedText: r.translatedText,
+            pair: { sourceLocale, targetLocale },
+          })),
+        ),
+      )
+      .catch(() =>
+        setPhrases(listPhrasebook(sourceLocale, targetLocale, phraseCategory)),
+      );
+  }, [sourceLocale, targetLocale, phraseCategory]);
 
   const speakTranslation = useCallback(
     async (text: string, locale: string, audio?: LiveTurnResponse["tts"]) => {
@@ -127,6 +187,7 @@ export default function TranslateScreen() {
   }) {
     setBusy(true);
     setError(null);
+    setPartialText("");
     try {
       const res = await runTranslationTurn({
         ...input,
@@ -138,7 +199,52 @@ export default function TranslateScreen() {
       pushTurn(res);
       await speakTranslation(res.translatedText, targetLocale, res.tts);
     } catch {
-      setError(t(uiLocale, "translate.error"));
+      const text = input.text?.trim();
+      if (text) {
+        const hit = offlinePhraseTranslate(text, sourceLocale, targetLocale);
+        if (hit) {
+          pushTurn({
+            sourceText: hit.sourceText,
+            translatedText: hit.translatedText,
+            pair: hit.pair,
+            asrProvider: "phrasebook",
+            translateProvider: "phrasebook",
+            mode: "demo",
+            tts: null,
+          });
+          setTurns((prev) =>
+            prev.map((row, i) =>
+              i === 0 ? { ...row, mode: "offline" } : row,
+            ),
+          );
+          await speakTranslation(hit.translatedText, targetLocale);
+        } else {
+          const item = await enqueueTranslation(queueStore, {
+            text,
+            sourceLocale,
+            targetLocale,
+          });
+          pushTurn({
+            sourceText: item.text,
+            translatedText:
+              item.offlineHint?.translatedText ??
+              `[${targetLocale}] ${item.text}`,
+            pair: item.pair,
+            asrProvider: "offline-queue",
+            translateProvider: "offline-queue",
+            mode: "demo",
+            tts: null,
+          });
+          setTurns((prev) =>
+            prev.map((row, i) =>
+              i === 0 ? { ...row, mode: "offline" } : row,
+            ),
+          );
+          await refreshQueue();
+        }
+      } else {
+        setError(t(uiLocale, "translate.error"));
+      }
     } finally {
       setBusy(false);
     }
@@ -146,6 +252,8 @@ export default function TranslateScreen() {
 
   async function startListening() {
     setError(null);
+    setPartialText("");
+    sequenceRef.current = 0;
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
@@ -163,12 +271,33 @@ export default function TranslateScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
       setListening(true);
+      // Optimistic partials: demo/live chunked ASR without waiting for release
+      if (partialTimerRef.current) clearInterval(partialTimerRef.current);
+      partialTimerRef.current = setInterval(() => {
+        const seq = sequenceRef.current++;
+        void runPartialAsr({
+          locale: sourceLocale,
+          targetLocale,
+          sequence: seq,
+          demoTurnIndex: demoIndex,
+        })
+          .then((p) => {
+            if (p.text) setPartialText(p.text);
+          })
+          .catch(() => {
+            /* ignore */
+          });
+      }, 900);
     } catch {
       setError(t(uiLocale, "translate.permissionMic"));
     }
   }
 
   async function stopListening() {
+    if (partialTimerRef.current) {
+      clearInterval(partialTimerRef.current);
+      partialTimerRef.current = null;
+    }
     const recording = recordingRef.current;
     recordingRef.current = null;
     setListening(false);
@@ -266,6 +395,14 @@ export default function TranslateScreen() {
   const locales = (status?.locales as TranslationLocale[] | undefined) ?? [
     ...TRANSLATION_LOCALES,
   ];
+  const primary = new Set(
+    (status?.primaryLocales as string[] | undefined) ??
+      PRIMARY_TRANSLATION_LOCALES,
+  );
+  const orderedLocales = [
+    ...locales.filter((l) => primary.has(l)),
+    ...locales.filter((l) => !primary.has(l)),
+  ];
 
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
@@ -321,7 +458,7 @@ export default function TranslateScreen() {
         <LocalePicker
           label={t(uiLocale, "translate.source")}
           value={sourceLocale}
-          locales={locales}
+          locales={orderedLocales}
           onChange={setSourceLocale}
         />
         <Pressable onPress={onSwap} style={styles.swapBtn}>
@@ -330,7 +467,7 @@ export default function TranslateScreen() {
         <LocalePicker
           label={t(uiLocale, "translate.target")}
           value={targetLocale}
-          locales={locales}
+          locales={orderedLocales}
           onChange={setTargetLocale}
         />
       </View>
@@ -353,6 +490,71 @@ export default function TranslateScreen() {
               </View>
             ))}
           </ScrollView>
+
+          {(listening || partialText) ? (
+            <Text style={styles.partial}>
+              {t(uiLocale, "translate.partialHint")} {partialText || "…"}
+            </Text>
+          ) : null}
+
+          <View style={styles.phraseHead}>
+            <Text style={styles.phraseTitle}>
+              {t(uiLocale, "translate.phrasebook")}
+            </Text>
+            <Text style={styles.phraseHint}>
+              {t(uiLocale, "translate.phrasebookHint")}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {CATEGORY_KEYS.map((cat) => (
+                <Pressable
+                  key={cat}
+                  onPress={() => setPhraseCategory(cat)}
+                  style={[
+                    styles.catChip,
+                    phraseCategory === cat && styles.catChipActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.catChipText,
+                      phraseCategory === cat && styles.catChipTextActive,
+                    ]}
+                  >
+                    {t(uiLocale, `translate.category.${cat}` as MessageKey)}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            {phrases.slice(0, 6).map((phrase) => (
+              <Pressable
+                key={phrase.id}
+                style={styles.phraseRow}
+                onPress={() => {
+                  pushTurn({
+                    sourceText: phrase.sourceText,
+                    translatedText: phrase.translatedText,
+                    pair: phrase.pair,
+                    asrProvider: "phrasebook",
+                    translateProvider: "phrasebook",
+                    mode: "demo",
+                    tts: null,
+                  });
+                  void speakTranslation(phrase.translatedText, targetLocale);
+                }}
+              >
+                <Text style={styles.bubbleSource}>{phrase.sourceText}</Text>
+                <Text style={styles.bubbleTarget}>{phrase.translatedText}</Text>
+              </Pressable>
+            ))}
+            {pendingQueueCount(queue) > 0 ? (
+              <Text style={styles.queueNote}>
+                {t(uiLocale, "offline.pending").replace(
+                  "{n}",
+                  String(pendingQueueCount(queue)),
+                )}
+              </Text>
+            ) : null}
+          </View>
 
           <View style={styles.compose}>
             <TextInput
@@ -758,4 +960,45 @@ const styles = StyleSheet.create({
   },
   visionLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
   visionLabelAlt: { color: colors.foam, fontWeight: "600", fontSize: 13 },
+  partial: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    color: colors.riverDeep,
+    fontSize: 13,
+  },
+  phraseHead: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  phraseTitle: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  phraseHint: { color: colors.inkSoft, fontSize: 12, lineHeight: 16 },
+  catChip: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 6,
+  },
+  catChipActive: {
+    backgroundColor: colors.river,
+    borderColor: colors.river,
+  },
+  catChipText: { fontSize: 12, color: colors.inkSoft },
+  catChipTextActive: { color: colors.foam, fontWeight: "600" },
+  phraseRow: {
+    borderRadius: 10,
+    backgroundColor: colors.foam,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    padding: 10,
+    gap: 4,
+  },
+  queueNote: { color: colors.timber, fontSize: 12 },
 });

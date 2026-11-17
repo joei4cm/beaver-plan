@@ -137,6 +137,9 @@ export type TranslationCapabilityReport = {
   tts: string;
   vision: string;
   featureEnabled: boolean;
+  /** Default lower-latency path: chunked partials + device interim. */
+  streamingMode: "utterance" | "chunked" | "realtime";
+  offlineAssist: "phrasebook";
 };
 
 export function reportTranslationCapabilities(
@@ -150,5 +153,7 @@ export function reportTranslationCapabilities(
     tts: stack.tts.id,
     vision: stack.vision.id,
     featureEnabled,
+    streamingMode: "chunked",
+    offlineAssist: "phrasebook",
   };
 }
