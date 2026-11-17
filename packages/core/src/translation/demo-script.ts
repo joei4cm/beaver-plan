@@ -60,6 +60,10 @@ const SCRIPTS: Record<string, DemoTurn[]> = {
       sourceText: "我想点一份拉面。",
       translatedText: "ラーメンを一つお願いします。",
     },
+    {
+      sourceText: "可以刷卡吗？",
+      translatedText: "カードは使えますか？",
+    },
   ],
   "ja|zh-CN": [
     {
@@ -70,11 +74,29 @@ const SCRIPTS: Record<string, DemoTurn[]> = {
       sourceText: "このメニューのおすすめは何ですか？",
       translatedText: "这菜单里有什么推荐？",
     },
+    {
+      sourceText: "水を一本ください。",
+      translatedText: "请给我一瓶水。",
+    },
   ],
   "en|ja": [
     {
       sourceText: "How do I get to the temple?",
       translatedText: "お寺へはどうやって行きますか？",
+    },
+    {
+      sourceText: "How much is this?",
+      translatedText: "これはいくらですか？",
+    },
+  ],
+  "ja|en": [
+    {
+      sourceText: "トイレはどこですか？",
+      translatedText: "Where is the bathroom?",
+    },
+    {
+      sourceText: "助けてください。",
+      translatedText: "Please help me.",
     },
   ],
   "zh-CN|ko": [
@@ -82,11 +104,43 @@ const SCRIPTS: Record<string, DemoTurn[]> = {
       sourceText: "请问地铁站怎么走？",
       translatedText: "지하철역은 어떻게 가나요?",
     },
+    {
+      sourceText: "这个多少钱？",
+      translatedText: "이거 얼마예요?",
+    },
+    {
+      sourceText: "我对花生过敏。",
+      translatedText: "땅콩 알레르기가 있어요.",
+    },
+  ],
+  "ko|zh-CN": [
+    {
+      sourceText: "화장실은 어디에 있나요?",
+      translatedText: "请问洗手间在哪里？",
+    },
+    {
+      sourceText: "물 한 병 주세요.",
+      translatedText: "请给我一瓶水。",
+    },
   ],
   "en|ko": [
     {
       sourceText: "How much is this?",
       translatedText: "이거 얼마예요?",
+    },
+    {
+      sourceText: "Where is the station?",
+      translatedText: "역은 어디에 있나요?",
+    },
+  ],
+  "ko|en": [
+    {
+      sourceText: "감사합니다.",
+      translatedText: "Thank you.",
+    },
+    {
+      sourceText: "도움이 필요해요.",
+      translatedText: "I need help.",
     },
   ],
   "zh-CN|fr": [
@@ -94,11 +148,123 @@ const SCRIPTS: Record<string, DemoTurn[]> = {
       sourceText: "请问菜单有中文吗？",
       translatedText: "Avez-vous un menu en chinois ?",
     },
+    {
+      sourceText: "请问车站怎么走？",
+      translatedText: "Où est la gare ?",
+    },
+    {
+      sourceText: "请给我一瓶水。",
+      translatedText: "Une bouteille d'eau, s'il vous plaît.",
+    },
+  ],
+  "fr|zh-CN": [
+    {
+      sourceText: "Où sont les toilettes ?",
+      translatedText: "请问洗手间在哪里？",
+    },
+    {
+      sourceText: "Combien ça coûte ?",
+      translatedText: "这个多少钱？",
+    },
+  ],
+  "en|fr": [
+    {
+      sourceText: "Where is the bathroom?",
+      translatedText: "Où sont les toilettes ?",
+    },
+    {
+      sourceText: "I'd like to check in.",
+      translatedText: "Je voudrais m'enregistrer.",
+    },
+  ],
+  "fr|en": [
+    {
+      sourceText: "Bonjour",
+      translatedText: "Hello",
+    },
+    {
+      sourceText: "J'ai besoin d'aide",
+      translatedText: "I need help",
+    },
+  ],
+  "zh-CN|es": [
+    {
+      sourceText: "请问洗手间在哪里？",
+      translatedText: "¿Dónde está el baño?",
+    },
+    {
+      sourceText: "这个多少钱？",
+      translatedText: "¿Cuánto cuesta esto?",
+    },
+  ],
+  "es|zh-CN": [
+    {
+      sourceText: "¿Dónde está la estación?",
+      translatedText: "请问车站在哪里？",
+    },
+    {
+      sourceText: "Gracias",
+      translatedText: "谢谢",
+    },
   ],
   "en|es": [
     {
       sourceText: "Where is the bathroom?",
       translatedText: "¿Dónde está el baño?",
+    },
+    {
+      sourceText: "Do you take cards?",
+      translatedText: "¿Aceptan tarjeta?",
+    },
+  ],
+  "es|en": [
+    {
+      sourceText: "Hola",
+      translatedText: "Hello",
+    },
+    {
+      sourceText: "Necesito ayuda",
+      translatedText: "I need help",
+    },
+  ],
+  "zh-CN|de": [
+    {
+      sourceText: "请问车站怎么走？",
+      translatedText: "Wo ist der Bahnhof?",
+    },
+    {
+      sourceText: "我对花生过敏。",
+      translatedText: "Ich bin allergisch gegen Erdnüsse.",
+    },
+  ],
+  "de|zh-CN": [
+    {
+      sourceText: "Wo ist die Toilette?",
+      translatedText: "请问洗手间在哪里？",
+    },
+    {
+      sourceText: "Was kostet das?",
+      translatedText: "这个多少钱？",
+    },
+  ],
+  "en|de": [
+    {
+      sourceText: "Where is the station?",
+      translatedText: "Wo ist der Bahnhof?",
+    },
+    {
+      sourceText: "Is there Wi‑Fi here?",
+      translatedText: "Gibt es hier WLAN?",
+    },
+  ],
+  "de|en": [
+    {
+      sourceText: "Hallo",
+      translatedText: "Hello",
+    },
+    {
+      sourceText: "Ich brauche Hilfe",
+      translatedText: "I need help",
     },
   ],
 };
@@ -126,6 +292,56 @@ const VISION_SCRIPTS: Record<
     caption: {
       sourceText: "A wooden gate with soft lantern light at dusk.",
       translatedText: "黄昏时分，木门与柔和的灯笼光。",
+    },
+  },
+  "zh-CN|ja": {
+    ocr: {
+      sourceText: "本日定食  ¥1,200",
+      translatedText: "本日の定食  ¥1,200",
+    },
+    caption: {
+      sourceText: "门口挂着今日套餐的木牌。",
+      translatedText: "入り口に今日の定食の木の看板があります。",
+    },
+  },
+  "en|ko": {
+    ocr: {
+      sourceText: "OPEN 10:00–21:00",
+      translatedText: "영업 10:00–21:00",
+    },
+    caption: {
+      sourceText: "A neon street sign above a night market stall.",
+      translatedText: "야시장 포장 위에 네온 간판이 보입니다.",
+    },
+  },
+  "en|fr": {
+    ocr: {
+      sourceText: "FERMÉ  Lundi",
+      translatedText: "FERMÉ  Lundi",
+    },
+    caption: {
+      sourceText: "A café chalkboard with the day's specials.",
+      translatedText: "Un tableau de café avec les spécialités du jour.",
+    },
+  },
+  "en|es": {
+    ocr: {
+      sourceText: "ENTRADA LIBRE",
+      translatedText: "ENTRADA LIBRE",
+    },
+    caption: {
+      sourceText: "A plaza fountain under afternoon sun.",
+      translatedText: "Una fuente de plaza bajo el sol de la tarde.",
+    },
+  },
+  "en|de": {
+    ocr: {
+      sourceText: "EINTRITT  €8",
+      translatedText: "EINTRITT  €8",
+    },
+    caption: {
+      sourceText: "A stone arch with a ticket window beside it.",
+      translatedText: "Ein steinerner Bogen mit Schalter daneben.",
     },
   },
 };

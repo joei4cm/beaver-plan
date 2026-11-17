@@ -27,6 +27,17 @@ export const TRANSLATION_LOCALES: readonly TranslationLocale[] = [
   "vi",
 ] as const;
 
+/** Phase 3 travel set — UI + API must always expose these pairs. */
+export const PRIMARY_TRANSLATION_LOCALES: readonly TranslationLocale[] = [
+  "zh-CN",
+  "en",
+  "ja",
+  "ko",
+  "fr",
+  "es",
+  "de",
+] as const;
+
 export type LanguagePair = {
   sourceLocale: TranslationLocale;
   targetLocale: TranslationLocale;

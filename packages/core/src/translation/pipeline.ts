@@ -1,11 +1,13 @@
 import { pickDemoTurn } from "./demo-script.js";
 import type { TranslationStack } from "./ports.js";
+import type { PartialAsrRequest, PartialTranscript } from "./streaming.js";
 import type {
   LanguagePair,
   LiveTurnRequest,
   LiveTurnResult,
   TtsResult,
 } from "./types.js";
+import { normalizePair } from "./types.js";
 
 /**
  * One conversation turn: optional ASR → translate → optional TTS.
@@ -133,6 +135,46 @@ export function decodeAudioBase64(b64: string): Uint8Array {
   ).Buffer;
   if (BufferCtor) return new Uint8Array(BufferCtor.from(b64, "base64"));
   throw new Error("base64_unavailable");
+}
+
+/**
+ * Interim / chunked ASR for optimistic UI.
+ * Demo stack returns a progressive prefix of the scripted turn.
+ * Live stack runs the configured ASR on the audio timeslice.
+ */
+export async function runPartialAsr(
+  stack: TranslationStack,
+  req: PartialAsrRequest & { demoTurnIndex?: number; targetLocale?: string },
+): Promise<PartialTranscript> {
+  const pair = normalizePair(req.locale, req.targetLocale ?? "en");
+  const sequence = req.sequence ?? 0;
+
+  if (stack.asr.id === "demo-asr" || !req.audio.byteLength) {
+    const turn = pickDemoTurn(pair, req.demoTurnIndex ?? 0);
+    const chars = Math.min(
+      turn.sourceText.length,
+      8 + sequence * 6 + Math.floor(req.audio.byteLength / 2400),
+    );
+    const text = turn.sourceText.slice(0, Math.max(chars, 4));
+    return {
+      text,
+      isFinal: false,
+      provider: "demo-asr-partial",
+      confidence: 0.4 + Math.min(0.5, sequence * 0.08),
+    };
+  }
+
+  const asr = await stack.asr.transcribe({
+    audio: req.audio,
+    mimeType: req.mimeType || "audio/webm",
+    locale: pair.sourceLocale,
+  });
+  return {
+    text: asr.text,
+    isFinal: false,
+    provider: asr.provider,
+    confidence: asr.confidence,
+  };
 }
 
 export type { LanguagePair };
