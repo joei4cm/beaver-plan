@@ -321,7 +321,17 @@ Primary travel locales (UI + API): `zh-CN`, `en`, `ja`, `ko`, `fr`, `es`, `de` (
 
 ### Smoke — demo → live
 
+Operator runbook (copy-paste): [`llm-asr-tts-smoke.md`](./llm-asr-tts-smoke.md).
+
 ```bash
+# Dry-run (no secrets — safe in CI):
+pnpm smoke:llm
+
+# Live (API up; demo or live per key presence; day-fill propose needs Neon):
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:llm
+EXPECT_LIVE=1 EXPECT_OPENAI=1 EXPECT_DAY_FILL=1 \
+  API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:llm
+
 # Before keys
 curl -s http://127.0.0.1:8787/v1/translation/status | jq '.mode,.streamingMode,.offlineAssist,.primaryLocales'
 # → mode: "demo", streamingMode: "chunked", offlineAssist: "phrasebook"
@@ -342,7 +352,7 @@ UI: `http://localhost:3000/translate` — next-demo line, phrasebook, and offlin
 
 ### Day-fill (智能填天) — same OpenAI key
 
-Uses the same `OPENAI_*` / `LLM_PROVIDER` vars. No extra secret.
+Uses the same `OPENAI_*` / `LLM_PROVIDER` vars. No extra secret. Covered by `pnpm smoke:llm` when `DATABASE_URL` is set.
 
 ```bash
 # Demo (no key)
@@ -400,9 +410,9 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | 4 | Maps engine | `pnpm smoke:maps` + `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` | Dry-run OK; live preference + places/directions (demo or live); `engineId: "amap"` when `MAP_AUTO_AMAP_CN=true` |
 | 5 | Journal upload | Web journal → photo → save | Object in R2; Neon entry has media key; `GET /v1/media/:id` redirects/streams |
 | 6 | Share | Share studio → export | Card generates; SVG may persist under `share/…` |
-| 7 | Translate demo | `/translate` without LLM keys | Scripted bilingual turns |
-| 8 | Translate live | Same UI / `POST /v1/translation/translate` with keys | `mode: "live"`; non-demo providers |
-| 9 | Day-fill demo | `/trips/sample-kyoto` 智能填天 without key | Draft preview; apply updates days/stops |
+| 7 | Translate demo | `pnpm smoke:llm` + `/translate` without LLM keys | Dry-run OK; scripted bilingual turns |
+| 8 | Translate live | Same UI / `POST /v1/translation/turn` with keys | `mode: "live"`; non-demo providers |
+| 9 | Day-fill demo | `pnpm smoke:llm` + `/trips/sample-kyoto` 智能填天 without key | Draft preview; apply updates days/stops |
 | 10 | Day-fill live | Same + `OPENAI_API_KEY` | `dayFill.mode: "live"`; LLM propose |
 | 11 | Booking demo | `POST /v1/booking/search` + planner 预订 | Suggestions; save stop `bookingLinks`; open external |
 | 12 | Clerk | `pnpm smoke:clerk` + `/sign-in` + mutate trip | Dry-run OK; JWT required when keyed; WeChat entry when flags on |

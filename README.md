@@ -146,6 +146,7 @@ pnpm --filter @beaver/api db:generate  # after schema edits
 pnpm smoke:neon-r2      # Neon+R2 checklist; dry-run without API_BASE_URL
 pnpm smoke:clerk        # Clerk + WeChat checklist; dry-run without API_BASE_URL
 pnpm smoke:maps         # Google/Amap/Baidu checklist; dry-run without API_BASE_URL
+pnpm smoke:llm          # OpenAI/Deepgram + day-fill checklist; dry-run without API_BASE_URL
 pnpm dev:api            # http://127.0.0.1:8787
 pnpm dev:web            # http://localhost:3000
 pnpm dev:mobile         # Expo Metro
@@ -198,6 +199,15 @@ TTS_PROVIDER=auto                   # edge = device/browser SpeechSynthesis
 | **Vision** | OpenAI vision chat if key set, else demo OCR/caption | (follows LLM key) |
 
 Restart `pnpm dev:api` after editing `.dev.vars`.
+
+- Step-by-step: [`docs/keys-integration.md`](docs/keys-integration.md#5-openai--deepgram-or-edge-tts)
+- Michael runbook + smoke: [`docs/llm-asr-tts-smoke.md`](docs/llm-asr-tts-smoke.md)
+
+```bash
+pnpm smoke:llm                                          # dry-run (no secrets)
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:llm
+EXPECT_LIVE=1 EXPECT_OPENAI=1 EXPECT_DAY_FILL=1 API_BASE_URL=… pnpm smoke:llm
+```
 
 ### Translation API
 
