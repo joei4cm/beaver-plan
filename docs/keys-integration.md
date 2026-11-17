@@ -86,7 +86,7 @@ WeChat credentials live in **Clerk + WeChat Open Platform**, not in this repo (n
 
 ---
 
-## 2. Google Maps + Amap (mainland auto-switch)
+## 2. Google Maps + Amap + Baidu (mainland auto-switch)
 
 Server keys stay in **`apps/api/.dev.vars`** — never in client bundles.
 
@@ -97,17 +97,22 @@ GOOGLE_MAPS_SERVER_KEY=…
 # 高德开放平台 — Web服务 key
 AMAP_SERVER_KEY=…
 
+# 百度地图开放平台 — Web服务 AK（Place v2 + DirectionLite）
+BAIDU_MAP_SERVER_KEY=…
+
 # Product rule: preference `auto` → Google outside CN, Amap in mainland CN
+# Baidu is never chosen by auto — set trip mapEngine / preference to `baidu`.
 DEFAULT_MAP_ENGINE=auto
 MAP_AUTO_AMAP_CN=true
 
 # Optional browser / native SDK keys (reserved; BFF is source of truth today)
 # NEXT_PUBLIC_GOOGLE_MAPS_JS_KEY=
 # NEXT_PUBLIC_AMAP_JS_KEY=
+# NEXT_PUBLIC_BAIDU_MAP_JS_KEY=
 # EXPO_PUBLIC_AMAP_KEY=
 ```
 
-Region inference uses Cloudflare `CF-IPCountry`, then timezone (`Asia/Shanghai`…), then `Accept-Language: zh-CN`. Manual trip preference `google` / `amap` always wins over auto.
+Region inference uses Cloudflare `CF-IPCountry`, then timezone (`Asia/Shanghai`…), then `Accept-Language: zh-CN`. Manual trip preference `google` / `amap` / `baidu` always wins over auto.
 
 ### Smoke — mainland auto-switch
 
@@ -123,11 +128,27 @@ curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=auto&timezone=Asia/Shan
 # Override always wins
 curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=google&timezone=Asia/Shanghai'
 # → engineId: "google"
+
+# Baidu is manual only
+curl -s 'http://127.0.0.1:8787/v1/maps/engine?preference=baidu&timezone=Asia/Shanghai'
+# → engineId: "baidu" (mode: "live" with BAIDU_MAP_SERVER_KEY, else "demo")
 ```
 
 With live keys: Places search / directions should return `mode: "live"` (not demo POIs). Without keys: curated Kyoto / CN demo data still works.
 
-`/health` → `maps.google` / `maps.amap` booleans + `maps.defaultEngine` / `maps.autoAmapCn`.
+`/health` → `maps.google` / `maps.amap` / `maps.baidu` booleans + `maps.defaultEngine` / `maps.autoAmapCn`.
+
+### Baidu limits (vs Google / Amap)
+
+| | Google | Amap | Baidu |
+|--|--------|------|-------|
+| Auto in mainland CN | no | yes | **no** (manual) |
+| Coord system | WGS84 | GCJ-02 | **BD-09** |
+| Coverage | global | CN-strong | CN-strong |
+| Places / walk / drive / transit | yes | yes | yes (DirectionLite) |
+| Web map tiles in planner | SVG stage (all engines) | same | same — no Baidu JS SDK tiles yet |
+
+Do not mix PlaceRefs across engines without re-resolving — BD-09 vs GCJ-02 vs WGS84 will skew the SVG map.
 
 ---
 
@@ -310,6 +331,7 @@ pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
 pnpm exec wrangler secret put CLERK_SECRET_KEY
 pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY
 pnpm exec wrangler secret put AMAP_SERVER_KEY
+pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY
 pnpm exec wrangler secret put OPENAI_API_KEY
 # optional: DEEPGRAM_API_KEY, CLERK_JWT_ISSUER, …
 pnpm --filter @beaver/api db:migrate   # same Neon DB
@@ -332,6 +354,6 @@ Authoritative templates: root [`.env.example`](../.env.example) and [`apps/api/.
 | API base | `NEXT_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_API_BASE_URL` |
 | Neon | `DATABASE_URL` |
 | R2 / S3 | `S3_ENDPOINT` or `R2_ACCOUNT_ID`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, optional `S3_PUBLIC_BASE_URL` (+ `R2_*` aliases) |
-| Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
+| Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `BAIDU_MAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
 | Translation | `FEATURE_TRANSLATION`, `OPENAI_*`, `DEEPGRAM_API_KEY`, `ASR_PROVIDER`, `LLM_PROVIDER`, `TTS_PROVIDER` |
 | Day-fill | same `OPENAI_*` + `LLM_PROVIDER` (demo when key unset) |

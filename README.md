@@ -22,7 +22,7 @@ Product plan (Agent Store / humans):
 | `packages/ui-tokens` | Design tokens |
 | `packages/i18n` | zh-CN + en |
 
-**Out of scope here:** Baidu maps, CRDT / presence avatars, offline ASR packs.
+**Out of scope here:** CRDT / presence avatars, offline ASR packs, Phase 3 offline / OTA.
 
 ---
 
@@ -31,7 +31,7 @@ Product plan (Agent Store / humans):
 - Node.js ≥ 20
 - [pnpm](https://pnpm.io) 10.x (`corepack enable` recommended)
 - For API deploy: Cloudflare account + Wrangler
-- Optional: Clerk, Google / Amap, OpenAI / Deepgram keys
+- Optional: Clerk, Google / Amap / Baidu, OpenAI / Deepgram keys
 - **Required for trip APIs:** a Neon (or any Postgres) `DATABASE_URL`
 - **Required for journal/share media:** Cloudflare R2 S3 API credentials (`S3_*` or `R2_*`)
 
@@ -297,9 +297,9 @@ Full enablement checklist + smoke matrix: [`docs/keys-integration.md`](docs/keys
 
 ---
 
-## Maps keys (Google + Amap)
+## Maps keys (Google + Amap + Baidu)
 
-Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs with **rich multi-step transit** (line names, agencies, per-step polylines). With live keys, Google / Amap Directions still normalize into the same `transitSteps` shape. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai`.
+Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs with **rich multi-step transit** (line names, agencies, per-step polylines). With live keys, Google / Amap / Baidu Directions still normalize into the same `transitSteps` shape. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. **Baidu is manual only** (`preference=baidu` / trip setting) — never selected by auto. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` and `…?preference=baidu`. Planner map UI is an SVG stage for all engines (no vendor JS tiles yet); Baidu live coords are BD-09.
 
 ---
 
@@ -314,7 +314,7 @@ pnpm exec wrangler secret put S3_ACCESS_KEY_ID
 pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
 # also set vars/secrets: S3_ENDPOINT (or R2_ACCOUNT_ID), S3_BUCKET, S3_REGION=auto
 pnpm exec wrangler secret put OPENAI_API_KEY
-# optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY
+# optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY, BAIDU_MAP_SERVER_KEY
 pnpm --filter @beaver/api db:migrate        # against the same Neon DB
 pnpm deploy
 ```

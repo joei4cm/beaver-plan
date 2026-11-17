@@ -55,7 +55,9 @@ function preferenceFrom(
   fallback: string,
 ): MapEnginePreference {
   const v = String(raw ?? fallback ?? "auto").toLowerCase();
-  if (v === "google" || v === "amap" || v === "auto") return v;
+  if (v === "google" || v === "amap" || v === "baidu" || v === "auto") {
+    return v;
+  }
   return "auto";
 }
 

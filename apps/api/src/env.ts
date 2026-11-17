@@ -40,6 +40,8 @@ export type Bindings = {
   PUBLIC_WEB_ORIGIN?: string;
   GOOGLE_MAPS_SERVER_KEY?: string;
   AMAP_SERVER_KEY?: string;
+  /** 百度地图开放平台 — 服务端 AK（Web服务）；缺省则 Baidu 走 demo. */
+  BAIDU_MAP_SERVER_KEY?: string;
   /** OpenAI-compatible API key (LLM / Whisper / TTS / vision). */
   OPENAI_API_KEY?: string;
   /** Optional OpenAI-compatible base, e.g. https://api.openai.com/v1 */

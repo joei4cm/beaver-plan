@@ -23,6 +23,8 @@ PUBLIC_WEB_ORIGIN=http://localhost:3000
 # ── Maps (optional — without keys, curated demo POIs) ──────────────────────
 GOOGLE_MAPS_SERVER_KEY=
 AMAP_SERVER_KEY=
+# 百度地图开放平台 — Web服务 AK（服务端）；缺省时 preference=baidu 走 demo
+BAIDU_MAP_SERVER_KEY=
 DEFAULT_MAP_ENGINE=auto
 MAP_AUTO_AMAP_CN=true
 

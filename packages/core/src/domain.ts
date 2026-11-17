@@ -1,8 +1,6 @@
 /** Domain models for Beaver Plan / 海狸旅行 (Slice A stubs). */
 
-export type MapEngineId = "google" | "amap";
-/** Reserved for Phase 2 — do not wire adapters yet. */
-export type FutureMapEngineId = "baidu";
+export type MapEngineId = "google" | "amap" | "baidu";
 
 export type TripRole = "owner" | "editor" | "viewer";
 
@@ -87,7 +85,10 @@ export type Trip = {
   endDate?: string;
   timezone: string;
   locale: "zh-CN" | "en";
-  /** `auto` follows product rules (Google default; Amap in mainland CN). */
+  /**
+   * `auto` follows product rules (Google default; Amap in mainland CN).
+   * Manual `baidu` is always an explicit override — never chosen by auto.
+   */
   mapEngine: MapEngineId | "auto";
   version: number;
   createdAt: string;

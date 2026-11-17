@@ -59,7 +59,9 @@ function preferenceFrom(
   fallback: string,
 ): MapEnginePreference {
   const v = String(raw ?? fallback ?? "auto").toLowerCase();
-  if (v === "google" || v === "amap" || v === "auto") return v;
+  if (v === "google" || v === "amap" || v === "baidu" || v === "auto") {
+    return v;
+  }
   return "auto";
 }
 
@@ -335,7 +337,7 @@ tripRoutes.post("/v1/trips/:id/duplicate", requireAuth, async (c) => {
 type AddStopBody = {
   dayId: string;
   place: PlaceSummary;
-  engine?: "google" | "amap";
+  engine?: "google" | "amap" | "baidu";
   userNote?: string;
 };
 
@@ -521,6 +523,7 @@ tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
   const bundle = createEngineBundle(engineId, {
     googleServerKey: c.env.GOOGLE_MAPS_SERVER_KEY,
     amapServerKey: c.env.AMAP_SERVER_KEY,
+    baiduServerKey: c.env.BAIDU_MAP_SERVER_KEY,
   });
 
   const dayStops = sortStops(

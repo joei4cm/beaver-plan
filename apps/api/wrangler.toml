@@ -26,6 +26,7 @@ CLERK_WECHAT_ENABLED = "false"
 # S3_PUBLIC_BASE_URL       — optional public CDN / custom domain for GET
 # GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
 # AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
+# BAIDU_MAP_SERVER_KEY     — 百度 Web服务 AK; required for live Baidu
 # OPENAI_API_KEY           — LLM translate + Whisper ASR + TTS + vision
 # DEEPGRAM_API_KEY         — optional ASR alternative
 # OPENAI_BASE_URL / OPENAI_CHAT_MODEL / OPENAI_ASR_MODEL / OPENAI_TTS_*

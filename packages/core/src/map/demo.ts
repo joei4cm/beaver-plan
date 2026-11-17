@@ -28,7 +28,7 @@ export {
 } from "./polyline.js";
 
 /**
- * Demo map engine — curated POIs when Google / Amap keys are absent.
+ * Demo map engine — curated POIs when Google / Amap / Baidu keys are absent.
  * Tagged with the preferred engine id so PlaceRefs stay honest about "mode".
  */
 export class DemoMapEngine implements MapEngine {

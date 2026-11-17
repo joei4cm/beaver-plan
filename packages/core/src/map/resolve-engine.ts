@@ -8,7 +8,8 @@ export type RegionHint = "mainland_cn" | "other";
 /**
  * Resolve the active map engine.
  * Product rule: Google default; mainland China → Amap when preference is `auto`.
- * Manual Google / Amap overrides always win.
+ * Manual Google / Amap / Baidu overrides always win.
+ * Auto never selects Baidu — choose it explicitly in trip settings.
  */
 export function resolveMapEngine(
   preference: MapEnginePreference,

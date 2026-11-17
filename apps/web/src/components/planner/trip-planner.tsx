@@ -293,7 +293,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const engineLabel =
     engineInfo?.engineId === "amap"
       ? t(locale, "planner.engine.amap")
-      : t(locale, "planner.engine.google");
+      : engineInfo?.engineId === "baidu"
+        ? t(locale, "planner.engine.baidu")
+        : t(locale, "planner.engine.google");
   const modeLabel =
     engineInfo?.mode === "live"
       ? t(locale, "planner.mode.live")
@@ -345,7 +347,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 ? t(locale, "planner.duplicating")
                 : t(locale, "planner.duplicate")}
             </button>
-            {(["auto", "google", "amap"] as const).map((opt) => (
+            {(["auto", "google", "amap", "baidu"] as const).map((opt) => (
               <button
                 key={opt}
                 type="button"
