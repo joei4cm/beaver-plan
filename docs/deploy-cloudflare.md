@@ -117,7 +117,7 @@ pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY --env "$ENV"
 pnpm exec wrangler secret put AMAP_SERVER_KEY --env "$ENV"
 pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY --env "$ENV"
 
-# LLM / ASR / TTS (optional — scripted demos without)
+# LLM / ASR / TTS (optional — scripted demos without). Smoke: pnpm smoke:llm
 pnpm exec wrangler secret put OPENAI_API_KEY --env "$ENV"
 # pnpm exec wrangler secret put DEEPGRAM_API_KEY --env "$ENV"
 

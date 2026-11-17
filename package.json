@@ -16,6 +16,7 @@
     "smoke:neon-r2": "pnpm --filter @beaver/api smoke:neon-r2",
     "smoke:clerk": "pnpm --filter @beaver/api smoke:clerk",
     "smoke:maps": "pnpm --filter @beaver/api smoke:maps",
+    "smoke:llm": "pnpm --filter @beaver/api smoke:llm",
     "lint": "pnpm -r --if-present lint"
   },
   "engines": {
