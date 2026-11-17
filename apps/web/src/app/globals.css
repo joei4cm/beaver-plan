@@ -12,35 +12,46 @@
   body {
     @apply bg-paper text-ink font-body antialiased;
     background-image:
-      radial-gradient(ellipse 90% 60% at 10% -10%, rgba(31, 107, 92, 0.18), transparent 55%),
-      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(184, 107, 60, 0.12), transparent 50%),
-      linear-gradient(180deg, #f7faf8 0%, #f3efe6 42%, #e8efe9 100%);
+      radial-gradient(ellipse 90% 60% at 10% -10%, rgba(26, 101, 87, 0.16), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(181, 101, 54, 0.1), transparent 50%),
+      linear-gradient(180deg, #f8faf8 0%, #f2eee4 42%, #e6eeea 100%);
     min-height: 100vh;
   }
 
   ::selection {
-    background: rgba(31, 107, 92, 0.22);
+    background: rgba(26, 101, 87, 0.22);
   }
 }
 
 @layer utilities {
+  /* Page enter — primary surfaces */
   .animate-rise {
     animation: bp-rise var(--bp-duration) var(--bp-ease) both;
   }
 
   .animate-fade {
-    animation: bp-fade calc(var(--bp-duration) + 80ms) var(--bp-ease) both;
+    animation: bp-fade var(--bp-duration-slow) var(--bp-ease) both;
   }
 
   .animate-drift {
-    animation: bp-drift 14s ease-in-out infinite alternate;
+    animation: bp-drift 16s ease-in-out infinite alternate;
+  }
+
+  /* Stop select — list + map marker pulse */
+  .animate-stop-select {
+    animation: bp-stop-select var(--bp-duration) var(--bp-ease-out) both;
+  }
+
+  /* Share preview swap — soft crossfade + lift */
+  .animate-preview-in {
+    animation: bp-preview-in var(--bp-duration-slow) var(--bp-ease) both;
   }
 }
 
 @keyframes bp-rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -62,6 +73,49 @@
     transform: translate3d(0, 0, 0) scale(1);
   }
   to {
-    transform: translate3d(-2%, 1.5%, 0) scale(1.03);
+    transform: translate3d(-1.5%, 1.2%, 0) scale(1.025);
+  }
+}
+
+@keyframes bp-stop-select {
+  from {
+    background-color: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+  to {
+    background-color: rgba(213, 224, 217, 0.45);
+    box-shadow: inset 3px 0 0 var(--bp-timber);
+  }
+}
+
+@keyframes bp-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bp-marker-pop {
+  from {
+    transform: scale(0.82);
+    opacity: 0.65;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-fade,
+  .animate-drift,
+  .animate-stop-select,
+  .animate-preview-in {
+    animation: none !important;
   }
 }

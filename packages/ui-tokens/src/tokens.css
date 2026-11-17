@@ -1,28 +1,38 @@
 /**
  * Beaver Plan / 海狸旅行 — design tokens
- * Visual direction: river-slate + warm timber (not purple/cream tropes).
+ * Visual direction: river-slate + warm timber (travel magazine, not purple/cream tropes).
  */
 :root {
   /* Brand */
   --bp-brand: "Beaver Plan";
   --bp-brand-zh: "海狸旅行";
 
-  /* Color */
-  --bp-ink: #14201c;
-  --bp-ink-soft: #2a3a34;
-  --bp-paper: #f3efe6;
-  --bp-mist: #d8e2dc;
-  --bp-river: #1f6b5c;
-  --bp-river-deep: #0f4339;
-  --bp-timber: #b86b3c;
-  --bp-foam: #f7faf8;
-  --bp-line: rgba(20, 32, 28, 0.12);
+  /* Color — slightly deeper ink, clearer river hierarchy */
+  --bp-ink: #101a17;
+  --bp-ink-soft: #3a4a43;
+  --bp-paper: #f2eee4;
+  --bp-mist: #d5e0d9;
+  --bp-river: #1a6557;
+  --bp-river-deep: #0c3a32;
+  --bp-timber: #b56536;
+  --bp-foam: #f8faf8;
+  --bp-line: rgba(16, 26, 23, 0.11);
   --bp-focus: #2a9d8f;
+  --bp-shadow: rgba(12, 58, 50, 0.14);
+  --bp-shadow-deep: rgba(12, 58, 50, 0.28);
 
   /* Typography */
   --bp-font-display: "Fraunces", "Songti SC", "Noto Serif SC", Georgia, serif;
   --bp-font-body: "Sora", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
   --bp-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Type scale */
+  --bp-text-xs: 0.75rem;
+  --bp-text-sm: 0.875rem;
+  --bp-text-md: 1rem;
+  --bp-text-lg: 1.125rem;
+  --bp-text-xl: 1.35rem;
+  --bp-text-display: clamp(2.5rem, 5vw, 4.25rem);
 
   /* Space */
   --bp-space-1: 0.25rem;
@@ -34,10 +44,13 @@
   --bp-space-7: 3rem;
   --bp-space-8: 4.5rem;
 
-  /* Radius / motion */
+  /* Radius / elevation / motion */
   --bp-radius-sm: 6px;
   --bp-radius-md: 12px;
   --bp-radius-lg: 20px;
   --bp-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --bp-duration: 420ms;
+  --bp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --bp-duration-fast: 180ms;
+  --bp-duration: 380ms;
+  --bp-duration-slow: 560ms;
 }

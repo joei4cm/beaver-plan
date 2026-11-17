@@ -409,6 +409,7 @@ export default function TranslateScreen() {
       <Stack.Screen options={{ title: t(uiLocale, "translate.title") }} />
 
       <View style={styles.hero}>
+        <Text style={styles.brandLine}>Beaver Plan · 海狸旅行</Text>
         <Text style={styles.eyebrow}>{t(uiLocale, "translate.eyebrow")}</Text>
         <Text style={styles.title}>{t(uiLocale, "mobile.translate")}</Text>
         <Text style={styles.support}>{t(uiLocale, "translate.support")}</Text>
@@ -721,12 +722,19 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.paper },
   hero: {
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 14,
     backgroundColor: colors.riverDeep,
   },
+  brandLine: {
+    color: "rgba(248,250,248,0.55)",
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    fontSize: 10,
+    marginBottom: 8,
+  },
   eyebrow: {
-    color: "rgba(247,250,248,0.65)",
+    color: "rgba(248,250,248,0.68)",
     letterSpacing: 2,
     textTransform: "uppercase",
     fontSize: 11,
@@ -734,8 +742,9 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 6,
     color: colors.foam,
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "600",
+    letterSpacing: -0.3,
   },
   support: {
     marginTop: 8,

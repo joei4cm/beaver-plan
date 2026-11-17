@@ -8,16 +8,18 @@ export const brand = {
 } as const;
 
 export const colors = {
-  ink: "#14201c",
-  inkSoft: "#2a3a34",
-  paper: "#f3efe6",
-  mist: "#d8e2dc",
-  river: "#1f6b5c",
-  riverDeep: "#0f4339",
-  timber: "#b86b3c",
-  foam: "#f7faf8",
-  line: "rgba(20, 32, 28, 0.12)",
+  ink: "#101a17",
+  inkSoft: "#3a4a43",
+  paper: "#f2eee4",
+  mist: "#d5e0d9",
+  river: "#1a6557",
+  riverDeep: "#0c3a32",
+  timber: "#b56536",
+  foam: "#f8faf8",
+  line: "rgba(16, 26, 23, 0.11)",
   focus: "#2a9d8f",
+  shadow: "rgba(12, 58, 50, 0.14)",
+  shadowDeep: "rgba(12, 58, 50, 0.28)",
 } as const;
 
 export const fonts = {
@@ -26,9 +28,29 @@ export const fonts = {
   mono: '"IBM Plex Mono", ui-monospace, monospace',
 } as const;
 
-export const motion = {
-  ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-  durationMs: 420,
+export const space = {
+  1: "0.25rem",
+  2: "0.5rem",
+  3: "0.75rem",
+  4: "1rem",
+  5: "1.5rem",
+  6: "2rem",
+  7: "3rem",
+  8: "4.5rem",
 } as const;
 
-export const tokens = { brand, colors, fonts, motion } as const;
+export const radius = {
+  sm: 6,
+  md: 12,
+  lg: 20,
+} as const;
+
+export const motion = {
+  ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+  easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
+  durationFastMs: 180,
+  durationMs: 380,
+  durationSlowMs: 560,
+} as const;
+
+export const tokens = { brand, colors, fonts, space, radius, motion } as const;

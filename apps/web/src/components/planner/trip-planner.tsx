@@ -543,8 +543,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
 
         <ol className="divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
           {dayStops.length === 0 && (
-            <li className="py-8 text-sm text-ink-soft">
-              {t(locale, "planner.emptyDay")}
+            <li className="animate-fade px-1 py-10">
+              <p className="font-display text-xl text-ink md:text-2xl">
+                {t(locale, "planner.emptyDay")}
+              </p>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
+                {t(locale, "planner.emptyDayHint")}
+              </p>
             </li>
           )}
           {dayStops.map((stop, index) => {
@@ -562,8 +567,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       setSelectedStopId(stop.id);
                     }
                   }}
-                  className={`group flex gap-3 py-4 transition ${
-                    selected ? "bg-mist/40" : "hover:bg-foam/50"
+                  className={`group flex gap-3 py-4 pl-1 transition duration-bp-fast ease-bp-out ${
+                    selected
+                      ? "animate-stop-select bg-mist/45"
+                      : "hover:bg-foam/50"
                   }`}
                 >
                   <span

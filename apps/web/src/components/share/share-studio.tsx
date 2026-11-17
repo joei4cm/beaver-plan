@@ -275,7 +275,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         <div className="animate-fade flex flex-col items-center">
           <div
-            className="relative w-full max-w-[420px] overflow-hidden rounded-[20px] border border-[color:var(--bp-line)] bg-river-deep/90 shadow-[0_30px_80px_-40px_rgba(15,67,57,0.65)]"
+            className="relative w-full max-w-[420px] overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-river-deep/90 shadow-bp"
             style={{
               aspectRatio: `${active.width} / ${active.height}`,
             }}
@@ -283,15 +283,21 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             {preview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
+                key={preview.previewUrl}
                 src={preview.previewUrl}
                 alt={
                   locale === "zh-CN" ? active.nameZh : active.nameEn
                 }
-                className="h-full w-full object-cover"
+                className="animate-preview-in h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-foam/70">
-                {busy ? t(locale, "share.rendering") : t(locale, "share.loading")}
+              <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-foam/70">
+                <span className="font-display text-lg text-foam/85">
+                  Beaver Plan · 海狸旅行
+                </span>
+                <span className="text-sm">
+                  {busy ? t(locale, "share.rendering") : t(locale, "share.loading")}
+                </span>
               </div>
             )}
           </div>

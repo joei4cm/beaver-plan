@@ -16,6 +16,7 @@ function AppStack() {
           headerStyle: { backgroundColor: colors.riverDeep },
           headerTintColor: colors.foam,
           headerTitleStyle: { fontWeight: "600" },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.paper },
         }}
       />

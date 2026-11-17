@@ -385,9 +385,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       >
         <div className="space-y-8">
           {visible.length === 0 && (
-            <p className="font-display text-2xl text-ink-soft/80">
-              {t(locale, "journal.empty")}
-            </p>
+            <div className="animate-fade rounded-bp-lg border border-dashed border-river/25 bg-foam/35 px-6 py-14">
+              <p className="font-display text-2xl text-ink md:text-3xl">
+                {t(locale, "journal.empty")}
+              </p>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
+                {t(locale, "journal.emptyHint")}
+              </p>
+            </div>
           )}
           {visible.map((entry, index) => {
             const stop = stops.find((s) => s.id === entry.stopId);

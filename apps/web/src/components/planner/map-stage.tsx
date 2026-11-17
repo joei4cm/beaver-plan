@@ -169,30 +169,57 @@ export function MapStage({
               className="cursor-pointer"
               onClick={() => onSelectStop(stop.id)}
             >
-              {selected && (
-                <circle
-                  r={22}
-                  fill="none"
-                  stroke="rgba(247,250,248,0.55)"
-                  strokeWidth={2}
-                  className="animate-pulse"
-                />
-              )}
-              <circle
-                r={selected ? 14 : 11}
-                fill={selected ? "#b86b3c" : "#f7faf8"}
-                stroke={selected ? "#f7faf8" : "#1f6b5c"}
-                strokeWidth={2.5}
-              />
-              <text
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={11}
-                fontWeight={700}
-                fill={selected ? "#f7faf8" : "#0f4339"}
+              <g
+                key={selected ? `sel-${stop.id}` : `idle-${stop.id}`}
+                className={selected ? "origin-center" : undefined}
+                style={
+                  selected
+                    ? {
+                        transformOrigin: "0 0",
+                        animation:
+                          "bp-marker-pop 380ms cubic-bezier(0.16, 1, 0.3, 1) both",
+                      }
+                    : undefined
+                }
               >
-                {index + 1}
-              </text>
+                {selected && (
+                  <circle
+                    r={24}
+                    fill="none"
+                    stroke="rgba(248,250,248,0.5)"
+                    strokeWidth={1.75}
+                    opacity={0.9}
+                  >
+                    <animate
+                      attributeName="r"
+                      values="18;26;18"
+                      dur="1.8s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.7;0.25;0.7"
+                      dur="1.8s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                )}
+                <circle
+                  r={selected ? 14 : 11}
+                  fill={selected ? "#b56536" : "#f8faf8"}
+                  stroke={selected ? "#f8faf8" : "#1a6557"}
+                  strokeWidth={2.5}
+                />
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={11}
+                  fontWeight={700}
+                  fill={selected ? "#f8faf8" : "#0c3a32"}
+                >
+                  {index + 1}
+                </text>
+              </g>
             </g>
           );
         })}
