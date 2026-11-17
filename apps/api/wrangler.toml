@@ -69,6 +69,7 @@ CLERK_WECHAT_ENABLED = "false"
 # S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY / S3_BUCKET / S3_REGION
 #   (R2_* aliases accepted — R2 S3 API tokens from Cloudflare dashboard)
 # S3_PUBLIC_BASE_URL       — optional public CDN / custom domain for GET
+# SMOKE_TOKEN              — optional; enables GET /v1/ops/smoke (db+media ping)
 # GOOGLE_MAPS_SERVER_KEY   — Places (New) + Routes; required for live Google
 # AMAP_SERVER_KEY          — 高德 Web服务 key; required for live Amap
 # BAIDU_MAP_SERVER_KEY     — 百度 Web服务 AK; required for live Baidu
@@ -81,6 +82,10 @@ CLERK_WECHAT_ENABLED = "false"
 # Without CLERK_SECRET_KEY, BFF uses demo identity headers (X-Beaver-User-Id).
 # Without DATABASE_URL, /v1/trips|/v1/invites|/v1/share return 503 (no memory fallback).
 # Without S3/R2 credentials, /v1/media* return 503 (no silent in-memory media).
+# Without SMOKE_TOKEN, GET /v1/ops/smoke returns 404.
 # Without map secrets, /v1/places and /v1/directions use curated demo data.
 # Without OPENAI_/DEEPGRAM keys, /v1/translation/* serves scripted demo turns.
 # OTA / booking: without keys POST /v1/booking/search is demo catalog (no payment).
+#
+# Neon + R2 smoke: pnpm --filter @beaver/api smoke:neon-r2
+# Live: API_BASE_URL=https://… SMOKE_TOKEN=… pnpm --filter @beaver/api smoke:neon-r2

@@ -16,6 +16,7 @@ import { journalRoutes } from "./journal.js";
 import { mapsRoutes } from "./maps.js";
 import { mediaRoutes } from "./media.js";
 import { memberRoutes } from "./members.js";
+import { opsSmokeRoutes } from "./ops-smoke.js";
 import { shareRoutes } from "./share.js";
 import { translationRoutes } from "./translation.js";
 import { templateRoutes } from "./templates.js";
@@ -211,6 +212,11 @@ app.get("/health", (c) => {
         ? "Journal/share media bytes in S3/R2; Neon stores object keys"
         : "Set S3_ENDPOINT|R2_ACCOUNT_ID + S3_ACCESS_KEY_ID + S3_SECRET_ACCESS_KEY + S3_BUCKET — /v1/media returns 503 until configured",
     },
+    ops: {
+      smoke: Boolean(c.env.SMOKE_TOKEN?.trim() && c.env.SMOKE_TOKEN.trim().length >= 8),
+      path: "/v1/ops/smoke",
+      note: "Auth-gated connectivity check when SMOKE_TOKEN is set (Bearer or X-Beaver-Smoke-Token). Returns 404 when unset.",
+    },
     features: {
       translation: translationEnabled,
       clerkWechatUi: wechat,
@@ -218,6 +224,7 @@ app.get("/health", (c) => {
   });
 });
 
+app.route("/", opsSmokeRoutes);
 app.route("/", mapsRoutes);
 app.route("/", tripRoutes);
 app.route("/", templateRoutes);
