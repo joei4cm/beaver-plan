@@ -322,21 +322,30 @@ Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curat
 
 ---
 
-## Cloudflare deploy notes
+## Cloudflare deploy
 
-Hosting is **Cloudflare only** (Workers + R2; no VPS).
+Hosting is **Cloudflare only** (Workers + R2 + Pages; no VPS). Full guide: [`docs/deploy-cloudflare.md`](docs/deploy-cloudflare.md).
 
 ```bash
+# Bundle check (no Cloudflare account required)
+pnpm --filter @beaver/api deploy:dry
+
+# After wrangler login + secrets (per env: preview | production):
+pnpm --filter @beaver/api db:migrate
+pnpm --filter @beaver/api deploy:preview      # beaver-plan-api-preview
+pnpm --filter @beaver/api deploy:production  # beaver-plan-api
+
+# Secrets example (names only — values via interactive prompt / CI):
 cd apps/api
-pnpm exec wrangler secret put DATABASE_URL   # Neon connection string (required)
-pnpm exec wrangler secret put S3_ACCESS_KEY_ID
-pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
-# also set vars/secrets: S3_ENDPOINT (or R2_ACCOUNT_ID), S3_BUCKET, S3_REGION=auto
-pnpm exec wrangler secret put OPENAI_API_KEY
-# optional: DEEPGRAM_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY, BAIDU_MAP_SERVER_KEY
-pnpm --filter @beaver/api db:migrate        # against the same Neon DB
-pnpm deploy
+pnpm exec wrangler secret put DATABASE_URL --env production
+pnpm exec wrangler secret put S3_ACCESS_KEY_ID --env production
+pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY --env production
+# also: S3_ENDPOINT|R2_ACCOUNT_ID, S3_BUCKET, S3_REGION=auto
+# optional: OPENAI_API_KEY, CLERK_*, GOOGLE_MAPS_SERVER_KEY, AMAP_SERVER_KEY, BAIDU_MAP_SERVER_KEY, …
+pnpm exec wrangler secret list --env production
 ```
+
+`GET /health` reports `deploy.env` + configured flags (booleans) — never secret values. Web: Cloudflare Pages via OpenNext (docs in the deploy guide); local `pnpm dev:web` against a deployed Worker is fine until Pages is wired.
 
 ---
 

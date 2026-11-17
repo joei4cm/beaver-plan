@@ -370,23 +370,27 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 
 ## 7. Production (Cloudflare Workers)
 
+Canonical deploy scaffold (envs, dry-run, secrets list, Pages/OpenNext): [`deploy-cloudflare.md`](./deploy-cloudflare.md).
+
 ```bash
 cd apps/api
-pnpm exec wrangler secret put DATABASE_URL
-pnpm exec wrangler secret put S3_ACCESS_KEY_ID
-pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY
+ENV=production   # or preview
+pnpm exec wrangler secret put DATABASE_URL --env "$ENV"
+pnpm exec wrangler secret put S3_ACCESS_KEY_ID --env "$ENV"
+pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY --env "$ENV"
 # also: S3_ENDPOINT or R2_ACCOUNT_ID, S3_BUCKET, S3_REGION=auto
-pnpm exec wrangler secret put CLERK_SECRET_KEY
-pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY
-pnpm exec wrangler secret put AMAP_SERVER_KEY
-pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY
-pnpm exec wrangler secret put OPENAI_API_KEY
+pnpm exec wrangler secret put CLERK_SECRET_KEY --env "$ENV"
+pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY --env "$ENV"
+pnpm exec wrangler secret put AMAP_SERVER_KEY --env "$ENV"
+pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY --env "$ENV"
+pnpm exec wrangler secret put OPENAI_API_KEY --env "$ENV"
 # optional: DEEPGRAM_API_KEY, CLERK_JWT_ISSUER, …
 pnpm --filter @beaver/api db:migrate   # same Neon DB
-pnpm deploy
+pnpm --filter @beaver/api deploy:production   # or deploy:preview
+pnpm exec wrangler secret list --env "$ENV"
 ```
 
-Update R2 CORS `AllowedOrigins` for the real web origin. Set `PUBLIC_WEB_ORIGIN` to the production web URL (wrangler var or secret).
+Update R2 CORS `AllowedOrigins` for the real web origin. Set `PUBLIC_WEB_ORIGIN` in `wrangler.toml` `[env.*.vars]` to the production web URL, then redeploy.
 
 ---
 
