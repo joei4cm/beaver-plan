@@ -21,7 +21,7 @@ import {
   type Stop,
   type Trip,
 } from "@beaver/core";
-import { colors } from "@beaver/ui-tokens";
+import { colors, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import type { JournalEntry, TripMember, TripRole } from "@beaver/core";
 import type { OfflinePinStatus } from "@beaver/offline";
@@ -221,6 +221,7 @@ export default function TripDetailScreen() {
       )}
       {!loading && trip && (
         <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.brandLine}>Beaver Plan · 海狸旅行</Text>
           <Text style={styles.eyebrow}>
             {trip.destination ?? "Beaver Plan"}
             {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
@@ -427,6 +428,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   content: { padding: 20, paddingBottom: 48 },
+  brandLine: {
+    fontSize: 11,
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    marginBottom: 10,
+  },
   eyebrow: {
     fontSize: 12,
     letterSpacing: 2,
@@ -435,13 +443,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "600",
+    letterSpacing: -0.4,
     color: colors.ink,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   pinBtn: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
@@ -479,11 +488,11 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
-    paddingVertical: 12,
+    paddingVertical: 13,
     alignItems: "center",
   },
   actionPrimary: {
@@ -594,7 +603,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "rgba(31,107,92,0.15)",
+    backgroundColor: "rgba(26,101,87,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -623,8 +632,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(31,107,92,0.35)",
-    backgroundColor: "rgba(31,107,92,0.08)",
+    borderColor: "rgba(26,101,87,0.35)",
+    backgroundColor: "rgba(26,101,87,0.08)",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },

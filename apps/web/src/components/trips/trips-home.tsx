@@ -86,14 +86,19 @@ export function TripsHome({ locale }: Props) {
     <div className="mx-auto max-w-5xl px-6 pb-24 pt-8 md:px-10">
       <div className="animate-rise flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl tracking-tight text-ink md:text-5xl">
+          <p className="text-xs uppercase tracking-[0.22em] text-river/75">
+            Beaver Plan · 海狸旅行
+          </p>
+          <h1 className="mt-2 font-display text-4xl tracking-tight text-ink md:text-5xl">
             {t(locale, "trips.title")}
           </h1>
-          <p className="mt-3 max-w-lg text-ink-soft">{t(locale, "trips.empty")}</p>
+          <p className="mt-3 max-w-lg text-ink-soft">
+            {t(locale, "trips.support")}
+          </p>
         </div>
         <Link
           href="/trips/sample-kyoto"
-          className="rounded-md bg-river px-4 py-2.5 text-sm text-foam transition hover:bg-river-deep"
+          className="rounded-bp bg-river px-4 py-2.5 text-sm text-foam shadow-bp-soft transition duration-bp ease-bp hover:bg-river-deep"
         >
           {t(locale, "trips.openSample")}
         </Link>
@@ -165,6 +170,15 @@ export function TripsHome({ locale }: Props) {
 
         {pending && trips.length === 0 ? (
           <p className="text-ink-soft">{t(locale, "trips.loading")}</p>
+        ) : trips.length === 0 ? (
+          <div className="animate-fade rounded-bp-lg border border-dashed border-river/30 bg-foam/40 px-6 py-12 text-center">
+            <p className="font-display text-2xl text-ink md:text-3xl">
+              {t(locale, "trips.empty")}
+            </p>
+            <p className="mt-3 text-sm text-ink-soft">
+              {t(locale, "trips.emptyCta")}
+            </p>
+          </div>
         ) : (
           <ul className="space-y-0 divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
             {trips.map((trip, index) => {
@@ -180,10 +194,10 @@ export function TripsHome({ locale }: Props) {
                   <div className="flex flex-wrap items-stretch gap-0 sm:flex-nowrap">
                     <Link
                       href={`/trips/${trip.id}`}
-                      className="flex min-w-0 flex-1 items-stretch transition hover:bg-foam/40"
+                      className="flex min-w-0 flex-1 items-stretch transition duration-bp-fast ease-bp hover:bg-foam/40"
                     >
                       <div
-                        className="hidden w-28 shrink-0 bg-gradient-to-br from-river/20 to-mist/30 sm:block"
+                        className="hidden w-28 shrink-0 bg-gradient-to-br from-river/25 to-mist/35 sm:block"
                         aria-hidden
                       />
                       <div className="flex flex-1 flex-col gap-1 px-1 py-6 sm:px-6">
@@ -209,7 +223,7 @@ export function TripsHome({ locale }: Props) {
                               [trip.id]: e.target.checked,
                             }))
                           }
-                          className="accent-[color:var(--bp-river,#1f6b5c)]"
+                          className="accent-[color:var(--bp-river,#1a6557)]"
                         />
                         {t(locale, "trips.copyJournal")}
                       </label>
@@ -217,7 +231,7 @@ export function TripsHome({ locale }: Props) {
                         type="button"
                         disabled={busy || Boolean(dupBusyId)}
                         onClick={() => void duplicateTrip(trip.id)}
-                        className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-sm text-ink-soft transition hover:border-river/40 hover:text-river disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-bp border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp hover:border-river/40 hover:text-river disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {busy
                           ? t(locale, "trips.duplicating")

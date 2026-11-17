@@ -516,7 +516,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   return (
     <div className="mx-auto max-w-3xl px-6 pb-24 pt-8 md:px-10">
       <div className="animate-rise">
-        <p className="text-sm uppercase tracking-[0.2em] text-river-deep/80">
+        <p className="text-xs uppercase tracking-[0.22em] text-river/75">
+          Beaver Plan · 海狸旅行
+        </p>
+        <p className="mt-3 text-sm uppercase tracking-[0.2em] text-river-deep/80">
           {t(locale, "translate.eyebrow")}
         </p>
         <h1 className="mt-3 font-display text-4xl tracking-tight text-ink md:text-5xl">
