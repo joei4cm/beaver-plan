@@ -144,6 +144,8 @@ pnpm typecheck          # all packages
 pnpm --filter @beaver/api db:migrate   # apply Drizzle migrations to Neon
 pnpm --filter @beaver/api db:generate  # after schema edits
 pnpm smoke:neon-r2      # Neon+R2 checklist; dry-run without API_BASE_URL
+pnpm smoke:clerk        # Clerk + WeChat checklist; dry-run without API_BASE_URL
+pnpm smoke:maps         # Google/Amap/Baidu checklist; dry-run without API_BASE_URL
 pnpm dev:api            # http://127.0.0.1:8787
 pnpm dev:web            # http://localhost:3000
 pnpm dev:mobile         # Expo Metro
@@ -330,6 +332,15 @@ Full enablement checklist + smoke matrix: [`docs/keys-integration.md`](docs/keys
 ## Maps keys (Google + Amap + Baidu)
 
 Secrets in **`apps/api/.dev.vars`**. Without them, Places + Directions use curated demo POIs with **rich multi-step transit** (line names, agencies, per-step polylines). With live keys, Google / Amap / Baidu Directions still normalize into the same `transitSteps` shape. Default preference is **`auto`** (`DEFAULT_MAP_ENGINE=auto`) so mainland CN resolves to Amap when `MAP_AUTO_AMAP_CN=true`. **Baidu is manual only** (`preference=baidu` / trip setting) — never selected by auto. Verify with `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` and `…?preference=baidu`. Planner map UI is an SVG stage for all engines (no vendor JS tiles yet); Baidu live coords are BD-09.
+
+- Step-by-step: [`docs/keys-integration.md`](docs/keys-integration.md#2-google-maps--amap--baidu-mainland-auto-switch)
+- Michael runbook + smoke: [`docs/maps-keys-smoke.md`](docs/maps-keys-smoke.md)
+
+```bash
+pnpm smoke:maps                                          # dry-run (no secrets)
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:maps
+EXPECT_LIVE=1 EXPECT_GOOGLE=1 EXPECT_AMAP=1 EXPECT_BAIDU=1 API_BASE_URL=… pnpm smoke:maps
+```
 
 ---
 
