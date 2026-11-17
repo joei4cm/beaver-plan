@@ -159,6 +159,16 @@ export async function getObject(
   return { body: buf, contentType };
 }
 
+/** Best-effort delete (used by ops smoke cleanup). */
+export async function deleteObject(cfg: S3Config, key: string): Promise<void> {
+  const client = awsClient(cfg);
+  const res = await client.fetch(objectUrl(cfg, key), { method: "DELETE" });
+  if (!res.ok && res.status !== 404) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`s3_delete_failed:${res.status}:${text.slice(0, 200)}`);
+  }
+}
+
 /** Presigned PUT — client uploads directly to R2/S3 (configure bucket CORS). */
 export async function signedPutUrl(
   cfg: S3Config,

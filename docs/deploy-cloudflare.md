@@ -78,17 +78,32 @@ Optional custom domain: Cloudflare dashboard → Workers → Triggers → Custom
 
 Put secrets **per environment**. Never put values in `wrangler.toml` or git.
 
+### Exact Neon + R2 secrets (required for trips / media)
+
+| Secret | Value source | Notes |
+|--------|--------------|-------|
+| `DATABASE_URL` | Neon console → **pooled** (`-pooler`) connection string | Required for `/v1/trips*` |
+| `S3_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` | **Or** put `R2_ACCOUNT_ID` instead |
+| `S3_ACCESS_KEY_ID` | R2 API token Access Key ID | `R2_ACCESS_KEY_ID` alias OK |
+| `S3_SECRET_ACCESS_KEY` | R2 API token Secret Access Key | `R2_SECRET_ACCESS_KEY` alias OK |
+| `S3_BUCKET` | Bucket name, e.g. `beaver-plan-media` | `R2_BUCKET` alias OK |
+| `S3_REGION` | usually `auto` | `R2_REGION` alias OK |
+| `S3_PUBLIC_BASE_URL` | optional CDN / custom domain | skips signed GET when set |
+| `SMOKE_TOKEN` | long random string (≥8 chars) | **optional** — enables `GET /v1/ops/smoke` |
+
 ```bash
 cd apps/api
 ENV=preview   # or: production
 
-# Required
+# Required — Neon + R2 (interactive prompts; do not paste values into chat)
 pnpm exec wrangler secret put DATABASE_URL --env "$ENV"
-pnpm exec wrangler secret put S3_ENDPOINT --env "$ENV"          # or R2_ACCOUNT_ID
+pnpm exec wrangler secret put S3_ENDPOINT --env "$ENV"          # or: R2_ACCOUNT_ID
 pnpm exec wrangler secret put S3_ACCESS_KEY_ID --env "$ENV"
 pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY --env "$ENV"
 pnpm exec wrangler secret put S3_BUCKET --env "$ENV"
 pnpm exec wrangler secret put S3_REGION --env "$ENV"             # usually "auto"
+# pnpm exec wrangler secret put S3_PUBLIC_BASE_URL --env "$ENV"  # optional
+# pnpm exec wrangler secret put SMOKE_TOKEN --env "$ENV"         # optional ops smoke
 
 # Auth (optional — without these, demo identity headers)
 pnpm exec wrangler secret put CLERK_SECRET_KEY --env "$ENV"
@@ -120,10 +135,34 @@ pnpm exec wrangler secret list --env production
 Migrate Neon **before** relying on trip routes (same DB the secret points at):
 
 ```bash
+# Uses DATABASE_URL from apps/api/.dev.vars (drizzle-kit). Same Neon DB as the Worker secret.
 pnpm --filter @beaver/api db:migrate
 ```
 
-Also set non-secret `PUBLIC_WEB_ORIGIN` in `wrangler.toml` `[env.*.vars]` to the Pages origin, then redeploy so CORS + invite links match.
+Also set non-secret `PUBLIC_WEB_ORIGIN` in `wrangler.toml` `[env.*.vars]` to the Pages origin, then redeploy so **Worker CORS** + invite links match.
+
+### R2 CORS for web origin
+
+Browser signed PUT (`POST /v1/media/presign` → client PUT) needs bucket CORS. Include **localhost** for local web and your real Pages / custom origin (must match `PUBLIC_WEB_ORIGIN`):
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://beaver-plan-web-preview.pages.dev",
+      "https://beaver-plan-web.pages.dev"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Replace the Pages hostnames with your real web origins. Without CORS, web journal falls back to `POST /v1/media` (BFF still writes to R2). Worker API CORS is separate: it allows localhost + `PUBLIC_WEB_ORIGIN` (see `apps/api/src/index.ts`).
 
 ---
 
@@ -145,10 +184,20 @@ curl -s https://beaver-plan-api.<subdomain>.workers.dev/health | jq .
 | `auth.clerk` / `auth.mode` | Clerk configured? `clerk` vs `demo` |
 | `database.configured` | `DATABASE_URL` present |
 | `media.configured` | S3/R2 credentials present |
+| `ops.smoke` | `true` when `SMOKE_TOKEN` is set (≥8 chars) |
 | `maps.google` / `amap` / `baidu` | Map server keys present |
 | `translation` / `dayFill` / `booking` | Provider mode + ids (no API keys) |
 
 It never returns connection strings, API keys, or token material.
+
+### Ops smoke (connectivity — optional)
+
+When `SMOKE_TOKEN` is set on the Worker, `GET /v1/ops/smoke` runs a real Neon `select 1` and a tiny R2 put/get/delete. Auth: `Authorization: Bearer <token>` or `X-Beaver-Smoke-Token`. When the secret is unset, the route returns **404** (disabled). Response is booleans + short errors only — no secrets.
+
+```bash
+curl -s -H "Authorization: Bearer $SMOKE_TOKEN" \
+  https://beaver-plan-api-preview.<subdomain>.workers.dev/v1/ops/smoke | jq .
+```
 
 ---
 
@@ -182,14 +231,45 @@ After the web origin exists:
 
 ## Operator smoke (Michael)
 
+### Deploy skeleton (Cloudflare)
+
 With a Cloudflare account logged in via `wrangler login`:
 
 1. `pnpm --filter @beaver/api deploy:dry` — confirm bundle + bindings.
-2. Create Neon + R2; `wrangler secret put … --env preview` for required secrets.
-3. `pnpm --filter @beaver/api db:migrate`
-4. `pnpm --filter @beaver/api deploy:preview`
-5. `curl -s https://beaver-plan-api-preview.<subdomain>.workers.dev/health | jq '{deploy,auth,database,media,maps}'`
-6. Expect `database.configured` / `media.configured` true when secrets are set; never see secret values in the JSON.
-7. When ready: repeat secrets + deploy for `--env production`.
+2. Create Neon + R2; `wrangler secret put … --env preview` for required secrets (table above).
+3. Configure R2 CORS for web origins; set `PUBLIC_WEB_ORIGIN` in `wrangler.toml` → redeploy.
+4. `pnpm --filter @beaver/api db:migrate` (local `.dev.vars` → same Neon DB).
+5. `pnpm --filter @beaver/api deploy:preview`
+6. `curl -s https://beaver-plan-api-preview.<subdomain>.workers.dev/health | jq '{deploy,auth,database,media,ops,maps}'`
+7. Expect `database.configured` / `media.configured` true when secrets are set; never see secret values in the JSON.
+8. When ready: repeat secrets + deploy for `--env production`.
+
+### Neon + R2 production smoke script
+
+CI / no credentials — dry-run only (always exit 0, no network secrets):
+
+```bash
+pnpm smoke:neon-r2
+# or: pnpm --filter @beaver/api smoke:neon-r2 -- --dry-run
+```
+
+Against local or deployed API (after migrate + secrets):
+
+```bash
+# Local
+pnpm dev:api   # separate terminal
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:neon-r2
+
+# Preview Worker
+API_BASE_URL=https://beaver-plan-api-preview.<subdomain>.workers.dev pnpm smoke:neon-r2
+
+# With ops connectivity endpoint
+API_BASE_URL=https://… SMOKE_TOKEN='…' pnpm smoke:neon-r2
+
+# Skip tiny PNG upload (health + sample trip + optional ops only)
+API_BASE_URL=https://… pnpm --filter @beaver/api smoke:neon-r2 -- --skip-upload
+```
+
+Pass criteria: `/health` has `database.configured` + `media.configured`; `GET /v1/trips/sample-kyoto` returns seeded days; `POST /v1/media` + proxy GET succeed; if `SMOKE_TOKEN` set, `/v1/ops/smoke` returns `ok: true`.
 
 Do **not** paste secret values into chat, PRs, or Agent Store docs.

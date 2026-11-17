@@ -12,6 +12,11 @@ export type Bindings = {
    */
   DATABASE_URL?: string;
   /**
+   * Optional operator token for GET /v1/ops/smoke (db + media connectivity).
+   * When unset, that route returns 404. Never commit real values.
+   */
+  SMOKE_TOKEN?: string;
+  /**
    * S3-compatible object storage (Cloudflare R2 via S3 API tokens).
    * Prefer S3_*; R2_* aliases accepted. Missing → /v1/media* returns 503.
    */

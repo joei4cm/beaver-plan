@@ -181,7 +181,13 @@ curl -s http://127.0.0.1:8787/health | jq '.database'
 # → configured: true
 curl -s http://127.0.0.1:8787/v1/trips/sample-kyoto | jq '.trip.id,.days|length'
 # → "sample-kyoto" + seeded days (idempotent seed on first DB request)
+
+# Combined Neon + R2 operator script (dry-run without API_BASE_URL):
+pnpm smoke:neon-r2
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:neon-r2
 ```
+
+Prod secrets: see exact Wrangler list in [`deploy-cloudflare.md`](./deploy-cloudflare.md#exact-neon--r2-secrets-required-for-trips--media).
 
 ---
 
@@ -203,12 +209,16 @@ S3_REGION=auto
 
 ### CORS (browser signed PUT)
 
-In the R2 bucket CORS settings:
+In the R2 bucket CORS settings — include **localhost** and the real web origin (`PUBLIC_WEB_ORIGIN` / Pages URL):
 
 ```json
 [
   {
-    "AllowedOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://beaver-plan-web.pages.dev"
+    ],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["*"],
     "ExposeHeaders": ["ETag"],
@@ -217,13 +227,19 @@ In the R2 bucket CORS settings:
 ]
 ```
 
-Without CORS, web journal falls back to `POST /v1/media` (still writes to R2). Mobile always uses the BFF upload path.
+Without CORS, web journal falls back to `POST /v1/media` (still writes to R2). Mobile always uses the BFF upload path. Worker CORS for the API is separate (`PUBLIC_WEB_ORIGIN` in `wrangler.toml`).
 
 ### Smoke
 
 ```bash
 curl -s http://127.0.0.1:8787/health | jq '.media'
 # → configured: true, storage: "s3"
+
+# Upload + fetch via operator script (also covers Neon migrate path):
+API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:neon-r2
+
+# Optional connectivity endpoint (set SMOKE_TOKEN on API):
+# curl -s -H "Authorization: Bearer $SMOKE_TOKEN" http://127.0.0.1:8787/v1/ops/smoke | jq .
 ```
 
 Web: `/trips/sample-kyoto/journal` → demo photos load → upload a photo → save → Share studio export.
@@ -353,6 +369,8 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | # | Surface | Command / UI | Pass criteria |
 |---|---------|--------------|---------------|
 | 1 | Health | `GET /health` | `database.configured`, `media.configured`; auth/maps/translation flags match env |
+| 1b | Neon+R2 script | `API_BASE_URL=… pnpm smoke:neon-r2` | Health + sample trip + media upload; dry-run without URL |
+| 1c | Ops smoke | `GET /v1/ops/smoke` + `SMOKE_TOKEN` | `ok: true` (db `select 1` + R2 round-trip); 404 if token unset |
 | 2 | Sample trip | `GET /v1/trips/sample-kyoto` | Seeded Kyoto days/stops/members |
 | 3 | Planner | Web `/trips/sample-kyoto` | Map + stops render |
 | 4 | Maps engine | `GET /v1/maps/engine?preference=auto&timezone=Asia/Shanghai` | `engineId: "amap"` when `MAP_AUTO_AMAP_CN=true` |
@@ -376,21 +394,19 @@ Canonical deploy scaffold (envs, dry-run, secrets list, Pages/OpenNext): [`deplo
 cd apps/api
 ENV=production   # or preview
 pnpm exec wrangler secret put DATABASE_URL --env "$ENV"
+pnpm exec wrangler secret put S3_ENDPOINT --env "$ENV"   # or R2_ACCOUNT_ID
 pnpm exec wrangler secret put S3_ACCESS_KEY_ID --env "$ENV"
 pnpm exec wrangler secret put S3_SECRET_ACCESS_KEY --env "$ENV"
-# also: S3_ENDPOINT or R2_ACCOUNT_ID, S3_BUCKET, S3_REGION=auto
-pnpm exec wrangler secret put CLERK_SECRET_KEY --env "$ENV"
-pnpm exec wrangler secret put GOOGLE_MAPS_SERVER_KEY --env "$ENV"
-pnpm exec wrangler secret put AMAP_SERVER_KEY --env "$ENV"
-pnpm exec wrangler secret put BAIDU_MAP_SERVER_KEY --env "$ENV"
-pnpm exec wrangler secret put OPENAI_API_KEY --env "$ENV"
-# optional: DEEPGRAM_API_KEY, CLERK_JWT_ISSUER, …
+pnpm exec wrangler secret put S3_BUCKET --env "$ENV"
+pnpm exec wrangler secret put S3_REGION --env "$ENV"      # auto
+# optional: SMOKE_TOKEN, S3_PUBLIC_BASE_URL, CLERK_*, maps, OPENAI_*, …
 pnpm --filter @beaver/api db:migrate   # same Neon DB
 pnpm --filter @beaver/api deploy:production   # or deploy:preview
 pnpm exec wrangler secret list --env "$ENV"
+API_BASE_URL=https://beaver-plan-api.<subdomain>.workers.dev pnpm smoke:neon-r2
 ```
 
-Update R2 CORS `AllowedOrigins` for the real web origin. Set `PUBLIC_WEB_ORIGIN` in `wrangler.toml` `[env.*.vars]` to the production web URL, then redeploy.
+Update R2 CORS `AllowedOrigins` for the real web origin. Set `PUBLIC_WEB_ORIGIN` in `wrangler.toml` `[env.*.vars]` to the production web URL, then redeploy. Full Neon/R2 secret table + CORS JSON: [`deploy-cloudflare.md`](./deploy-cloudflare.md).
 
 ---
 
@@ -406,6 +422,7 @@ Authoritative templates: root [`.env.example`](../.env.example) and [`apps/api/.
 | API base | `NEXT_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_API_BASE_URL` |
 | Neon | `DATABASE_URL` |
 | R2 / S3 | `S3_ENDPOINT` or `R2_ACCOUNT_ID`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, optional `S3_PUBLIC_BASE_URL` (+ `R2_*` aliases) |
+| Ops smoke | optional `SMOKE_TOKEN` → `GET /v1/ops/smoke` |
 | Maps | `GOOGLE_MAPS_SERVER_KEY`, `AMAP_SERVER_KEY`, `BAIDU_MAP_SERVER_KEY`, `DEFAULT_MAP_ENGINE`, `MAP_AUTO_AMAP_CN` |
 | Translation | `FEATURE_TRANSLATION`, `OPENAI_*`, `DEEPGRAM_API_KEY`, `ASR_PROVIDER`, `LLM_PROVIDER`, `TTS_PROVIDER` |
 | Day-fill | same `OPENAI_*` + `LLM_PROVIDER` (demo when key unset) |

@@ -131,9 +131,11 @@ Without CORS, the web journal **falls back** to `POST /v1/media` (BFF PutObject)
 | `GET` | `/v1/media/:id?proxy=1` | Stream bytes through Worker |
 | `GET` | `/v1/media/:id/signed` | JSON `{ key, downloadUrl }` |
 
-`/health` → `media.configured: true` when S3/R2 env is set. Missing credentials → **503** with setup hints (no silent memory fallback).
+`/health` → `media.configured: true` when S3/R2 env is set. Missing credentials → **503** with setup hints (no silent memory fallback). Optional `SMOKE_TOKEN` enables `GET /v1/ops/smoke` (real Neon + R2 connectivity; 404 when unset).
 
 **Demo steps:** set Neon + R2 env → `pnpm dev:api` + `pnpm dev:web` → open `/trips/sample-kyoto/journal` → photos load from R2 → upload a new photo → save entry → open Share studio and export PNG.
+
+**Operator smoke:** `pnpm smoke:neon-r2` (dry-run, no credentials) → `API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:neon-r2` after migrate. Details: [`docs/deploy-cloudflare.md`](docs/deploy-cloudflare.md).
 
 ### Scripts
 
@@ -141,6 +143,7 @@ Without CORS, the web journal **falls back** to `POST /v1/media` (BFF PutObject)
 pnpm typecheck          # all packages
 pnpm --filter @beaver/api db:migrate   # apply Drizzle migrations to Neon
 pnpm --filter @beaver/api db:generate  # after schema edits
+pnpm smoke:neon-r2      # Neon+R2 checklist; dry-run without API_BASE_URL
 pnpm dev:api            # http://127.0.0.1:8787
 pnpm dev:web            # http://localhost:3000
 pnpm dev:mobile         # Expo Metro
