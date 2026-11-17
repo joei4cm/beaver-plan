@@ -15,7 +15,8 @@ export type AuthVariables = {
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
-function clerkIssuer(env: Bindings): string | null {
+/** Derive Clerk JWT issuer from CLERK_JWT_ISSUER or publishable key payload. */
+export function clerkIssuer(env: Bindings): string | null {
   if (env.CLERK_JWT_ISSUER?.trim()) {
     return env.CLERK_JWT_ISSUER.trim().replace(/\/$/, "");
   }
@@ -36,6 +37,12 @@ function clerkIssuer(env: Bindings): string | null {
   }
 }
 
+/** True when a non-placeholder CLERK_SECRET_KEY is present. */
+export function clerkSecretConfigured(env: Bindings): boolean {
+  const secret = env.CLERK_SECRET_KEY?.trim();
+  return Boolean(secret && !secret.includes("xxxxxxxx"));
+}
+
 function jwksFor(issuer: string) {
   let set = jwksCache.get(issuer);
   if (!set) {
@@ -45,9 +52,13 @@ function jwksFor(issuer: string) {
   return set;
 }
 
+/**
+ * Clerk JWT mode is active only when secret + issuer are both ready.
+ * Incomplete config (secret without issuer) stays in demo so mutations
+ * do not 500 with clerk_issuer_missing.
+ */
 export function clerkConfigured(env: Bindings): boolean {
-  const secret = env.CLERK_SECRET_KEY?.trim();
-  return Boolean(secret && !secret.includes("xxxxxxxx"));
+  return clerkSecretConfigured(env) && Boolean(clerkIssuer(env));
 }
 
 export async function resolveAuthUser(

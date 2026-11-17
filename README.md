@@ -232,7 +232,15 @@ Pipeline (packages/core): **ASR → TranslationProvider → TTS**, with optional
 
 ## Auth — Clerk + WeChat
 
-Without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat OAuth is configured in Clerk Dashboard (no fake AppID in this repo). Step-by-step: [`docs/keys-integration.md`](docs/keys-integration.md#1-clerk-web--expo--wechat).
+Without Clerk keys, apps use demo identity headers (`X-Beaver-User-Id`). WeChat OAuth is configured in Clerk Dashboard (no fake AppID in this repo).
+
+- Step-by-step: [`docs/keys-integration.md`](docs/keys-integration.md#1-clerk-web--expo--wechat)
+- Michael runbook + smoke: [`docs/clerk-wechat-smoke.md`](docs/clerk-wechat-smoke.md)
+
+```bash
+pnpm smoke:clerk                                          # dry-run (no secrets)
+API_BASE_URL=http://127.0.0.1:8787 WEB_BASE_URL=http://localhost:3000 pnpm smoke:clerk
+```
 
 ---
 

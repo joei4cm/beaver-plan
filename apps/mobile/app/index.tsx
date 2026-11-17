@@ -3,10 +3,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { brand, colors } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
+import { wechatLoginEnabled } from "../src/clerk";
 
 const locale = "zh-CN" as const;
 
 export default function HomeScreen() {
+  const wechat = wechatLoginEnabled();
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <View style={styles.hero}>
@@ -25,6 +27,13 @@ export default function HomeScreen() {
         <Link href="/translate" asChild>
           <Pressable style={styles.translate}>
             <Text style={styles.primaryLabel}>{t(locale, "mobile.translate")}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/sign-in" asChild>
+          <Pressable style={styles.secondary}>
+            <Text style={styles.secondaryLabel}>
+              {wechat ? t(locale, "auth.wechat") : t(locale, "nav.signIn")}
+            </Text>
           </Pressable>
         </Link>
         <Link href="/trips" asChild>

@@ -77,10 +77,24 @@ WeChat credentials live in **Clerk + WeChat Open Platform**, not in this repo (n
 
 ### Smoke
 
+Operator runbook (copy-paste): [`clerk-wechat-smoke.md`](./clerk-wechat-smoke.md).
+
+```bash
+# Dry-run (no secrets — safe in CI):
+pnpm smoke:clerk
+
+# Live (API up; optional web + JWT):
+API_BASE_URL=http://127.0.0.1:8787 WEB_BASE_URL=http://localhost:3000 pnpm smoke:clerk
+EXPECT_CLERK=1 EXPECT_WECHAT=1 API_BASE_URL=http://127.0.0.1:8787 pnpm smoke:clerk
+```
+
 | Check | Expect |
 |-------|--------|
 | No Clerk keys | `/health` → `auth.mode: "demo"`; planner works with demo headers |
-| Keys set | `/health` → `auth.clerk: true`, `auth.mode: "clerk"` |
+| Secret without issuer | Stays **demo**; `/health` → `secretConfigured: true`, `jwtIssuerConfigured: false` |
+| Keys set (secret + issuer) | `/health` → `auth.clerk: true`, `auth.mode: "clerk"`, `jwtIssuerConfigured: true` |
+| Web `/sign-in` | Clerk panel when keyed; demo instructions when unset; `?strategy=oauth_wechat` starts WeChat |
+| Mobile `/sign-in` | Demo copy without keys; WeChat button when Expo WeChat flag is on |
 | Web signed in | Bearer JWT accepted on trip mutations; unsigned → 401 |
 | WeChat flags on | UI shows WeChat entry; OAuth completes via Clerk |
 
@@ -381,7 +395,7 @@ Run with Neon + R2 at minimum; add Clerk / maps / LLM as you enable them.
 | 9 | Day-fill demo | `/trips/sample-kyoto` 智能填天 without key | Draft preview; apply updates days/stops |
 | 10 | Day-fill live | Same + `OPENAI_API_KEY` | `dayFill.mode: "live"`; LLM propose |
 | 11 | Booking demo | `POST /v1/booking/search` + planner 预订 | Suggestions; save stop `bookingLinks`; open external |
-| 12 | Clerk | Sign-in + mutate trip | JWT required; WeChat entry when flags on |
+| 12 | Clerk | `pnpm smoke:clerk` + `/sign-in` + mutate trip | Dry-run OK; JWT required when keyed; WeChat entry when flags on |
 | 13 | Mobile | Expo itinerary / journal / translate / booking chips | Hits same API base URL |
 
 ---
