@@ -1,5 +1,7 @@
 export type Bindings = {
   APP_NAME: string;
+  /** Deploy target label: local | preview | production (non-secret wrangler var). */
+  BEAVER_ENV?: string;
   DEFAULT_LOCALE: string;
   DEFAULT_MAP_ENGINE: string;
   MAP_AUTO_AMAP_CN: string;

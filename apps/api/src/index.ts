@@ -33,10 +33,25 @@ import { isS3Configured } from "./s3.js";
 
 const app = new Hono<{ Bindings: Bindings; Variables: AuthVariables }>();
 
-app.use(
-  "*",
-  cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+/** Localhost + PUBLIC_WEB_ORIGIN (production web). Never echoes secrets. */
+function corsOrigins(env: Bindings): string[] {
+  const allowed = new Set<string>([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+  ]);
+  const web = env.PUBLIC_WEB_ORIGIN?.trim().replace(/\/$/, "");
+  if (web) allowed.add(web);
+  // Local / unset deploy target: allow any origin for wrangler dev convenience.
+  const beaverEnv = (env.BEAVER_ENV ?? "local").toLowerCase();
+  if (beaverEnv === "local" || beaverEnv === "dev") {
+    allowed.add("*");
+  }
+  return [...allowed];
+}
+
+app.use("*", async (c, next) => {
+  const handler = cors({
+    origin: corsOrigins(c.env),
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: [
       "Content-Type",
@@ -46,8 +61,9 @@ app.use(
       "X-Beaver-Display-Name",
     ],
     exposeHeaders: ["X-Beaver-Trip-Version"],
-  }),
-);
+  });
+  return handler(c, next);
+});
 
 /**
  * Persistence requires Neon/Postgres. No silent in-memory fallback for trips.
@@ -142,10 +158,19 @@ app.get("/health", (c) => {
   );
   const hasDb = Boolean(c.env.DATABASE_URL?.trim());
   const hasS3 = isS3Configured(c.env);
+  const beaverEnv = c.env.BEAVER_ENV ?? "local";
+  const webOrigin =
+    c.env.PUBLIC_WEB_ORIGIN?.trim().replace(/\/$/, "") || null;
+  // Configured flags only — never echo secret values or connection strings.
   return c.json({
     status: t(locale, "api.health"),
     app: c.env.APP_NAME ?? "Beaver Plan",
     ts: nowIso(),
+    deploy: {
+      env: beaverEnv,
+      publicWebOrigin: webOrigin,
+      workers: true,
+    },
     auth: {
       clerk: clerkConfigured(c.env),
       wechatUi: wechat,
@@ -160,9 +185,9 @@ app.get("/health", (c) => {
         : "Set DATABASE_URL (Neon) — trip APIs return 503 until configured",
     },
     maps: {
-      google: Boolean(c.env.GOOGLE_MAPS_SERVER_KEY),
-      amap: Boolean(c.env.AMAP_SERVER_KEY),
-      baidu: Boolean(c.env.BAIDU_MAP_SERVER_KEY),
+      google: Boolean(c.env.GOOGLE_MAPS_SERVER_KEY?.trim()),
+      amap: Boolean(c.env.AMAP_SERVER_KEY?.trim()),
+      baidu: Boolean(c.env.BAIDU_MAP_SERVER_KEY?.trim()),
       defaultEngine: c.env.DEFAULT_MAP_ENGINE ?? "auto",
       autoAmapCn: (c.env.MAP_AUTO_AMAP_CN ?? "true") !== "false",
     },
@@ -185,6 +210,10 @@ app.get("/health", (c) => {
       note: hasS3
         ? "Journal/share media bytes in S3/R2; Neon stores object keys"
         : "Set S3_ENDPOINT|R2_ACCOUNT_ID + S3_ACCESS_KEY_ID + S3_SECRET_ACCESS_KEY + S3_BUCKET — /v1/media returns 503 until configured",
+    },
+    features: {
+      translation: translationEnabled,
+      clerkWechatUi: wechat,
     },
   });
 });

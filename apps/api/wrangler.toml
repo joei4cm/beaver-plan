@@ -1,13 +1,23 @@
+# Beaver Plan API — Cloudflare Workers (Hono)
+# Deploy docs: ../../docs/deploy-cloudflare.md
+#
+# Local:     pnpm --filter @beaver/api dev
+# Dry-run:   pnpm --filter @beaver/api deploy:dry
+# Preview:   pnpm --filter @beaver/api deploy:preview
+# Production: pnpm --filter @beaver/api deploy:production
+#
+# Media uses S3-compatible credentials against Cloudflare R2 (not an R2 binding).
+# Secrets: wrangler secret put <NAME> --env preview|production — never commit values.
+
 name = "beaver-plan-api"
 main = "src/index.ts"
 compatibility_date = "2025-03-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Media uses S3-compatible credentials against Cloudflare R2 (not an R2 binding).
-# Set S3_* or R2_* secrets in .dev.vars / wrangler secret — see README → Media / R2.
-
+# Top-level = local `wrangler dev` defaults (no --env).
 [vars]
 APP_NAME = "Beaver Plan"
+BEAVER_ENV = "local"
 DEFAULT_LOCALE = "zh-CN"
 DEFAULT_MAP_ENGINE = "auto"
 MAP_AUTO_AMAP_CN = "true"
@@ -15,7 +25,42 @@ FEATURE_TRANSLATION = "true"
 PUBLIC_WEB_ORIGIN = "http://localhost:3000"
 CLERK_WECHAT_ENABLED = "false"
 
-# Secrets (wrangler secret put …) — never commit values:
+# ── Preview (staging) ────────────────────────────────────────────────────────
+# Worker URL: https://beaver-plan-api-preview.<account>.workers.dev
+[env.preview]
+name = "beaver-plan-api-preview"
+workers_dev = true
+
+[env.preview.vars]
+APP_NAME = "Beaver Plan"
+BEAVER_ENV = "preview"
+DEFAULT_LOCALE = "zh-CN"
+DEFAULT_MAP_ENGINE = "auto"
+MAP_AUTO_AMAP_CN = "true"
+FEATURE_TRANSLATION = "true"
+# Replace with your Cloudflare Pages preview URL after first web deploy:
+PUBLIC_WEB_ORIGIN = "https://beaver-plan-web-preview.pages.dev"
+CLERK_WECHAT_ENABLED = "false"
+
+# ── Production ───────────────────────────────────────────────────────────────
+# Worker URL: https://beaver-plan-api.<account>.workers.dev
+# Optional: add routes / custom domain in the dashboard or via [[env.production.routes]]
+[env.production]
+name = "beaver-plan-api"
+workers_dev = true
+
+[env.production.vars]
+APP_NAME = "Beaver Plan"
+BEAVER_ENV = "production"
+DEFAULT_LOCALE = "zh-CN"
+DEFAULT_MAP_ENGINE = "auto"
+MAP_AUTO_AMAP_CN = "true"
+FEATURE_TRANSLATION = "true"
+# Replace with your production web origin (Pages or custom domain):
+PUBLIC_WEB_ORIGIN = "https://beaver-plan-web.pages.dev"
+CLERK_WECHAT_ENABLED = "false"
+
+# Secrets (per env: `wrangler secret put NAME --env preview|production`) — never commit:
 # CLERK_SECRET_KEY         — enables JWT-gated trip mutations
 # CLERK_PUBLISHABLE_KEY / CLERK_JWT_ISSUER — JWKS verification
 # DATABASE_URL             — Neon Postgres (required for trips/journal/members)
@@ -31,12 +76,11 @@ CLERK_WECHAT_ENABLED = "false"
 # DEEPGRAM_API_KEY         — optional ASR alternative
 # OPENAI_BASE_URL / OPENAI_CHAT_MODEL / OPENAI_ASR_MODEL / OPENAI_TTS_*
 # ASR_PROVIDER / LLM_PROVIDER / TTS_PROVIDER — openai|deepgram|edge|demo|auto
+# OTA_PROVIDER / AMADEUS_API_KEY / AMADEUS_API_SECRET / BOOKING_AFFILIATE_ID
 #
 # Without CLERK_SECRET_KEY, BFF uses demo identity headers (X-Beaver-User-Id).
 # Without DATABASE_URL, /v1/trips|/v1/invites|/v1/share return 503 (no memory fallback).
 # Without S3/R2 credentials, /v1/media* return 503 (no silent in-memory media).
 # Without map secrets, /v1/places and /v1/directions use curated demo data.
 # Without OPENAI_/DEEPGRAM keys, /v1/translation/* serves scripted demo turns.
-# OTA / booking (optional): OTA_PROVIDER, AMADEUS_API_KEY, AMADEUS_API_SECRET,
-#   BOOKING_AFFILIATE_ID — without keys POST /v1/booking/search is demo catalog.
-#   No payment capture; live Amadeus/Booking adapter is future work.
+# OTA / booking: without keys POST /v1/booking/search is demo catalog (no payment).
