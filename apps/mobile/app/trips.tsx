@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   cta: {
     marginTop: 14,
     fontSize: 14,
-    color: colors.timber,
+    color: colors.river,
     fontWeight: "700",
   },
 });

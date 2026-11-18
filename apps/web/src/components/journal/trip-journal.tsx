@@ -349,7 +349,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </Link>
           <Link
             href={`/trips/${tripId}/share`}
-            className="rounded-bp bg-timber px-4 py-2 text-sm font-semibold text-foam transition hover:brightness-110"
+            className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep"
           >
             {t(locale, "journal.toShare")}
           </Link>
@@ -367,8 +367,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             }}
             className={`shrink-0 px-5 py-3 text-left transition ${
               dayId === day.id
-                ? "bg-ink text-foam"
-                : "text-ink-soft hover:bg-mist/40 hover:text-ink"
+                ? "bg-river text-foam"
+                : "text-ink-soft hover:bg-mist/70 hover:text-ink"
             }`}
           >
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
@@ -516,7 +516,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 pendingLocalPhotos.length === 0)
             }
             onClick={() => void saveEntry()}
-            className="mt-5 w-full rounded-md bg-timber px-4 py-3 text-sm font-medium text-foam transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? t(locale, "journal.saving") : t(locale, "journal.save")}
           </button>

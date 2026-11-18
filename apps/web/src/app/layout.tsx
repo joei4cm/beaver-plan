@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Syne } from "next/font/google";
+import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { brand } from "@beaver/ui-tokens";
 import { AuthBridge } from "@/components/auth/auth-bridge";
 import { BeaverClerkProvider } from "@/components/providers/clerk-provider";
@@ -8,16 +8,16 @@ import { clerkPublishableKey } from "@/lib/clerk";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 
-const display = Syne({
+const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-syne",
+  variable: "--font-bricolage",
   display: "swap",
   weight: ["500", "600", "700", "800"],
 });
 
-const body = Outfit({
+const body = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-jakarta",
   display: "swap",
   weight: ["300", "400", "500", "600", "700"],
 });
@@ -45,9 +45,9 @@ export default async function RootLayout({
       style={
         {
           "--bp-font-display":
-            'var(--font-syne), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+            'var(--font-bricolage), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
           "--bp-font-body":
-            'var(--font-outfit), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+            'var(--font-jakarta), "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
         } as React.CSSProperties
       }
     >

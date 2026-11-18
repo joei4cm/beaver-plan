@@ -1,30 +1,30 @@
 /**
- * Beaver Plan / 海狸旅行 — design tokens (redesign v2)
- * Direction: Horizon Cartograph — cool fog atlas + lagoon + vermillion signal.
- * Not cream/Fraunces/terracotta; not purple AI; not dark-mode spam.
+ * Beaver Plan / 海狸旅行 — design tokens (redesign v3)
+ * Direction: Lumen Route — luminous canvas + azure route + light map craft.
+ * Rejected: cream/serif/terracotta; Horizon Cartograph fog/Syne/vermillion atlas.
  */
 :root {
   /* Brand */
   --bp-brand: "Beaver Plan";
   --bp-brand-zh: "海狸旅行";
 
-  /* Color */
-  --bp-ink: #0b1420;
-  --bp-ink-soft: #5a6574;
-  --bp-paper: #f3f5f7;
-  --bp-mist: #e1e7ee;
-  --bp-river: #0c7c78;
-  --bp-river-deep: #064a4f;
-  --bp-timber: #e84e2f;
-  --bp-foam: #fafbfc;
-  --bp-line: rgba(11, 20, 32, 0.1);
-  --bp-focus: #19a8a1;
-  --bp-shadow: rgba(11, 20, 32, 0.1);
-  --bp-shadow-deep: rgba(11, 20, 32, 0.22);
+  /* Color — daylight travel OS */
+  --bp-ink: #0f172a;
+  --bp-ink-soft: #64748b;
+  --bp-paper: #f4f6fa;
+  --bp-mist: #e6ecf5;
+  --bp-river: #2f6bff;
+  --bp-river-deep: #1a4fd6;
+  --bp-timber: #e11d48;
+  --bp-foam: #ffffff;
+  --bp-line: rgba(15, 23, 42, 0.1);
+  --bp-focus: #60a5fa;
+  --bp-shadow: rgba(15, 23, 42, 0.08);
+  --bp-shadow-deep: rgba(15, 23, 42, 0.18);
 
-  /* Typography — geometric editorial (Syne) + clean body (Outfit) */
-  --bp-font-display: "Syne", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
-  --bp-font-body: "Outfit", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  /* Typography — Bricolage Grotesque + Plus Jakarta Sans */
+  --bp-font-display: "Bricolage Grotesque", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --bp-font-body: "Plus Jakarta Sans", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
   --bp-font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   /* Type scale */
@@ -45,13 +45,13 @@
   --bp-space-7: 3rem;
   --bp-space-8: 4.5rem;
 
-  /* Radius / elevation / motion — sharper, less soft-card */
-  --bp-radius-sm: 4px;
-  --bp-radius-md: 10px;
-  --bp-radius-lg: 16px;
+  /* Radius / elevation / motion — product-soft, not atlas-hard */
+  --bp-radius-sm: 6px;
+  --bp-radius-md: 12px;
+  --bp-radius-lg: 20px;
   --bp-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --bp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --bp-duration-fast: 200ms;
-  --bp-duration: 420ms;
-  --bp-duration-slow: 640ms;
+  --bp-duration-fast: 180ms;
+  --bp-duration: 380ms;
+  --bp-duration-slow: 600ms;
 }
