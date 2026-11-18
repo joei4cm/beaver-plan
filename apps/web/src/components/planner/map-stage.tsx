@@ -28,33 +28,33 @@ function strokeForMode(mode: string): {
   switch (mode) {
     case "walk":
       return {
-        stroke: "rgba(250,251,252,0.7)",
+        stroke: "#64748B",
         strokeWidth: 2.5,
         dash: "5 7",
-        opacity: 0.95,
+        opacity: 0.9,
       };
     case "transit":
       return {
-        stroke: "#19A8A1",
+        stroke: "#2F6BFF",
         strokeWidth: 4,
         opacity: 1,
       };
     case "transfer":
       return {
-        stroke: "#E84E2F",
+        stroke: "#E11D48",
         strokeWidth: 2.5,
         dash: "3 5",
         opacity: 0.9,
       };
     case "drive":
       return {
-        stroke: "rgba(232,78,47,0.85)",
+        stroke: "#1A4FD6",
         strokeWidth: 3.5,
         opacity: 1,
       };
     default:
       return {
-        stroke: "rgba(250,251,252,0.5)",
+        stroke: "#94A3B8",
         strokeWidth: 3,
         opacity: 0.9,
       };
@@ -74,24 +74,24 @@ export function MapStage({
   const bounds = boundsOf(coords);
 
   return (
-    <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-[#061820] lg:min-h-[640px] lg:rounded-none">
+    <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-[#EAF0F8] lg:min-h-[640px] lg:rounded-none">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-80"
+        className="pointer-events-none absolute inset-0 opacity-90"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 70% 55% at 28% 18%, rgba(25,168,161,0.32), transparent 55%),
-            radial-gradient(ellipse 45% 35% at 82% 72%, rgba(232,78,47,0.16), transparent 50%),
-            linear-gradient(155deg, #064a4f 0%, #0b1420 52%, #122433 100%)
+            radial-gradient(ellipse 65% 50% at 30% 22%, rgba(47,107,255,0.14), transparent 55%),
+            radial-gradient(ellipse 40% 35% at 78% 70%, rgba(96,165,250,0.12), transparent 50%),
+            linear-gradient(160deg, #eef3fb 0%, #e4ebf5 55%, #dce5f2 100%)
           `,
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.14]"
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40h80M40 0v80' stroke='%23fafbfc' stroke-width='0.55' fill='none'/%3E%3C/svg%3E\")",
+            "url(\"data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 36h72M36 0v72' stroke='%232F6BFF' stroke-width='0.5' stroke-opacity='0.18' fill='none'/%3E%3C/svg%3E\")",
         }}
       />
 
@@ -175,7 +175,7 @@ export function MapStage({
                     ? {
                         transformOrigin: "0 0",
                         animation:
-                          "bp-marker-pop 420ms cubic-bezier(0.16, 1, 0.3, 1) both",
+                          "bp-marker-pop 380ms cubic-bezier(0.16, 1, 0.3, 1) both",
                       }
                     : undefined
                 }
@@ -184,7 +184,7 @@ export function MapStage({
                   <circle
                     r={24}
                     fill="none"
-                    stroke="rgba(250,251,252,0.55)"
+                    stroke="rgba(47,107,255,0.45)"
                     strokeWidth={1.75}
                     opacity={0.9}
                   >
@@ -204,8 +204,8 @@ export function MapStage({
                 )}
                 <circle
                   r={selected ? 14 : 11}
-                  fill={selected ? "#E84E2F" : "#FAFBFC"}
-                  stroke={selected ? "#FAFBFC" : "#0C7C78"}
+                  fill={selected ? "#2F6BFF" : "#FFFFFF"}
+                  stroke={selected ? "#FFFFFF" : "#2F6BFF"}
                   strokeWidth={2.5}
                 />
                 <text
@@ -213,7 +213,7 @@ export function MapStage({
                   dominantBaseline="central"
                   fontSize={11}
                   fontWeight={700}
-                  fill={selected ? "#FAFBFC" : "#0B1420"}
+                  fill={selected ? "#FFFFFF" : "#0F172A"}
                 >
                   {index + 1}
                 </text>
@@ -224,24 +224,24 @@ export function MapStage({
       </svg>
 
       <div className="pointer-events-none absolute left-4 top-4 z-[2] flex flex-col gap-1">
-        <span className="bg-foam/92 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink backdrop-blur">
+        <span className="rounded-bp bg-foam/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink shadow-bp-soft backdrop-blur">
           {engineLabel}
         </span>
-        <span className="text-[11px] text-foam/70">{modeLabel}</span>
+        <span className="text-[11px] font-medium text-ink-soft">{modeLabel}</span>
       </div>
 
       {legs.some((l) => legPathSegments(l).length > 0) && (
-        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap gap-3 bg-ink/65 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-foam/85 backdrop-blur">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap gap-3 rounded-bp bg-foam/90 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-foam/70"
+              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"
               aria-hidden
             />
             {t(locale, "planner.transfer.walk")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="inline-block h-0.5 w-4 bg-[#19A8A1]"
+              className="inline-block h-0.5 w-4 bg-river"
               aria-hidden
             />
             {t(locale, "planner.transfer.ride")}

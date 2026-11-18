@@ -1,4 +1,4 @@
-/** Shared design tokens for Beaver Plan / 海狸旅行 — Horizon Cartograph (redesign v2). */
+/** Shared design tokens for Beaver Plan / 海狸旅行 — Lumen Route (redesign v3). */
 
 export const brand = {
   en: "Beaver Plan",
@@ -8,27 +8,28 @@ export const brand = {
 } as const;
 
 /**
- * Cool atlas palette — fog paper, navy ink, lagoon primary, vermillion signal.
- * Deliberately not cream+terracotta, not purple SaaS, not dark-by-default.
+ * Lumen Route palette — luminous paper, azure signal, ink chrome.
+ * Not cream+terracotta, not fog/Syne/vermillion Cartograph, not purple SaaS.
  */
 export const colors = {
-  ink: "#0B1420",
-  inkSoft: "#5A6574",
-  paper: "#F3F5F7",
-  mist: "#E1E7EE",
-  river: "#0C7C78",
-  riverDeep: "#064A4F",
-  timber: "#E84E2F",
-  foam: "#FAFBFC",
-  line: "rgba(11, 20, 32, 0.1)",
-  focus: "#19A8A1",
-  shadow: "rgba(11, 20, 32, 0.1)",
-  shadowDeep: "rgba(11, 20, 32, 0.22)",
+  ink: "#0F172A",
+  inkSoft: "#64748B",
+  paper: "#F4F6FA",
+  mist: "#E6ECF5",
+  river: "#2F6BFF",
+  riverDeep: "#1A4FD6",
+  timber: "#E11D48",
+  foam: "#FFFFFF",
+  line: "rgba(15, 23, 42, 0.1)",
+  focus: "#60A5FA",
+  shadow: "rgba(15, 23, 42, 0.08)",
+  shadowDeep: "rgba(15, 23, 42, 0.18)",
 } as const;
 
 export const fonts = {
-  display: '"Syne", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
-  body: '"Outfit", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+  display:
+    '"Bricolage Grotesque", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
+  body: '"Plus Jakarta Sans", "PingFang SC", "Noto Sans SC", system-ui, sans-serif',
   mono: '"IBM Plex Mono", ui-monospace, monospace',
 } as const;
 
@@ -44,17 +45,17 @@ export const space = {
 } as const;
 
 export const radius = {
-  sm: 4,
-  md: 10,
-  lg: 16,
+  sm: 6,
+  md: 12,
+  lg: 20,
 } as const;
 
 export const motion = {
   ease: "cubic-bezier(0.22, 1, 0.36, 1)",
   easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
-  durationFastMs: 200,
-  durationMs: 420,
-  durationSlowMs: 640,
+  durationFastMs: 180,
+  durationMs: 380,
+  durationSlowMs: 600,
 } as const;
 
 export const tokens = { brand, colors, fonts, space, radius, motion } as const;

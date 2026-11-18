@@ -262,7 +262,7 @@ export function BookingPanel({
                 type="button"
                 disabled={saving}
                 onClick={() => void save()}
-                className="rounded-md bg-timber px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:opacity-40"
+                className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-40"
               >
                 {saving
                   ? t(locale, "planner.booking.saving")

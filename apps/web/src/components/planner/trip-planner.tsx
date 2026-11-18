@@ -333,7 +333,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </Link>
           <Link
             href={`/trips/${tripId}/share`}
-            className="rounded-bp bg-timber px-3.5 py-1.5 font-semibold text-foam transition hover:brightness-110"
+            className="rounded-bp bg-river px-3.5 py-1.5 font-semibold text-foam transition hover:bg-river-deep"
           >
             {t(locale, "nav.share")}
           </Link>
@@ -388,8 +388,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         />
       </div>
 
-      {/* One composition: map stage + itinerary column */}
-      <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam/40 shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
+      {/* One composition: light map stage + itinerary sheet */}
+      <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
         <section className="relative flex min-h-[420px] flex-col">
           <div
             className="animate-fade min-h-0 flex-1"
@@ -406,7 +406,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 backdrop-blur-sm">
+          <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--bp-line)] bg-foam/95 px-4 py-3 backdrop-blur-sm">
             <div className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
               {(["walk", "transit", "drive"] as const).map((m) => (
                 <button
@@ -452,10 +452,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         </section>
 
         <aside
-          className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/90 lg:border-l lg:border-t-0"
+          className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
           style={{ animationDelay: "100ms" }}
         >
-          <div className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
+          <div className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60">
             {days.map((day, i) => (
               <button
                 key={day.id}
@@ -466,8 +466,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 }}
                 className={`shrink-0 px-5 py-3.5 text-left transition ${
                   dayId === day.id
-                    ? "bg-ink text-foam"
-                    : "text-ink-soft hover:bg-mist/40 hover:text-ink"
+                    ? "bg-river text-foam"
+                    : "text-ink-soft hover:bg-mist/70 hover:text-ink"
                 }`}
               >
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
@@ -555,9 +555,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     }`}
                   >
                     <span
-                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center text-xs font-bold ${
+                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-bp text-xs font-bold ${
                         selected
-                          ? "bg-timber text-foam"
+                          ? "bg-river text-foam"
                           : "bg-ink text-foam"
                       }`}
                     >

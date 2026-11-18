@@ -120,7 +120,7 @@ export function TripsHome({ locale }: Props) {
         </div>
         <Link
           href="/trips/sample-kyoto"
-          className="rounded-bp bg-ink px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
+          className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
         >
           {t(locale, "trips.openSample")}
         </Link>
@@ -181,7 +181,7 @@ export function TripsHome({ locale }: Props) {
                   type="button"
                   disabled={busy || Boolean(creatingId)}
                   onClick={() => void createFromTemplate(tpl.id)}
-                  className="shrink-0 rounded-bp border border-ink/15 bg-transparent px-4 py-2 text-sm font-semibold text-ink transition hover:border-timber hover:bg-timber hover:text-foam disabled:cursor-not-allowed disabled:opacity-40"
+                  className="shrink-0 rounded-bp border border-ink/15 bg-transparent px-4 py-2 text-sm font-semibold text-ink transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busy
                     ? t(locale, "trips.creating")

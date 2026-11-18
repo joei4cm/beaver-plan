@@ -189,7 +189,7 @@ export function DayFillPanel({
               type="button"
               disabled={generating || interests.length === 0}
               onClick={() => void generate()}
-              className="rounded-md bg-timber px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {generating
                 ? t(locale, "planner.dayFill.generating")

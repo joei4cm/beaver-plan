@@ -786,7 +786,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             }}
             disabled={busy && !listening}
             className={`min-w-[10rem] flex-1 rounded-md px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
-              listening ? "bg-timber" : "bg-river-deep hover:bg-river"
+              listening ? "bg-ink" : "bg-river hover:bg-river-deep"
             }`}
           >
             {listening

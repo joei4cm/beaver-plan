@@ -260,8 +260,8 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             onClick={() => setDayId(day.id)}
             className={`shrink-0 px-5 py-3 text-left transition ${
               dayId === day.id
-                ? "bg-ink text-foam"
-                : "text-ink-soft hover:bg-mist/40 hover:text-ink"
+                ? "bg-river text-foam"
+                : "text-ink-soft hover:bg-mist/70 hover:text-ink"
             }`}
           >
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">

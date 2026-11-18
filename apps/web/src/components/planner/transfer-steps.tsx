@@ -41,7 +41,7 @@ function StepIcon({ mode }: { mode: string }) {
       : kind === "transit"
         ? "bg-river text-foam"
         : kind === "transfer"
-          ? "bg-timber/90 text-foam"
+          ? "bg-river text-foam"
           : kind === "drive"
             ? "bg-ink-soft text-foam"
             : "bg-mist text-ink-soft";

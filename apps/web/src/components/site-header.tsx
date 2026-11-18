@@ -10,11 +10,11 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <span className="font-display text-xl font-bold tracking-tight text-ink md:text-2xl">
           {locale === "zh-CN" ? brand.zh : brand.en}
         </span>
-        <span className="hidden text-[0.65rem] font-medium uppercase tracking-[0.22em] text-ink-soft/70 transition group-hover:text-river sm:inline">
+        <span className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-ink-soft/70 transition group-hover:text-river sm:inline">
           {locale === "zh-CN" ? brand.en : brand.zh}
         </span>
       </Link>
-      <nav className="flex items-center gap-6 text-sm font-medium text-ink-soft">
+      <nav className="flex items-center gap-6 text-sm font-semibold text-ink-soft">
         <Link
           href="/trips"
           className="transition duration-bp-fast ease-bp hover:text-river"
