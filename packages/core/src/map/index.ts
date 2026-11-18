@@ -21,6 +21,13 @@ export {
   buildDemoWalkOrDrive,
   buildGenericDemoTransit,
 } from "./demo-transit.js";
+export {
+  roadFollowPath,
+  encodeRoadPolyline,
+  encodeKyotoCorridor,
+  polylineLooksLikeChord,
+  KYOTO_CORRIDORS,
+} from "./demo-road-paths.js";
 export { GoogleMapEngine, GoogleRoutingEngine, type GoogleMapsConfig } from "./google.js";
 export { AmapMapEngine, AmapRoutingEngine, type AmapConfig } from "./amap.js";
 export { BaiduMapEngine, BaiduRoutingEngine, type BaiduConfig } from "./baidu.js";

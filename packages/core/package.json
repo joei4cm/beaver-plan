@@ -10,7 +10,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test src/collab.mentions.test.ts src/map/resolve-engine.test.ts src/translation/phrasebook.test.ts src/booking/links.test.ts"
+    "test": "tsx --test src/collab.mentions.test.ts src/map/resolve-engine.test.ts src/map/demo-road-paths.test.ts src/translation/phrasebook.test.ts src/booking/links.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.8.2"

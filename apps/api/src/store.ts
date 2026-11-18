@@ -18,6 +18,7 @@ import {
   DEMO_PLACES,
   buildDemoTransitRoute,
   buildDemoWalkOrDrive,
+  polylineLooksLikeChord,
 } from "@beaver/core";
 import type { Db } from "./db/client.js";
 import {
@@ -633,13 +634,19 @@ export async function ensureSampleTrip(
   if (existing) {
     // Re-upload demo placeholders so signed URLs work after bucket wipe / new env.
     if (s3) await seedSampleMedia(s3);
-    // Soft upgrade: empty legs → seed Kyoto multi-step transit for demo UX.
+    // Soft upgrade: empty / chord-only legs → road-following Kyoto demo geometry.
     const legs = await listLegs(db, id);
-    if (legs.length === 0) {
-      const stops = await listStops(db, id);
-      if (stops.length >= 2) {
-        await replaceLegs(db, id, buildSampleKyotoLegs(stops));
-      }
+    const stops = await listStops(db, id);
+    const needsRoadGeometry =
+      stops.length >= 2 &&
+      (legs.length === 0 ||
+        legs.some(
+          (leg) =>
+            polylineLooksLikeChord(leg.polyline) ||
+            leg.transitSteps.some((s) => polylineLooksLikeChord(s.polyline)),
+        ));
+    if (needsRoadGeometry) {
+      await replaceLegs(db, id, buildSampleKyotoLegs(stops));
     }
     await seedSampleCollabIfEmpty(db, id);
     return;

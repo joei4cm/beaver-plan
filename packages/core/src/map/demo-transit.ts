@@ -1,11 +1,11 @@
 import type { TransitStep } from "../domain.js";
 import type { LatLng, RouteResult } from "../ports.js";
 import {
-  encodeSimplePolyline,
-  haversineM,
-  interpolatePath,
-  pointAlong,
-} from "./polyline.js";
+  encodeKyotoCorridor,
+  encodeRoadPolyline,
+  roadFollowPath,
+} from "./demo-road-paths.js";
+import { encodeSimplePolyline, haversineM } from "./polyline.js";
 
 type ScriptedTransit = {
   /** Match when both ends are near these coords (meters). */
@@ -20,12 +20,13 @@ function walkStep(
   from: LatLng,
   to: LatLng,
   durationSec: number,
+  polyline?: string,
 ): TransitStep {
   return {
     instruction,
     mode: "WALK",
     durationSec,
-    polyline: encodeSimplePolyline(interpolatePath(from, to, 3)),
+    polyline: polyline ?? encodeRoadPolyline(from, to, { mode: "walk" }),
   };
 }
 
@@ -39,6 +40,7 @@ function transitStep(opts: {
   from: LatLng;
   to: LatLng;
   durationSec: number;
+  polyline?: string;
 }): TransitStep {
   return {
     instruction: opts.instruction,
@@ -49,7 +51,9 @@ function transitStep(opts: {
     vehicleType: opts.vehicleType,
     fromStopName: opts.fromStopName,
     toStopName: opts.toStopName,
-    polyline: encodeSimplePolyline(interpolatePath(opts.from, opts.to, 6)),
+    polyline:
+      opts.polyline ??
+      encodeRoadPolyline(opts.from, opts.to, { mode: "transit", samples: 3 }),
   };
 }
 
@@ -58,12 +62,15 @@ function transferStep(
   at: LatLng,
   durationSec: number,
 ): TransitStep {
-  const nudge = { lat: at.lat + 0.0002, lng: at.lng + 0.0002 };
+  // Small station-area loop — not a chord between distant stops.
+  const a = { lat: at.lat + 0.00018, lng: at.lng + 0.00005 };
+  const b = { lat: at.lat + 0.00012, lng: at.lng + 0.00022 };
+  const c = { lat: at.lat - 0.00005, lng: at.lng + 0.00014 };
   return {
     instruction,
     mode: "TRANSFER",
     durationSec,
-    polyline: encodeSimplePolyline([at, nudge, at]),
+    polyline: encodeSimplePolyline([at, a, b, c, at]),
   };
 }
 
@@ -95,20 +102,21 @@ function assemble(
   };
 }
 
-/** Kiyomizu → Gion: short bus hop with walks. */
+/** Kiyomizu → Gion: short bus hop with walks along Higashiyama streets. */
 function kiyomizuToGion(
   origin: LatLng,
   dest: LatLng,
   zh: boolean,
 ): RouteResult {
-  const busStopA = pointAlong(origin, dest, 0.18);
-  const busStopB = pointAlong(origin, dest, 0.82);
+  const busStopA = { lat: 34.9967, lng: 135.78145 };
+  const busStopB = { lat: 35.0027, lng: 135.77865 };
   const steps: TransitStep[] = [
     walkStep(
       zh ? "步行至清水道巴士站" : "Walk to Kiyomizu-michi bus stop",
       origin,
       busStopA,
       7 * 60,
+      encodeKyotoCorridor("kiyomizuWalkToBus", origin, busStopA),
     ),
     transitStep({
       instruction: zh
@@ -122,32 +130,35 @@ function kiyomizuToGion(
       from: busStopA,
       to: busStopB,
       durationSec: 9 * 60,
+      polyline: encodeKyotoCorridor("kiyomizuBusRide", busStopA, busStopB),
     }),
     walkStep(
       zh ? "步行至祗园巷口" : "Walk into Gion lanes",
       busStopB,
       dest,
       6 * 60,
+      encodeKyotoCorridor("gionWalkFromBus", busStopB, dest),
     ),
   ];
   return assemble(steps, origin, dest);
 }
 
-/** Fushimi Inari → Arashiyama: JR transfer via Kyoto. */
+/** Fushimi Inari → Arashiyama: JR transfer via Kyoto along real rail corridors. */
 function fushimiToArashiyama(
   origin: LatLng,
   dest: LatLng,
   zh: boolean,
 ): RouteResult {
-  const inari = pointAlong(origin, dest, 0.06);
+  const inari = { lat: 34.96765, lng: 135.77255 };
   const kyoto = { lat: 34.9858, lng: 135.7588 };
-  const saga = pointAlong(kyoto, dest, 0.85);
+  const saga = { lat: 35.0168, lng: 135.6762 };
   const steps: TransitStep[] = [
     walkStep(
       zh ? "步行至稻荷站" : "Walk to Inari Station",
       origin,
       inari,
       8 * 60,
+      encodeKyotoCorridor("fushimiWalkToInari", origin, inari),
     ),
     transitStep({
       instruction: zh
@@ -161,6 +172,7 @@ function fushimiToArashiyama(
       from: inari,
       to: kyoto,
       durationSec: 7 * 60,
+      polyline: encodeKyotoCorridor("jrNaraInariToKyoto", inari, kyoto),
     }),
     transferStep(
       zh ? "京都站换乘 · 步行至嵯峨野线月台" : "Transfer at Kyoto · walk to Sagano platforms",
@@ -179,12 +191,14 @@ function fushimiToArashiyama(
       from: kyoto,
       to: saga,
       durationSec: 16 * 60,
+      polyline: encodeKyotoCorridor("jrSaganoKyotoToSaga", kyoto, saga),
     }),
     walkStep(
       zh ? "步行至岚山竹林入口" : "Walk to the bamboo grove entrance",
       saga,
       dest,
       10 * 60,
+      encodeKyotoCorridor("sagaWalkToBamboo", saga, dest),
     ),
   ];
   return assemble(steps, origin, dest);
@@ -235,10 +249,11 @@ export function buildGenericDemoTransit(
   zh: boolean,
 ): RouteResult {
   const distanceM = Math.round(haversineM(origin, dest));
-  const a = pointAlong(origin, dest, 0.12);
-  const b = pointAlong(origin, dest, 0.45);
-  const c = pointAlong(origin, dest, 0.55);
-  const d = pointAlong(origin, dest, 0.88);
+  const path = roadFollowPath(origin, dest, { mode: "transit", samples: 3 });
+  const a = path[Math.max(1, Math.floor(path.length * 0.12))]!;
+  const b = path[Math.max(2, Math.floor(path.length * 0.42))]!;
+  const c = path[Math.max(3, Math.floor(path.length * 0.55))]!;
+  const d = path[Math.max(4, Math.floor(path.length * 0.88))]!;
   const rideSec = Math.max(8 * 60, Math.round(distanceM / 8));
   const steps: TransitStep[] = [
     walkStep(
@@ -260,11 +275,7 @@ export function buildGenericDemoTransit(
       to: b,
       durationSec: Math.round(rideSec * 0.4),
     }),
-    transferStep(
-      zh ? "站内换乘" : "In-station transfer",
-      c,
-      4 * 60,
-    ),
+    transferStep(zh ? "站内换乘" : "In-station transfer", c, 4 * 60),
     transitStep({
       instruction: zh
         ? "示范线路 B · 前往目的地站"
@@ -294,13 +305,16 @@ export function buildDemoWalkOrDrive(
   mode: "walk" | "drive",
   zh: boolean,
 ): RouteResult {
-  const distanceM = Math.round(haversineM(origin, dest));
+  const path = roadFollowPath(origin, dest, { mode });
+  const distanceM = Math.round(
+    path.reduce((sum, p, i) => {
+      if (i === 0) return 0;
+      return sum + haversineM(path[i - 1]!, p);
+    }, 0),
+  );
   const speedMps = mode === "walk" ? 1.35 : 11;
   const durationSec = Math.max(60, Math.round(distanceM / speedMps));
-  const mid = pointAlong(origin, dest, 0.5);
-  const polyline = encodeSimplePolyline(
-    interpolatePath(origin, dest, mode === "walk" ? 5 : 4),
-  );
+  const polyline = encodeSimplePolyline(path);
   return {
     durationSec,
     distanceM,
@@ -310,14 +324,15 @@ export function buildDemoWalkOrDrive(
         instruction:
           mode === "walk"
             ? zh
-              ? "沿示范路径步行"
-              : "Walk along demo path"
+              ? "沿示范道路步行"
+              : "Walk along demo streets"
             : zh
-              ? "沿示范路径驾车"
-              : "Drive demo route",
+              ? "沿示范道路驾车"
+              : "Drive demo streets",
         mode: mode.toUpperCase(),
         durationSec,
-        polyline: encodeSimplePolyline([origin, mid, dest]),
+        // Same road geometry for the step stroke (not a 2-point chord).
+        polyline,
       },
     ],
   };
