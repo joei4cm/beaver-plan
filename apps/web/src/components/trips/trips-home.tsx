@@ -35,8 +35,13 @@ export function TripsHome({ locale }: Props) {
   );
 
   const load = useCallback(async () => {
-    const tplRes = await apiGet<{ templates: TemplateCard[] }>("/v1/templates");
-    setTemplates(tplRes.templates);
+    try {
+      const tplRes = await apiGet<{ templates: TemplateCard[] }>("/v1/templates");
+      setTemplates(tplRes.templates);
+    } catch {
+      // Demo shell without API: empty templates is fine.
+      setTemplates([]);
+    }
     try {
       const tripRes = await apiGet<{ trips: Trip[] }>("/v1/trips");
       setTrips(tripRes.trips);
