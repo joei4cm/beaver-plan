@@ -11,7 +11,15 @@ import type {
   Stop,
   Trip,
 } from "@beaver/core";
-import { SHARE_ACCENT_PRESETS, SHARE_TEMPLATES, stopsForDay } from "@beaver/core";
+import {
+  SHARE_ACCENT_PRESETS,
+  SHARE_TEMPLATES,
+  getShareTemplate,
+  renderShareSvg,
+  stopsForDay,
+  svgToDataUrl,
+  type ShareSnapshot,
+} from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiBase, apiGet, apiSend } from "@/lib/api";
@@ -37,6 +45,15 @@ type Props = {
 };
 
 const DEFAULT_ACCENT = SHARE_ACCENT_PRESETS[0];
+
+function svgInnerMarkup(svg: string): string {
+  const trimmed = svg.trim();
+  const open = trimmed.indexOf("<svg");
+  if (open < 0) return trimmed;
+  const close = trimmed.indexOf(">", open);
+  if (close < 0) return trimmed;
+  return trimmed.slice(open, trimmed.lastIndexOf("</svg>") + 6);
+}
 
 export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [trip, setTrip] = useState<Trip | null>(initialTrip?.trip ?? null);
@@ -70,17 +87,32 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   }, [accentColor, coverSubtitle, coverTitle, titleScale]);
 
   const load = useCallback(async () => {
-    const [tripData, journal] = await Promise.all([
-      initialTrip
-        ? Promise.resolve(initialTrip)
-        : apiGet<TripPayload>(`/v1/trips/${tripId}`),
-      apiGet<{ entries: JournalEntry[] }>(`/v1/trips/${tripId}/journal`),
-    ]);
+    let tripData = initialTrip;
+    if (!tripData) {
+      try {
+        tripData = await apiGet<TripPayload>(`/v1/trips/${tripId}`);
+      } catch {
+        tripData = null;
+      }
+    }
+    if (!tripData) {
+      setError("not_found");
+      return;
+    }
+    let journalEntries: JournalEntry[] = [];
+    try {
+      const journal = await apiGet<{ entries: JournalEntry[] }>(
+        `/v1/trips/${tripId}/journal`,
+      );
+      journalEntries = journal.entries;
+    } catch {
+      journalEntries = [];
+    }
     setTrip(tripData.trip);
     setDays(tripData.days);
     setStops(tripData.stops);
     setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
-    setEntries(journal.entries);
+    setEntries(journalEntries);
     if (!editSeeded) {
       setCoverTitle(tripData.trip.title);
       setCoverSubtitle(tripData.trip.destination ?? "");
@@ -110,6 +142,44 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     return urls.size;
   }, [entries, dayId, dayStops]);
 
+  const buildLocalPreview = useCallback((): RenderResponse | null => {
+    if (!trip) return null;
+    const template = getShareTemplate(templateId);
+    if (!template) return null;
+    const day = days.find((d) => d.id === dayId);
+    const dayStopList = dayId ? stopsForDay(stops, dayId) : [];
+    const photos: string[] = [];
+    for (const e of entries) {
+      if (dayId && e.dayId !== dayId && !dayStopList.some((s) => s.id === e.stopId)) {
+        continue;
+      }
+      for (const u of e.media) photos.push(resolveMediaUrl(u));
+    }
+    const snap: ShareSnapshot = {
+      tripTitle: trip.title,
+      destination: trip.destination,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      dayLabel: day?.note,
+      dayDate: day?.date,
+      places: dayStopList.map((s) => s.place.name),
+      photos,
+      note: day?.note,
+      pathPoints: dayStopList.map((s) => ({
+        lat: s.place.lat,
+        lng: s.place.lng,
+      })),
+      locale: trip.locale === "en" ? "en" : "zh-CN",
+      style: stylePayload,
+    };
+    const svg = renderShareSvg(templateId, snap);
+    return {
+      template,
+      svg,
+      previewUrl: svgToDataUrl(svg),
+    };
+  }, [trip, days, stops, entries, dayId, templateId, stylePayload]);
+
   const render = useCallback(async () => {
     setBusy(true);
     setError(null);
@@ -126,18 +196,24 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         },
       );
       setPreview(res);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "render_failed");
+    } catch {
+      const local = buildLocalPreview();
+      if (local) {
+        setPreview(local);
+        setError(null);
+      } else {
+        setError("render_failed");
+      }
     } finally {
       setBusy(false);
     }
-  }, [tripId, templateId, dayId, stylePayload]);
+  }, [tripId, templateId, dayId, stylePayload, buildLocalPreview]);
 
   useEffect(() => {
     if (!trip || !editSeeded) return;
     const timer = window.setTimeout(() => {
       void render();
-    }, 350);
+    }, 280);
     return () => window.clearTimeout(timer);
   }, [trip, templateId, dayId, stylePayload, editSeeded, render]);
 
@@ -147,6 +223,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     setCoverSubtitle(trip.destination ?? "");
     setAccentColor(DEFAULT_ACCENT);
     setTitleScale(1);
+  }
+
+  function pickTemplate(id: ShareTemplateId) {
+    if (id === templateId) return;
+    setTemplateId(id);
   }
 
   async function downloadPng() {
@@ -221,6 +302,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   }
 
   const active = templates.find((x) => x.id === templateId)!;
+  const previewKey = preview
+    ? `${preview.template.id}-${preview.previewUrl.slice(-48)}`
+    : templateId;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
@@ -258,7 +342,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             key={day.id}
             type="button"
             onClick={() => setDayId(day.id)}
-            className={`shrink-0 px-5 py-3 text-left transition ${
+            className={`shrink-0 px-5 py-3 text-left transition duration-200 ${
               dayId === day.id
                 ? "bg-river text-foam"
                 : "text-ink-soft hover:bg-mist/70 hover:text-ink"
@@ -275,24 +359,25 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         <div className="animate-fade flex flex-col items-center">
           <div
-            className="animate-sheet-in relative w-full max-w-[420px] overflow-hidden border border-[color:var(--bp-line)] bg-ink shadow-bp"
+            className="animate-template-swap relative w-full max-w-[420px] overflow-hidden border border-[color:var(--bp-line)] bg-paper shadow-bp transition-[aspect-ratio] duration-300 ease-out"
+            key={`frame-${templateId}`}
             style={{
               aspectRatio: `${active.width} / ${active.height}`,
             }}
           >
             {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={preview.previewUrl}
-                src={preview.previewUrl}
-                alt={
+              <div
+                key={previewKey}
+                className="share-svg-preview animate-preview-in h-full w-full [&_svg]:h-full [&_svg]:w-full"
+                dangerouslySetInnerHTML={{ __html: svgInnerMarkup(preview.svg) }}
+                role="img"
+                aria-label={
                   locale === "zh-CN" ? active.nameZh : active.nameEn
                 }
-                className="animate-preview-in h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-foam/70">
-                <span className="font-display text-lg text-foam/85">
+              <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-ink-soft">
+                <span className="font-display text-lg text-ink/80">
                   Beaver Plan · 海狸旅行
                 </span>
                 <span className="text-sm">
@@ -311,31 +396,38 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           <h2 className="font-display text-2xl text-ink">
             {t(locale, "share.pickTemplate")}
           </h2>
-          <div className="space-y-3">
-            {templates.map((tpl) => (
-              <button
-                key={tpl.id}
-                type="button"
-                onClick={() => setTemplateId(tpl.id)}
-                className={`w-full rounded-[14px] border px-4 py-4 text-left transition ${
-                  templateId === tpl.id
-                    ? "border-river bg-river/10"
-                    : "border-[color:var(--bp-line)] bg-foam/60 hover:border-river/40"
-                }`}
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-display text-xl text-ink">
-                    {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
-                  </span>
-                  <span className="font-mono text-xs text-ink-soft">
-                    {tpl.aspect}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-ink-soft">
-                  {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
-                </p>
-              </button>
-            ))}
+          <div className="space-y-2.5">
+            {templates.map((tpl) => {
+              const selected = templateId === tpl.id;
+              return (
+                <button
+                  key={tpl.id}
+                  type="button"
+                  onClick={() => pickTemplate(tpl.id)}
+                  className={`group w-full rounded-[14px] border px-4 py-3.5 text-left transition duration-200 ${
+                    selected
+                      ? "border-river bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : "border-[color:var(--bp-line)] bg-foam/60 hover:border-river/40 hover:bg-foam"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-display text-xl tracking-tight text-ink">
+                      {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
+                    </span>
+                    <span
+                      className={`font-mono text-[11px] transition ${
+                        selected ? "text-river" : "text-ink-soft"
+                      }`}
+                    >
+                      {tpl.aspect}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-ink-soft">
+                    {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
+                  </p>
+                </button>
+              );
+            })}
           </div>
 
           <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
@@ -346,14 +438,14 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               <button
                 type="button"
                 onClick={resetEdits}
-                className="text-xs text-ink-soft underline-offset-4 hover:text-river hover:underline"
+                className="text-xs text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
               >
                 {t(locale, "share.resetEdit")}
               </button>
             </div>
 
             <label className="block space-y-1.5">
-              <span className="text-xs uppercase tracking-wider text-ink-soft">
+              <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
                 {t(locale, "share.coverTitle")}
               </span>
               <input
@@ -361,12 +453,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 value={coverTitle}
                 maxLength={80}
                 onChange={(e) => setCoverTitle(e.target.value)}
-                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50"
+                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
               />
             </label>
 
             <label className="block space-y-1.5">
-              <span className="text-xs uppercase tracking-wider text-ink-soft">
+              <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
                 {t(locale, "share.coverSubtitle")}
               </span>
               <input
@@ -374,13 +466,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 value={coverSubtitle}
                 maxLength={100}
                 onChange={(e) => setCoverSubtitle(e.target.value)}
-                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50"
+                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
               />
             </label>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-wider text-ink-soft">
+                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
                   {t(locale, "share.accentColor")}
                 </span>
                 <input
@@ -400,7 +492,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     className={`h-7 w-7 rounded-full border transition ${
                       accentColor.toLowerCase() === hex.toLowerCase()
                         ? "border-ink ring-2 ring-river/40"
-                        : "border-[color:var(--bp-line)]"
+                        : "border-[color:var(--bp-line)] hover:scale-105"
                     }`}
                     style={{ backgroundColor: hex }}
                     aria-label={hex}
@@ -411,7 +503,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
             <label className="block space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-wider text-ink-soft">
+                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
                   {t(locale, "share.titleScale")}
                 </span>
                 <span className="font-mono text-xs text-ink-soft">
@@ -425,7 +517,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 step={0.05}
                 value={titleScale}
                 onChange={(e) => setTitleScale(Number(e.target.value))}
-                className="w-full accent-[color:var(--bp-river,#1f6b5c)]"
+                className="w-full accent-[color:var(--bp-river,#2F6BFF)]"
               />
             </label>
           </section>
