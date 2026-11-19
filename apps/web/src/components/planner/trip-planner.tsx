@@ -32,6 +32,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
+import { getLocalTrip, saveLocalTrip } from "@/lib/local-trips";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
@@ -118,6 +119,24 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     return false;
   }, [locale]);
 
+  const applyLocalBundle = useCallback(() => {
+    const local = getLocalTrip(tripId);
+    if (!local) return null;
+    setTrip(local.trip);
+    setDays(local.days);
+    setStops(local.stops);
+    setLegs(local.legs);
+    setDayId((prev) => prev ?? local.days[0]?.id ?? null);
+    setSoftNotice(t(locale, "planner.demoLocal"));
+    setError(null);
+    return {
+      trip: local.trip,
+      days: local.days,
+      stops: local.stops,
+      legs: local.legs,
+    } satisfies TripPayload;
+  }, [tripId, locale]);
+
   const refresh = useCallback(async (): Promise<TripPayload | null> => {
     try {
       const data = await apiGet<TripPayload>(`/v1/trips/${tripId}`);
@@ -129,21 +148,31 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       setSoftNotice(null);
       return data;
     } catch (e) {
+      const local = applyLocalBundle();
+      if (local) return local;
       if (isPlannerNoiseError(e)) {
         setSoftNotice(t(locale, "planner.demoLocal"));
         return null;
       }
       throw e;
     }
-  }, [tripId, locale]);
+  }, [tripId, locale, applyLocalBundle]);
 
   useEffect(() => {
     if (initial) return;
+    // Local optimistic trips only live in the browser — hydrate before fetch.
+    if (applyLocalBundle()) return;
     startTransition(() => {
-      void refresh().catch((e: Error) => setError(e.message));
+      void refresh().catch((e: Error) => {
+        if (isPlannerNoiseError(e)) {
+          setSoftNotice(t(locale, "planner.demoLocal"));
+          setError(null);
+          return;
+        }
+        setError(e.message);
+      });
     });
-  }, [initial, refresh]);
-
+  }, [initial, refresh, applyLocalBundle, locale]);
   useEffect(() => {
     void apiGet<EngineResponse>(
       `/v1/maps/engine?preference=${encodeURIComponent(preference)}&timezone=${encodeURIComponent(trip?.timezone ?? "")}`,
@@ -351,10 +380,20 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         bookingLinks: [],
       };
       const nextStops = [...stops, stop];
+      const nextTrip = trip
+        ? { ...trip, version: trip.version + 1, updatedAt: new Date().toISOString() }
+        : null;
       setStops(nextStops);
-      setTrip((prev) =>
-        prev ? { ...prev, version: prev.version + 1 } : prev,
-      );
+      if (nextTrip) setTrip(nextTrip);
+      if (nextTrip && getLocalTrip(tripId)) {
+        saveLocalTrip({
+          trip: nextTrip,
+          days,
+          stops: nextStops,
+          legs,
+          local: true,
+        });
+      }
       setQuery("");
       setResults([]);
       setSelectedStopId(stop.id);
