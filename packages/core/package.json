@@ -13,6 +13,7 @@
     "test": "tsx --test src/collab.mentions.test.ts src/map/resolve-engine.test.ts src/map/demo-road-paths.test.ts src/translation/phrasebook.test.ts src/booking/links.test.ts"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "typescript": "^5.8.2"
   }
 }
