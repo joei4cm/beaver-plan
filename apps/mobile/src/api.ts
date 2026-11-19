@@ -2,6 +2,8 @@ import type {
   Day,
   JournalEntry,
   Leg,
+  MapEngineId,
+  PlaceSummary,
   ShareTemplateId,
   ShareTemplateMeta,
   Stop,
@@ -89,6 +91,60 @@ async function apiSend<T>(
 
 export async function fetchTrip(id: string): Promise<TripPayload> {
   return apiGet<TripPayload>(`/v1/trips/${id}`);
+}
+
+export type PlacesSearchResponse = {
+  places: PlaceSummary[];
+  engineId?: MapEngineId;
+  mode?: "live" | "demo";
+  region?: string;
+};
+
+export async function searchPlaces(input: {
+  q: string;
+  lat?: number;
+  lng?: number;
+  language?: string;
+  engine?: string;
+  timezone?: string;
+}): Promise<PlacesSearchResponse> {
+  const params = new URLSearchParams({
+    q: input.q,
+    engine: input.engine ?? "auto",
+    language: input.language ?? "zh-CN",
+  });
+  if (input.lat != null) params.set("lat", String(input.lat));
+  if (input.lng != null) params.set("lng", String(input.lng));
+  if (input.timezone) params.set("timezone", input.timezone);
+  return apiGet(`/v1/places/search?${params.toString()}`);
+}
+
+export async function addTripStop(input: {
+  tripId: string;
+  dayId: string;
+  place: PlaceSummary;
+  engine?: MapEngineId;
+  expectedVersion?: number;
+}): Promise<unknown> {
+  return apiSend(`/v1/trips/${input.tripId}/stops`, "POST", {
+    dayId: input.dayId,
+    place: input.place,
+    engine: input.engine,
+    expectedVersion: input.expectedVersion,
+  });
+}
+
+export async function routeTripDay(input: {
+  tripId: string;
+  dayId: string;
+  mode?: "walk" | "transit" | "drive";
+  engine?: string;
+}): Promise<{ legs: Leg[]; mode: "live" | "demo"; engineId: MapEngineId }> {
+  return apiSend(`/v1/trips/${input.tripId}/route-day`, "POST", {
+    dayId: input.dayId,
+    mode: input.mode ?? "transit",
+    engine: input.engine ?? "auto",
+  });
 }
 
 export async function fetchMembers(
