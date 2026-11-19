@@ -55,8 +55,32 @@
     animation: bp-preview-in var(--bp-duration-slow) var(--bp-ease) both;
   }
 
+  .animate-template-swap {
+    animation: bp-template-swap var(--bp-duration) var(--bp-ease-out) both;
+  }
+
   .animate-sheet-in {
     animation: bp-sheet-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
+  .animate-turn-in {
+    animation: bp-turn-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
+  .animate-lens-breathe {
+    animation: bp-lens-breathe 4.8s ease-in-out infinite alternate;
+  }
+
+  .animate-entry-in {
+    animation: bp-entry-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
+  .share-svg-preview text.bp-display {
+    font-family: var(--bp-font-display) !important;
+  }
+
+  .share-svg-preview text.bp-body {
+    font-family: var(--bp-font-body) !important;
   }
 }
 
@@ -103,11 +127,24 @@
 @keyframes bp-preview-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(14px) scale(0.975);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes bp-template-swap {
+  from {
+    opacity: 0.35;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -115,6 +152,39 @@
   from {
     opacity: 0;
     transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bp-turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bp-lens-breathe {
+  from {
+    transform: scale(1);
+    opacity: 0.88;
+  }
+  to {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes bp-entry-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -139,7 +209,11 @@
   .animate-drift,
   .animate-stop-select,
   .animate-preview-in,
-  .animate-sheet-in {
+  .animate-template-swap,
+  .animate-sheet-in,
+  .animate-turn-in,
+  .animate-lens-breathe,
+  .animate-entry-in {
     animation: none !important;
   }
 }
