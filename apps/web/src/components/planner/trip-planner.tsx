@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type {
@@ -12,14 +19,19 @@ import type {
   Trip,
 } from "@beaver/core";
 import {
+  DemoRoutingEngine,
   formatDistance,
   formatDuration,
+  reorderStops as reorderStopsLocal,
+  routeAdjacentStops,
+  searchDemoPlaces,
   stopsForDay,
   summarizeTransfer,
+  toPlaceRef,
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
@@ -57,6 +69,8 @@ type Props = {
 
 type TravelMode = "walk" | "transit" | "drive";
 
+const SEARCH_DEBOUNCE_MS = 220;
+
 export function TripPlanner({ tripId, locale, initial }: Props) {
   const router = useRouter();
   const [trip, setTrip] = useState<Trip | null>(initial?.trip ?? null);
@@ -74,9 +88,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const [travelMode, setTravelMode] = useState<TravelMode>("transit");
   const [routing, setRouting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [softNotice, setSoftNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [duplicating, setDuplicating] = useState(false);
   const [copyJournal, setCopyJournal] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchGenRef = useRef(0);
 
   const preference = trip?.mapEngine ?? "auto";
 
@@ -90,14 +107,35 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
   }, [legs, dayStops]);
 
-  const refresh = useCallback(async () => {
-    const data = await apiGet<TripPayload>(`/v1/trips/${tripId}`);
-    setTrip(data.trip);
-    setDays(data.days);
-    setStops(data.stops);
-    setLegs(data.legs);
-    setDayId((prev) => prev ?? data.days[0]?.id ?? null);
-  }, [tripId]);
+  const applySoftOrHard = useCallback((err: unknown, hardFallback: string) => {
+    if (isPlannerNoiseError(err)) {
+      setSoftNotice(t(locale, "planner.demoLocal"));
+      setError(null);
+      return true;
+    }
+    setSoftNotice(null);
+    setError(err instanceof Error ? err.message : hardFallback);
+    return false;
+  }, [locale]);
+
+  const refresh = useCallback(async (): Promise<TripPayload | null> => {
+    try {
+      const data = await apiGet<TripPayload>(`/v1/trips/${tripId}`);
+      setTrip(data.trip);
+      setDays(data.days);
+      setStops(data.stops);
+      setLegs(data.legs);
+      setDayId((prev) => prev ?? data.days[0]?.id ?? null);
+      setSoftNotice(null);
+      return data;
+    } catch (e) {
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        return null;
+      }
+      throw e;
+    }
+  }, [tripId, locale]);
 
   useEffect(() => {
     if (initial) return;
@@ -114,14 +152,50 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       .catch(() => setEngineInfo(null));
   }, [preference, trip?.timezone]);
 
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
+  const applySearchResults = useCallback(
+    (places: PlaceSummary[], meta?: Partial<SearchResponse>) => {
+      setResults(places);
+      if (meta?.engineId) {
+        setEngineInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                engineId: meta.engineId!,
+                mode: meta.mode ?? prev.mode,
+                region: meta.region ?? prev.region,
+              }
+            : {
+                preference,
+                engineId: meta.engineId!,
+                mode: meta.mode ?? "demo",
+                region: meta.region ?? "other",
+              },
+        );
+      }
+    },
+    [preference],
+  );
+
   async function runSearch(text: string) {
     const q = text.trim();
     if (!q) {
       setResults([]);
       return;
     }
+    const gen = ++searchGenRef.current;
+    // Instant curated fixtures so the dropdown is never an empty stub.
+    applySearchResults(searchDemoPlaces(q), {
+      engineId: engineInfo?.engineId ?? "google",
+      mode: "demo",
+      region: engineInfo?.region ?? "other",
+    });
     setSearching(true);
-    setError(null);
     try {
       const center = dayStops[0]?.place;
       const params = new URLSearchParams({
@@ -137,21 +211,112 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       const data = await apiGet<SearchResponse>(
         `/v1/places/search?${params}`,
       );
-      setResults(data.places);
+      if (gen !== searchGenRef.current) return;
+      if (data.places.length > 0) {
+        applySearchResults(data.places, data);
+      }
+    } catch (e) {
+      if (gen !== searchGenRef.current) return;
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.searchDemo"));
+        setError(null);
+      } else {
+        applySoftOrHard(e, "search_failed");
+      }
+    } finally {
+      if (gen === searchGenRef.current) setSearching(false);
+    }
+  }
+
+  function scheduleSearch(text: string) {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    const q = text.trim();
+    // Paint local hits immediately; debounce only the live BFF round-trip.
+    if (q) {
+      applySearchResults(searchDemoPlaces(q), {
+        engineId: engineInfo?.engineId ?? "google",
+        mode: "demo",
+        region: engineInfo?.region ?? "other",
+      });
+    } else {
+      setResults([]);
+    }
+    searchTimerRef.current = setTimeout(() => {
+      void runSearch(text);
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  async function routeDayStops(
+    activeDayId: string,
+    orderedStops: Stop[],
+  ): Promise<void> {
+    if (orderedStops.length < 2) {
+      setLegs((prev) => {
+        const ids = new Set(orderedStops.map((s) => s.id));
+        return prev.filter(
+          (l) => !(ids.has(l.fromStopId) || ids.has(l.toStopId)),
+        );
+      });
+      return;
+    }
+    setRouting(true);
+    try {
+      const res = await apiSend<{
+        legs: Leg[];
+        mode: "live" | "demo";
+        engineId: MapEngineId;
+      }>(`/v1/trips/${tripId}/route-day`, "POST", {
+        dayId: activeDayId,
+        mode: travelMode,
+        engine: preference,
+      });
+      setLegs((prev) => {
+        const ids = new Set(orderedStops.map((s) => s.id));
+        const kept = prev.filter(
+          (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
+        );
+        return [...kept, ...res.legs];
+      });
       setEngineInfo((prev) =>
         prev
-          ? { ...prev, engineId: data.engineId, mode: data.mode, region: data.region }
+          ? { ...prev, engineId: res.engineId, mode: res.mode }
           : {
               preference,
-              engineId: data.engineId,
-              mode: data.mode,
-              region: data.region,
+              engineId: res.engineId,
+              mode: res.mode,
+              region: "other",
             },
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "search_failed");
+      // Client-side demo road geometry when Neon/API is down.
+      const engineId = engineInfo?.engineId ?? "google";
+      const routingEngine = new DemoRoutingEngine(engineId);
+      const demoLegs = await routeAdjacentStops(
+        routingEngine,
+        orderedStops,
+        travelMode,
+        locale,
+      );
+      setLegs((prev) => {
+        const ids = new Set(orderedStops.map((s) => s.id));
+        const kept = prev.filter(
+          (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
+        );
+        return [...kept, ...demoLegs];
+      });
+      setEngineInfo((prev) =>
+        prev
+          ? { ...prev, engineId, mode: "demo" }
+          : { preference, engineId, mode: "demo", region: "other" },
+      );
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+      } else {
+        applySoftOrHard(e, "route_failed");
+      }
     } finally {
-      setSearching(false);
+      setRouting(false);
     }
   }
 
@@ -167,23 +332,65 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       });
       setQuery("");
       setResults([]);
-      await refresh();
+      const payload = await refresh();
+      const nextStops = payload?.stops ?? stops;
+      const ordered = stopsForDay(nextStops, dayId);
+      await routeDayStops(dayId, ordered);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "add_failed");
+      // Local optimistic add so sample-kyoto / offline shell stays usable.
+      const engineId = engineInfo?.engineId ?? "google";
+      const stop: Stop = {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `local-stop-${Date.now()}`,
+        dayId,
+        order: dayStops.length,
+        place: toPlaceRef(engineId, place),
+        photos: [],
+        bookingLinks: [],
+      };
+      const nextStops = [...stops, stop];
+      setStops(nextStops);
+      setTrip((prev) =>
+        prev ? { ...prev, version: prev.version + 1 } : prev,
+      );
+      setQuery("");
+      setResults([]);
+      setSelectedStopId(stop.id);
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+      } else {
+        applySoftOrHard(e, "add_failed");
+      }
+      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
     }
   }
 
   async function removeStop(stopId: string) {
-    if (!trip) return;
+    if (!trip || !dayId) return;
     setError(null);
     try {
       await apiSend(`/v1/trips/${tripId}/stops/${stopId}`, "DELETE", {
         expectedVersion: trip.version,
       });
       if (selectedStopId === stopId) setSelectedStopId(null);
-      await refresh();
+      const payload = await refresh();
+      const ordered = stopsForDay(payload?.stops ?? stops, dayId);
+      await routeDayStops(dayId, ordered);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "delete_failed");
+      const nextStops = stops.filter((s) => s.id !== stopId);
+      setStops(nextStops);
+      setLegs((prev) =>
+        prev.filter((l) => l.fromStopId !== stopId && l.toStopId !== stopId),
+      );
+      if (selectedStopId === stopId) setSelectedStopId(null);
+      setTrip((prev) =>
+        prev ? { ...prev, version: prev.version + 1 } : prev,
+      );
+      applySoftOrHard(e, "delete_failed");
+      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
     }
   }
 
@@ -203,9 +410,19 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         orderedIds: swapped,
         expectedVersion: trip.version,
       });
-      await refresh();
+      const payload = await refresh();
+      await routeDayStops(
+        dayId,
+        stopsForDay(payload?.stops ?? stops, dayId),
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "reorder_failed");
+      const nextStops = reorderStopsLocal(stops, dayId, swapped);
+      setStops(nextStops);
+      setTrip((prev) =>
+        prev ? { ...prev, version: prev.version + 1 } : prev,
+      );
+      applySoftOrHard(e, "reorder_failed");
+      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
     }
   }
 
@@ -218,46 +435,21 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       });
       setTrip(res.trip);
     } catch (e) {
+      if (isPlannerNoiseError(e)) {
+        // Keep preference local for the demo shell.
+        setTrip((prev) => (prev ? { ...prev, mapEngine: next } : prev));
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+        return;
+      }
       setError(e instanceof Error ? e.message : "engine_failed");
     }
   }
 
   async function generateRoutes() {
     if (!dayId) return;
-    setRouting(true);
     setError(null);
-    try {
-      const res = await apiSend<{
-        legs: Leg[];
-        mode: "live" | "demo";
-        engineId: MapEngineId;
-      }>(`/v1/trips/${tripId}/route-day`, "POST", {
-        dayId,
-        mode: travelMode,
-        engine: preference,
-      });
-      setLegs((prev) => {
-        const ids = new Set(dayStops.map((s) => s.id));
-        const kept = prev.filter(
-          (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
-        );
-        return [...kept, ...res.legs];
-      });
-      setEngineInfo((prev) =>
-        prev
-          ? { ...prev, engineId: res.engineId, mode: res.mode }
-          : {
-              preference,
-              engineId: res.engineId,
-              mode: res.mode,
-              region: "other",
-            },
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "route_failed");
-    } finally {
-      setRouting(false);
-    }
+    await routeDayStops(dayId, dayStops);
   }
 
   async function duplicateTrip() {
@@ -271,7 +463,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       );
       router.push(`/trips/${res.trip.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "duplicate_failed");
+      applySoftOrHard(e, "duplicate_failed");
       setDuplicating(false);
     }
   }
@@ -489,10 +681,23 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               onChange={(e) => {
                 const v = e.target.value;
                 setQuery(v);
+                scheduleSearch(v);
+              }}
+              onCompositionEnd={(e) => {
+                const v = e.currentTarget.value;
+                setQuery(v);
                 void runSearch(v);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+                  void runSearch(query);
+                }
               }}
               placeholder={t(locale, "planner.searchPlaceholder")}
               className="w-full border-0 bg-transparent px-1 py-2 text-sm text-ink outline-none ring-0 placeholder:text-ink-soft/45 focus:outline-none"
+              autoComplete="off"
             />
             {searching && (
               <span className="absolute right-4 top-4 text-xs text-ink-soft">
@@ -639,6 +844,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
+          {!error && softNotice && (
+            <p
+              className="border-t border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink-soft"
+              role="status"
+            >
+              {softNotice}
+            </p>
+          )}
           <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
             {t(locale, "planner.hint")}
           </p>
@@ -655,7 +868,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           onApplied={async () => {
             await refresh();
           }}
-          onError={(message) => setError(message || null)}
+          onError={(message) => {
+            if (!message) {
+              setError(null);
+              return;
+            }
+            if (isPlannerNoiseError(new Error(message))) {
+              setSoftNotice(t(locale, "planner.demoLocal"));
+              setError(null);
+              return;
+            }
+            setError(message);
+          }}
         />
         <BookingPanel
           tripId={tripId}
@@ -666,7 +890,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           onSaved={async () => {
             await refresh();
           }}
-          onError={(message) => setError(message || null)}
+          onError={(message) => {
+            if (!message) {
+              setError(null);
+              return;
+            }
+            if (isPlannerNoiseError(new Error(message))) {
+              setSoftNotice(t(locale, "planner.demoLocal"));
+              setError(null);
+              return;
+            }
+            setError(message);
+          }}
         />
       </div>
 
