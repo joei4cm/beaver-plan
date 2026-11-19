@@ -14,53 +14,53 @@ export type ShareTemplateMeta = {
 export const SHARE_TEMPLATES: ShareTemplateMeta[] = [
   {
     id: "magazine-reel",
-    nameZh: "杂志封面",
-    nameEn: "Magazine cover",
+    nameZh: "光途封面",
+    nameEn: "Lumen cover",
     aspect: "9:16",
     width: 1080,
     height: 1920,
-    blurbZh: "竖版封面 · 适合朋友圈",
-    blurbEn: "Portrait cover · Moments-ready",
+    blurbZh: "竖版旅报封面 · 朋友圈",
+    blurbEn: "Portrait travel poster · Moments",
   },
   {
     id: "path-square",
-    nameZh: "足迹方卡",
-    nameEn: "Path square",
+    nameZh: "航线方卡",
+    nameEn: "Route square",
     aspect: "1:1",
     width: 1080,
     height: 1080,
-    blurbZh: "方图路径 · 适合小红书",
-    blurbEn: "Square path · Xiaohongshu-ready",
+    blurbZh: "方图航线 · 小红书",
+    blurbEn: "Square route map · Xiaohongshu",
   },
   {
     id: "day-film",
-    nameZh: "一日胶片",
-    nameEn: "Day film",
+    nameZh: "一日光影",
+    nameEn: "Day lumen",
     aspect: "9:16",
     width: 1080,
     height: 1920,
-    blurbZh: "竖版胶片条 · 一日足迹",
-    blurbEn: "Portrait film strip · one day",
+    blurbZh: "竖版一日三帧 · 足迹叙事",
+    blurbEn: "Three-frame day strip · stop story",
   },
   {
     id: "story-panel",
-    nameZh: "故事竖幅",
-    nameEn: "Story panel",
+    nameZh: "叙事长幅",
+    nameEn: "Story route",
     aspect: "9:16",
     width: 1080,
     height: 1920,
-    blurbZh: "竖版叙事条 · 强调封面句与地点",
+    blurbZh: "竖版叙事条 · 封面句 + 停点",
     blurbEn: "Portrait story band · title + stops",
   },
   {
     id: "stamp-square",
-    nameZh: "邮戳方卡",
-    nameEn: "Stamp square",
+    nameZh: "海报方卡",
+    nameEn: "Poster square",
     aspect: "1:1",
     width: 1080,
     height: 1080,
-    blurbZh: "方图邮戳框 · 小红书封面感",
-    blurbEn: "Square stamp frame · Xiaohongshu cover",
+    blurbZh: "方图旅报 · 小红书封面",
+    blurbEn: "Square travel poster · cover ready",
   },
 ];
 
@@ -87,8 +87,22 @@ export type ShareSnapshot = {
   style?: ShareStyle;
 };
 
-const DEFAULT_ACCENT = "#b86b3c";
-const DEFAULT_RIVER = "#1f6b5c";
+/** Lumen Route defaults — azure river, luminous paper. */
+const DEFAULT_ACCENT = "#2F6BFF";
+const PAPER = "#F4F6FA";
+const FOAM = "#FFFFFF";
+const INK = "#0F172A";
+const INK_SOFT = "#64748B";
+const MIST = "#E6ECF5";
+const RIVER = "#2F6BFF";
+const RIVER_DEEP = "#1A4FD6";
+const SKY = "#DBE8FF";
+
+const FONT_DISPLAY =
+  '"Bricolage Grotesque", "PingFang SC", "Noto Sans SC", system-ui, sans-serif';
+const FONT_BODY =
+  '"Plus Jakarta Sans", "PingFang SC", "Noto Sans SC", system-ui, sans-serif';
+const FONT_MONO = '"IBM Plex Mono", ui-monospace, monospace';
 
 function esc(text: string): string {
   return text
@@ -107,6 +121,10 @@ function dateRange(snap: ShareSnapshot): string {
 
 function brandLine(locale: ShareSnapshot["locale"]): string {
   return locale === "zh-CN" ? "海狸旅行 · Beaver Plan" : "Beaver Plan · 海狸旅行";
+}
+
+function brandMark(locale: ShareSnapshot["locale"]): string {
+  return locale === "zh-CN" ? "海狸旅行" : "Beaver Plan";
 }
 
 function resolveTitle(snap: ShareSnapshot): string {
@@ -138,11 +156,11 @@ function titlePx(base: number, snap: ShareSnapshot): number {
 function pathHintSvg(
   points: Array<{ lat: number; lng: number }>,
   box: { x: number; y: number; w: number; h: number },
-  stroke = "#f7faf8",
-  fill = DEFAULT_RIVER,
+  stroke = RIVER,
+  fill = FOAM,
 ): string {
   if (points.length === 0) {
-    return `<circle cx="${box.x + box.w / 2}" cy="${box.y + box.h / 2}" r="6" fill="${stroke}" opacity="0.5"/>`;
+    return `<circle cx="${box.x + box.w / 2}" cy="${box.y + box.h / 2}" r="7" fill="${stroke}" opacity="0.45"/>`;
   }
   const lats = points.map((p) => p.lat);
   const lngs = points.map((p) => p.lng);
@@ -150,7 +168,7 @@ function pathHintSvg(
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
-  const pad = 18;
+  const pad = 28;
   const proj = (lat: number, lng: number) => {
     const nx = (lng - minLng) / (maxLng - minLng || 1);
     const ny = 1 - (lat - minLat) / (maxLat - minLat || 1);
@@ -164,12 +182,13 @@ function pathHintSvg(
     .map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
     .join(" ");
   const dots = coords
-    .map(
-      (c, i) =>
-        `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === 0 || i === coords.length - 1 ? 8 : 5}" fill="${stroke}"/><circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === 0 || i === coords.length - 1 ? 4 : 2.5}" fill="${fill}"/>`,
-    )
+    .map((c, i) => {
+      const outer = i === 0 || i === coords.length - 1 ? 10 : 6;
+      const inner = i === 0 || i === coords.length - 1 ? 4.5 : 2.5;
+      return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${outer}" fill="${fill}"/><circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${inner}" fill="${stroke}"/>`;
+    })
     .join("");
-  return `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>${dots}`;
+  return `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>${dots}`;
 }
 
 function photoOrWash(
@@ -186,45 +205,58 @@ function photoOrWash(
   return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${washId})"/>`;
 }
 
+/** 9:16 editorial lumen cover — sky plane + brand-first poster. */
 function renderMagazineReel(snap: ShareSnapshot): string {
   const meta = getShareTemplate("magazine-reel")!;
   const { width: W, height: H } = meta;
   const hero = snap.photos[0];
-  const places = snap.places.slice(0, 5).map(esc).join("  ·  ");
+  const places = snap.places.slice(0, 4).map(esc).join("  ·  ");
   const title = esc(resolveTitle(snap));
   const dest = esc(resolveSubtitle(snap));
   const dates = esc(dateRange(snap));
   const note = esc((snap.note ?? "").slice(0, 80));
   const brand = esc(brandLine(snap.locale));
+  const mark = esc(brandMark(snap.locale));
   const accent = resolveAccent(snap);
-  const titleSize = titlePx(92, snap);
+  const titleSize = titlePx(88, snap);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0%" stop-color="${SKY}"/>
+      <stop offset="42%" stop-color="${PAPER}"/>
+      <stop offset="100%" stop-color="${FOAM}"/>
+    </linearGradient>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f4339"/>
-      <stop offset="55%" stop-color="#1f6b5c"/>
-      <stop offset="100%" stop-color="${accent}"/>
+      <stop offset="0%" stop-color="${SKY}"/>
+      <stop offset="55%" stop-color="${RIVER}"/>
+      <stop offset="100%" stop-color="${RIVER_DEEP}"/>
     </linearGradient>
     <linearGradient id="veil" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#14201c" stop-opacity="0.15"/>
-      <stop offset="45%" stop-color="#14201c" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#14201c" stop-opacity="0.82"/>
+      <stop offset="0%" stop-color="${INK}" stop-opacity="0.08"/>
+      <stop offset="38%" stop-color="${INK}" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="${INK}" stop-opacity="0.72"/>
     </linearGradient>
   </defs>
-  ${photoOrWash(hero, 0, 0, W, H, "wash")}
+  <rect width="${W}" height="${H}" fill="url(#sky)"/>
+  <defs><clipPath id="heroClip"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>
+  <g clip-path="url(#heroClip)">${photoOrWash(hero, 0, 0, W, H, "wash")}</g>
   <rect x="0" y="0" width="${W}" height="${H}" fill="url(#veil)"/>
-  <text x="72" y="120" fill="#f7faf8" font-family="Georgia, 'Songti SC', serif" font-size="28" letter-spacing="6" opacity="0.85">${brand}</text>
-  <text x="72" y="${H - 420}" fill="#f7faf8" font-family="Georgia, 'Songti SC', serif" font-size="${titleSize}" font-weight="600">${title}</text>
-  <text x="72" y="${H - 330}" fill="#d8e2dc" font-family="system-ui, 'PingFang SC', sans-serif" font-size="34">${dest}</text>
-  <text x="72" y="${H - 270}" fill="#f7faf8" font-family="ui-monospace, monospace" font-size="26" opacity="0.9">${dates}</text>
-  ${note ? `<text x="72" y="${H - 200}" fill="#f3efe6" font-family="system-ui, 'PingFang SC', sans-serif" font-size="28" opacity="0.92">${note}</text>` : ""}
-  <text x="72" y="${H - 120}" fill="#f7faf8" font-family="system-ui, 'PingFang SC', sans-serif" font-size="24" opacity="0.78">${places || "—"}</text>
-  <rect x="72" y="${H - 80}" width="120" height="4" fill="${accent}"/>
+  <rect x="64" y="96" width="6" height="56" rx="3" fill="${accent}"/>
+  <text class="bp-body" x="88" y="118" fill="${FOAM}" font-family="${FONT_BODY}" font-size="22" font-weight="600" letter-spacing="5">${brand}</text>
+  <text class="bp-display" x="88" y="168" fill="${FOAM}" font-family="${FONT_DISPLAY}" font-size="34" font-weight="700" letter-spacing="-0.5">${mark}</text>
+  <text class="bp-display" x="72" y="${H - 460}" fill="${FOAM}" font-family="${FONT_DISPLAY}" font-size="${titleSize}" font-weight="800" letter-spacing="-2">${title}</text>
+  <text class="bp-body" x="72" y="${H - 360}" fill="${SKY}" font-family="${FONT_BODY}" font-size="32" font-weight="500">${dest}</text>
+  <text class="bp-body" x="72" y="${H - 300}" fill="${FOAM}" font-family="${FONT_MONO}" font-size="24" opacity="0.88">${dates}</text>
+  ${note ? `<text class="bp-body" x="72" y="${H - 230}" fill="${FOAM}" font-family="${FONT_BODY}" font-size="26" opacity="0.9">${note}</text>` : ""}
+  <text class="bp-body" x="72" y="${H - 150}" fill="${FOAM}" font-family="${FONT_BODY}" font-size="22" opacity="0.78">${places || "—"}</text>
+  <rect x="72" y="${H - 100}" width="140" height="5" rx="2.5" fill="${accent}"/>
+  <text class="bp-body" x="72" y="${H - 56}" fill="${FOAM}" font-family="${FONT_BODY}" font-size="18" letter-spacing="3" opacity="0.7">LUMEN ROUTE</text>
 </svg>`;
 }
 
+/** 1:1 luminous route card with path geometry. */
 function renderPathSquare(snap: ShareSnapshot): string {
   const meta = getShareTemplate("path-square")!;
   const W = meta.width;
@@ -236,48 +268,54 @@ function renderPathSquare(snap: ShareSnapshot): string {
   const places = snap.places.slice(0, 4);
   const points = snap.pathPoints ?? [];
   const accent = resolveAccent(snap);
-  const titleSize = titlePx(64, snap);
+  const titleSize = titlePx(58, snap);
 
   const thumbs = [
-    { x: 72, y: 620, w: 440, h: 320 },
-    { x: 568, y: 620, w: 440, h: 320 },
+    { x: 64, y: 640, w: 456, h: 280 },
+    { x: 560, y: 640, w: 456, h: 280 },
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f7faf8"/>
-      <stop offset="100%" stop-color="#d8e2dc"/>
+      <stop offset="0%" stop-color="${PAPER}"/>
+      <stop offset="100%" stop-color="${SKY}"/>
+    </linearGradient>
+    <linearGradient id="mapPanel" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="${FOAM}"/>
+      <stop offset="100%" stop-color="${MIST}"/>
     </linearGradient>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f4339"/>
-      <stop offset="100%" stop-color="#1f6b5c"/>
+      <stop offset="0%" stop-color="${SKY}"/>
+      <stop offset="100%" stop-color="${RIVER}"/>
     </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#paper)"/>
-  <rect x="48" y="48" width="${W - 96}" height="520" rx="18" fill="#0f4339"/>
-  ${pathHintSvg(points, { x: 48, y: 48, w: W - 96, h: 520 }, "#f7faf8", accent)}
-  <text x="72" y="100" fill="#f7faf8" font-family="system-ui, 'PingFang SC', sans-serif" font-size="22" letter-spacing="4" opacity="0.7">${brand}</text>
-  <text x="72" y="170" fill="#f7faf8" font-family="Georgia, 'Songti SC', serif" font-size="${titleSize}" font-weight="600">${title}</text>
-  <text x="72" y="230" fill="#d8e2dc" font-family="ui-monospace, monospace" font-size="24">${dates}</text>
+  <rect x="48" y="48" width="${W - 96}" height="540" rx="20" fill="url(#mapPanel)"/>
+  <rect x="48" y="48" width="8" height="540" rx="4" fill="${accent}"/>
+  ${pathHintSvg(points, { x: 48, y: 48, w: W - 96, h: 540 }, accent, FOAM)}
+  <text class="bp-body" x="80" y="96" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="18" font-weight="600" letter-spacing="4">${brand}</text>
+  <text class="bp-display" x="80" y="168" fill="${INK}" font-family="${FONT_DISPLAY}" font-size="${titleSize}" font-weight="800" letter-spacing="-1.5">${title}</text>
+  <text class="bp-body" x="80" y="220" fill="${accent}" font-family="${FONT_MONO}" font-size="22">${dates}</text>
   ${thumbs
     .map((box, i) => {
       const clip = `clip${i}`;
-      return `<defs><clipPath id="${clip}"><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="14"/></clipPath></defs>
+      return `<defs><clipPath id="${clip}"><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="16"/></clipPath></defs>
       <g clip-path="url(#${clip})">${photoOrWash(photos[i], box.x, box.y, box.w, box.h, "wash")}</g>`;
     })
     .join("\n")}
   ${places
-    .map(
-      (p, i) =>
-        `<text x="72" y="${980 + i * 28}" fill="#2a3a34" font-family="system-ui, 'PingFang SC', sans-serif" font-size="22">${esc(p)}</text>`,
-    )
+    .map((p, i) => {
+      const y = 970 + i * 26;
+      return `<circle cx="72" cy="${y - 6}" r="5" fill="${accent}"/><text class="bp-body" x="90" y="${y}" fill="${INK}" font-family="${FONT_BODY}" font-size="20">${esc(p)}</text>`;
+    })
     .join("\n")}
-  <rect x="${W - 168}" y="${H - 56}" width="96" height="4" fill="${accent}"/>
+  <text class="bp-body" x="${W - 220}" y="${H - 48}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="16" letter-spacing="2">BEAVER PLAN</text>
 </svg>`;
 }
 
+/** 9:16 three-frame day strip on luminous paper. */
 function renderDayFilm(snap: ShareSnapshot): string {
   const meta = getShareTemplate("day-film")!;
   const W = meta.width;
@@ -290,47 +328,49 @@ function renderDayFilm(snap: ShareSnapshot): string {
   const places = snap.places.slice(0, 3);
   const note = esc((snap.note ?? "").slice(0, 60));
   const accent = resolveAccent(snap);
-  const titleSize = titlePx(58, snap);
+  const titleSize = titlePx(52, snap);
 
   const frames = [
-    { y: 280, photo: photos[0], place: places[0] },
-    { y: 780, photo: photos[1], place: places[1] },
-    { y: 1280, photo: photos[2], place: places[2] },
+    { y: 300, photo: photos[0], place: places[0] },
+    { y: 820, photo: photos[1], place: places[1] },
+    { y: 1340, photo: photos[2], place: places[2] },
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#14201c"/>
-      <stop offset="100%" stop-color="#0f4339"/>
+      <stop offset="0%" stop-color="${PAPER}"/>
+      <stop offset="100%" stop-color="${SKY}"/>
     </linearGradient>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1f6b5c"/>
+      <stop offset="0%" stop-color="${SKY}"/>
       <stop offset="100%" stop-color="${accent}"/>
     </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
-  <rect x="72" y="248" width="64" height="4" fill="${accent}"/>
-  <text x="72" y="110" fill="#f7faf8" font-family="system-ui, sans-serif" font-size="24" letter-spacing="5" opacity="0.7">${brand}</text>
-  <text x="72" y="180" fill="#f7faf8" font-family="Georgia, 'Songti SC', serif" font-size="${titleSize}">${title}</text>
-  <text x="72" y="235" fill="#d8e2dc" font-family="system-ui, 'PingFang SC', sans-serif" font-size="28">${day}  ·  ${dates}</text>
+  <text class="bp-body" x="72" y="100" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="20" font-weight="600" letter-spacing="4">${brand}</text>
+  <text class="bp-display" x="72" y="172" fill="${INK}" font-family="${FONT_DISPLAY}" font-size="${titleSize}" font-weight="800" letter-spacing="-1.2">${title}</text>
+  <text class="bp-body" x="72" y="230" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="26">${day}  ·  ${dates}</text>
+  <rect x="72" y="258" width="72" height="5" rx="2.5" fill="${accent}"/>
   ${frames
     .map((f, i) => {
       const clip = `f${i}`;
       const place = esc(f.place ?? `Stop ${i + 1}`);
       return `
-      <defs><clipPath id="${clip}"><rect x="72" y="${f.y}" width="936" height="420" rx="16"/></clipPath></defs>
-      <g clip-path="url(#${clip})">${photoOrWash(f.photo, 72, f.y, 936, 420, "wash")}</g>
-      <rect x="72" y="${f.y + 340}" width="936" height="80" fill="#14201c" opacity="0.55"/>
-      <text x="96" y="${f.y + 390}" fill="#f7faf8" font-family="system-ui, 'PingFang SC', sans-serif" font-size="32">${i + 1}. ${place}</text>`;
+      <defs><clipPath id="${clip}"><rect x="72" y="${f.y}" width="936" height="440" rx="18"/></clipPath></defs>
+      <g clip-path="url(#${clip})">${photoOrWash(f.photo, 72, f.y, 936, 440, "wash")}</g>
+      <rect x="72" y="${f.y + 352}" width="936" height="88" fill="${INK}" opacity="0.55"/>
+      <circle cx="118" cy="${f.y + 396}" r="22" fill="${accent}"/>
+      <text class="bp-display" x="118" y="${f.y + 403}" text-anchor="middle" fill="${FOAM}" font-family="${FONT_DISPLAY}" font-size="22" font-weight="700">${i + 1}</text>
+      <text class="bp-body" x="158" y="${f.y + 404}" fill="${FOAM}" font-family="${FONT_BODY}" font-size="30" font-weight="600">${place}</text>`;
     })
     .join("\n")}
-  ${note ? `<text x="72" y="${H - 80}" fill="#f3efe6" font-family="system-ui, 'PingFang SC', sans-serif" font-size="26" opacity="0.85">${note}</text>` : ""}
+  ${note ? `<text class="bp-body" x="72" y="${H - 56}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="24">${note}</text>` : `<text class="bp-body" x="72" y="${H - 56}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="18" letter-spacing="3">BEAVER PLAN · 海狸旅行</text>`}
 </svg>`;
 }
 
-/** 9:16 editorial story band — accent rail + hero + stop list. */
+/** 9:16 story band — azure rail + hero + stop list. */
 function renderStoryPanel(snap: ShareSnapshot): string {
   const meta = getShareTemplate("story-panel")!;
   const { width: W, height: H } = meta;
@@ -342,42 +382,42 @@ function renderStoryPanel(snap: ShareSnapshot): string {
   const places = snap.places.slice(0, 6);
   const note = esc((snap.note ?? "").slice(0, 72));
   const accent = resolveAccent(snap);
-  const titleSize = titlePx(78, snap);
-  const rail = 56;
+  const titleSize = titlePx(72, snap);
+  const rail = 48;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f4339"/>
-      <stop offset="60%" stop-color="#1f6b5c"/>
+      <stop offset="0%" stop-color="${SKY}"/>
+      <stop offset="55%" stop-color="${RIVER}"/>
       <stop offset="100%" stop-color="${accent}"/>
     </linearGradient>
     <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f7faf8"/>
-      <stop offset="100%" stop-color="#e8efe9"/>
+      <stop offset="0%" stop-color="${FOAM}"/>
+      <stop offset="100%" stop-color="${PAPER}"/>
     </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#panel)"/>
   <rect x="0" y="0" width="${rail}" height="${H}" fill="${accent}"/>
-  <defs><clipPath id="heroClip"><rect x="${rail + 40}" y="120" width="${W - rail - 80}" height="820" rx="8"/></clipPath></defs>
-  <g clip-path="url(#heroClip)">${photoOrWash(hero, rail + 40, 120, W - rail - 80, 820, "wash")}</g>
-  <text x="${rail + 48}" y="88" fill="#0f4339" font-family="system-ui, 'PingFang SC', sans-serif" font-size="22" letter-spacing="5" opacity="0.75">${brand}</text>
-  <text x="${rail + 48}" y="1040" fill="#14201c" font-family="Georgia, 'Songti SC', serif" font-size="${titleSize}" font-weight="600">${title}</text>
-  <text x="${rail + 48}" y="1110" fill="#2a3a34" font-family="system-ui, 'PingFang SC', sans-serif" font-size="32">${subtitle}</text>
-  <text x="${rail + 48}" y="1165" fill="#1f6b5c" font-family="ui-monospace, monospace" font-size="24">${dates}</text>
+  <defs><clipPath id="heroClip"><rect x="${rail + 36}" y="110" width="${W - rail - 72}" height="780" rx="16"/></clipPath></defs>
+  <g clip-path="url(#heroClip)">${photoOrWash(hero, rail + 36, 110, W - rail - 72, 780, "wash")}</g>
+  <text class="bp-body" x="${rail + 44}" y="78" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="18" font-weight="600" letter-spacing="4">${brand}</text>
+  <text class="bp-display" x="${rail + 44}" y="990" fill="${INK}" font-family="${FONT_DISPLAY}" font-size="${titleSize}" font-weight="800" letter-spacing="-1.6">${title}</text>
+  <text class="bp-body" x="${rail + 44}" y="1055" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="30">${subtitle}</text>
+  <text class="bp-body" x="${rail + 44}" y="1105" fill="${accent}" font-family="${FONT_MONO}" font-size="22">${dates}</text>
   ${places
     .map((p, i) => {
-      const y = 1260 + i * 52;
-      return `<circle cx="${rail + 56}" cy="${y - 8}" r="7" fill="${accent}"/><text x="${rail + 80}" y="${y}" fill="#14201c" font-family="system-ui, 'PingFang SC', sans-serif" font-size="26">${esc(p)}</text>`;
+      const y = 1185 + i * 52;
+      return `<circle cx="${rail + 52}" cy="${y - 8}" r="8" fill="${accent}"/><text class="bp-display" x="${rail + 52}" y="${y - 3}" text-anchor="middle" fill="${FOAM}" font-family="${FONT_DISPLAY}" font-size="11" font-weight="700">${i + 1}</text><text class="bp-body" x="${rail + 76}" y="${y}" fill="${INK}" font-family="${FONT_BODY}" font-size="24">${esc(p)}</text>`;
     })
     .join("\n")}
-  ${note ? `<text x="${rail + 48}" y="${H - 90}" fill="#2a3a34" font-family="system-ui, 'PingFang SC', sans-serif" font-size="24" opacity="0.85">${note}</text>` : ""}
-  <text x="${rail + 48}" y="${H - 40}" fill="#0f4339" font-family="Georgia, 'Songti SC', serif" font-size="20" opacity="0.55">Beaver Plan</text>
+  ${note ? `<text class="bp-body" x="${rail + 44}" y="${H - 90}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="22">${note}</text>` : ""}
+  <text class="bp-body" x="${rail + 44}" y="${H - 42}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="16" letter-spacing="2">BEAVER PLAN · 海狸旅行</text>
 </svg>`;
 }
 
-/** 1:1 stamp / postcard frame for Xiaohongshu covers. */
+/** 1:1 luminous poster square for Xiaohongshu covers. */
 function renderStampSquare(snap: ShareSnapshot): string {
   const meta = getShareTemplate("stamp-square")!;
   const { width: W, height: H } = meta;
@@ -388,35 +428,35 @@ function renderStampSquare(snap: ShareSnapshot): string {
   const brand = esc(brandLine(snap.locale));
   const places = snap.places.slice(0, 3).map(esc).join(" · ");
   const accent = resolveAccent(snap);
-  const titleSize = titlePx(56, snap);
-  const inset = 64;
-  const frame = 28;
+  const titleSize = titlePx(52, snap);
+  const inset = 56;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f3efe6"/>
-      <stop offset="100%" stop-color="#e4ebe5"/>
+      <stop offset="0%" stop-color="${PAPER}"/>
+      <stop offset="100%" stop-color="${SKY}"/>
     </linearGradient>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f4339"/>
+      <stop offset="0%" stop-color="${SKY}"/>
       <stop offset="100%" stop-color="${accent}"/>
     </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#paper)"/>
-  <rect x="${inset}" y="${inset}" width="${W - inset * 2}" height="${H - inset * 2}" fill="none" stroke="${accent}" stroke-width="3" stroke-dasharray="10 8" rx="6"/>
-  <rect x="${inset + frame}" y="${inset + frame}" width="${W - (inset + frame) * 2}" height="560" fill="#14201c"/>
-  <defs><clipPath id="stampPhoto"><rect x="${inset + frame + 12}" y="${inset + frame + 12}" width="${W - (inset + frame) * 2 - 24}" height="536" rx="4"/></clipPath></defs>
-  <g clip-path="url(#stampPhoto)">${photoOrWash(hero, inset + frame + 12, inset + frame + 12, W - (inset + frame) * 2 - 24, 536, "wash")}</g>
-  <circle cx="${W - inset - 36}" cy="${inset + 36}" r="22" fill="none" stroke="${accent}" stroke-width="2"/>
-  <circle cx="${W - inset - 36}" cy="${inset + 36}" r="8" fill="${accent}" opacity="0.85"/>
-  <text x="${inset + frame}" y="760" fill="#0f4339" font-family="system-ui, 'PingFang SC', sans-serif" font-size="18" letter-spacing="4" opacity="0.7">${brand}</text>
-  <text x="${inset + frame}" y="830" fill="#14201c" font-family="Georgia, 'Songti SC', serif" font-size="${titleSize}" font-weight="600">${title}</text>
-  <text x="${inset + frame}" y="890" fill="#2a3a34" font-family="system-ui, 'PingFang SC', sans-serif" font-size="28">${subtitle}</text>
-  <text x="${inset + frame}" y="940" fill="#1f6b5c" font-family="ui-monospace, monospace" font-size="22">${dates}</text>
-  <text x="${inset + frame}" y="1000" fill="#2a3a34" font-family="system-ui, 'PingFang SC', sans-serif" font-size="22" opacity="0.85">${places || "—"}</text>
-  <rect x="${inset + frame}" y="${H - inset - 28}" width="140" height="5" fill="${accent}"/>
+  <rect x="${inset}" y="${inset}" width="${W - inset * 2}" height="${H - inset * 2}" rx="24" fill="${FOAM}" stroke="${MIST}" stroke-width="2"/>
+  <rect x="${inset}" y="${inset}" width="10" height="${H - inset * 2}" rx="5" fill="${accent}"/>
+  <defs><clipPath id="posterPhoto"><rect x="${inset + 28}" y="${inset + 28}" width="${W - (inset + 28) * 2}" height="520" rx="16"/></clipPath></defs>
+  <g clip-path="url(#posterPhoto)">${photoOrWash(hero, inset + 28, inset + 28, W - (inset + 28) * 2, 520, "wash")}</g>
+  <circle cx="${W - inset - 48}" cy="${inset + 48}" r="18" fill="${accent}"/>
+  <circle cx="${W - inset - 48}" cy="${inset + 48}" r="7" fill="${FOAM}"/>
+  <text class="bp-body" x="${inset + 36}" y="680" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="16" font-weight="600" letter-spacing="4">${brand}</text>
+  <text class="bp-display" x="${inset + 36}" y="750" fill="${INK}" font-family="${FONT_DISPLAY}" font-size="${titleSize}" font-weight="800" letter-spacing="-1.2">${title}</text>
+  <text class="bp-body" x="${inset + 36}" y="810" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="26">${subtitle}</text>
+  <text class="bp-body" x="${inset + 36}" y="860" fill="${accent}" font-family="${FONT_MONO}" font-size="20">${dates}</text>
+  <text class="bp-body" x="${inset + 36}" y="920" fill="${INK}" font-family="${FONT_BODY}" font-size="20" opacity="0.85">${places || "—"}</text>
+  <rect x="${inset + 36}" y="${H - inset - 52}" width="120" height="5" rx="2.5" fill="${accent}"/>
+  <text class="bp-body" x="${inset + 36}" y="${H - inset - 20}" fill="${INK_SOFT}" font-family="${FONT_BODY}" font-size="15" letter-spacing="2">LUMEN ROUTE</text>
 </svg>`;
 }
 
@@ -450,12 +490,12 @@ export function svgToDataUrl(svg: string): string {
   return `data:image/svg+xml;charset=utf-8,${encoded}`;
 }
 
-/** Sensible accent presets for the light-edit UI. */
+/** Lumen Route accent presets for the light-edit UI. */
 export const SHARE_ACCENT_PRESETS = [
-  "#b86b3c",
-  "#1f6b5c",
-  "#0f4339",
-  "#2a9d8f",
-  "#8b4513",
-  "#c45c26",
+  "#2F6BFF",
+  "#1A4FD6",
+  "#0F172A",
+  "#60A5FA",
+  "#64748B",
+  "#E11D48",
 ] as const;

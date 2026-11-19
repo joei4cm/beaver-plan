@@ -1,8 +1,25 @@
+import { isOfflineTransportError } from "@beaver/offline";
+
 const DEFAULT_BASE = "http://127.0.0.1:8787";
 
 export function apiBase(): string {
   return (
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || DEFAULT_BASE
+  );
+}
+
+/**
+ * Network / Neon-absent noise that should not dominate the planner demo UI.
+ * Mirrors collab soft-fail for 503 when DATABASE_URL is unset.
+ */
+export function isPlannerNoiseError(err: unknown): boolean {
+  if (isOfflineTransportError(err)) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    /\b503\b/.test(msg) ||
+    /Failed to fetch/i.test(msg) ||
+    /database_required|DATABASE_URL|Neon/i.test(msg) ||
+    /ECONNREFUSED|NetworkError|Load failed/i.test(msg)
   );
 }
 
