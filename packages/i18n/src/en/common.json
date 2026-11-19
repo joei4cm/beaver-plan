@@ -106,6 +106,8 @@
   "planner.generateRoutes": "Generate routes",
   "planner.routing": "Routing…",
   "planner.hint": "Without map keys the planner uses demo data. Add Google / Amap / Baidu server keys and the BFF switches to live Places + Directions.",
+  "planner.demoLocal": "Demo shell — stops update locally until Neon/API is available.",
+  "planner.searchDemo": "Showing curated demo places (API offline).",
   "planner.engine.google": "Google Maps",
   "planner.engine.amap": "Amap",
   "planner.engine.baidu": "Baidu Maps",
