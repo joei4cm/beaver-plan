@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocalSearchParams, Stack, Link } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Linking,
@@ -7,25 +7,43 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
-  decodeSimplePolyline,
+  DemoRoutingEngine,
   formatDuration,
   normalizeStepMode,
+  routeAdjacentStops,
+  sampleKyotoCollab,
+  sampleKyotoFixture,
+  searchDemoPlaces,
   stopsForDay,
   summarizeTransfer,
+  toPlaceRef,
+  type ActivityEvent,
   type BookingLinkKind,
   type Day,
   type Leg,
+  type PlaceSummary,
   type Stop,
   type Trip,
+  type TripComment,
 } from "@beaver/core";
 import { colors, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import type { JournalEntry, TripMember, TripRole } from "@beaver/core";
 import type { OfflinePinStatus } from "@beaver/offline";
-import { createInvite, fetchJournal, fetchMembers, fetchTrip } from "../../src/api";
+import {
+  addTripStop,
+  createInvite,
+  fetchJournal,
+  fetchMembers,
+  fetchTrip,
+  routeTripDay,
+  searchPlaces,
+} from "../../src/api";
+import { TripMap } from "../../src/components/trip-map";
 import {
   flushJournalQueue,
   getPinStatus,
@@ -36,48 +54,26 @@ import {
 } from "../../src/offline/trip-offline";
 
 const locale = "zh-CN" as const;
+const SEARCH_DEBOUNCE_MS = 220;
 
-function MiniMap({ stops, legs }: { stops: Stop[]; legs: Leg[] }) {
-  const points = stops.map((s) => ({ lat: s.place.lat, lng: s.place.lng }));
-  const all = [...points];
-  for (const leg of legs) {
-    if (leg.polyline?.includes(";")) {
-      all.push(...decodeSimplePolyline(leg.polyline));
-    }
-  }
-  const minLat = Math.min(...all.map((p) => p.lat), 34.9);
-  const maxLat = Math.max(...all.map((p) => p.lat), 35.1);
-  const minLng = Math.min(...all.map((p) => p.lng), 135.6);
-  const maxLng = Math.max(...all.map((p) => p.lng), 135.85);
-  const W = 100;
-  const H = 100;
-  const proj = (lat: number, lng: number) => ({
-    left: `${((lng - minLng) / (maxLng - minLng || 1)) * W}%` as const,
-    top: `${(1 - (lat - minLat) / (maxLat - minLat || 1)) * H}%` as const,
-  });
-
+function isNoiseError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
   return (
-    <View style={styles.map}>
-      {stops.map((stop, i) => {
-        const p = proj(stop.place.lat, stop.place.lng);
-        return (
-          <View
-            key={stop.id}
-            style={[
-              styles.marker,
-              { left: p.left, top: p.top, marginLeft: -11, marginTop: -11 },
-            ]}
-          >
-            <Text style={styles.markerText}>{i + 1}</Text>
-          </View>
-        );
-      })}
-      <Text style={styles.mapHint}>{t(locale, "mobile.itinerary")}</Text>
-    </View>
+    /_503$|_502$|_504$|Failed to fetch|Network request failed|load_failed|ECONNREFUSED/i.test(
+      msg,
+    ) || msg.includes("places/search_")
   );
 }
 
+function newLocalId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
+}
+
 export default function TripDetailScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -87,13 +83,25 @@ export default function TripDetailScreen() {
   const [dayId, setDayId] = useState<string | null>(null);
   const [members, setMembers] = useState<TripMember[]>([]);
   const [yourRole, setYourRole] = useState<TripRole | null>(null);
+  const [comments, setComments] = useState<TripComment[]>([]);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [collabSeeded, setCollabSeeded] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [softNotice, setSoftNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [pinStatus, setPinStatus] = useState<OfflinePinStatus | null>(null);
   const [pinBusy, setPinBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PlaceSummary[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [routing, setRouting] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchGenRef = useRef(0);
 
   const refreshPin = useCallback(async () => {
     try {
@@ -131,10 +139,27 @@ export default function TripDetailScreen() {
       }
       try {
         const m = await fetchMembers(tripId);
-        setMembers(m.members);
-        setYourRole(m.yourRole);
+        if (tripId === "sample-kyoto" && m.members.length === 0) {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        } else {
+          setMembers(m.members);
+          setYourRole(m.yourRole);
+          setCollabSeeded(false);
+        }
       } catch {
-        /* members optional if offline */
+        if (tripId === "sample-kyoto") {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        }
       }
       await refreshPin();
     } catch (e) {
@@ -148,7 +173,31 @@ export default function TripDetailScreen() {
         setDayId(cached.days[0]?.id ?? null);
         setFromCache(true);
         setError(null);
+        if (tripId === "sample-kyoto") {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        }
         await refreshPin();
+      } else if (tripId === "sample-kyoto") {
+        const fixture = sampleKyotoFixture();
+        const seed = sampleKyotoCollab();
+        setTrip(fixture.trip);
+        setDays(fixture.days);
+        setStops(fixture.stops);
+        setLegs(fixture.legs);
+        setDayId(fixture.days[0]?.id ?? null);
+        setMembers(seed.members);
+        setYourRole(seed.yourRole);
+        setComments(seed.comments);
+        setActivity(seed.events);
+        setCollabSeeded(true);
+        setFromCache(true);
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
       } else {
         setError(e instanceof Error ? e.message : "load_failed");
       }
@@ -193,6 +242,12 @@ export default function TripDetailScreen() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
     [stops, dayId],
@@ -201,6 +256,155 @@ export default function TripDetailScreen() {
     const ids = new Set(dayStops.map((s) => s.id));
     return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
   }, [legs, dayStops]);
+
+  const routeDayStops = useCallback(
+    async (activeDayId: string, orderedStops: Stop[]) => {
+      if (orderedStops.length < 2) {
+        setLegs((prev) => {
+          const ids = new Set(orderedStops.map((s) => s.id));
+          return prev.filter(
+            (l) => !(ids.has(l.fromStopId) || ids.has(l.toStopId)),
+          );
+        });
+        return;
+      }
+      setRouting(true);
+      try {
+        const res = await routeTripDay({
+          tripId,
+          dayId: activeDayId,
+          mode: "transit",
+        });
+        setLegs((prev) => {
+          const ids = new Set(orderedStops.map((s) => s.id));
+          const kept = prev.filter(
+            (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
+          );
+          return [...kept, ...res.legs];
+        });
+      } catch (e) {
+        const routingEngine = new DemoRoutingEngine("google");
+        const demoLegs = await routeAdjacentStops(
+          routingEngine,
+          orderedStops,
+          "transit",
+          locale,
+        );
+        setLegs((prev) => {
+          const ids = new Set(orderedStops.map((s) => s.id));
+          const kept = prev.filter(
+            (l) => !(ids.has(l.fromStopId) && ids.has(l.toStopId)),
+          );
+          return [...kept, ...demoLegs];
+        });
+        if (isNoiseError(e)) {
+          setSoftNotice(t(locale, "planner.demoLocal"));
+          setError(null);
+        }
+      } finally {
+        setRouting(false);
+      }
+    },
+    [tripId],
+  );
+
+  const runSearch = useCallback(
+    async (text: string) => {
+      const q = text.trim();
+      if (!q) {
+        setResults([]);
+        return;
+      }
+      const gen = ++searchGenRef.current;
+      setResults(searchDemoPlaces(q));
+      setSearching(true);
+      try {
+        const center = dayStops[0]?.place;
+        const data = await searchPlaces({
+          q,
+          lat: center?.lat,
+          lng: center?.lng,
+          language: locale,
+          timezone: trip?.timezone,
+        });
+        if (gen !== searchGenRef.current) return;
+        if (data.places.length > 0) setResults(data.places);
+      } catch (e) {
+        if (gen !== searchGenRef.current) return;
+        if (isNoiseError(e)) {
+          setSoftNotice(t(locale, "planner.searchDemo"));
+          setError(null);
+        }
+      } finally {
+        if (gen === searchGenRef.current) setSearching(false);
+      }
+    },
+    [dayStops, trip?.timezone],
+  );
+
+  function scheduleSearch(text: string) {
+    setQuery(text);
+    setSearchOpen(true);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    const q = text.trim();
+    if (q) setResults(searchDemoPlaces(q));
+    else setResults([]);
+    searchTimerRef.current = setTimeout(() => {
+      void runSearch(text);
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  async function addPlace(place: PlaceSummary) {
+    if (!dayId || !trip) return;
+    setError(null);
+    try {
+      await addTripStop({
+        tripId,
+        dayId,
+        place,
+        expectedVersion: trip.version,
+      });
+      setQuery("");
+      setResults([]);
+      setSearchOpen(false);
+      const payload = await fetchTrip(tripId);
+      setTrip(payload.trip);
+      setDays(payload.days);
+      setStops(payload.stops);
+      setLegs(payload.legs);
+      const ordered = stopsForDay(payload.stops, dayId);
+      setSelectedStopId(ordered[ordered.length - 1]?.id ?? null);
+      await routeDayStops(dayId, ordered);
+    } catch (e) {
+      const stop: Stop = {
+        id: newLocalId("local-stop"),
+        dayId,
+        order: dayStops.length,
+        place: toPlaceRef("google", place),
+        photos: [],
+        bookingLinks: [],
+      };
+      const nextStops = [...stops, stop];
+      setStops(nextStops);
+      setTrip((prev) =>
+        prev ? { ...prev, version: prev.version + 1 } : prev,
+      );
+      setQuery("");
+      setResults([]);
+      setSearchOpen(false);
+      setSelectedStopId(stop.id);
+      if (isNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+      } else {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+      }
+      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
+    }
+  }
+
+  const googleKey =
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null;
 
   return (
     <View style={styles.root}>
@@ -220,7 +424,10 @@ export default function TripDetailScreen() {
         </View>
       )}
       {!loading && trip && (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.brandLine}>Beaver Plan · 海狸旅行</Text>
           <Text style={styles.eyebrow}>
             {trip.destination ?? "Beaver Plan"}
@@ -261,28 +468,37 @@ export default function TripDetailScreen() {
           </Pressable>
           <Text style={styles.pinHint}>{t(locale, "offline.statusHint")}</Text>
           <View style={styles.actionRow}>
-            <Link href={`/trips/${tripId}/journal`} asChild>
-              <Pressable style={styles.actionBtn}>
-                <Text style={styles.actionLabel}>{t(locale, "mobile.journal")}</Text>
-              </Pressable>
-            </Link>
-            <Link href={`/trips/${tripId}/share`} asChild>
-              <Pressable style={[styles.actionBtn, styles.actionPrimary]}>
-                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
-                  {t(locale, "mobile.share")}
-                </Text>
-              </Pressable>
-            </Link>
-            <Link href="/translate" asChild>
-              <Pressable style={[styles.actionBtn, styles.actionTranslate]}>
-                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
-                  {t(locale, "mobile.translate")}
-                </Text>
-              </Pressable>
-            </Link>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => router.push(`/trips/${tripId}/journal`)}
+            >
+              <Text style={styles.actionLabel}>{t(locale, "mobile.journal")}</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.actionBtn, styles.actionPrimary]}
+              onPress={() => router.push(`/trips/${tripId}/share`)}
+            >
+              <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                {t(locale, "mobile.share")}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.actionBtn, styles.actionTranslate]}
+              onPress={() => router.push("/translate")}
+            >
+              <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                {t(locale, "mobile.translate")}
+              </Text>
+            </Pressable>
           </View>
 
           <View style={styles.collabBox}>
+            <Text style={styles.collabEyebrow}>
+              {t(locale, "collab.panel.eyebrow")}
+            </Text>
+            <Text style={styles.collabHeading}>
+              {t(locale, "collab.panel.title")}
+            </Text>
             <Text style={styles.collabTitle}>{t(locale, "collab.members")}</Text>
             <Text style={styles.collabMeta}>
               {members
@@ -290,7 +506,15 @@ export default function TripDetailScreen() {
                 .slice(0, 4)
                 .join(" · ") || "—"}
               {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
+              {collabSeeded ? ` · ${t(locale, "collab.demoBadge")}` : ""}
             </Text>
+            {collabSeeded ? (
+              <Text style={styles.collabNotice}>
+                {softNotice
+                  ? t(locale, "collab.panel.softOffline")
+                  : t(locale, "collab.panel.demoNotice")}
+              </Text>
+            ) : null}
             {(yourRole === "owner" || yourRole === "editor") && (
               <Pressable style={styles.inviteBtn} onPress={() => void onInvite()}>
                 <Text style={styles.inviteLabel}>{t(locale, "collab.invite")}</Text>
@@ -301,8 +525,86 @@ export default function TripDetailScreen() {
                 {t(locale, "collab.shareHint")} {inviteCode}
               </Text>
             ) : null}
+            {comments.length > 0 ? (
+              <View style={styles.collabThread}>
+                <Text style={styles.collabSectionLabel}>
+                  {t(locale, "collab.panel.tab.comments")}
+                </Text>
+                {comments.slice(0, 3).map((c) => (
+                  <View key={c.id} style={styles.commentRail}>
+                    <Text style={styles.commentAuthor}>
+                      {c.authorDisplayName ?? c.authorUserId}
+                    </Text>
+                    <Text style={styles.commentBody}>{c.body}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {activity.length > 0 ? (
+              <View style={styles.collabThread}>
+                <Text style={styles.collabSectionLabel}>
+                  {t(locale, "collab.panel.tab.activity")}
+                </Text>
+                {activity.slice(0, 4).map((ev) => (
+                  <View key={ev.id} style={styles.activityRail}>
+                    <Text style={styles.activityType}>
+                      {t(locale, `collab.activity.${ev.type}`)}
+                    </Text>
+                    <Text style={styles.activitySummary}>{ev.summary}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
-          <MiniMap stops={dayStops} legs={dayLegs} />
+
+          <View style={styles.searchWrap}>
+            <TextInput
+              value={query}
+              onChangeText={scheduleSearch}
+              onFocus={() => setSearchOpen(true)}
+              placeholder={t(locale, "planner.searchPlaceholder")}
+              placeholderTextColor={colors.inkSoft}
+              style={styles.searchInput}
+              autoCorrect={false}
+              autoCapitalize="none"
+              clearButtonMode="while-editing"
+            />
+            {searching || routing ? (
+              <ActivityIndicator
+                style={styles.searchSpinner}
+                color={colors.river}
+                size="small"
+              />
+            ) : null}
+            {searchOpen && results.length > 0 ? (
+              <View style={styles.searchSheet}>
+                {results.map((place) => (
+                  <Pressable
+                    key={place.enginePlaceId}
+                    style={styles.searchHit}
+                    onPress={() => void addPlace(place)}
+                  >
+                    <Text style={styles.searchHitName}>{place.name}</Text>
+                    {place.address ? (
+                      <Text style={styles.searchHitAddr}>{place.address}</Text>
+                    ) : null}
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+          </View>
+
+          {softNotice ? (
+            <Text style={styles.softNotice}>{softNotice}</Text>
+          ) : null}
+
+          <TripMap
+            stops={dayStops}
+            legs={dayLegs}
+            selectedStopId={selectedStopId}
+            onSelectStop={setSelectedStopId}
+            googleMapsKey={googleKey}
+          />
 
           <ScrollView
             horizontal
@@ -341,9 +643,14 @@ export default function TripDetailScreen() {
 
           {dayStops.map((stop, index) => {
             const leg = dayLegs.find((l) => l.fromStopId === stop.id);
+            const selected = stop.id === selectedStopId;
             return (
-              <View key={stop.id} style={styles.stopRow}>
-                <View style={styles.stopIndex}>
+              <Pressable
+                key={stop.id}
+                style={[styles.stopRow, selected && styles.stopRowSelected]}
+                onPress={() => setSelectedStopId(stop.id)}
+              >
+                <View style={[styles.stopIndex, selected && styles.stopIndexSelected]}>
                   <Text style={styles.stopIndexText}>{index + 1}</Text>
                 </View>
                 <View style={styles.stopBody}>
@@ -406,11 +713,11 @@ export default function TripDetailScreen() {
                     </View>
                   ) : null}
                 </View>
-              </View>
+              </Pressable>
             );
           })}
           {dayStops.length === 0 && (
-            <Text style={styles.hint}>{t(locale, "planner.emptyDay")}</Text>
+            <Text style={styles.hint}>{t(locale, "planner.emptyDayHint")}</Text>
           )}
         </ScrollView>
       )}
@@ -515,12 +822,27 @@ const styles = StyleSheet.create({
   },
   collabBox: {
     marginBottom: 16,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "transparent",
     gap: 6,
+  },
+  collabEyebrow: {
+    fontSize: 10,
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    fontWeight: "700",
+    color: colors.river,
+  },
+  collabHeading: {
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: colors.ink,
+    marginBottom: 4,
   },
   collabTitle: {
     fontSize: 11,
@@ -529,6 +851,62 @@ const styles = StyleSheet.create({
     color: colors.river,
   },
   collabMeta: { fontSize: 14, color: colors.inkSoft },
+  collabNotice: {
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47,107,255,0.2)",
+    backgroundColor: "rgba(47,107,255,0.06)",
+    color: colors.riverDeep,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  collabThread: {
+    marginTop: 10,
+    gap: 8,
+  },
+  collabSectionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  commentRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.4)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  commentAuthor: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  commentBody: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
+  },
+  activityRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.28)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  activityType: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  activitySummary: {
+    fontSize: 13,
+    color: colors.ink,
+  },
   inviteBtn: {
     marginTop: 6,
     alignSelf: "flex-start",
@@ -539,40 +917,55 @@ const styles = StyleSheet.create({
   },
   inviteLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
   inviteCode: { marginTop: 4, fontSize: 12, color: colors.ink, fontFamily: "monospace" },
-  map: {
-    height: 240,
-    borderRadius: radius.lg,
-    backgroundColor: "#EAF0F8",
-    overflow: "hidden",
-    marginBottom: 18,
+  searchWrap: {
+    marginBottom: 10,
+    zIndex: 5,
+  },
+  searchInput: {
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-  },
-  mapHint: {
-    position: "absolute",
-    left: 12,
-    top: 12,
-    color: colors.inkSoft,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  marker: {
-    position: "absolute",
-    width: 22,
-    height: 22,
-    borderRadius: 6,
     backgroundColor: colors.foam,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: colors.river,
-  },
-  markerText: {
-    fontSize: 11,
-    fontWeight: "800",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     color: colors.ink,
+    paddingRight: 40,
+  },
+  searchSpinner: {
+    position: "absolute",
+    right: 14,
+    top: 14,
+  },
+  searchSheet: {
+    marginTop: 6,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    overflow: "hidden",
+  },
+  searchHit: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  searchHitName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.ink,
+  },
+  searchHitAddr: {
+    marginTop: 2,
+    fontSize: 12,
+    color: colors.inkSoft,
+  },
+  softNotice: {
+    marginBottom: 10,
+    fontSize: 12,
+    color: colors.inkSoft,
+    lineHeight: 18,
   },
   dayRow: { marginBottom: 8 },
   dayRowContent: { gap: 0, paddingVertical: 0 },
@@ -609,6 +1002,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  stopRowSelected: {
+    backgroundColor: "rgba(47,107,255,0.06)",
+  },
   stopIndex: {
     width: 28,
     height: 28,
@@ -616,6 +1012,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.river,
     alignItems: "center",
     justifyContent: "center",
+  },
+  stopIndexSelected: {
+    backgroundColor: colors.riverDeep,
   },
   stopIndexText: { fontWeight: "800", color: colors.foam, fontSize: 12 },
   stopBody: { flex: 1 },

@@ -5,6 +5,8 @@ import {
   DEFAULT_STREAMING_CHUNK_MS,
   PRIMARY_TRANSLATION_LOCALES,
   TRANSLATION_LOCALES,
+  demoTurnsFor,
+  demoVisionAssist,
   enqueueTranslation,
   listPhrasebook,
   listQueuedTranslations,
@@ -12,6 +14,7 @@ import {
   markQueuedFlushed,
   offlinePhraseTranslate,
   pendingQueueCount,
+  pickDemoTurn,
   removeQueuedTranslation,
   swapPair,
   type PhraseCategory,
@@ -19,8 +22,9 @@ import {
   type QueuedTranslation,
   type TranslationLocale,
 } from "@beaver/core";
+import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
-import { apiBase, apiGet, apiSend } from "@/lib/api";
+import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   createWebOfflineQueueStore,
   isBrowserOnline,
@@ -75,6 +79,9 @@ type PartialResponse = {
 type PhrasebookResponse = {
   phrases: PhrasebookLookup[];
 };
+
+type Tab = "conversation" | "camera";
+type Facing = "user" | "environment";
 
 const CATEGORY_KEYS: PhraseCategory[] = [
   "greetings",
@@ -139,30 +146,75 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+function softDemoStatus(): Status {
+  return {
+    mode: "demo",
+    asr: "demo-asr",
+    llm: "demo-llm",
+    tts: "demo-tts",
+    vision: "demo-vision",
+    featureEnabled: true,
+    locales: [...TRANSLATION_LOCALES],
+    primaryLocales: [...PRIMARY_TRANSLATION_LOCALES],
+    streamingMode: "chunked",
+    offlineAssist: "phrasebook",
+  };
+}
+
+function seedTurns(
+  sourceLocale: TranslationLocale,
+  targetLocale: TranslationLocale,
+): Turn[] {
+  return demoTurnsFor({ sourceLocale, targetLocale })
+    .slice(0, 2)
+    .map((row, i) => ({
+      id: `seed-${i}-${row.sourceText.slice(0, 8)}`,
+      sourceText: row.sourceText,
+      translatedText: row.translatedText,
+      mode: "demo" as const,
+    }));
+}
+
 export function LiveAssist({ locale }: { locale: Locale }) {
   const queueStore = useMemo(() => createWebOfflineQueueStore(), []);
   const [status, setStatus] = useState<Status | null>(null);
+  const [softNotice, setSoftNotice] = useState(false);
+  const [tab, setTab] = useState<Tab>("conversation");
   const [sourceLocale, setSourceLocale] = useState<TranslationLocale>("zh-CN");
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [draft, setDraft] = useState("");
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = useState<Turn[]>(() => seedTurns("zh-CN", "en"));
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [partialText, setPartialText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(0);
+  const [demoIndex, setDemoIndex] = useState(2);
   const [online, setOnline] = useState(true);
   const [phrases, setPhrases] = useState<PhrasebookLookup[]>([]);
   const [phraseCategory, setPhraseCategory] =
     useState<PhraseCategory>("greetings");
   const [queue, setQueue] = useState<QueuedTranslation[]>([]);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [facing, setFacing] = useState<Facing>("environment");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [overlay, setOverlay] = useState<{
+    source: string;
+    translated: string;
+  } | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const sequenceRef = useRef(0);
   const sessionIdRef = useRef(`sess_${Date.now().toString(36)}`);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const seededPairRef = useRef("zh-CN|en");
   const chunkMs =
     status?.streaming?.chunkMs ?? DEFAULT_STREAMING_CHUNK_MS;
+
+  const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
+  const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
+  const isDemo = !status || status.mode === "demo" || softNotice;
 
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
@@ -183,21 +235,17 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     void apiGet<Status>("/v1/translation/status")
-      .then(setStatus)
-      .catch(() =>
-        setStatus({
-          mode: "demo",
-          asr: "demo-asr",
-          llm: "demo-llm",
-          tts: "demo-tts",
-          vision: "demo-vision",
-          featureEnabled: true,
-          locales: [...TRANSLATION_LOCALES],
-          primaryLocales: [...PRIMARY_TRANSLATION_LOCALES],
-          streamingMode: "chunked",
-          offlineAssist: "phrasebook",
-        }),
-      );
+      .then((res) => {
+        setStatus(res);
+        setSoftNotice(res.mode === "demo");
+      })
+      .catch((err) => {
+        setStatus(softDemoStatus());
+        setSoftNotice(true);
+        if (!isPlannerNoiseError(err)) {
+          /* still soft — never surface Failed to fetch */
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -206,10 +254,34 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     )
       .then((res) => setPhrases(res.phrases))
       .catch(() => {
-        // Client-side fallback from core bundle if API unreachable
         setPhrases(listPhrasebook(sourceLocale, targetLocale, phraseCategory));
       });
   }, [sourceLocale, targetLocale, phraseCategory]);
+
+  useEffect(() => {
+    const key = `${sourceLocale}|${targetLocale}`;
+    if (seededPairRef.current === key) return;
+    seededPairRef.current = key;
+    setTurns(seedTurns(sourceLocale, targetLocale));
+    setDemoIndex(2);
+    setOverlay(null);
+  }, [sourceLocale, targetLocale]);
+
+  useEffect(() => {
+    return () => {
+      cameraStreamRef.current?.getTracks().forEach((tr) => tr.stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (tab !== "camera" || !cameraReady || !cameraStreamRef.current) return;
+    const el = videoRef.current;
+    if (!el) return;
+    el.srcObject = cameraStreamRef.current;
+    void el.play().catch(() => {
+      /* autoplay may be blocked until gesture */
+    });
+  }, [tab, cameraReady]);
 
   const pushAndSpeak = useCallback(
     async (res: SpeakableTurn) => {
@@ -224,7 +296,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         ...prev,
       ]);
       if (res.tts !== undefined) setDemoIndex((i) => i + 1);
-      if (!res.translatedText) return;
+      if (!res.translatedText || !ttsEnabled) return;
       if (res.tts?.audioBase64 && !res.tts.speakLocally) {
         try {
           await playAudioBase64(res.tts.audioBase64, res.tts.mimeType);
@@ -235,7 +307,36 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       }
       await speakLocal(res.translatedText, targetLocale);
     },
-    [targetLocale],
+    [targetLocale, ttsEnabled],
+  );
+
+  const localDemoTurn = useCallback(
+    async (input: { text?: string }) => {
+      const text = input.text?.trim();
+      if (text) {
+        const hit = offlinePhraseTranslate(text, sourceLocale, targetLocale);
+        await pushAndSpeak({
+          sourceText: text,
+          translatedText:
+            hit?.translatedText ?? `[${targetLocale}] ${text}`,
+          mode: "demo",
+          tts: {
+            audioBase64: null,
+            mimeType: "audio/mpeg",
+            speakLocally: true,
+          },
+        });
+        return;
+      }
+      const turn = pickDemoTurn({ sourceLocale, targetLocale }, demoIndex);
+      await pushAndSpeak({
+        sourceText: turn.sourceText,
+        translatedText: turn.translatedText,
+        mode: "demo",
+        tts: { audioBase64: null, mimeType: "audio/mpeg", speakLocally: true },
+      });
+    },
+    [demoIndex, pushAndSpeak, sourceLocale, targetLocale],
   );
 
   async function runTurn(input: {
@@ -248,17 +349,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     setPartialText("");
     try {
       if (!isBrowserOnline()) {
-        const text =
-          input.text?.trim() ||
-          offlinePhraseTranslate(
-            "",
-            sourceLocale,
-            targetLocale,
-          )?.sourceText ||
-          "";
-        if (input.text?.trim()) {
+        const text = input.text?.trim();
+        if (text) {
           const item = await enqueueTranslation(queueStore, {
-            text: input.text.trim(),
+            text,
             sourceLocale,
             targetLocale,
           });
@@ -272,18 +366,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           await refreshQueue();
           return;
         }
-        // Demo / empty mic offline → phrasebook first greeting for pair
-        const hit = offlinePhraseTranslate(
-          "你好",
-          sourceLocale,
-          targetLocale,
-        );
+        const hit = offlinePhraseTranslate("你好", sourceLocale, targetLocale);
         if (hit) {
           await pushAndSpeak({
             sourceText: hit.sourceText,
             translatedText: hit.translatedText,
             mode: "offline",
           });
+        } else {
+          await localDemoTurn({});
         }
         return;
       }
@@ -292,12 +383,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         ...input,
         sourceLocale,
         targetLocale,
-        withTts: true,
+        withTts: ttsEnabled,
         demoTurnIndex: demoIndex,
       });
       await pushAndSpeak(res);
-    } catch {
-      // Semi-offline fallback: phrasebook or queue
+    } catch (err) {
+      setSoftNotice(true);
       const text = input.text?.trim();
       if (text) {
         const hit = offlinePhraseTranslate(text, sourceLocale, targetLocale);
@@ -322,6 +413,13 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           });
           await refreshQueue();
         }
+      } else if (
+        !input.audioBase64 ||
+        isPlannerNoiseError(err) ||
+        softNotice ||
+        status?.mode === "demo"
+      ) {
+        await localDemoTurn({});
       } else {
         setError(t(locale, "translate.error"));
       }
@@ -349,7 +447,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       );
       if (res.text) setPartialText(res.text);
     } catch {
-      /* optimistic UI best-effort */
+      const turn = pickDemoTurn({ sourceLocale, targetLocale }, demoIndex);
+      setPartialText(turn.sourceText.slice(0, 18) + "…");
     }
   }
 
@@ -404,7 +503,6 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data);
           const seq = sequenceRef.current++;
-          // Optimistic chunked partial (in addition to device interim)
           void postPartialChunk(e.data, seq);
         }
       };
@@ -481,7 +579,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           text: item.text,
           sourceLocale: item.pair.sourceLocale,
           targetLocale: item.pair.targetLocale,
-          withTts: true,
+          withTts: ttsEnabled,
           demoTurnIndex: demoIndex,
         });
         await markQueuedFlushed(queueStore, item.id);
@@ -501,6 +599,82 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     });
   }
 
+  async function startCamera(nextFacing: Facing = facing) {
+    try {
+      cameraStreamRef.current?.getTracks().forEach((tr) => tr.stop());
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: nextFacing },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraReady(true);
+    } catch {
+      setCameraReady(false);
+    }
+  }
+
+  async function onVision(mode: "ocr" | "caption") {
+    setBusy(true);
+    setError(null);
+    try {
+      let imageBase64: string | undefined;
+      if (videoRef.current && cameraReady) {
+        const canvas = document.createElement("canvas");
+        canvas.width = videoRef.current.videoWidth || 640;
+        canvas.height = videoRef.current.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+          const data = canvas.toDataURL("image/jpeg", 0.55);
+          imageBase64 = data.includes(",") ? data.split(",")[1] : data;
+        }
+      }
+      try {
+        const res = await apiSend<{
+          sourceText: string;
+          translatedText: string | null;
+          mode: "live" | "demo";
+        }>("/v1/translation/vision", "POST", {
+          imageBase64,
+          mimeType: "image/jpeg",
+          mode,
+          sourceLocale,
+          targetLocale,
+        });
+        setOverlay({
+          source: res.sourceText,
+          translated: res.translatedText ?? "",
+        });
+        await pushAndSpeak({
+          sourceText: res.sourceText,
+          translatedText: res.translatedText ?? "",
+          mode: res.mode,
+        });
+      } catch {
+        setSoftNotice(true);
+        const demo = demoVisionAssist(
+          { sourceLocale, targetLocale },
+          mode,
+        );
+        setOverlay({
+          source: demo.sourceText,
+          translated: demo.translatedText,
+        });
+        await pushAndSpeak({
+          sourceText: demo.sourceText,
+          translatedText: demo.translatedText,
+          mode: "demo",
+        });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const locales = (status?.locales as TranslationLocale[] | undefined) ?? [
     ...TRANSLATION_LOCALES,
   ];
@@ -514,295 +688,535 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   ];
 
   return (
-    <div className="mx-auto max-w-3xl px-6 pb-24 pt-8 md:px-10">
-      <div className="animate-rise border-b border-[color:var(--bp-line)] pb-8">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
-          Beaver Plan · 海狸旅行
+    <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] overflow-hidden"
+      >
+        <div
+          className="animate-drift absolute inset-0"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse 70% 55% at 78% 18%, rgba(47, 107, 255, 0.18), transparent 58%),
+              radial-gradient(ellipse 50% 40% at 12% 0%, rgba(96, 165, 250, 0.14), transparent 52%),
+              linear-gradient(180deg, #dbe8ff 0%, transparent 78%)
+            `,
+          }}
+        />
+        <div className="bp-topo absolute inset-0 opacity-50" />
+      </div>
+
+      <header className="animate-rise border-b border-[color:var(--bp-line)] pb-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-river">
+          {brandSecondary}
         </p>
+        <h1 className="mt-3 font-display text-[clamp(2.5rem,6vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-ink">
+          {brandPrimary}
+        </h1>
         <p className="mt-4 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-ink-soft">
           {t(locale, "translate.eyebrow")}
         </p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        <p className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight text-ink/90 md:text-3xl">
           {t(locale, "translate.title")}
-        </h1>
-        <p className="mt-4 max-w-xl text-ink-soft">
+        </p>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base">
           {t(locale, "translate.webSupport")}
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
+
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
           <span
-            className={`rounded-md px-2.5 py-1 font-medium text-foam ${
-              status?.mode === "live" ? "bg-focus/80" : "bg-timber/80"
+            className={`rounded-md px-2.5 py-1 font-semibold ${
+              isDemo
+                ? "bg-river/12 text-river-deep"
+                : "bg-river text-foam"
             }`}
           >
-            {status?.mode === "live"
-              ? t(locale, "translate.liveBadge")
-              : t(locale, "translate.demoBadge")}
+            {isDemo
+              ? t(locale, "translate.demoBadge")
+              : t(locale, "translate.liveBadge")}
           </span>
           <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-river-deep">
             {t(locale, "translate.streamingBadge")}
           </span>
-          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-river-deep">
+          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-ink-soft">
             {online
               ? t(locale, "offline.online")
               : t(locale, "translate.offlineBadge")}
           </span>
-          <span className="text-ink-soft/70">
-            ASR {status?.asr ?? "…"} · LLM {status?.llm ?? "…"} · TTS{" "}
-            {status?.tts ?? "…"}
+          <span className="rounded-md bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+            {t(locale, "translate.asrReady")} · {status?.asr ?? "…"}
           </span>
-          <span className="font-mono text-[11px] text-ink-soft/50">
-            {apiBase()}
+          <span className="rounded-md bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+            {t(locale, "translate.ttsReady")} · {status?.tts ?? "…"}
           </span>
+          {!status ? (
+            <span className="text-ink-soft/70">
+              {t(locale, "translate.loading")}
+            </span>
+          ) : null}
         </div>
-      </div>
+
+        {isDemo ? (
+          <p className="animate-sheet-in mt-4 rounded-md border border-river/15 bg-river/[0.06] px-4 py-3 text-sm leading-relaxed text-river-deep">
+            {softNotice && !online
+              ? t(locale, "translate.softOffline")
+              : t(locale, "translate.demoNotice")}
+          </p>
+        ) : null}
+      </header>
 
       <div
-        className="animate-rise mt-10 grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end"
-        style={{ animationDelay: "60ms" }}
+        className="animate-rise mt-8 flex gap-2 rounded-xl bg-mist/70 p-1.5"
+        style={{ animationDelay: "40ms" }}
+        role="tablist"
+        aria-label={t(locale, "translate.title")}
       >
-        <LocaleSelect
-          label={t(locale, "translate.source")}
-          value={sourceLocale}
-          locales={orderedLocales}
-          primary={primary}
-          ui={locale}
-          onChange={setSourceLocale}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            const next = swapPair({ sourceLocale, targetLocale });
-            setSourceLocale(next.sourceLocale);
-            setTargetLocale(next.targetLocale);
-          }}
-          className="mb-1 h-10 w-10 justify-self-center rounded-full bg-mist text-river-deep transition hover:bg-river hover:text-foam"
-          aria-label={t(locale, "translate.swap")}
-        >
-          ⇄
-        </button>
-        <LocaleSelect
-          label={t(locale, "translate.target")}
-          value={targetLocale}
-          locales={orderedLocales}
-          primary={primary}
-          ui={locale}
-          onChange={setTargetLocale}
-        />
+        {(
+          [
+            ["conversation", "translate.mode.conversation"],
+            ["camera", "translate.mode.camera"],
+          ] as const
+        ).map(([id, key]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => {
+              setTab(id);
+              if (id === "camera") {
+                if (cameraStreamRef.current && videoRef.current) {
+                  videoRef.current.srcObject = cameraStreamRef.current;
+                  void videoRef.current.play();
+                } else if (!cameraReady) {
+                  void startCamera();
+                }
+              }
+            }}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+              tab === id
+                ? "bg-river text-foam shadow-sm"
+                : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            {t(locale, key)}
+          </button>
+        ))}
       </div>
+
+      <section
+        className="animate-rise mt-6"
+        style={{ animationDelay: "80ms" }}
+        aria-label={t(locale, "translate.pairLabel")}
+      >
+        <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+          {t(locale, "translate.pairLabel")}
+        </p>
+        <div className="grid items-stretch gap-3 sm:grid-cols-[1fr_auto_1fr]">
+          <LocaleSelect
+            label={t(locale, "translate.source")}
+            value={sourceLocale}
+            locales={orderedLocales}
+            primary={primary}
+            ui={locale}
+            onChange={setSourceLocale}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const next = swapPair({ sourceLocale, targetLocale });
+              setSourceLocale(next.sourceLocale);
+              setTargetLocale(next.targetLocale);
+            }}
+            className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-sm transition hover:bg-river-deep"
+            aria-label={t(locale, "translate.swap")}
+          >
+            ⇄
+          </button>
+          <LocaleSelect
+            label={t(locale, "translate.target")}
+            value={targetLocale}
+            locales={orderedLocales}
+            primary={primary}
+            ui={locale}
+            onChange={setTargetLocale}
+          />
+        </div>
+      </section>
 
       {error ? (
         <p className="mt-4 text-sm text-timber">{error}</p>
       ) : null}
 
-      {(listening || partialText) && (
-        <p className="mt-6 rounded-md bg-mist/80 px-4 py-3 text-sm text-river-deep">
-          <span className="mr-2 text-xs uppercase tracking-[0.14em] text-river">
-            {t(locale, "translate.partialHint")}
-          </span>
-          {partialText || "…"}
-        </p>
-      )}
-
-      <div
-        className="animate-rise mt-8 space-y-3"
-        style={{ animationDelay: "120ms" }}
-      >
-        {turns.length === 0 ? (
-          <p className="border-y border-[color:var(--bp-line)] py-10 text-ink-soft">
-            {t(locale, "translate.empty")}
-          </p>
-        ) : (
-          turns.map((row) => (
-            <article
-              key={row.id}
-              className="border-b border-[color:var(--bp-line)] py-5"
-            >
-              <p className="text-sm text-ink-soft">{row.sourceText}</p>
-              <p className="mt-2 font-display text-2xl leading-snug text-ink">
-                {row.translatedText}
-              </p>
-              {row.mode === "offline" ? (
-                <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-timber">
-                  {t(locale, "translate.offlineBadge")}
-                </p>
-              ) : null}
-            </article>
-          ))
-        )}
-      </div>
-
-      <section className="animate-rise mt-12" style={{ animationDelay: "140ms" }}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="font-display text-2xl text-ink">
-              {t(locale, "translate.phrasebook")}
-            </h2>
-            <p className="mt-1 text-sm text-ink-soft">
-              {t(locale, "translate.phrasebookHint")}
+      {tab === "conversation" ? (
+        <>
+          {(listening || partialText) && (
+            <p className="animate-sheet-in mt-6 rounded-md border border-river/20 bg-foam/90 px-4 py-3 text-sm text-river-deep">
+              <span className="mr-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river">
+                {t(locale, "translate.partialHint")}
+              </span>
+              {partialText || "…"}
             </p>
+          )}
+
+          <div
+            className="animate-rise mt-8 space-y-0"
+            style={{ animationDelay: "120ms" }}
+          >
+            {turns.length === 0 ? (
+              <p className="border-y border-[color:var(--bp-line)] py-12 text-ink-soft">
+                {t(locale, "translate.empty")}
+              </p>
+            ) : (
+              turns.map((row, idx) => (
+                <article
+                  key={row.id}
+                  className="animate-turn-in border-b border-[color:var(--bp-line)] py-5"
+                  style={{ animationDelay: `${Math.min(idx, 4) * 40}ms` }}
+                >
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                        {t(locale, "translate.source")}
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                        {row.sourceText}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                        {t(locale, "translate.target")}
+                      </p>
+                      <p className="mt-1.5 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl">
+                        {row.translatedText}
+                      </p>
+                    </div>
+                  </div>
+                  {row.mode === "offline" ? (
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-timber">
+                      {t(locale, "translate.offlineBadge")}
+                    </p>
+                  ) : null}
+                </article>
+              ))
+            )}
           </div>
-          <span className="text-xs text-ink-soft/70">
-            {pendingQueueCount(queue) > 0
-              ? t(locale, "offline.pending").replace(
-                  "{n}",
-                  String(pendingQueueCount(queue)),
-                )
-              : null}
-          </span>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {CATEGORY_KEYS.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setPhraseCategory(cat)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                phraseCategory === cat
-                  ? "bg-river text-foam"
-                  : "bg-mist text-river-deep hover:bg-river/15"
-              }`}
-            >
-              {t(locale, `translate.category.${cat}` as MessageKey)}
-            </button>
-          ))}
-        </div>
-        <ul className="mt-4 divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
-          {phrases.map((phrase) => (
-            <li key={phrase.id}>
+
+          <section
+            className="animate-rise mt-12"
+            style={{ animationDelay: "140ms" }}
+          >
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="font-display text-2xl tracking-tight text-ink">
+                  {t(locale, "translate.phrasebook")}
+                </h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {t(locale, "translate.phrasebookHint")}
+                </p>
+              </div>
+              <span className="text-xs text-ink-soft/70">
+                {pendingQueueCount(queue) > 0
+                  ? t(locale, "offline.pending").replace(
+                      "{n}",
+                      String(pendingQueueCount(queue)),
+                    )
+                  : null}
+              </span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {CATEGORY_KEYS.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setPhraseCategory(cat)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    phraseCategory === cat
+                      ? "bg-river text-foam"
+                      : "bg-mist text-river-deep hover:bg-river/15"
+                  }`}
+                >
+                  {t(locale, `translate.category.${cat}` as MessageKey)}
+                </button>
+              ))}
+            </div>
+            <ul className="mt-4 divide-y divide-[color:var(--bp-line)] border-y border-[color:var(--bp-line)]">
+              {phrases.map((phrase) => (
+                <li key={phrase.id}>
+                  <button
+                    type="button"
+                    onClick={() => void onPhrase(phrase)}
+                    className="flex w-full flex-col items-start gap-1 py-3 text-left transition hover:bg-mist/40"
+                  >
+                    <span className="text-sm text-ink-soft">
+                      {phrase.sourceText}
+                    </span>
+                    <span className="font-medium text-ink">
+                      {phrase.translatedText}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-river">
+                {t(locale, "translate.queue")}
+              </h3>
+              {queue.filter((q) => q.status === "queued").length === 0 ? (
+                <p className="mt-2 text-sm text-ink-soft">
+                  {t(locale, "translate.queueEmpty")}
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-2">
+                  {queue
+                    .filter((q) => q.status === "queued")
+                    .map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-start justify-between gap-3 text-sm"
+                      >
+                        <div>
+                          <p className="text-ink">{item.text}</p>
+                          {item.offlineHint ? (
+                            <p className="text-ink-soft">
+                              {item.offlineHint.translatedText}
+                            </p>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          className="text-xs text-timber"
+                          onClick={() =>
+                            void removeQueuedTranslation(
+                              queueStore,
+                              item.id,
+                            ).then(refreshQueue)
+                          }
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              )}
               <button
                 type="button"
-                onClick={() => void onPhrase(phrase)}
-                className="flex w-full flex-col items-start gap-1 py-3 text-left transition hover:bg-mist/40"
+                onClick={() => void onFlushQueue()}
+                disabled={!online || pendingQueueCount(queue) === 0}
+                className="mt-3 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river disabled:opacity-40"
               >
-                <span className="text-sm text-ink-soft">{phrase.sourceText}</span>
-                <span className="font-medium text-ink">
-                  {phrase.translatedText}
-                </span>
+                {t(locale, "translate.queueFlush")}
               </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section
+          className="animate-sheet-in mt-6"
+          aria-label={t(locale, "translate.mode.camera")}
+        >
+          <p className="mb-3 text-sm text-ink-soft">
+            {t(locale, "translate.dualHint")}
+          </p>
+          <div className="grid overflow-hidden rounded-2xl border border-[color:var(--bp-line)] bg-ink shadow-[0_20px_50px_rgba(15,23,42,0.12)] md:grid-cols-2">
+            <div className="relative min-h-[220px] border-b border-white/10 md:min-h-[320px] md:border-b-0 md:border-r">
+              <div
+                className="animate-lens-breathe absolute inset-0"
+                style={{
+                  backgroundImage: `
+                    radial-gradient(ellipse 60% 50% at 40% 35%, rgba(47,107,255,0.45), transparent 60%),
+                    linear-gradient(160deg, #1a4fd6 0%, #0f172a 70%)
+                  `,
+                }}
+              />
+              <div className="bp-topo absolute inset-0 opacity-30" />
+              <div className="absolute left-3 top-3 rounded-md bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
+                {t(locale, "translate.lensYou")} ·{" "}
+                {t(locale, "translate.cameraFront")}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-20 w-20 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
+              </div>
+            </div>
 
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-river">
-            {t(locale, "translate.queue")}
-          </h3>
-          {queue.filter((q) => q.status === "queued").length === 0 ? (
-            <p className="mt-2 text-sm text-ink-soft">
-              {t(locale, "translate.queueEmpty")}
-            </p>
-          ) : (
-            <ul className="mt-2 space-y-2">
-              {queue
-                .filter((q) => q.status === "queued")
-                .map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-start justify-between gap-3 text-sm"
-                  >
-                    <div>
-                      <p className="text-ink">{item.text}</p>
-                      {item.offlineHint ? (
-                        <p className="text-ink-soft">
-                          {item.offlineHint.translatedText}
-                        </p>
-                      ) : null}
-                    </div>
+            <div className="relative min-h-[220px] md:min-h-[320px]">
+              {cameraReady ? (
+                <video
+                  ref={videoRef}
+                  muted
+                  playsInline
+                  autoPlay
+                  className={`absolute inset-0 h-full w-full object-cover ${
+                    facing === "user" ? "scale-x-[-1]" : ""
+                  }`}
+                />
+              ) : (
+                <>
+                  <div
+                    className="animate-lens-breathe absolute inset-0"
+                    style={{
+                      backgroundImage: `
+                        radial-gradient(ellipse 70% 55% at 70% 40%, rgba(96,165,250,0.35), transparent 55%),
+                        linear-gradient(200deg, #334155 0%, #0f172a 85%)
+                      `,
+                    }}
+                  />
+                  <div className="bp-topo absolute inset-0 opacity-40" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                    <p className="text-sm text-foam/80">
+                      {t(locale, "translate.cameraHint")}
+                    </p>
                     <button
                       type="button"
-                      className="text-xs text-timber"
-                      onClick={() =>
-                        void removeQueuedTranslation(queueStore, item.id).then(
-                          refreshQueue,
-                        )
-                      }
+                      onClick={() => void startCamera()}
+                      className="rounded-md bg-river px-4 py-2 text-sm font-semibold text-foam"
                     >
-                      ×
+                      {t(locale, "translate.enableCamera")}
                     </button>
-                  </li>
-                ))}
-            </ul>
-          )}
-          <button
-            type="button"
-            onClick={() => void onFlushQueue()}
-            disabled={!online || pendingQueueCount(queue) === 0}
-            className="mt-3 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river disabled:opacity-40"
-          >
-            {t(locale, "translate.queueFlush")}
-          </button>
-        </div>
-      </section>
+                  </div>
+                </>
+              )}
+              <div className="absolute left-3 top-3 rounded-md bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
+                {t(locale, "translate.lensWorld")} ·{" "}
+                {facing === "environment"
+                  ? t(locale, "translate.cameraBack")
+                  : t(locale, "translate.cameraFront")}
+              </div>
+              {overlay ? (
+                <div className="absolute inset-x-3 bottom-3 rounded-xl bg-ink/75 px-4 py-3 backdrop-blur-md">
+                  <p className="text-xs text-foam/70">{overlay.source}</p>
+                  {overlay.translated ? (
+                    <p className="mt-1 font-display text-lg font-semibold leading-snug text-foam">
+                      {overlay.translated}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
 
-      <div
-        className="animate-rise sticky bottom-0 mt-10 -mx-6 border-t border-[color:var(--bp-line)] bg-foam/80 px-6 py-4 backdrop-blur-md md:-mx-10 md:px-10"
-        style={{ animationDelay: "160ms" }}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void onSend();
-            }}
-            placeholder={t(locale, "translate.typeHint")}
-            className="flex-1 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
-            disabled={busy}
-          />
-          <button
-            type="button"
-            onClick={() => void onSend()}
-            disabled={busy}
-            className="rounded-md bg-river px-4 py-2.5 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-50"
-          >
-            {busy
-              ? t(locale, "translate.translating")
-              : t(locale, "translate.send")}
-          </button>
-          <button
-            type="button"
-            onClick={() => void onQueueDraft()}
-            disabled={busy || !draft.trim()}
-            className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river disabled:opacity-50"
-          >
-            {t(locale, "translate.queueAdd")}
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = facing === "environment" ? "user" : "environment";
+                setFacing(next);
+                void startCamera(next);
+              }}
+              className="rounded-md border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-river/30 hover:text-river"
+            >
+              {facing === "environment"
+                ? t(locale, "translate.cameraFront")
+                : t(locale, "translate.cameraBack")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onVision("ocr")}
+              disabled={busy}
+              className="rounded-md bg-river px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-50"
+            >
+              {t(locale, "translate.ocr")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onVision("caption")}
+              disabled={busy}
+              className="rounded-md bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-ink disabled:opacity-50"
+            >
+              {t(locale, "translate.caption")}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {tab === "conversation" ? (
+        <div
+          className="animate-rise sticky bottom-0 mt-10 -mx-6 border-t border-[color:var(--bp-line)] bg-foam/85 px-6 py-4 backdrop-blur-md md:-mx-10 md:px-10"
+          style={{ animationDelay: "160ms" }}
+        >
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setTtsEnabled((v) => !v)}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                ttsEnabled
+                  ? "bg-river/12 text-river-deep"
+                  : "bg-mist text-ink-soft"
+              }`}
+              aria-pressed={ttsEnabled}
+            >
+              {t(locale, "translate.ttsReady")}{" "}
+              {ttsEnabled ? "· on" : "· off"}
+            </button>
+            <span className="text-[11px] text-ink-soft/60">{apiBase()}</span>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void onSend();
+              }}
+              placeholder={t(locale, "translate.typeHint")}
+              className="flex-1 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
+              disabled={busy}
+            />
+            <button
+              type="button"
+              onClick={() => void onSend()}
+              disabled={busy}
+              className="rounded-md bg-river px-4 py-2.5 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-50"
+            >
+              {busy
+                ? t(locale, "translate.translating")
+                : t(locale, "translate.send")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onQueueDraft()}
+              disabled={busy || !draft.trim()}
+              className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river disabled:opacity-50"
+            >
+              {t(locale, "translate.queueAdd")}
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onMouseDown={() => void startMic()}
+              onMouseUp={stopMic}
+              onMouseLeave={() => {
+                if (listening) stopMic();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                void startMic();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                stopMic();
+              }}
+              disabled={busy && !listening}
+              className={`min-w-[10rem] flex-1 rounded-md px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
+                listening ? "bg-ink" : "bg-river hover:bg-river-deep"
+              }`}
+            >
+              {listening
+                ? t(locale, "translate.listening")
+                : t(locale, "translate.holdMic")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runTurn({})}
+              disabled={busy}
+              className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition hover:border-river/40 disabled:opacity-50"
+            >
+              {t(locale, "translate.nextDemo")}
+            </button>
+          </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onMouseDown={() => void startMic()}
-            onMouseUp={stopMic}
-            onMouseLeave={() => {
-              if (listening) stopMic();
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              void startMic();
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              stopMic();
-            }}
-            disabled={busy && !listening}
-            className={`min-w-[10rem] flex-1 rounded-md px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
-              listening ? "bg-ink" : "bg-river hover:bg-river-deep"
-            }`}
-          >
-            {listening
-              ? t(locale, "translate.listening")
-              : t(locale, "translate.holdMic")}
-          </button>
-          <button
-            type="button"
-            onClick={() => void runTurn({})}
-            disabled={busy}
-            className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition hover:border-river/40 disabled:opacity-50"
-          >
-            {t(locale, "translate.nextDemo")}
-          </button>
-        </div>
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -823,14 +1237,14 @@ function LocaleSelect({
   onChange: (v: TranslationLocale) => void;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs uppercase tracking-[0.16em] text-river">
+    <label className="block rounded-xl border border-[color:var(--bp-line)] bg-foam/90 p-3 shadow-sm backdrop-blur-sm">
+      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as TranslationLocale)}
-        className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-foam px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
+        className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm font-medium text-ink outline-none ring-focus focus:ring-2"
       >
         {locales.map((loc) => (
           <option key={loc} value={loc}>
