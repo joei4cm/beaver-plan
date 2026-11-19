@@ -213,7 +213,7 @@ export type ShareStyle = {
   coverTitle?: string;
   /** Override subtitle line (defaults to destination / day label). */
   coverSubtitle?: string;
-  /** Accent hex, e.g. #b86b3c. */
+  /** Accent hex, e.g. #2F6BFF (Lumen Route river). */
   accentColor?: string;
   /** Title size multiplier, typically 0.8–1.35. */
   titleScale?: number;

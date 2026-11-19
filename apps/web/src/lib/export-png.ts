@@ -14,7 +14,7 @@ export async function svgToPngBlob(
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("canvas_unavailable");
-    ctx.fillStyle = "#f3efe6";
+    ctx.fillStyle = "#F4F6FA";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0, width, height);
     const blob = await new Promise<Blob>((resolve, reject) => {

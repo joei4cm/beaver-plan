@@ -38,6 +38,8 @@ export function OfflinePinControl({
   const [status, setStatus] = useState<OfflinePinStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Avoid SSR/client navigator.onLine mismatch → Next.js "1 Issue" pill.
+  const [mounted, setMounted] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -49,6 +51,7 @@ export function OfflinePinControl({
   }, [tripId]);
 
   useEffect(() => {
+    setMounted(true);
     void refresh();
     const onNet = () => {
       void (async () => {
@@ -108,7 +111,9 @@ export function OfflinePinControl({
 
   const pinned = status?.pinned ?? false;
   const pending = status?.pendingMutations ?? 0;
-  const online = status?.online ?? isBrowserOnline();
+  const online = mounted
+    ? (status?.online ?? isBrowserOnline())
+    : true;
 
   return (
     <div className={compact ? "inline-flex flex-col gap-1" : "flex flex-col gap-2"}>
