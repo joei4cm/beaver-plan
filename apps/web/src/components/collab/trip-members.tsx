@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { TripInvite, TripMember, TripRole } from "@beaver/core";
+import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type MembersPayload = {
   members: TripMember[];
@@ -37,27 +38,63 @@ export function TripMembersBar({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [demoSeeded, setDemoSeeded] = useState(false);
+
+  const applySeed = useCallback(() => {
+    if (tripId !== "sample-kyoto") return false;
+    const seed = sampleKyotoCollab();
+    setMembers(seed.members);
+    setYourRole(seed.yourRole);
+    setDemoSeeded(true);
+    setError(null);
+    return true;
+  }, [tripId]);
 
   const refresh = useCallback(async () => {
     const data = await apiGet<MembersPayload>(`/v1/trips/${tripId}/members`);
+    if (tripId === "sample-kyoto" && data.members.length === 0) {
+      applySeed();
+      return;
+    }
     setMembers(data.members);
     setYourRole(data.yourRole);
+    setDemoSeeded(false);
     onVersion?.(data.tripVersion);
-  }, [tripId, onVersion]);
+  }, [applySeed, tripId, onVersion]);
 
   useEffect(() => {
     startTransition(() => {
-      void refresh().catch((e: Error) => {
-        // Soft-fail when Neon is absent — avoid red 503 blobs on demo shell.
-        if (/503/.test(e.message) || /Failed to fetch/i.test(e.message)) return;
-        setError(e.message);
+      void refresh().catch((e: unknown) => {
+        if (isPlannerNoiseError(e)) {
+          if (!applySeed()) return;
+          return;
+        }
+        setError(e instanceof Error ? e.message : "load_failed");
       });
     });
-  }, [refresh]);
+  }, [applySeed, refresh]);
 
   async function createInvite() {
     setError(null);
     setCopied(false);
+    if (demoSeeded) {
+      setLastInvite({
+        invite: {
+          id: "invite-demo",
+          tripId,
+          code: "BP-DEMO42",
+          role: inviteRole,
+          createdBy: "demo-user",
+          createdAt: new Date().toISOString(),
+          useCount: 0,
+        },
+        code: "BP-DEMO42",
+        inviteUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/invite/BP-DEMO42`,
+        path: "/invite/BP-DEMO42",
+      });
+      setOpen(true);
+      return;
+    }
     try {
       const data = await apiSend<InvitePayload>(
         `/v1/trips/${tripId}/invites`,
@@ -67,6 +104,25 @@ export function TripMembersBar({
       setLastInvite(data);
       setOpen(true);
     } catch (e) {
+      if (isPlannerNoiseError(e)) {
+        applySeed();
+        setLastInvite({
+          invite: {
+            id: "invite-demo",
+            tripId,
+            code: "BP-DEMO42",
+            role: inviteRole,
+            createdBy: "demo-user",
+            createdAt: new Date().toISOString(),
+            useCount: 0,
+          },
+          code: "BP-DEMO42",
+          inviteUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/invite/BP-DEMO42`,
+          path: "/invite/BP-DEMO42",
+        });
+        setOpen(true);
+        return;
+      }
       setError(e instanceof Error ? e.message : "invite_failed");
     }
   }
@@ -84,10 +140,10 @@ export function TripMembersBar({
   const canInvite = yourRole === "owner" || yourRole === "editor";
 
   return (
-    <div className="animate-fade border border-[color:var(--bp-line)] bg-foam/40 px-3 py-3">
+    <div className="animate-fade border-y border-[color:var(--bp-line)] bg-foam/30 px-1 py-3 md:px-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <span className="text-[11px] uppercase tracking-[0.16em] text-river/80">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
             {t(locale, "collab.members")}
           </span>
           <div className="flex -space-x-2">
@@ -95,26 +151,32 @@ export function TripMembersBar({
               <span
                 key={m.id}
                 title={`${m.displayName ?? m.userId} · ${m.role}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-foam bg-river-deep text-[11px] font-medium text-foam"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-paper bg-river text-[11px] font-semibold text-foam"
               >
                 {initials(m)}
               </span>
             ))}
+            {pending && members.length === 0 ? (
+              <span className="inline-flex h-8 w-16 items-center text-xs text-ink-soft">
+                …
+              </span>
+            ) : null}
           </div>
           <span className="truncate text-sm text-ink-soft">
             {members.length} · v{tripVersion}
             {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
+            {demoSeeded ? ` · ${t(locale, "collab.demoBadge")}` : ""}
           </span>
         </div>
 
-        {canInvite && (
+        {canInvite ? (
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={inviteRole}
               onChange={(e) =>
                 setInviteRole(e.target.value as "editor" | "viewer")
               }
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-2 py-1.5 text-xs text-ink-soft outline-none"
+              className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-2 py-1.5 text-xs text-ink-soft outline-none focus:border-river"
               aria-label={t(locale, "collab.inviteRole")}
             >
               <option value="editor">{t(locale, "collab.role.editor")}</option>
@@ -123,53 +185,59 @@ export function TripMembersBar({
             <button
               type="button"
               onClick={() => void createInvite()}
-              className="rounded-md bg-river px-3 py-1.5 text-sm text-foam transition hover:bg-river-deep"
+              className="rounded-md bg-river px-3 py-1.5 text-sm font-medium text-foam transition hover:bg-river-deep"
             >
               {t(locale, "collab.invite")}
             </button>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="rounded-md border border-[color:var(--bp-line)] px-3 py-1.5 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+              className="rounded-md px-3 py-1.5 text-sm text-ink-soft transition hover:text-river"
             >
               {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
             </button>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {error && (
-        <p className="mt-2 text-sm text-timber">{error}</p>
-      )}
+      {error ? (
+        <p className="mt-2 text-sm text-timber" role="alert">
+          {error}
+        </p>
+      ) : null}
 
-      {open && (
-        <div className="mt-4 space-y-4 border-t border-[color:var(--bp-line)] pt-4">
-          {lastInvite && (
+      {open ? (
+        <div className="animate-sheet-in mt-4 space-y-4 border-t border-[color:var(--bp-line)] pt-4">
+          {lastInvite ? (
             <div className="space-y-2">
-              <p className="text-sm text-ink-soft">{t(locale, "collab.shareHint")}</p>
+              <p className="text-sm text-ink-soft">
+                {t(locale, "collab.shareHint")}
+              </p>
               <div className="flex flex-wrap items-center gap-2">
-                <code className="rounded bg-river-deep/10 px-2 py-1 font-mono text-sm tracking-wider text-river-deep">
+                <code className="rounded bg-river/10 px-2 py-1 font-mono text-sm tracking-wider text-river-deep">
                   {lastInvite.code}
                 </code>
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-md border border-[color:var(--bp-line)] px-3 py-1.5 text-xs text-ink-soft hover:border-river/40"
+                  className="rounded-md border border-[color:var(--bp-line)] px-3 py-1.5 text-xs text-ink-soft transition hover:border-river/40 hover:text-river"
                 >
-                  {copied ? t(locale, "collab.copied") : t(locale, "collab.copyLink")}
+                  {copied
+                    ? t(locale, "collab.copied")
+                    : t(locale, "collab.copyLink")}
                 </button>
               </div>
               <p className="break-all text-xs text-ink-soft/80">
                 {lastInvite.inviteUrl}
               </p>
             </div>
-          )}
+          ) : null}
 
           <ul className="space-y-2">
             {members.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between gap-3 text-sm"
+                className="flex items-center justify-between gap-3 border-l-2 border-river/25 pl-3 text-sm"
               >
                 <span className="truncate text-ink">
                   {m.displayName ?? m.userId}
@@ -179,12 +247,14 @@ export function TripMembersBar({
                 </span>
               </li>
             ))}
-            {pending && members.length === 0 && (
-              <li className="text-sm text-ink-soft">{t(locale, "collab.loading")}</li>
-            )}
+            {pending && members.length === 0 ? (
+              <li className="text-sm text-ink-soft">
+                {t(locale, "collab.loading")}
+              </li>
+            ) : null}
           </ul>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
