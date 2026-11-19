@@ -49,7 +49,8 @@ export function TripMembersBar({
     startTransition(() => {
       void refresh().catch((e: Error) => {
         // Soft-fail when Neon is absent — avoid red 503 blobs on demo shell.
-        if (!/503/.test(e.message)) setError(e.message);
+        if (/503/.test(e.message) || /Failed to fetch/i.test(e.message)) return;
+        setError(e.message);
       });
     });
   }, [refresh]);
