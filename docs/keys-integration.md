@@ -119,7 +119,9 @@ BAIDU_MAP_SERVER_KEY=…
 DEFAULT_MAP_ENGINE=auto
 MAP_AUTO_AMAP_CN=true
 
-# Optional browser / native SDK keys (reserved; BFF is source of truth today)
+# Optional browser / native SDK keys for interactive planner basemap
+# (Places/Directions still use server keys via BFF. Missing browser keys →
+# Leaflet + OSM daylight tiles (Esri street fallback) so the demo never looks empty.)
 # NEXT_PUBLIC_GOOGLE_MAPS_JS_KEY=
 # NEXT_PUBLIC_AMAP_JS_KEY=
 # NEXT_PUBLIC_BAIDU_MAP_JS_KEY=

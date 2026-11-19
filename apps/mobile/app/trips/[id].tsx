@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import {
   decodeSimplePolyline,
+  encodeRoadPolyline,
   formatDuration,
+  legPathSegments,
   normalizeStepMode,
   stopsForDay,
   summarizeTransfer,
@@ -38,13 +40,35 @@ import {
 const locale = "zh-CN" as const;
 
 function MiniMap({ stops, legs }: { stops: Stop[]; legs: Leg[] }) {
-  const points = stops.map((s) => ({ lat: s.place.lat, lng: s.place.lng }));
-  const all = [...points];
+  const routePts: { lat: number; lng: number; mode: string }[] = [];
   for (const leg of legs) {
-    if (leg.polyline?.includes(";")) {
-      all.push(...decodeSimplePolyline(leg.polyline));
+    const segs = legPathSegments(leg);
+    let added = false;
+    for (const seg of segs) {
+      if (!seg.polyline?.includes(";")) continue;
+      const pts = decodeSimplePolyline(seg.polyline);
+      if (pts.length < 2) continue;
+      for (const p of pts) routePts.push({ ...p, mode: seg.mode });
+      added = true;
+    }
+    if (added) continue;
+    const from = stops.find((s) => s.id === leg.fromStopId);
+    const to = stops.find((s) => s.id === leg.toStopId);
+    if (!from || !to) continue;
+    const mode =
+      leg.mode === "walk" ? "walk" : leg.mode === "drive" ? "drive" : "transit";
+    const poly = encodeRoadPolyline(
+      { lat: from.place.lat, lng: from.place.lng },
+      { lat: to.place.lat, lng: to.place.lng },
+      { mode },
+    );
+    for (const p of decodeSimplePolyline(poly)) {
+      routePts.push({ ...p, mode });
     }
   }
+
+  const points = stops.map((s) => ({ lat: s.place.lat, lng: s.place.lng }));
+  const all = [...points, ...routePts];
   const minLat = Math.min(...all.map((p) => p.lat), 34.9);
   const maxLat = Math.max(...all.map((p) => p.lat), 35.1);
   const minLng = Math.min(...all.map((p) => p.lng), 135.6);
@@ -52,12 +76,37 @@ function MiniMap({ stops, legs }: { stops: Stop[]; legs: Leg[] }) {
   const W = 100;
   const H = 100;
   const proj = (lat: number, lng: number) => ({
-    left: `${((lng - minLng) / (maxLng - minLng || 1)) * W}%` as const,
-    top: `${(1 - (lat - minLat) / (maxLat - minLat || 1)) * H}%` as const,
+    left: ((lng - minLng) / (maxLng - minLng || 1)) * W,
+    top: (1 - (lat - minLat) / (maxLat - minLat || 1)) * H,
   });
 
   return (
     <View style={styles.map}>
+      <View style={styles.mapWash} pointerEvents="none" />
+      {routePts.map((p, i) => {
+        // Sample every other vertex so the strip stays light.
+        if (i % 2 === 1) return null;
+        const pos = proj(p.lat, p.lng);
+        const color =
+          p.mode === "walk"
+            ? "#64748B"
+            : p.mode === "transfer"
+              ? colors.timber
+              : colors.river;
+        return (
+          <View
+            key={`dot-${i}`}
+            style={[
+              styles.routeDot,
+              {
+                left: `${pos.left}%`,
+                top: `${pos.top}%`,
+                backgroundColor: color,
+              },
+            ]}
+          />
+        );
+      })}
       {stops.map((stop, i) => {
         const p = proj(stop.place.lat, stop.place.lng);
         return (
@@ -65,7 +114,12 @@ function MiniMap({ stops, legs }: { stops: Stop[]; legs: Leg[] }) {
             key={stop.id}
             style={[
               styles.marker,
-              { left: p.left, top: p.top, marginLeft: -11, marginTop: -11 },
+              {
+                left: `${p.left}%`,
+                top: `${p.top}%`,
+                marginLeft: -11,
+                marginTop: -11,
+              },
             ]}
           >
             <Text style={styles.markerText}>{i + 1}</Text>
@@ -548,6 +602,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
   },
+  mapWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#DBE8FF",
+    opacity: 0.35,
+  },
+  routeDot: {
+    position: "absolute",
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginLeft: -2.5,
+    marginTop: -2.5,
+  },
   mapHint: {
     position: "absolute",
     left: 12,
@@ -562,12 +629,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: 11,
     backgroundColor: colors.foam,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
     borderColor: colors.river,
+    zIndex: 2,
   },
   markerText: {
     fontSize: 11,
