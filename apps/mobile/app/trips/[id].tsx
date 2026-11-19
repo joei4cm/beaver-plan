@@ -15,17 +15,20 @@ import {
   formatDuration,
   normalizeStepMode,
   routeAdjacentStops,
+  sampleKyotoCollab,
   sampleKyotoFixture,
   searchDemoPlaces,
   stopsForDay,
   summarizeTransfer,
   toPlaceRef,
+  type ActivityEvent,
   type BookingLinkKind,
   type Day,
   type Leg,
   type PlaceSummary,
   type Stop,
   type Trip,
+  type TripComment,
 } from "@beaver/core";
 import { colors, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
@@ -80,6 +83,9 @@ export default function TripDetailScreen() {
   const [dayId, setDayId] = useState<string | null>(null);
   const [members, setMembers] = useState<TripMember[]>([]);
   const [yourRole, setYourRole] = useState<TripRole | null>(null);
+  const [comments, setComments] = useState<TripComment[]>([]);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [collabSeeded, setCollabSeeded] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [softNotice, setSoftNotice] = useState<string | null>(null);
@@ -133,10 +139,27 @@ export default function TripDetailScreen() {
       }
       try {
         const m = await fetchMembers(tripId);
-        setMembers(m.members);
-        setYourRole(m.yourRole);
+        if (tripId === "sample-kyoto" && m.members.length === 0) {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        } else {
+          setMembers(m.members);
+          setYourRole(m.yourRole);
+          setCollabSeeded(false);
+        }
       } catch {
-        /* members optional if offline */
+        if (tripId === "sample-kyoto") {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        }
       }
       await refreshPin();
     } catch (e) {
@@ -150,14 +173,28 @@ export default function TripDetailScreen() {
         setDayId(cached.days[0]?.id ?? null);
         setFromCache(true);
         setError(null);
+        if (tripId === "sample-kyoto") {
+          const seed = sampleKyotoCollab();
+          setMembers(seed.members);
+          setYourRole(seed.yourRole);
+          setComments(seed.comments);
+          setActivity(seed.events);
+          setCollabSeeded(true);
+        }
         await refreshPin();
       } else if (tripId === "sample-kyoto") {
         const fixture = sampleKyotoFixture();
+        const seed = sampleKyotoCollab();
         setTrip(fixture.trip);
         setDays(fixture.days);
         setStops(fixture.stops);
         setLegs(fixture.legs);
         setDayId(fixture.days[0]?.id ?? null);
+        setMembers(seed.members);
+        setYourRole(seed.yourRole);
+        setComments(seed.comments);
+        setActivity(seed.events);
+        setCollabSeeded(true);
         setFromCache(true);
         setSoftNotice(t(locale, "planner.demoLocal"));
         setError(null);
@@ -456,6 +493,12 @@ export default function TripDetailScreen() {
           </View>
 
           <View style={styles.collabBox}>
+            <Text style={styles.collabEyebrow}>
+              {t(locale, "collab.panel.eyebrow")}
+            </Text>
+            <Text style={styles.collabHeading}>
+              {t(locale, "collab.panel.title")}
+            </Text>
             <Text style={styles.collabTitle}>{t(locale, "collab.members")}</Text>
             <Text style={styles.collabMeta}>
               {members
@@ -463,7 +506,15 @@ export default function TripDetailScreen() {
                 .slice(0, 4)
                 .join(" · ") || "—"}
               {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
+              {collabSeeded ? ` · ${t(locale, "collab.demoBadge")}` : ""}
             </Text>
+            {collabSeeded ? (
+              <Text style={styles.collabNotice}>
+                {softNotice
+                  ? t(locale, "collab.panel.softOffline")
+                  : t(locale, "collab.panel.demoNotice")}
+              </Text>
+            ) : null}
             {(yourRole === "owner" || yourRole === "editor") && (
               <Pressable style={styles.inviteBtn} onPress={() => void onInvite()}>
                 <Text style={styles.inviteLabel}>{t(locale, "collab.invite")}</Text>
@@ -473,6 +524,36 @@ export default function TripDetailScreen() {
               <Text style={styles.inviteCode}>
                 {t(locale, "collab.shareHint")} {inviteCode}
               </Text>
+            ) : null}
+            {comments.length > 0 ? (
+              <View style={styles.collabThread}>
+                <Text style={styles.collabSectionLabel}>
+                  {t(locale, "collab.panel.tab.comments")}
+                </Text>
+                {comments.slice(0, 3).map((c) => (
+                  <View key={c.id} style={styles.commentRail}>
+                    <Text style={styles.commentAuthor}>
+                      {c.authorDisplayName ?? c.authorUserId}
+                    </Text>
+                    <Text style={styles.commentBody}>{c.body}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {activity.length > 0 ? (
+              <View style={styles.collabThread}>
+                <Text style={styles.collabSectionLabel}>
+                  {t(locale, "collab.panel.tab.activity")}
+                </Text>
+                {activity.slice(0, 4).map((ev) => (
+                  <View key={ev.id} style={styles.activityRail}>
+                    <Text style={styles.activityType}>
+                      {t(locale, `collab.activity.${ev.type}`)}
+                    </Text>
+                    <Text style={styles.activitySummary}>{ev.summary}</Text>
+                  </View>
+                ))}
+              </View>
             ) : null}
           </View>
 
@@ -741,12 +822,27 @@ const styles = StyleSheet.create({
   },
   collabBox: {
     marginBottom: 16,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "transparent",
     gap: 6,
+  },
+  collabEyebrow: {
+    fontSize: 10,
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    fontWeight: "700",
+    color: colors.river,
+  },
+  collabHeading: {
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: colors.ink,
+    marginBottom: 4,
   },
   collabTitle: {
     fontSize: 11,
@@ -755,6 +851,62 @@ const styles = StyleSheet.create({
     color: colors.river,
   },
   collabMeta: { fontSize: 14, color: colors.inkSoft },
+  collabNotice: {
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47,107,255,0.2)",
+    backgroundColor: "rgba(47,107,255,0.06)",
+    color: colors.riverDeep,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  collabThread: {
+    marginTop: 10,
+    gap: 8,
+  },
+  collabSectionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  commentRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.4)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  commentAuthor: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  commentBody: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
+  },
+  activityRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.28)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  activityType: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  activitySummary: {
+    fontSize: 13,
+    color: colors.ink,
+  },
   inviteBtn: {
     marginTop: 6,
     alignSelf: "flex-start",

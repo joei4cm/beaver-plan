@@ -38,6 +38,7 @@ export {
 export {
   sampleKyotoFixture,
   sampleKyotoJournal,
+  sampleKyotoCollab,
   lumenJournalPlaceholder,
 } from "./sample-kyoto.js";
 export { GoogleMapEngine, GoogleRoutingEngine, type GoogleMapsConfig } from "./google.js";

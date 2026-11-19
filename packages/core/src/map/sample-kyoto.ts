@@ -1,6 +1,18 @@
-import type { Day, JournalEntry, Leg, PlaceRef, Stop, Trip } from "../domain.js";
+import type {
+  ActivityEvent,
+  Day,
+  JournalEntry,
+  Leg,
+  PlaceRef,
+  Stop,
+  Trip,
+  TripComment,
+  TripMember,
+  TripRole,
+} from "../domain.js";
 import { DEMO_PLACES } from "./demo-data.js";
 import { buildDemoTransitRoute } from "./demo-transit.js";
+import { parseMentions } from "../collab.js";
 
 /** Lumen Route azure media placeholders (data URLs — no R2 required). */
 export function lumenJournalPlaceholder(opts: {
@@ -202,4 +214,148 @@ export function sampleKyotoFixture(): {
   }
 
   return { trip, days, stops, legs, journal: sampleKyotoJournal() };
+}
+
+/** Soft-fail companions / comments / timeline when Neon+auth are unset. */
+export function sampleKyotoCollab(): {
+  members: TripMember[];
+  yourRole: TripRole;
+  comments: TripComment[];
+  events: ActivityEvent[];
+} {
+  const tripId = "sample-kyoto";
+  const members: TripMember[] = [
+    {
+      id: "member-demo",
+      tripId,
+      userId: "demo-user",
+      role: "owner",
+      displayName: "Demo Traveler",
+      joinedAt: "2026-04-01T00:00:00.000Z",
+    },
+    {
+      id: "member-mia",
+      tripId,
+      userId: "user-mia",
+      role: "editor",
+      displayName: "Mia Chen",
+      joinedAt: "2026-04-02T08:00:00.000Z",
+    },
+    {
+      id: "member-ken",
+      tripId,
+      userId: "user-ken",
+      role: "viewer",
+      displayName: "Ken Sato",
+      joinedAt: "2026-04-03T10:30:00.000Z",
+    },
+  ];
+  const names = members
+    .map((m) => m.displayName)
+    .filter((n): n is string => Boolean(n));
+
+  const commentBodies: Array<{
+    id: string;
+    author: TripMember;
+    body: string;
+    stopId?: string;
+    createdAt: string;
+  }> = [
+    {
+      id: "comment-seed-1",
+      author: members[1]!,
+      body: "@Demo Traveler 清水寺清晨人少，建议八点前到。",
+      stopId: "stop-kiyomizu",
+      createdAt: "2026-04-09T12:10:00.000Z",
+    },
+    {
+      id: "comment-seed-2",
+      author: members[0]!,
+      body: "@Mia Chen 收到 — 我会把路线钉在东山第一天。",
+      createdAt: "2026-04-09T12:25:00.000Z",
+    },
+    {
+      id: "comment-seed-3",
+      author: members[2]!,
+      body: "祇园傍晚灯笼很好拍，@Mia Chen 记得带相机。",
+      stopId: "stop-gion",
+      createdAt: "2026-04-09T18:40:00.000Z",
+    },
+  ];
+
+  const comments: TripComment[] = commentBodies.map((c) => ({
+    id: c.id,
+    tripId,
+    stopId: c.stopId,
+    authorUserId: c.author.userId,
+    authorDisplayName: c.author.displayName,
+    body: c.body,
+    mentions: parseMentions(c.body, names),
+    createdAt: c.createdAt,
+  }));
+
+  const events: ActivityEvent[] = [
+    {
+      id: "activity-seed-1",
+      tripId,
+      type: "member_joined",
+      actorUserId: members[0]!.userId,
+      actorDisplayName: members[0]!.displayName,
+      summary: "Demo Traveler opened the Kyoto sample trip",
+      createdAt: "2026-04-01T00:00:00.000Z",
+    },
+    {
+      id: "activity-seed-2",
+      tripId,
+      type: "invite_created",
+      actorUserId: members[0]!.userId,
+      actorDisplayName: members[0]!.displayName,
+      summary: "Invite created for editors",
+      createdAt: "2026-04-02T07:50:00.000Z",
+    },
+    {
+      id: "activity-seed-3",
+      tripId,
+      type: "member_joined",
+      actorUserId: members[1]!.userId,
+      actorDisplayName: members[1]!.displayName,
+      summary: "Mia Chen joined as editor",
+      createdAt: "2026-04-02T08:00:00.000Z",
+    },
+    {
+      id: "activity-seed-4",
+      tripId,
+      type: "stop_added",
+      actorUserId: members[0]!.userId,
+      actorDisplayName: members[0]!.displayName,
+      summary: "Added 清水寺 to Day 1",
+      payload: { stopId: "stop-kiyomizu" },
+      createdAt: "2026-04-08T09:00:00.000Z",
+    },
+    {
+      id: "activity-seed-5",
+      tripId,
+      type: "comment_added",
+      actorUserId: members[1]!.userId,
+      actorDisplayName: members[1]!.displayName,
+      summary: "Mia Chen left a note on 清水寺",
+      createdAt: "2026-04-09T12:10:00.000Z",
+    },
+    {
+      id: "activity-seed-6",
+      tripId,
+      type: "day_fill_applied",
+      actorUserId: members[0]!.userId,
+      actorDisplayName: members[0]!.displayName,
+      summary: "Day fill applied for temples + food",
+      createdAt: "2026-04-09T15:00:00.000Z",
+    },
+  ];
+
+  return {
+    members,
+    yourRole: "owner",
+    comments,
+    events,
+  };
 }
