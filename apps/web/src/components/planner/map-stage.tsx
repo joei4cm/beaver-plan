@@ -1,7 +1,7 @@
 "use client";
 
 import type { Leg, Stop } from "@beaver/core";
-import { legPathSegments } from "@beaver/core";
+import { encodeRoadPolyline, legPathSegments } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { boundsOf, polylineToPoints, project } from "@/lib/geo";
@@ -130,28 +130,39 @@ export function MapStage({
 
           if (rendered.some(Boolean)) return rendered;
 
+          // Last resort: synthesize a street-grid path — never a stop-to-stop chord.
           const from = stops.find((s) => s.id === leg.fromStopId);
           const to = stops.find((s) => s.id === leg.toStopId);
           if (!from || !to) return null;
-          const a = project(from.place, bounds, W, H);
-          const b = project(to.place, bounds, W, H);
-          const style = strokeForMode(
+          const mode =
             leg.mode === "walk"
               ? "walk"
               : leg.mode === "drive"
                 ? "drive"
-                : "transit",
+                : "transit";
+          const style = strokeForMode(mode);
+          const fallbackPoly = encodeRoadPolyline(
+            { lat: from.place.lat, lng: from.place.lng },
+            { lat: to.place.lat, lng: to.place.lng },
+            { mode },
           );
+          const pts = polylineToPoints(fallbackPoly, bounds, W, H);
+          if (pts.length < 2) return null;
+          const d = pts
+            .map(
+              (p, i) =>
+                `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`,
+            )
+            .join(" ");
           return (
-            <line
+            <path
               key={leg.id}
-              x1={a.x}
-              y1={a.y}
-              x2={b.x}
-              y2={b.y}
+              d={d}
+              fill="none"
               stroke={style.stroke}
               strokeWidth={style.strokeWidth}
               strokeLinecap="round"
+              strokeLinejoin="round"
               strokeDasharray={style.dash}
               opacity={style.opacity}
             />
