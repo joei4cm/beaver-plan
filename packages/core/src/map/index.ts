@@ -35,7 +35,11 @@ export {
   type PathLine,
   type PathStroke,
 } from "./path-lines.js";
-export { sampleKyotoFixture } from "./sample-kyoto.js";
+export {
+  sampleKyotoFixture,
+  sampleKyotoJournal,
+  lumenJournalPlaceholder,
+} from "./sample-kyoto.js";
 export { GoogleMapEngine, GoogleRoutingEngine, type GoogleMapsConfig } from "./google.js";
 export { AmapMapEngine, AmapRoutingEngine, type AmapConfig } from "./amap.js";
 export { BaiduMapEngine, BaiduRoutingEngine, type BaiduConfig } from "./baidu.js";
