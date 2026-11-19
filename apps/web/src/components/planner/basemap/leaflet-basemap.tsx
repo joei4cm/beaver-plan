@@ -34,6 +34,7 @@ export function LeafletBasemap({
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
   const fittedRef = useRef(false);
+  const lastStopCountRef = useRef(0);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -74,6 +75,7 @@ export function LeafletBasemap({
       mapRef.current = null;
       layerRef.current = null;
       fittedRef.current = false;
+      lastStopCountRef.current = 0;
     };
   }, []);
 
@@ -126,7 +128,11 @@ export function LeafletBasemap({
     const fitPts = collectFitPoints(stops, lines).map((p) =>
       L.latLng(p.lat, p.lng),
     );
-    if (!fittedRef.current && fitPts.length > 0) {
+    const stopCountChanged = stops.length !== lastStopCountRef.current;
+    lastStopCountRef.current = stops.length;
+    const shouldFit =
+      fitPts.length > 0 && (!fittedRef.current || stopCountChanged);
+    if (shouldFit) {
       map.fitBounds(L.latLngBounds(fitPts), { padding: [48, 48], maxZoom: 14 });
       fittedRef.current = true;
       window.setTimeout(() => map.invalidateSize(), 50);
