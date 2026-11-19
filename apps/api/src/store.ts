@@ -921,13 +921,13 @@ async function seedSampleMedia(cfg: S3Config): Promise<void> {
       id: "demo-photo-gion",
       title: "祇园",
       subtitle: "Lantern lanes",
-      tone: "timber" as const,
+      tone: "mist" as const,
     },
     {
       id: "demo-photo-fushimi",
       title: "伏见稻荷",
       subtitle: "Torii path",
-      tone: "mist" as const,
+      tone: "sky" as const,
     },
     {
       id: "demo-photo-arashiyama",

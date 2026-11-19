@@ -71,6 +71,10 @@
     animation: bp-lens-breathe 4.8s ease-in-out infinite alternate;
   }
 
+  .animate-entry-in {
+    animation: bp-entry-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
   .share-svg-preview text.bp-display {
     font-family: var(--bp-font-display) !important;
   }
@@ -177,6 +181,17 @@
   }
 }
 
+@keyframes bp-entry-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes bp-marker-pop {
   from {
     transform: scale(0.78);
@@ -197,7 +212,8 @@
   .animate-template-swap,
   .animate-sheet-in,
   .animate-turn-in,
-  .animate-lens-breathe {
+  .animate-lens-breathe,
+  .animate-entry-in {
     animation: none !important;
   }
 }
