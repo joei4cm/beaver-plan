@@ -17,19 +17,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   PRIMARY_TRANSLATION_LOCALES,
   TRANSLATION_LOCALES,
+  demoTurnsFor,
+  demoVisionAssist,
   enqueueTranslation,
   listPhrasebook,
   listQueuedTranslations,
   localeLabel,
   offlinePhraseTranslate,
   pendingQueueCount,
+  pickDemoTurn,
   swapPair,
   type PhraseCategory,
   type PhrasebookLookup,
   type QueuedTranslation,
   type TranslationLocale,
 } from "@beaver/core";
-import { colors } from "@beaver/ui-tokens";
+import { brand, colors, radius } from "@beaver/ui-tokens";
 import { t, type MessageKey } from "@beaver/i18n";
 import {
   fetchPhrasebook,
@@ -63,18 +66,51 @@ const CATEGORY_KEYS: PhraseCategory[] = [
   "lodging",
 ];
 
+function softDemoStatus(): TranslationStatus {
+  return {
+    mode: "demo",
+    asr: "demo-asr",
+    llm: "demo-llm",
+    tts: "demo-tts",
+    vision: "demo-vision",
+    featureEnabled: true,
+    locales: [...TRANSLATION_LOCALES],
+    primaryLocales: [...PRIMARY_TRANSLATION_LOCALES],
+    streamingMode: "chunked",
+    offlineAssist: "phrasebook",
+  };
+}
+
+function seedTurns(
+  sourceLocale: TranslationLocale,
+  targetLocale: TranslationLocale,
+): TurnRow[] {
+  return demoTurnsFor({ sourceLocale, targetLocale })
+    .slice(0, 2)
+    .map((row, i) => ({
+      id: `seed-${i}-${row.sourceText.slice(0, 8)}`,
+      sourceText: row.sourceText,
+      translatedText: row.translatedText,
+      mode: "demo" as const,
+    }));
+}
+
 export default function TranslateScreen() {
   const [tab, setTab] = useState<Tab>("conversation");
   const [sourceLocale, setSourceLocale] = useState<TranslationLocale>("zh-CN");
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [status, setStatus] = useState<TranslationStatus | null>(null);
-  const [turns, setTurns] = useState<TurnRow[]>([]);
+  const [softNotice, setSoftNotice] = useState(true);
+  const [turns, setTurns] = useState<TurnRow[]>(() =>
+    seedTurns("zh-CN", "en"),
+  );
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(0);
+  const [demoIndex, setDemoIndex] = useState(2);
   const [facing, setFacing] = useState<Facing>("back");
+  const [ttsEnabled, setTtsEnabled] = useState(true);
   const [overlay, setOverlay] = useState<{
     source: string;
     translated: string;
@@ -90,6 +126,9 @@ export default function TranslateScreen() {
   const [queue, setQueue] = useState<QueuedTranslation[]>([]);
   const partialTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sequenceRef = useRef(0);
+  const seededPairRef = useRef("zh-CN|en");
+
+  const isDemo = !status || status.mode === "demo" || softNotice;
 
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
@@ -97,21 +136,14 @@ export default function TranslateScreen() {
 
   useEffect(() => {
     void fetchTranslationStatus()
-      .then(setStatus)
-      .catch(() =>
-        setStatus({
-          mode: "demo",
-          asr: "demo-asr",
-          llm: "demo-llm",
-          tts: "demo-tts",
-          vision: "demo-vision",
-          featureEnabled: true,
-          locales: [...TRANSLATION_LOCALES],
-          primaryLocales: [...PRIMARY_TRANSLATION_LOCALES],
-          streamingMode: "chunked",
-          offlineAssist: "phrasebook",
-        }),
-      );
+      .then((res) => {
+        setStatus(res);
+        setSoftNotice(res.mode === "demo");
+      })
+      .catch(() => {
+        setStatus(softDemoStatus());
+        setSoftNotice(true);
+      });
     void refreshQueue();
   }, [refreshQueue]);
 
@@ -138,9 +170,18 @@ export default function TranslateScreen() {
       );
   }, [sourceLocale, targetLocale, phraseCategory]);
 
+  useEffect(() => {
+    const key = `${sourceLocale}|${targetLocale}`;
+    if (seededPairRef.current === key) return;
+    seededPairRef.current = key;
+    setTurns(seedTurns(sourceLocale, targetLocale));
+    setDemoIndex(2);
+    setOverlay(null);
+  }, [sourceLocale, targetLocale]);
+
   const speakTranslation = useCallback(
     async (text: string, locale: string, audio?: LiveTurnResponse["tts"]) => {
-      if (!text) return;
+      if (!text || !ttsEnabled) return;
       if (audio?.audioBase64 && !audio.speakLocally) {
         try {
           const uri = `${FileSystem.cacheDirectory}bp-tts-${Date.now()}.mp3`;
@@ -163,7 +204,7 @@ export default function TranslateScreen() {
         rate: 0.96,
       });
     },
-    [],
+    [ttsEnabled],
   );
 
   const pushTurn = useCallback((res: LiveTurnResponse) => {
@@ -180,6 +221,40 @@ export default function TranslateScreen() {
     setDemoIndex((i) => i + 1);
   }, []);
 
+  const localDemoTurn = useCallback(
+    async (input: { text?: string }) => {
+      const text = input.text?.trim();
+      if (text) {
+        const hit = offlinePhraseTranslate(text, sourceLocale, targetLocale);
+        const translated =
+          hit?.translatedText ?? `[${targetLocale}] ${text}`;
+        pushTurn({
+          sourceText: text,
+          translatedText: translated,
+          pair: { sourceLocale, targetLocale },
+          asrProvider: "demo-asr",
+          translateProvider: "demo-llm",
+          mode: "demo",
+          tts: null,
+        });
+        await speakTranslation(translated, targetLocale);
+        return;
+      }
+      const turn = pickDemoTurn({ sourceLocale, targetLocale }, demoIndex);
+      pushTurn({
+        sourceText: turn.sourceText,
+        translatedText: turn.translatedText,
+        pair: { sourceLocale, targetLocale },
+        asrProvider: "demo-asr",
+        translateProvider: "demo-llm",
+        mode: "demo",
+        tts: null,
+      });
+      await speakTranslation(turn.translatedText, targetLocale);
+    },
+    [demoIndex, pushTurn, sourceLocale, speakTranslation, targetLocale],
+  );
+
   async function runTurn(input: {
     text?: string;
     audioBase64?: string;
@@ -193,12 +268,13 @@ export default function TranslateScreen() {
         ...input,
         sourceLocale,
         targetLocale,
-        withTts: true,
+        withTts: ttsEnabled,
         demoTurnIndex: demoIndex,
       });
       pushTurn(res);
       await speakTranslation(res.translatedText, targetLocale, res.tts);
     } catch {
+      setSoftNotice(true);
       const text = input.text?.trim();
       if (text) {
         const hit = offlinePhraseTranslate(text, sourceLocale, targetLocale);
@@ -243,7 +319,7 @@ export default function TranslateScreen() {
           await refreshQueue();
         }
       } else {
-        setError(t(uiLocale, "translate.error"));
+        await localDemoTurn({});
       }
     } finally {
       setBusy(false);
@@ -258,6 +334,7 @@ export default function TranslateScreen() {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
         setError(t(uiLocale, "translate.permissionMic"));
+        await localDemoTurn({});
         return;
       }
       await Audio.setAudioModeAsync({
@@ -271,7 +348,6 @@ export default function TranslateScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
       setListening(true);
-      // Optimistic partials: demo/live chunked ASR without waiting for release
       if (partialTimerRef.current) clearInterval(partialTimerRef.current);
       partialTimerRef.current = setInterval(() => {
         const seq = sequenceRef.current++;
@@ -285,11 +361,16 @@ export default function TranslateScreen() {
             if (p.text) setPartialText(p.text);
           })
           .catch(() => {
-            /* ignore */
+            const turn = pickDemoTurn(
+              { sourceLocale, targetLocale },
+              demoIndex,
+            );
+            setPartialText(turn.sourceText.slice(0, 18) + "…");
           });
       }, 900);
     } catch {
       setError(t(uiLocale, "translate.permissionMic"));
+      await localDemoTurn({});
     }
   }
 
@@ -306,7 +387,6 @@ export default function TranslateScreen() {
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       if (!uri) {
-        // Demo path without usable audio file
         await runTurn({});
         return;
       }
@@ -318,7 +398,6 @@ export default function TranslateScreen() {
         mimeType: "audio/m4a",
       });
     } catch {
-      // Still advance a demo turn so the UX stays demoable
       await runTurn({});
     }
   }
@@ -337,7 +416,25 @@ export default function TranslateScreen() {
       if (!camPermission?.granted) {
         const next = await requestCamPermission();
         if (!next.granted) {
-          setError(t(uiLocale, "translate.permissionCamera"));
+          setSoftNotice(true);
+          const demo = demoVisionAssist(
+            { sourceLocale, targetLocale },
+            mode,
+          );
+          setOverlay({
+            source: demo.sourceText,
+            translated: demo.translatedText,
+          });
+          pushTurn({
+            sourceText: demo.sourceText,
+            translatedText: demo.translatedText,
+            pair: { sourceLocale, targetLocale },
+            asrProvider: "vision",
+            translateProvider: "demo-vision",
+            mode: "demo",
+            tts: null,
+          });
+          await speakTranslation(demo.translatedText, targetLocale);
           return;
         }
       }
@@ -356,31 +453,51 @@ export default function TranslateScreen() {
       } catch {
         /* demo vision works without a frame */
       }
-      const res = await runVisionAssist({
-        imageBase64,
-        mimeType,
-        mode,
-        sourceLocale,
-        targetLocale,
-      });
-      setOverlay({
-        source: res.sourceText,
-        translated: res.translatedText ?? "",
-      });
-      pushTurn({
-        sourceText: res.sourceText,
-        translatedText: res.translatedText ?? "",
-        pair: res.pair,
-        asrProvider: "vision",
-        translateProvider: res.provider,
-        mode: res.mode,
-        tts: null,
-      });
-      if (res.translatedText) {
-        await speakTranslation(res.translatedText, targetLocale);
+      try {
+        const res = await runVisionAssist({
+          imageBase64,
+          mimeType,
+          mode,
+          sourceLocale,
+          targetLocale,
+        });
+        setOverlay({
+          source: res.sourceText,
+          translated: res.translatedText ?? "",
+        });
+        pushTurn({
+          sourceText: res.sourceText,
+          translatedText: res.translatedText ?? "",
+          pair: res.pair,
+          asrProvider: "vision",
+          translateProvider: res.provider,
+          mode: res.mode,
+          tts: null,
+        });
+        if (res.translatedText) {
+          await speakTranslation(res.translatedText, targetLocale);
+        }
+      } catch {
+        setSoftNotice(true);
+        const demo = demoVisionAssist(
+          { sourceLocale, targetLocale },
+          mode,
+        );
+        setOverlay({
+          source: demo.sourceText,
+          translated: demo.translatedText,
+        });
+        pushTurn({
+          sourceText: demo.sourceText,
+          translatedText: demo.translatedText,
+          pair: { sourceLocale, targetLocale },
+          asrProvider: "vision",
+          translateProvider: "demo-vision",
+          mode: "demo",
+          tts: null,
+        });
+        await speakTranslation(demo.translatedText, targetLocale);
       }
-    } catch {
-      setError(t(uiLocale, "translate.error"));
     } finally {
       setBusy(false);
     }
@@ -408,272 +525,378 @@ export default function TranslateScreen() {
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <Stack.Screen options={{ title: t(uiLocale, "translate.title") }} />
 
-      <View style={styles.hero}>
-        <Text style={styles.brandLine}>Beaver Plan · 海狸旅行</Text>
-        <Text style={styles.eyebrow}>{t(uiLocale, "translate.eyebrow")}</Text>
-        <Text style={styles.title}>{t(uiLocale, "mobile.translate")}</Text>
-        <Text style={styles.support}>{t(uiLocale, "translate.support")}</Text>
-        <View style={styles.badgeRow}>
-          <View
-            style={[
-              styles.badge,
-              status?.mode === "live" ? styles.badgeLive : styles.badgeDemo,
-            ]}
-          >
-            <Text style={styles.badgeText}>
-              {status?.mode === "live"
-                ? t(uiLocale, "translate.liveBadge")
-                : t(uiLocale, "translate.demoBadge")}
-            </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.hero}>
+          <View style={styles.heroWash} />
+          <Text style={styles.brandSecondary}>{brand.en}</Text>
+          <Text style={styles.brandPrimary}>{brand.zh}</Text>
+          <Text style={styles.eyebrow}>{t(uiLocale, "translate.eyebrow")}</Text>
+          <Text style={styles.title}>{t(uiLocale, "mobile.translate")}</Text>
+          <Text style={styles.support}>{t(uiLocale, "translate.support")}</Text>
+          <View style={styles.badgeRow}>
+            <View
+              style={[
+                styles.badge,
+                isDemo ? styles.badgeDemo : styles.badgeLive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.badgeText,
+                  isDemo ? styles.badgeTextDemo : styles.badgeTextLive,
+                ]}
+              >
+                {isDemo
+                  ? t(uiLocale, "translate.demoBadge")
+                  : t(uiLocale, "translate.liveBadge")}
+              </Text>
+            </View>
+            <View style={styles.badgeSoft}>
+              <Text style={styles.badgeSoftText}>
+                {t(uiLocale, "translate.asrReady")} · {status?.asr ?? "…"}
+              </Text>
+            </View>
+            <View style={styles.badgeSoft}>
+              <Text style={styles.badgeSoftText}>
+                {t(uiLocale, "translate.ttsReady")} · {status?.tts ?? "…"}
+              </Text>
+            </View>
           </View>
-        </View>
-      </View>
-
-      <View style={styles.tabs}>
-        <Pressable
-          onPress={() => setTab("conversation")}
-          style={[styles.tab, tab === "conversation" && styles.tabActive]}
-        >
-          <Text
-            style={[
-              styles.tabLabel,
-              tab === "conversation" && styles.tabLabelActive,
-            ]}
-          >
-            {t(uiLocale, "translate.mode.conversation")}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setTab("camera")}
-          style={[styles.tab, tab === "camera" && styles.tabActive]}
-        >
-          <Text
-            style={[styles.tabLabel, tab === "camera" && styles.tabLabelActive]}
-          >
-            {t(uiLocale, "translate.mode.camera")}
-          </Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.pairRow}>
-        <LocalePicker
-          label={t(uiLocale, "translate.source")}
-          value={sourceLocale}
-          locales={orderedLocales}
-          onChange={setSourceLocale}
-        />
-        <Pressable onPress={onSwap} style={styles.swapBtn}>
-          <Text style={styles.swapLabel}>⇄</Text>
-        </Pressable>
-        <LocalePicker
-          label={t(uiLocale, "translate.target")}
-          value={targetLocale}
-          locales={orderedLocales}
-          onChange={setTargetLocale}
-        />
-      </View>
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      {tab === "conversation" ? (
-        <View style={styles.panel}>
-          <ScrollView
-            style={styles.transcript}
-            contentContainerStyle={styles.transcriptContent}
-          >
-            {turns.length === 0 && (
-              <Text style={styles.empty}>{t(uiLocale, "translate.empty")}</Text>
-            )}
-            {turns.map((row) => (
-              <View key={row.id} style={styles.bubble}>
-                <Text style={styles.bubbleSource}>{row.sourceText}</Text>
-                <Text style={styles.bubbleTarget}>{row.translatedText}</Text>
-              </View>
-            ))}
-          </ScrollView>
-
-          {(listening || partialText) ? (
-            <Text style={styles.partial}>
-              {t(uiLocale, "translate.partialHint")} {partialText || "…"}
-            </Text>
+          {isDemo ? (
+            <View style={styles.notice}>
+              <Text style={styles.noticeText}>
+                {t(uiLocale, "translate.demoNotice")}
+              </Text>
+            </View>
           ) : null}
+        </View>
 
-          <View style={styles.phraseHead}>
-            <Text style={styles.phraseTitle}>
-              {t(uiLocale, "translate.phrasebook")}
+        <View style={styles.tabs}>
+          <Pressable
+            onPress={() => setTab("conversation")}
+            style={[styles.tab, tab === "conversation" && styles.tabActive]}
+          >
+            <Text
+              style={[
+                styles.tabLabel,
+                tab === "conversation" && styles.tabLabelActive,
+              ]}
+            >
+              {t(uiLocale, "translate.mode.conversation")}
             </Text>
-            <Text style={styles.phraseHint}>
-              {t(uiLocale, "translate.phrasebookHint")}
+          </Pressable>
+          <Pressable
+            onPress={() => setTab("camera")}
+            style={[styles.tab, tab === "camera" && styles.tabActive]}
+          >
+            <Text
+              style={[
+                styles.tabLabel,
+                tab === "camera" && styles.tabLabelActive,
+              ]}
+            >
+              {t(uiLocale, "translate.mode.camera")}
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {CATEGORY_KEYS.map((cat) => (
-                <Pressable
-                  key={cat}
-                  onPress={() => setPhraseCategory(cat)}
-                  style={[
-                    styles.catChip,
-                    phraseCategory === cat && styles.catChipActive,
-                  ]}
-                >
-                  <Text
+          </Pressable>
+        </View>
+
+        <Text style={styles.pairHeading}>
+          {t(uiLocale, "translate.pairLabel")}
+        </Text>
+        <View style={styles.pairRow}>
+          <LocalePicker
+            label={t(uiLocale, "translate.source")}
+            value={sourceLocale}
+            locales={orderedLocales}
+            onChange={setSourceLocale}
+          />
+          <Pressable onPress={onSwap} style={styles.swapBtn}>
+            <Text style={styles.swapLabel}>⇄</Text>
+          </Pressable>
+          <LocalePicker
+            label={t(uiLocale, "translate.target")}
+            value={targetLocale}
+            locales={orderedLocales}
+            onChange={setTargetLocale}
+          />
+        </View>
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        {tab === "conversation" ? (
+          <View style={styles.panel}>
+            {(listening || partialText) ? (
+              <Text style={styles.partial}>
+                {t(uiLocale, "translate.partialHint")} {partialText || "…"}
+              </Text>
+            ) : null}
+
+            <View style={styles.transcript}>
+              {turns.length === 0 ? (
+                <Text style={styles.empty}>
+                  {t(uiLocale, "translate.empty")}
+                </Text>
+              ) : (
+                turns.map((row) => (
+                  <View key={row.id} style={styles.turnRow}>
+                    <View style={styles.turnCol}>
+                      <Text style={styles.turnMeta}>
+                        {t(uiLocale, "translate.source")}
+                      </Text>
+                      <Text style={styles.bubbleSource}>{row.sourceText}</Text>
+                    </View>
+                    <View style={styles.turnCol}>
+                      <Text style={styles.turnMetaTarget}>
+                        {t(uiLocale, "translate.target")}
+                      </Text>
+                      <Text style={styles.bubbleTarget}>
+                        {row.translatedText}
+                      </Text>
+                    </View>
+                    {row.mode === "offline" ? (
+                      <Text style={styles.offlineTag}>
+                        {t(uiLocale, "translate.offlineBadge")}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))
+              )}
+            </View>
+
+            <View style={styles.phraseHead}>
+              <Text style={styles.phraseTitle}>
+                {t(uiLocale, "translate.phrasebook")}
+              </Text>
+              <Text style={styles.phraseHint}>
+                {t(uiLocale, "translate.phrasebookHint")}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {CATEGORY_KEYS.map((cat) => (
+                  <Pressable
+                    key={cat}
+                    onPress={() => setPhraseCategory(cat)}
                     style={[
-                      styles.catChipText,
-                      phraseCategory === cat && styles.catChipTextActive,
+                      styles.catChip,
+                      phraseCategory === cat && styles.catChipActive,
                     ]}
                   >
-                    {t(uiLocale, `translate.category.${cat}` as MessageKey)}
+                    <Text
+                      style={[
+                        styles.catChipText,
+                        phraseCategory === cat && styles.catChipTextActive,
+                      ]}
+                    >
+                      {t(uiLocale, `translate.category.${cat}` as MessageKey)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              {phrases.slice(0, 6).map((phrase) => (
+                <Pressable
+                  key={phrase.id}
+                  style={styles.phraseRow}
+                  onPress={() => {
+                    pushTurn({
+                      sourceText: phrase.sourceText,
+                      translatedText: phrase.translatedText,
+                      pair: phrase.pair,
+                      asrProvider: "phrasebook",
+                      translateProvider: "phrasebook",
+                      mode: "demo",
+                      tts: null,
+                    });
+                    void speakTranslation(
+                      phrase.translatedText,
+                      targetLocale,
+                    );
+                  }}
+                >
+                  <Text style={styles.bubbleSource}>{phrase.sourceText}</Text>
+                  <Text style={styles.bubbleTarget}>
+                    {phrase.translatedText}
                   </Text>
                 </Pressable>
               ))}
-            </ScrollView>
-            {phrases.slice(0, 6).map((phrase) => (
+              {pendingQueueCount(queue) > 0 ? (
+                <Text style={styles.queueNote}>
+                  {t(uiLocale, "offline.pending").replace(
+                    "{n}",
+                    String(pendingQueueCount(queue)),
+                  )}
+                </Text>
+              ) : null}
+            </View>
+
+            <View style={styles.controlRail}>
               <Pressable
-                key={phrase.id}
-                style={styles.phraseRow}
-                onPress={() => {
-                  pushTurn({
-                    sourceText: phrase.sourceText,
-                    translatedText: phrase.translatedText,
-                    pair: phrase.pair,
-                    asrProvider: "phrasebook",
-                    translateProvider: "phrasebook",
-                    mode: "demo",
-                    tts: null,
-                  });
-                  void speakTranslation(phrase.translatedText, targetLocale);
-                }}
+                onPress={() => setTtsEnabled((v) => !v)}
+                style={[
+                  styles.ttsChip,
+                  ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
+                ]}
               >
-                <Text style={styles.bubbleSource}>{phrase.sourceText}</Text>
-                <Text style={styles.bubbleTarget}>{phrase.translatedText}</Text>
-              </Pressable>
-            ))}
-            {pendingQueueCount(queue) > 0 ? (
-              <Text style={styles.queueNote}>
-                {t(uiLocale, "offline.pending").replace(
-                  "{n}",
-                  String(pendingQueueCount(queue)),
-                )}
-              </Text>
-            ) : null}
-          </View>
-
-          <View style={styles.compose}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder={t(uiLocale, "translate.typeHint")}
-              placeholderTextColor="rgba(42,58,52,0.45)"
-              style={styles.input}
-              editable={!busy}
-              onSubmitEditing={() => void onSendText()}
-              returnKeyType="send"
-            />
-            <Pressable
-              style={[styles.sendBtn, busy && styles.disabled]}
-              onPress={() => void onSendText()}
-              disabled={busy}
-            >
-              <Text style={styles.sendLabel}>{t(uiLocale, "translate.send")}</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.micRow}>
-            <Pressable
-              onPressIn={() => void startListening()}
-              onPressOut={() => void stopListening()}
-              style={[
-                styles.micBtn,
-                listening && styles.micBtnActive,
-                busy && styles.disabled,
-              ]}
-              disabled={busy && !listening}
-            >
-              {busy && !listening ? (
-                <ActivityIndicator color={colors.foam} />
-              ) : (
-                <Text style={styles.micLabel}>
-                  {listening
-                    ? t(uiLocale, "translate.listening")
-                    : t(uiLocale, "translate.holdMic")}
-                </Text>
-              )}
-            </Pressable>
-            <Pressable
-              style={styles.demoNext}
-              onPress={() => void runTurn({})}
-              disabled={busy}
-            >
-              <Text style={styles.demoNextLabel}>
-                {t(uiLocale, "translate.nextDemo")}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.cameraPanel}>
-          <View style={styles.cameraFrame}>
-            {camPermission?.granted ? (
-              <CameraView
-                ref={cameraRef}
-                style={StyleSheet.absoluteFill}
-                facing={facing}
-              />
-            ) : (
-              <View style={styles.cameraFallback}>
-                <Text style={styles.cameraFallbackText}>
-                  {t(uiLocale, "translate.cameraHint")}
-                </Text>
-                <Pressable
-                  style={styles.sendBtn}
-                  onPress={() => void requestCamPermission()}
+                <Text
+                  style={[
+                    styles.ttsChipText,
+                    ttsEnabled && styles.ttsChipTextOn,
+                  ]}
                 >
-                  <Text style={styles.sendLabel}>
-                    {t(uiLocale, "translate.permissionCamera")}
+                  {t(uiLocale, "translate.ttsReady")}{" "}
+                  {ttsEnabled ? "· on" : "· off"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.compose}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={t(uiLocale, "translate.typeHint")}
+                placeholderTextColor={colors.inkSoft}
+                style={styles.input}
+                editable={!busy}
+                onSubmitEditing={() => void onSendText()}
+                returnKeyType="send"
+              />
+              <Pressable
+                style={[styles.sendBtn, busy && styles.disabled]}
+                onPress={() => void onSendText()}
+                disabled={busy}
+              >
+                <Text style={styles.sendLabel}>
+                  {t(uiLocale, "translate.send")}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.micRow}>
+              <Pressable
+                onPressIn={() => void startListening()}
+                onPressOut={() => void stopListening()}
+                style={[
+                  styles.micBtn,
+                  listening && styles.micBtnActive,
+                  busy && styles.disabled,
+                ]}
+                disabled={busy && !listening}
+              >
+                {busy && !listening ? (
+                  <ActivityIndicator color={colors.foam} />
+                ) : (
+                  <Text style={styles.micLabel}>
+                    {listening
+                      ? t(uiLocale, "translate.listening")
+                      : t(uiLocale, "translate.holdMic")}
                   </Text>
-                </Pressable>
+                )}
+              </Pressable>
+              <Pressable
+                style={styles.demoNext}
+                onPress={() => void runTurn({})}
+                disabled={busy}
+              >
+                <Text style={styles.demoNextLabel}>
+                  {t(uiLocale, "translate.nextDemo")}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.cameraPanel}>
+            <Text style={styles.dualHint}>
+              {t(uiLocale, "translate.dualHint")}
+            </Text>
+            <View style={styles.dualStage}>
+              <View style={[styles.lensPane, styles.lensYou]}>
+                <View style={styles.lensBadgeWrap}>
+                  <Text style={styles.lensBadgeText}>
+                    {t(uiLocale, "translate.lensYou")} ·{" "}
+                    {t(uiLocale, "translate.cameraFront")}
+                  </Text>
+                </View>
+                <View style={styles.avatarRing} />
               </View>
-            )}
-            {overlay ? (
-              <View style={styles.subtitle}>
-                <Text style={styles.subtitleSource}>{overlay.source}</Text>
-                {overlay.translated ? (
-                  <Text style={styles.subtitleTarget}>{overlay.translated}</Text>
+              <View style={styles.lensPane}>
+                {camPermission?.granted ? (
+                  <CameraView
+                    ref={cameraRef}
+                    style={StyleSheet.absoluteFill}
+                    facing={facing}
+                  />
+                ) : (
+                  <View style={styles.cameraFallback}>
+                    <Text style={styles.cameraFallbackText}>
+                      {t(uiLocale, "translate.cameraHint")}
+                    </Text>
+                    <Pressable
+                      style={styles.sendBtn}
+                      onPress={() => void requestCamPermission()}
+                    >
+                      <Text style={styles.sendLabel}>
+                        {t(uiLocale, "translate.enableCamera")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+                <View style={styles.lensBadgeWrap}>
+                  <Text style={styles.lensBadgeText}>
+                    {t(uiLocale, "translate.lensWorld")} ·{" "}
+                    {facing === "back"
+                      ? t(uiLocale, "translate.cameraBack")
+                      : t(uiLocale, "translate.cameraFront")}
+                  </Text>
+                </View>
+                {overlay ? (
+                  <View style={styles.subtitle}>
+                    <Text style={styles.subtitleSource}>{overlay.source}</Text>
+                    {overlay.translated ? (
+                      <Text style={styles.subtitleTarget}>
+                        {overlay.translated}
+                      </Text>
+                    ) : null}
+                  </View>
                 ) : null}
               </View>
-            ) : null}
+            </View>
+            <View style={styles.cameraActions}>
+              <Pressable
+                style={styles.facingBtn}
+                onPress={() =>
+                  setFacing((f) => (f === "back" ? "front" : "back"))
+                }
+              >
+                <Text style={styles.facingLabel}>
+                  {facing === "back"
+                    ? t(uiLocale, "translate.cameraFront")
+                    : t(uiLocale, "translate.cameraBack")}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.visionBtn, busy && styles.disabled]}
+                onPress={() => void onVision("ocr")}
+                disabled={busy}
+              >
+                <Text style={styles.visionLabel}>
+                  {t(uiLocale, "translate.ocr")}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.visionBtnAlt, busy && styles.disabled]}
+                onPress={() => void onVision("caption")}
+                disabled={busy}
+              >
+                <Text style={styles.visionLabelAlt}>
+                  {t(uiLocale, "translate.caption")}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.cameraActions}>
-            <Pressable
-              style={styles.facingBtn}
-              onPress={() =>
-                setFacing((f) => (f === "back" ? "front" : "back"))
-              }
-            >
-              <Text style={styles.facingLabel}>
-                {facing === "back"
-                  ? t(uiLocale, "translate.cameraBack")
-                  : t(uiLocale, "translate.cameraFront")}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.visionBtn, busy && styles.disabled]}
-              onPress={() => void onVision("ocr")}
-              disabled={busy}
-            >
-              <Text style={styles.visionLabel}>{t(uiLocale, "translate.ocr")}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.visionBtnAlt, busy && styles.disabled]}
-              onPress={() => void onVision("caption")}
-              disabled={busy}
-            >
-              <Text style={styles.visionLabelAlt}>
-                {t(uiLocale, "translate.caption")}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -720,23 +943,37 @@ function LocalePicker({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.paper },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 28 },
   hero: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingTop: 12,
+    paddingBottom: 16,
+    overflow: "hidden",
     backgroundColor: colors.foam,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
-  brandLine: {
+  heroWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(219, 232, 255, 0.55)",
+  },
+  brandSecondary: {
     color: colors.river,
     letterSpacing: 2.8,
     textTransform: "uppercase",
     fontSize: 10,
     fontWeight: "700",
-    marginBottom: 8,
+  },
+  brandPrimary: {
+    marginTop: 8,
+    color: colors.ink,
+    fontSize: 34,
+    fontWeight: "800",
+    letterSpacing: -0.8,
   },
   eyebrow: {
+    marginTop: 10,
     color: colors.inkSoft,
     letterSpacing: 2,
     textTransform: "uppercase",
@@ -746,9 +983,9 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 6,
     color: colors.ink,
-    fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.6,
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: -0.4,
   },
   support: {
     marginTop: 8,
@@ -756,106 +993,169 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  badgeRow: { marginTop: 12, flexDirection: "row" },
-  badge: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  badgeRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
-  badgeDemo: { backgroundColor: "rgba(225, 29, 72, 0.12)" },
-  badgeLive: { backgroundColor: "rgba(47, 107, 255, 0.14)" },
-  badgeText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
+  badge: {
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  badgeDemo: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
+  badgeLive: { backgroundColor: colors.river },
+  badgeText: { fontSize: 11, fontWeight: "700" },
+  badgeTextDemo: { color: colors.riverDeep },
+  badgeTextLive: { color: colors.foam },
+  badgeSoft: {
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: colors.mist,
+  },
+  badgeSoftText: { color: colors.inkSoft, fontSize: 11, fontWeight: "600" },
+  notice: {
+    marginTop: 12,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.2)",
+    backgroundColor: "rgba(47, 107, 255, 0.06)",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  noticeText: {
+    color: colors.riverDeep,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   tabs: {
     flexDirection: "row",
     marginHorizontal: 16,
     marginTop: 14,
-    gap: 8,
+    gap: 6,
+    padding: 5,
+    borderRadius: radius.md,
+    backgroundColor: colors.mist,
   },
   tab: {
     flex: 1,
     borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: colors.foam,
     paddingVertical: 10,
     alignItems: "center",
   },
   tabActive: {
     backgroundColor: colors.river,
-    borderColor: colors.river,
   },
   tabLabel: { color: colors.inkSoft, fontWeight: "600", fontSize: 14 },
   tabLabelActive: { color: colors.foam },
+  pairHeading: {
+    marginTop: 16,
+    marginHorizontal: 20,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
+  },
   pairRow: {
-    marginTop: 12,
-    marginHorizontal: 16,
+    marginTop: 8,
+    marginHorizontal: 12,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
   },
-  localeCol: { flex: 1 },
+  localeCol: {
+    flex: 1,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    padding: 10,
+  },
   localeLabel: {
     fontSize: 11,
     letterSpacing: 1,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 6,
+    fontWeight: "700",
   },
   localeChips: { gap: 6 },
   localeChip: {
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: colors.paper,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginRight: 6,
   },
   localeChipActive: {
-    backgroundColor: colors.riverDeep,
-    borderColor: colors.riverDeep,
+    backgroundColor: colors.river,
+    borderColor: colors.river,
   },
   localeChipText: { fontSize: 12, color: colors.inkSoft },
   localeChipTextActive: { color: colors.foam, fontWeight: "600" },
   swapBtn: {
-    marginTop: 22,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.mist,
+    marginTop: 28,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.river,
     alignItems: "center",
     justifyContent: "center",
   },
-  swapLabel: { fontSize: 16, color: colors.riverDeep },
+  swapLabel: { fontSize: 16, color: colors.foam, fontWeight: "700" },
   error: {
     marginHorizontal: 20,
     marginTop: 8,
     color: colors.timber,
     fontSize: 13,
   },
-  panel: { flex: 1, marginTop: 8 },
-  transcript: { flex: 1 },
-  transcriptContent: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
+  panel: { marginTop: 8 },
+  transcript: { paddingHorizontal: 16, paddingBottom: 8, gap: 0 },
   empty: {
     marginTop: 24,
     color: colors.inkSoft,
     fontSize: 14,
     lineHeight: 20,
   },
-  bubble: {
-    borderRadius: 14,
-    backgroundColor: colors.foam,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    padding: 14,
-    gap: 6,
+  turnRow: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  turnCol: { gap: 4 },
+  turnMeta: {
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    fontWeight: "700",
+  },
+  turnMetaTarget: {
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
   },
   bubbleSource: { color: colors.inkSoft, fontSize: 13, lineHeight: 18 },
   bubbleTarget: {
     color: colors.ink,
-    fontSize: 17,
-    fontWeight: "500",
+    fontSize: 18,
+    fontWeight: "600",
     lineHeight: 24,
+    letterSpacing: -0.2,
+  },
+  offlineTag: {
+    color: colors.timber,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   compose: {
     flexDirection: "row",
@@ -881,17 +1181,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sendLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
+  controlRail: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  ttsChip: {
+    alignSelf: "flex-start",
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  ttsChipOn: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
+  ttsChipOff: { backgroundColor: colors.mist },
+  ttsChipText: { color: colors.inkSoft, fontSize: 12, fontWeight: "600" },
+  ttsChipTextOn: { color: colors.riverDeep },
   micRow: {
     padding: 16,
     gap: 10,
   },
   micBtn: {
-    borderRadius: 14,
-    backgroundColor: colors.riverDeep,
+    borderRadius: radius.md,
+    backgroundColor: colors.river,
     paddingVertical: 18,
     alignItems: "center",
   },
-  micBtnActive: { backgroundColor: colors.timber },
+  micBtnActive: { backgroundColor: colors.ink },
   micLabel: { color: colors.foam, fontSize: 16, fontWeight: "600" },
   demoNext: {
     alignItems: "center",
@@ -899,13 +1213,59 @@ const styles = StyleSheet.create({
   },
   demoNextLabel: { color: colors.river, fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.55 },
-  cameraPanel: { flex: 1, marginTop: 8, paddingHorizontal: 16, paddingBottom: 16 },
-  cameraFrame: {
-    flex: 1,
-    borderRadius: 18,
+  cameraPanel: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  dualHint: {
+    color: colors.inkSoft,
+    fontSize: 13,
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+  dualStage: {
+    borderRadius: radius.lg,
     overflow: "hidden",
+    backgroundColor: colors.ink,
+    minHeight: 360,
+  },
+  lensPane: {
+    flex: 1,
+    minHeight: 180,
+    position: "relative",
+  },
+  lensYou: {
     backgroundColor: colors.riverDeep,
-    minHeight: 280,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.12)",
+  },
+  lensBadgeWrap: {
+    position: "absolute",
+    left: 12,
+    top: 12,
+    zIndex: 2,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  lensBadgeText: {
+    color: colors.foam,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  avatarRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
   cameraFallback: {
     flex: 1,
@@ -913,9 +1273,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     gap: 14,
+    backgroundColor: "#1e293b",
   },
   cameraFallbackText: {
-    color: "rgba(247,250,248,0.85)",
+    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
     lineHeight: 20,
   },
@@ -924,13 +1285,13 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     bottom: 16,
-    borderRadius: 12,
-    backgroundColor: "rgba(15,67,57,0.78)",
+    borderRadius: radius.md,
+    backgroundColor: "rgba(15, 23, 42, 0.78)",
     padding: 12,
     gap: 4,
   },
   subtitleSource: {
-    color: "rgba(247,250,248,0.75)",
+    color: "rgba(255,255,255,0.7)",
     fontSize: 12,
     lineHeight: 16,
   },
@@ -976,8 +1337,15 @@ const styles = StyleSheet.create({
   partial: {
     marginHorizontal: 16,
     marginBottom: 8,
+    marginTop: 8,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.2)",
+    backgroundColor: colors.foam,
     color: colors.riverDeep,
     fontSize: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   phraseHead: {
     paddingHorizontal: 16,
@@ -986,8 +1354,9 @@ const styles = StyleSheet.create({
   },
   phraseTitle: {
     color: colors.ink,
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   phraseHint: { color: colors.inkSoft, fontSize: 12, lineHeight: 16 },
   catChip: {

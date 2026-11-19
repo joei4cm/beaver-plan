@@ -63,6 +63,14 @@
     animation: bp-sheet-in var(--bp-duration) var(--bp-ease-out) both;
   }
 
+  .animate-turn-in {
+    animation: bp-turn-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
+  .animate-lens-breathe {
+    animation: bp-lens-breathe 4.8s ease-in-out infinite alternate;
+  }
+
   .share-svg-preview text.bp-display {
     font-family: var(--bp-font-display) !important;
   }
@@ -147,6 +155,28 @@
   }
 }
 
+@keyframes bp-turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bp-lens-breathe {
+  from {
+    transform: scale(1);
+    opacity: 0.88;
+  }
+  to {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
 @keyframes bp-marker-pop {
   from {
     transform: scale(0.78);
@@ -165,7 +195,9 @@
   .animate-stop-select,
   .animate-preview-in,
   .animate-template-swap,
-  .animate-sheet-in {
+  .animate-sheet-in,
+  .animate-turn-in,
+  .animate-lens-breathe {
     animation: none !important;
   }
 }
