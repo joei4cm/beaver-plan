@@ -71,15 +71,28 @@ export function TripCollabPanel({
   }, [tripId]);
 
   useEffect(() => {
+    let stopped = false;
+    let intervalId: number | undefined;
     startTransition(() => {
-      void refresh().catch((e: Error) => {
-        if (!/503/.test(e.message)) setError(e.message);
-      });
+      void refresh()
+        .then(() => {
+          if (stopped) return;
+          // Only poll when Neon/API is healthy — avoid 503 console spam on demo shell.
+          intervalId = window.setInterval(() => {
+            void refresh().catch(() => undefined);
+          }, 20_000);
+        })
+        .catch((e: Error) => {
+          if (/503/.test(e.message) || /Failed to fetch/i.test(e.message)) {
+            return;
+          }
+          setError(e.message);
+        });
     });
-    const id = window.setInterval(() => {
-      void refresh().catch(() => undefined);
-    }, 20_000);
-    return () => window.clearInterval(id);
+    return () => {
+      stopped = true;
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+    };
   }, [refresh]);
 
   useEffect(() => {

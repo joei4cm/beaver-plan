@@ -3,11 +3,18 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
-import { journalForDay, stopsForDay } from "@beaver/core";
+import {
+  journalForDay,
+  lumenJournalPlaceholder,
+  sampleKyotoFixture,
+  sampleKyotoJournal,
+  stopsForDay,
+} from "@beaver/core";
+import { brand } from "@beaver/ui-tokens";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { fileToBase64, resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
 import {
   enqueueJournalCreate,
@@ -23,6 +30,7 @@ type TripPayload = {
   days: Day[];
   stops: Stop[];
   legs?: Leg[];
+  journal?: JournalEntry[];
 };
 
 type Props = {
@@ -38,12 +46,44 @@ type PendingLocalPhoto = {
   preview: string;
 };
 
+function MediaFrame({
+  src,
+  alt,
+  className,
+  label,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  label: string;
+}) {
+  const [broken, setBroken] = useState(false);
+  const fallback = lumenJournalPlaceholder({
+    title: label,
+    subtitle: "Lumen Route",
+    tone: "sky",
+  });
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={broken ? fallback : src}
+      alt={alt}
+      className={className}
+      onError={() => setBroken(true)}
+    />
+  );
+}
+
 export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [trip, setTrip] = useState<Trip | null>(initialTrip?.trip ?? null);
   const [days, setDays] = useState<Day[]>(initialTrip?.days ?? []);
   const [stops, setStops] = useState<Stop[]>(initialTrip?.stops ?? []);
   const [legs, setLegs] = useState<Leg[]>(initialTrip?.legs ?? []);
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>(() => {
+    if (initialTrip?.journal?.length) return initialTrip.journal;
+    if (tripId === "sample-kyoto" && initialTrip) return sampleKyotoJournal();
+    return [];
+  });
   const [dayId, setDayId] = useState<string | null>(
     initialTrip?.days[0]?.id ?? null,
   );
@@ -57,15 +97,63 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [info, setInfo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [demoSeeded, setDemoSeeded] = useState(
+    Boolean(initialTrip?.journal?.length),
+  );
+  const [softNotice, setSoftNotice] = useState(false);
+  const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
+
+  const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
+  const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
+
+  useEffect(() => {
+    setOnline(isBrowserOnline());
+    const sync = () => setOnline(isBrowserOnline());
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
+
+  const applySampleSeed = useCallback(
+    (opts?: { soft?: boolean }) => {
+      if (tripId !== "sample-kyoto") return false;
+      const fixture = sampleKyotoFixture();
+      setTrip(fixture.trip);
+      setDays(fixture.days);
+      setStops(fixture.stops);
+      setLegs(fixture.legs);
+      setEntries(fixture.journal);
+      setDayId((prev) => prev ?? fixture.days[0]?.id ?? null);
+      setDemoSeeded(true);
+      setSoftNotice(Boolean(opts?.soft));
+      setFromCache(false);
+      setError(null);
+      return true;
+    },
+    [tripId],
+  );
 
   const loadJournal = useCallback(async () => {
     const data = await apiGet<{ entries: JournalEntry[] }>(
       `/v1/trips/${tripId}/journal`,
     );
-    setEntries(data.entries);
+    const next =
+      tripId === "sample-kyoto" &&
+      (!data.entries || data.entries.length === 0)
+        ? sampleKyotoJournal()
+        : data.entries;
+    setEntries(next);
+    setDemoSeeded(
+      tripId === "sample-kyoto" &&
+        (!data.entries || data.entries.length === 0),
+    );
+    setSoftNotice(false);
     setFromCache(false);
-    return data.entries;
+    return next;
   }, [tripId]);
 
   const loadTrip = useCallback(async () => {
@@ -86,9 +174,18 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     setDays(cached.days);
     setStops(cached.stops);
     setLegs(cached.legs);
-    setEntries(cached.journal);
+    setEntries(
+      cached.journal.length > 0
+        ? cached.journal
+        : tripId === "sample-kyoto"
+          ? sampleKyotoJournal()
+          : [],
+    );
     setDayId((prev) => prev ?? cached.days[0]?.id ?? null);
     setFromCache(true);
+    setDemoSeeded(
+      tripId === "sample-kyoto" && cached.journal.length === 0,
+    );
     setInfo(t(locale, "offline.cachedRead"));
     return true;
   }, [locale, tripId]);
@@ -109,14 +206,30 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             }
           }
         } catch (e) {
+          if (isPlannerNoiseError(e) || isOfflineTransportError(e)) {
+            const ok = await loadFromCache();
+            if (!ok && !applySampleSeed({ soft: true })) {
+              setError(e instanceof Error ? e.message : "load_failed");
+            } else if (ok && tripId === "sample-kyoto") {
+              setSoftNotice(true);
+            }
+            return;
+          }
           const ok = await loadFromCache();
-          if (!ok) {
+          if (!ok && !applySampleSeed({ soft: true })) {
             setError(e instanceof Error ? e.message : "load_failed");
           }
         }
       })();
     });
-  }, [initialTrip, loadFromCache, loadJournal, loadTrip]);
+  }, [
+    applySampleSeed,
+    initialTrip,
+    loadFromCache,
+    loadJournal,
+    loadTrip,
+    tripId,
+  ]);
 
   useEffect(() => {
     const onOnline = () => {
@@ -126,8 +239,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           await loadTrip();
           await loadJournal();
           setInfo(null);
+          setSoftNotice(false);
         } catch {
-          /* stay on cache */
+          /* stay on cache / seed */
         }
       })();
     };
@@ -148,6 +262,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       dayStops.map((s) => s.id),
     );
   }, [entries, dayId, dayStops]);
+
+  const activeDay = useMemo(
+    () => days.find((d) => d.id === dayId) ?? null,
+    [days, dayId],
+  );
+
+  const activeDayIndex = useMemo(() => {
+    if (!dayId) return 0;
+    const idx = days.findIndex((d) => d.id === dayId);
+    return idx >= 0 ? idx : 0;
+  }, [days, dayId]);
 
   async function onPickFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -176,7 +301,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       }
       setPendingMedia((prev) => [...prev, ...uploaded].slice(0, 8));
     } catch (e) {
-      if (isOfflineTransportError(e)) {
+      if (isOfflineTransportError(e) || isPlannerNoiseError(e)) {
         try {
           const locals: PendingLocalPhoto[] = [];
           for (const file of Array.from(files).slice(0, 6)) {
@@ -238,7 +363,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     };
 
     try {
-      if (!isBrowserOnline()) {
+      if (!isBrowserOnline() || softNotice) {
         await finishLocal();
         return;
       }
@@ -252,7 +377,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         setTrip({ ...trip, version: trip.version + 1 });
       }
     } catch (e) {
-      if (isOfflineTransportError(e)) {
+      if (isOfflineTransportError(e) || isPlannerNoiseError(e)) {
         await finishLocal();
         return;
       }
@@ -263,15 +388,18 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   }
 
   async function removeEntry(entryId: string) {
+    const isSeedEntry = entryId.startsWith("journal-");
     try {
-      if (!isBrowserOnline()) {
-        await enqueueJournalDelete({
-          tripId,
-          entryId,
-          expectedVersion: trip?.version,
-        });
+      if (!isBrowserOnline() || softNotice || isSeedEntry) {
+        if (!isSeedEntry) {
+          await enqueueJournalDelete({
+            tripId,
+            entryId,
+            expectedVersion: trip?.version,
+          });
+        }
         setEntries((prev) => prev.filter((e) => e.id !== entryId));
-        setInfo(t(locale, "offline.savedLocal"));
+        setInfo(isSeedEntry ? null : t(locale, "offline.savedLocal"));
         return;
       }
       await apiSend(`/v1/trips/${tripId}/journal/${entryId}`, "DELETE", {
@@ -279,12 +407,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       });
       await loadJournal();
     } catch (e) {
-      if (isOfflineTransportError(e)) {
-        await enqueueJournalDelete({
-          tripId,
-          entryId,
-          expectedVersion: trip?.version,
-        });
+      if (isOfflineTransportError(e) || isPlannerNoiseError(e)) {
+        if (!isSeedEntry) {
+          await enqueueJournalDelete({
+            tripId,
+            entryId,
+            expectedVersion: trip?.version,
+          });
+        }
         setEntries((prev) => prev.filter((e) => e.id !== entryId));
         setInfo(t(locale, "offline.savedLocal"));
         return;
@@ -295,8 +425,25 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
 
   if (!trip && pending) {
     return (
-      <div className="px-6 py-20 text-ink-soft md:px-10">
-        {t(locale, "journal.loading")}
+      <div className="relative mx-auto max-w-5xl overflow-hidden px-4 py-20 md:px-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-10 h-56 opacity-80"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse 70% 55% at 78% 18%, rgba(47, 107, 255, 0.16), transparent 58%),
+              linear-gradient(180deg, #dbe8ff 0%, transparent 78%)
+            `,
+          }}
+        />
+        <div className="animate-rise space-y-4">
+          <div className="h-3 w-40 rounded bg-mist" />
+          <div className="h-10 w-72 max-w-full rounded bg-mist/80" />
+          <div className="h-4 w-full max-w-md rounded bg-mist/60" />
+          <p className="pt-6 text-sm text-ink-soft">
+            {t(locale, "journal.loading")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -313,54 +460,105 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     ...pendingMedia.map((url) => ({ key: url, src: resolveMediaUrl(url) })),
     ...pendingLocalPhotos.map((p) => ({ key: p.id, src: p.preview })),
   ];
+  const emptySlots = Math.max(0, 3 - previewMedia.length);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
-      <header className="animate-rise flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-8">
-        <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
-            Beaver Plan · {t(locale, "journal.eyebrow")}
-            {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
-          </p>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
-            {trip.title}
-          </h1>
-          <p className="mt-3 max-w-xl text-ink-soft">
-            {t(locale, "journal.support")}
-          </p>
-          <div className="mt-4">
-            <OfflinePinControl
-              tripId={tripId}
-              locale={locale}
-              trip={trip}
-              days={days}
-              stops={stops}
-              legs={legs}
-              journal={entries}
-            />
-          </div>
+    <div className="relative mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-8 md:pt-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-8 h-72 overflow-hidden"
+      >
+        <div
+          className="absolute inset-0 animate-drift opacity-90"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse 70% 55% at 78% 18%, rgba(47, 107, 255, 0.18), transparent 58%),
+              radial-gradient(ellipse 50% 40% at 12% 0%, rgba(96, 165, 250, 0.14), transparent 52%),
+              linear-gradient(180deg, #dbe8ff 0%, transparent 78%)
+            `,
+          }}
+        />
+        <div className="bp-topo absolute inset-0 opacity-45" />
+      </div>
+
+      <header className="animate-rise relative border-b border-[color:var(--bp-line)] pb-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-river">
+          {brandSecondary}
+          {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
+        </p>
+        <h1 className="mt-3 font-display text-[clamp(2.4rem,5.5vw,3.5rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-ink">
+          {brandPrimary}
+        </h1>
+        <p className="mt-4 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-ink-soft">
+          {t(locale, "journal.eyebrow")}
+        </p>
+        <p className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight text-ink/90 md:text-3xl">
+          {trip.title}
+        </p>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base">
+          {t(locale, "journal.support")}
+        </p>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
+          {demoSeeded ? (
+            <span className="rounded-md bg-river/12 px-2.5 py-1 font-semibold text-river-deep">
+              {t(locale, "journal.demoBadge")}
+            </span>
+          ) : null}
+          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-ink-soft">
+            {online
+              ? t(locale, "offline.online")
+              : t(locale, "offline.offline")}
+          </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/trips/${tripId}`}
-            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
-          >
-            {t(locale, "journal.backPlanner")}
-          </Link>
-          <Link
-            href={`/trips/${tripId}/share`}
-            className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep"
-          >
-            {t(locale, "journal.toShare")}
-          </Link>
+
+        {demoSeeded ? (
+          <p className="animate-sheet-in mt-4 rounded-md border border-river/15 bg-river/[0.06] px-4 py-3 text-sm leading-relaxed text-river-deep">
+            {softNotice && !online
+              ? t(locale, "journal.softOffline")
+              : t(locale, "journal.demoNotice")}
+          </p>
+        ) : null}
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+          <OfflinePinControl
+            tripId={tripId}
+            locale={locale}
+            trip={trip}
+            days={days}
+            stops={stops}
+            legs={legs}
+            journal={entries}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/trips/${tripId}`}
+              className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+            >
+              {t(locale, "journal.backPlanner")}
+            </Link>
+            <Link
+              href={`/trips/${tripId}/share`}
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep"
+            >
+              {t(locale, "journal.toShare")}
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
+      <div
+        className="animate-rise relative mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]"
+        style={{ animationDelay: "40ms" }}
+        role="tablist"
+        aria-label={t(locale, "journal.eyebrow")}
+      >
         {days.map((day, i) => (
           <button
             key={day.id}
             type="button"
+            role="tab"
+            aria-selected={dayId === day.id}
             onClick={() => {
               setDayId(day.id);
               setStopId("");
@@ -372,7 +570,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             }`}
           >
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
-              {t(locale, "planner.day")} {i + 1}
+              {t(locale, "journal.daySection").replace("{n}", String(i + 1))}
             </span>
             <span className="text-sm font-semibold">{day.date}</span>
           </button>
@@ -380,30 +578,57 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       </div>
 
       <section
-        className="animate-fade mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]"
-        style={{ animationDelay: "80ms" }}
+        className="relative mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr]"
       >
         <div className="space-y-8">
+          <div
+            className="animate-sheet-in border-b border-[color:var(--bp-line)] pb-5"
+            key={dayId ?? "all"}
+          >
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+              {t(locale, "journal.daySection").replace(
+                "{n}",
+                String(activeDayIndex + 1),
+              )}
+            </p>
+            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
+              {activeDay?.note ?? activeDay?.date ?? trip.title}
+            </h2>
+            {activeDay?.date ? (
+              <p className="mt-2 text-sm text-ink-soft">{activeDay.date}</p>
+            ) : null}
+          </div>
+
           {visible.length === 0 && (
-            <div className="animate-fade border border-dashed border-river/30 px-6 py-14">
+            <div className="animate-fade border border-dashed border-river/30 bg-foam/40 px-6 py-14">
               <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
                 {t(locale, "journal.empty")}
               </p>
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
                 {t(locale, "journal.emptyHint")}
               </p>
+              <div className="mt-8 grid max-w-sm grid-cols-3 gap-3">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="aspect-[3/4] rounded-md bg-gradient-to-br from-river/15 via-mist to-sky-100/80"
+                    aria-hidden
+                  />
+                ))}
+              </div>
             </div>
           )}
+
           {visible.map((entry, index) => {
             const stop = stops.find((s) => s.id === entry.stopId);
             return (
               <article
                 key={entry.id}
-                className="animate-rise border-b border-[color:var(--bp-line)] pb-8"
-                style={{ animationDelay: `${index * 60}ms` }}
+                className="animate-entry-in border-b border-[color:var(--bp-line)] pb-8"
+                style={{ animationDelay: `${index * 70}ms` }}
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-timber">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-river">
                     {stop?.place.name ??
                       days.find((d) => d.id === entry.dayId)?.note ??
                       t(locale, "journal.dayNote")}
@@ -420,19 +645,29 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   </button>
                 </div>
                 {entry.body ? (
-                  <p className="mt-3 font-display text-2xl leading-snug text-ink md:text-3xl">
+                  <p className="mt-3 font-display text-2xl leading-snug tracking-tight text-ink md:text-3xl">
                     {entry.body}
                   </p>
                 ) : null}
-                {entry.media.length > 0 && (
+                {entry.media.length > 0 ? (
                   <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-                    {entry.media.map((url) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={url}
+                    {entry.media.map((url, mediaIndex) => (
+                      <MediaFrame
+                        key={`${entry.id}-${mediaIndex}`}
                         src={resolveMediaUrl(url)}
                         alt=""
-                        className="aspect-[3/4] w-full object-cover"
+                        label={t(locale, "journal.mediaPlaceholder")}
+                        className="aspect-[3/4] w-full rounded-md object-cover ring-1 ring-[color:var(--bp-line)]"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
+                    {[0, 1].map((i) => (
+                      <div
+                        key={i}
+                        className="aspect-[3/4] rounded-md border border-dashed border-river/25 bg-mist/40"
+                        aria-label={t(locale, "journal.mediaPlaceholder")}
                       />
                     ))}
                   </div>
@@ -442,20 +677,20 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           })}
         </div>
 
-        <aside className="h-fit border border-[color:var(--bp-line)] bg-foam/70 p-5 lg:sticky lg:top-6">
-          <h2 className="font-display text-2xl font-semibold text-ink">
+        <aside className="animate-sheet-in h-fit border border-[color:var(--bp-line)] bg-foam/80 p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm lg:sticky lg:top-6">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
             {t(locale, "journal.compose")}
           </h2>
           <p className="mt-1 text-sm text-ink-soft">
             {t(locale, "journal.composeHint")}
           </p>
 
-          <label className="mt-5 block text-xs uppercase tracking-wider text-ink-soft">
+          <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
             {t(locale, "journal.bindStop")}
             <select
               value={stopId}
               onChange={(e) => setStopId(e.target.value)}
-              className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-sm text-ink"
+              className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-sm text-ink focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
             >
               <option value="">{t(locale, "journal.dayOnly")}</option>
               {dayStops.map((s) => (
@@ -471,11 +706,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             onChange={(e) => setBody(e.target.value)}
             rows={4}
             placeholder={t(locale, "journal.placeholder")}
-            className="mt-4 w-full resize-none rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 focus:border-river focus:outline-none"
+            className="mt-4 w-full resize-none rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
           />
 
-          <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-md border border-dashed border-river/35 bg-mist/30 px-4 py-5 transition hover:border-river/60">
-            <span className="text-sm font-medium text-river">
+          <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-md border border-dashed border-river/35 bg-mist/30 px-4 py-5 transition hover:border-river/60 hover:bg-river/[0.04]">
+            <span className="text-sm font-semibold text-river">
               {t(locale, "journal.addPhotos")}
             </span>
             <span className="text-xs text-ink-soft">
@@ -490,19 +725,31 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             />
           </label>
 
-          {previewMedia.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+              {t(locale, "journal.photoSlots")}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
               {previewMedia.map((item) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <MediaFrame
                   key={item.key}
                   src={item.src}
                   alt=""
-                  className="h-16 w-12 object-cover"
+                  label={t(locale, "journal.mediaPlaceholder")}
+                  className="h-20 w-14 rounded-md object-cover ring-1 ring-[color:var(--bp-line)]"
                 />
               ))}
+              {Array.from({ length: emptySlots }).map((_, i) => (
+                <div
+                  key={`slot-${i}`}
+                  className="flex h-20 w-14 items-center justify-center rounded-md border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
+                  aria-hidden
+                >
+                  +
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
           {info && <p className="mt-3 text-sm text-river">{info}</p>}
           {error && <p className="mt-3 text-sm text-timber">{error}</p>}

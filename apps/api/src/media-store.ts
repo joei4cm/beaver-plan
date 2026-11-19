@@ -51,12 +51,14 @@ export function mediaKeyFromRef(ref: string): string | null {
 export function makePlaceholderSvg(opts: {
   title: string;
   subtitle?: string;
-  tone?: "river" | "timber" | "mist";
+  tone?: "river" | "timber" | "mist" | "sky";
 }): Uint8Array {
+  // Lumen Route azure canvas — not Cartograph lagoon / terracotta magazine.
   const tones = {
-    river: ["#0f4339", "#1f6b5c"],
-    timber: ["#8a4b28", "#b86b3c"],
-    mist: ["#2a3a34", "#6b8578"],
+    river: ["#1A4FD6", "#2F6BFF"],
+    sky: ["#60A5FA", "#DBE8FF"],
+    mist: ["#64748B", "#94A3B8"],
+    timber: ["#E11D48", "#FB7185"],
   } as const;
   const [a, b] = tones[opts.tone ?? "river"];
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -68,12 +70,12 @@ export function makePlaceholderSvg(opts: {
     </linearGradient>
   </defs>
   <rect width="1200" height="1600" fill="url(#g)"/>
-  <circle cx="920" cy="280" r="180" fill="#f7faf8" opacity="0.08"/>
-  <circle cx="200" cy="1280" r="260" fill="#f7faf8" opacity="0.06"/>
-  <text x="80" y="1400" fill="#f7faf8" font-family="Georgia, serif" font-size="64">${escapeXml(opts.title)}</text>
+  <circle cx="920" cy="280" r="180" fill="#ffffff" opacity="0.12"/>
+  <circle cx="200" cy="1280" r="260" fill="#ffffff" opacity="0.08"/>
+  <text x="80" y="1400" fill="#F4F6FA" font-family="Bricolage Grotesque, Plus Jakarta Sans, sans-serif" font-size="64" font-weight="700">${escapeXml(opts.title)}</text>
   ${
     opts.subtitle
-      ? `<text x="80" y="1480" fill="#d8e2dc" font-family="system-ui, sans-serif" font-size="32">${escapeXml(opts.subtitle)}</text>`
+      ? `<text x="80" y="1480" fill="#E6ECF5" font-family="Plus Jakarta Sans, sans-serif" font-size="32">${escapeXml(opts.subtitle)}</text>`
       : ""
   }
 </svg>`;

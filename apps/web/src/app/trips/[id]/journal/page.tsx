@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import type { Day, Stop, Trip } from "@beaver/core";
+import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
 import { getLocale } from "@/lib/locale";
 import { apiBase } from "@/lib/api";
+import { sampleKyotoFixture } from "@/lib/sample-kyoto";
 import { TripJournal } from "@/components/journal/trip-journal";
 
 type Params = { params: Promise<{ id: string }> };
@@ -17,12 +18,23 @@ async function loadTrip(id: string): Promise<{
   trip: Trip;
   days: Day[];
   stops: Stop[];
+  legs?: Leg[];
+  journal?: JournalEntry[];
 } | null> {
   try {
     const res = await fetch(`${apiBase()}/v1/trips/${id}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as { trip: Trip; days: Day[]; stops: Stop[] };
+    if (!res.ok) {
+      if (id === "sample-kyoto") return sampleKyotoFixture();
+      return null;
+    }
+    return (await res.json()) as {
+      trip: Trip;
+      days: Day[];
+      stops: Stop[];
+      legs?: Leg[];
+    };
   } catch {
+    if (id === "sample-kyoto") return sampleKyotoFixture();
     return null;
   }
 }

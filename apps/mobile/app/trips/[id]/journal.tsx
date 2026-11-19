@@ -14,13 +14,15 @@ import {
 } from "react-native";
 import {
   journalForDay,
+  sampleKyotoFixture,
+  sampleKyotoJournal,
   stopsForDay,
   type Day,
   type JournalEntry,
   type Stop,
   type Trip,
 } from "@beaver/core";
-import { colors } from "@beaver/ui-tokens";
+import { brand, colors } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import {
   createJournalEntry,
@@ -46,6 +48,17 @@ type LocalPhoto = {
   preview: string;
 };
 
+function isNoiseError(err: unknown): boolean {
+  if (isOfflineTransportError(err)) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    /\b503\b/.test(msg) ||
+    /Failed to fetch/i.test(msg) ||
+    /database_required|DATABASE_URL|Neon/i.test(msg) ||
+    /ECONNREFUSED|NetworkError|Load failed/i.test(msg)
+  );
+}
+
 export default function JournalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
@@ -62,6 +75,26 @@ export default function JournalScreen() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const [demoSeeded, setDemoSeeded] = useState(false);
+  const [softNotice, setSoftNotice] = useState(false);
+
+  const applySampleSeed = useCallback(
+    (opts?: { soft?: boolean }) => {
+      if (tripId !== "sample-kyoto") return false;
+      const fixture = sampleKyotoFixture();
+      setTrip(fixture.trip);
+      setDays(fixture.days);
+      setStops(fixture.stops);
+      setEntries(fixture.journal);
+      setDayId((prev) => prev ?? fixture.days[0]?.id ?? null);
+      setDemoSeeded(true);
+      setSoftNotice(Boolean(opts?.soft));
+      setFromCache(false);
+      setError(null);
+      return true;
+    },
+    [tripId],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,7 +114,17 @@ export default function JournalScreen() {
       setTrip(tripData.trip);
       setDays(tripData.days);
       setStops(tripData.stops);
-      setEntries(journal.entries);
+      const next =
+        tripId === "sample-kyoto" &&
+        (!journal.entries || journal.entries.length === 0)
+          ? sampleKyotoJournal()
+          : journal.entries;
+      setEntries(next);
+      setDemoSeeded(
+        tripId === "sample-kyoto" &&
+          (!journal.entries || journal.entries.length === 0),
+      );
+      setSoftNotice(false);
       setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
       setFromCache(false);
       setInfo(null);
@@ -91,17 +134,27 @@ export default function JournalScreen() {
         setTrip(cached.trip);
         setDays(cached.days);
         setStops(cached.stops);
-        setEntries(cached.journal);
+        setEntries(
+          cached.journal.length > 0
+            ? cached.journal
+            : tripId === "sample-kyoto"
+              ? sampleKyotoJournal()
+              : [],
+        );
         setDayId((prev) => prev ?? cached.days[0]?.id ?? null);
         setFromCache(true);
+        setDemoSeeded(
+          tripId === "sample-kyoto" && cached.journal.length === 0,
+        );
+        setSoftNotice(isNoiseError(e));
         setInfo(t(locale, "offline.cachedRead"));
-      } else {
+      } else if (!applySampleSeed({ soft: true })) {
         setError(e instanceof Error ? e.message : "load_failed");
       }
     } finally {
       setLoading(false);
     }
-  }, [tripId]);
+  }, [applySampleSeed, tripId]);
 
   useEffect(() => {
     void load();
@@ -119,6 +172,16 @@ export default function JournalScreen() {
       dayStops.map((s) => s.id),
     );
   }, [entries, dayId, dayStops]);
+
+  const activeDay = useMemo(
+    () => days.find((d) => d.id === dayId) ?? null,
+    [days, dayId],
+  );
+  const activeDayIndex = useMemo(() => {
+    if (!dayId) return 0;
+    const idx = days.findIndex((d) => d.id === dayId);
+    return idx >= 0 ? idx : 0;
+  }, [days, dayId]);
 
   async function capture() {
     setError(null);
@@ -166,7 +229,7 @@ export default function JournalScreen() {
       }
       setPendingMedia((prev) => [...prev, ...urls].slice(0, 8));
     } catch (e) {
-      if (isOfflineTransportError(e)) {
+      if (isOfflineTransportError(e) || isNoiseError(e)) {
         try {
           const locals: LocalPhoto[] = [];
           for (const asset of picked.assets.slice(0, 4)) {
@@ -221,7 +284,7 @@ export default function JournalScreen() {
     };
 
     try {
-      if (!isDeviceOnline()) {
+      if (!isDeviceOnline() || softNotice) {
         await finishLocal();
         return;
       }
@@ -235,9 +298,11 @@ export default function JournalScreen() {
       setPendingMedia([]);
       setPendingLocal([]);
       const journal = await fetchJournal(tripId);
-      setEntries(journal.entries);
+      setEntries(
+        journal.entries.length > 0 ? journal.entries : sampleKyotoJournal(),
+      );
     } catch (e) {
-      if (isOfflineTransportError(e)) {
+      if (isOfflineTransportError(e) || isNoiseError(e)) {
         await finishLocal();
         return;
       }
@@ -251,6 +316,7 @@ export default function JournalScreen() {
     ...pendingMedia.map((url) => ({ key: url, uri: resolveMediaUrl(url) })),
     ...pendingLocal.map((p) => ({ key: p.id, uri: p.preview })),
   ];
+  const emptySlots = Math.max(0, 3 - previewMedia.length);
 
   return (
     <View style={styles.root}>
@@ -258,15 +324,28 @@ export default function JournalScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.river} />
+          <Text style={styles.loadingText}>{t(locale, "journal.loading")}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.eyebrow}>
-            {t(locale, "journal.eyebrow")}
+            {brand.en}
             {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
           </Text>
+          <Text style={styles.brand}>{brand.zh}</Text>
+          <Text style={styles.kicker}>{t(locale, "journal.eyebrow")}</Text>
           <Text style={styles.title}>{trip?.title ?? "—"}</Text>
           <Text style={styles.support}>{t(locale, "journal.support")}</Text>
+
+          {demoSeeded ? (
+            <View style={styles.notice}>
+              <Text style={styles.noticeText}>
+                {softNotice
+                  ? t(locale, "journal.softOffline")
+                  : t(locale, "journal.demoNotice")}
+              </Text>
+            </View>
+          ) : null}
 
           <ScrollView
             horizontal
@@ -284,24 +363,46 @@ export default function JournalScreen() {
               >
                 <Text
                   style={[
+                    styles.dayChipMeta,
+                    dayId === day.id && styles.dayChipMetaActive,
+                  ]}
+                >
+                  {t(locale, "journal.daySection").replace("{n}", String(i + 1))}
+                </Text>
+                <Text
+                  style={[
                     styles.dayChipLabel,
                     dayId === day.id && styles.dayChipLabelActive,
                   ]}
                 >
-                  {t(locale, "planner.day")} {i + 1}
+                  {day.date}
                 </Text>
               </Pressable>
             ))}
           </ScrollView>
 
+          <View style={styles.daySection}>
+            <Text style={styles.daySectionMeta}>
+              {t(locale, "journal.daySection").replace(
+                "{n}",
+                String(activeDayIndex + 1),
+              )}
+            </Text>
+            <Text style={styles.daySectionTitle}>
+              {activeDay?.note ?? activeDay?.date ?? trip?.title ?? "—"}
+            </Text>
+          </View>
+
           {visible.map((entry) => (
             <View key={entry.id} style={styles.entry}>
-              <Text style={styles.entryBody}>
-                {entry.body || "·"}
+              <Text style={styles.entryMeta}>
+                {stops.find((s) => s.id === entry.stopId)?.place.name ??
+                  t(locale, "journal.dayNote")}
                 {entry.id.startsWith("local-")
-                  ? ` (${t(locale, "offline.pending").replace("{n}", "1")})`
+                  ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
                   : ""}
               </Text>
+              <Text style={styles.entryBody}>{entry.body || "·"}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {entry.media.map((url) => (
                   <Image
@@ -310,15 +411,30 @@ export default function JournalScreen() {
                     style={styles.thumb}
                   />
                 ))}
+                {entry.media.length === 0 ? (
+                  <>
+                    <View style={styles.slot} />
+                    <View style={styles.slot} />
+                  </>
+                ) : null}
               </ScrollView>
             </View>
           ))}
           {visible.length === 0 && (
-            <Text style={styles.hint}>{t(locale, "journal.empty")}</Text>
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>{t(locale, "journal.empty")}</Text>
+              <Text style={styles.hint}>{t(locale, "journal.emptyHint")}</Text>
+              <View style={styles.slotRow}>
+                <View style={styles.slot} />
+                <View style={styles.slot} />
+                <View style={styles.slot} />
+              </View>
+            </View>
           )}
 
           <View style={styles.compose}>
             <Text style={styles.composeTitle}>{t(locale, "journal.compose")}</Text>
+            <Text style={styles.composeHint}>{t(locale, "journal.composeHint")}</Text>
             <TextInput
               value={body}
               onChangeText={setBody}
@@ -345,17 +461,19 @@ export default function JournalScreen() {
                 </Text>
               </Pressable>
             </View>
-            {previewMedia.length > 0 && (
-              <ScrollView horizontal style={{ marginTop: 12 }}>
-                {previewMedia.map((item) => (
-                  <Image
-                    key={item.key}
-                    source={{ uri: item.uri }}
-                    style={styles.thumb}
-                  />
-                ))}
-              </ScrollView>
-            )}
+            <Text style={styles.slotsLabel}>{t(locale, "journal.photoSlots")}</Text>
+            <ScrollView horizontal style={{ marginTop: 8 }}>
+              {previewMedia.map((item) => (
+                <Image
+                  key={item.key}
+                  source={{ uri: item.uri }}
+                  style={styles.thumb}
+                />
+              ))}
+              {Array.from({ length: emptySlots }).map((_, i) => (
+                <View key={`slot-${i}`} style={styles.slot} />
+              ))}
+            </ScrollView>
             {info ? <Text style={styles.info}>{info}</Text> : null}
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </View>
@@ -367,18 +485,35 @@ export default function JournalScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  loadingText: { color: colors.inkSoft, fontSize: 14 },
   content: { padding: 20, paddingBottom: 48 },
   eyebrow: {
-    fontSize: 12,
-    letterSpacing: 2,
+    fontSize: 11,
+    letterSpacing: 2.4,
     textTransform: "uppercase",
     color: colors.river,
+    fontWeight: "600",
+  },
+  brand: {
+    marginTop: 8,
+    fontSize: 34,
+    fontWeight: "800",
+    letterSpacing: -1,
+    color: colors.ink,
+  },
+  kicker: {
+    marginTop: 14,
+    fontSize: 11,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    fontWeight: "600",
   },
   title: {
-    marginTop: 8,
-    fontSize: 28,
-    fontWeight: "600",
+    marginTop: 6,
+    fontSize: 24,
+    fontWeight: "700",
     color: colors.ink,
   },
   support: {
@@ -386,6 +521,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: colors.inkSoft,
+  },
+  notice: {
+    marginTop: 14,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.2)",
+    backgroundColor: "rgba(47, 107, 255, 0.06)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  noticeText: {
+    color: colors.riverDeep,
+    fontSize: 13,
+    lineHeight: 18,
   },
   dayRow: { gap: 8, paddingVertical: 16 },
   dayChip: {
@@ -398,29 +547,87 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dayChipActive: {
-    backgroundColor: colors.riverDeep,
-    borderColor: colors.riverDeep,
+    backgroundColor: colors.river,
+    borderColor: colors.river,
   },
-  dayChipLabel: { fontSize: 13, color: colors.inkSoft },
+  dayChipMeta: {
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    marginBottom: 2,
+  },
+  dayChipMetaActive: { color: "rgba(255,255,255,0.8)" },
+  dayChipLabel: { fontSize: 13, fontWeight: "600", color: colors.inkSoft },
   dayChipLabelActive: { color: colors.foam },
+  daySection: {
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    marginBottom: 8,
+  },
+  daySectionMeta: {
+    fontSize: 11,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "600",
+  },
+  daySectionTitle: {
+    marginTop: 6,
+    fontSize: 26,
+    fontWeight: "700",
+    color: colors.ink,
+  },
   entry: {
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  entryMeta: {
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
   entryBody: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 22,
+    lineHeight: 30,
     color: colors.ink,
-    marginBottom: 10,
+    marginBottom: 12,
+    fontWeight: "600",
   },
   thumb: {
     width: 72,
     height: 96,
     marginRight: 8,
+    borderRadius: 8,
     backgroundColor: colors.mist,
   },
-  hint: { color: colors.inkSoft, fontSize: 15, marginTop: 8 },
+  slot: {
+    width: 72,
+    height: 96,
+    marginRight: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(47, 107, 255, 0.3)",
+    backgroundColor: "rgba(47, 107, 255, 0.06)",
+  },
+  slotRow: { flexDirection: "row", marginTop: 14 },
+  empty: {
+    marginTop: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 4,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.ink,
+  },
+  hint: { color: colors.inkSoft, fontSize: 14, marginTop: 8, lineHeight: 20 },
   compose: {
     marginTop: 24,
     padding: 16,
@@ -430,10 +637,15 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   composeTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
     color: colors.ink,
+  },
+  composeHint: {
+    marginTop: 4,
     marginBottom: 10,
+    fontSize: 13,
+    color: colors.inkSoft,
   },
   input: {
     minHeight: 88,
@@ -449,7 +661,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 10, marginTop: 12 },
   primary: {
     flex: 1,
-    backgroundColor: colors.timber,
+    backgroundColor: colors.river,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
@@ -465,6 +677,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   secondaryLabel: { color: colors.river, fontWeight: "600" },
+  slotsLabel: {
+    marginTop: 14,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    fontWeight: "600",
+  },
   disabled: { opacity: 0.45 },
   error: { marginTop: 10, color: colors.timber, fontSize: 13 },
   info: { marginTop: 10, color: colors.river, fontSize: 13 },

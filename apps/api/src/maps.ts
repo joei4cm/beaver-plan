@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import {
   createEngineBundle,
+  DemoMapEngine,
+  DemoRoutingEngine,
   inferRegionHint,
   resolveMapEngine,
   type MapEnginePreference,
@@ -84,17 +86,32 @@ mapsRoutes.get("/v1/places/search", async (c) => {
     c.req.query("timezone"),
   );
 
+  const query = {
+    text,
+    near:
+      near && Number.isFinite(near.lat) && Number.isFinite(near.lng)
+        ? near
+        : undefined,
+    language: c.req.query("language") ?? "zh-CN",
+  };
+
   try {
-    const places = await map.searchPlaces({
-      text,
-      near:
-        near && Number.isFinite(near.lat) && Number.isFinite(near.lng)
-          ? near
-          : undefined,
-      language: c.req.query("language") ?? "zh-CN",
-    });
+    const places = await map.searchPlaces(query);
     return c.json({ places, engineId, mode, region });
   } catch (err) {
+    // Soft-fail live vendor outages → curated demo POIs (never empty stub).
+    if (mode === "live") {
+      const demo = new DemoMapEngine(engineId);
+      const places = await demo.searchPlaces(query);
+      return c.json({
+        places,
+        engineId,
+        mode: "demo" as const,
+        region,
+        fallback: "demo_after_live_error",
+        liveError: err instanceof Error ? err.message : "search_failed",
+      });
+    }
     const message = err instanceof Error ? err.message : "search_failed";
     return c.json({ error: message, engineId, mode }, 502);
   }
@@ -138,6 +155,16 @@ mapsRoutes.get("/v1/geocode/reverse", async (c) => {
     const address = await map.reverseGeocode({ lat, lng });
     return c.json({ address, engineId, mode });
   } catch (err) {
+    if (mode === "live") {
+      const demo = new DemoMapEngine(engineId);
+      const address = await demo.reverseGeocode({ lat, lng });
+      return c.json({
+        address,
+        engineId,
+        mode: "demo" as const,
+        fallback: "demo_after_live_error",
+      });
+    }
     const message = err instanceof Error ? err.message : "geocode_failed";
     return c.json({ error: message, engineId, mode }, 502);
   }
@@ -180,15 +207,28 @@ mapsRoutes.post("/v1/directions", async (c) => {
     body.timezone,
   );
 
+  const req = {
+    origin: body.origin,
+    destination: body.destination,
+    mode: body.mode ?? ("walk" as const),
+    language: body.language ?? "zh-CN",
+  };
+
   try {
-    const route = await routing.route({
-      origin: body.origin,
-      destination: body.destination,
-      mode: body.mode ?? "walk",
-      language: body.language ?? "zh-CN",
-    });
+    const route = await routing.route(req);
     return c.json({ route, engineId, mode, region });
   } catch (err) {
+    if (mode === "live") {
+      const demo = new DemoRoutingEngine(engineId);
+      const route = await demo.route(req);
+      return c.json({
+        route,
+        engineId,
+        mode: "demo" as const,
+        region,
+        fallback: "demo_after_live_error",
+      });
+    }
     const message = err instanceof Error ? err.message : "directions_failed";
     return c.json({ error: message, engineId, mode }, 502);
   }
