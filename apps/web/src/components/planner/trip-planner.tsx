@@ -402,6 +402,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               onSelectStop={setSelectedStopId}
               engineLabel={engineLabel}
               modeLabel={modeLabel}
+              engineId={engineInfo?.engineId}
               locale={locale}
             />
           </div>
