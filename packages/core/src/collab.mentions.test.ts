@@ -4,6 +4,7 @@ import {
   canCommentOnTrip,
   parseMentions,
 } from "./collab.js";
+import { sampleKyotoCollab } from "./map/sample-kyoto.js";
 
 describe("parseMentions", () => {
   it("matches member display names after @", () => {
@@ -32,5 +33,16 @@ describe("canCommentOnTrip", () => {
     assert.equal(canCommentOnTrip("editor"), true);
     assert.equal(canCommentOnTrip("viewer"), false);
     assert.equal(canCommentOnTrip(undefined), false);
+  });
+});
+
+describe("sampleKyotoCollab", () => {
+  it("seeds members, @mentions, and a timeline rail", () => {
+    const seed = sampleKyotoCollab();
+    assert.equal(seed.yourRole, "owner");
+    assert.ok(seed.members.length >= 2);
+    assert.ok(seed.comments.some((c) => c.mentions.includes("Demo Traveler")));
+    assert.ok(seed.events.some((e) => e.type === "comment_added"));
+    assert.ok(seed.events.some((e) => e.type === "member_joined"));
   });
 });
