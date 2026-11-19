@@ -6,26 +6,44 @@ import { useRouter } from "next/navigation";
 import type { Trip } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { apiGet, apiSend } from "@/lib/api";
-
-type TemplateCard = {
-  id: string;
-  title: { "zh-CN": string; en: string };
-  destination: string;
-  description: { "zh-CN": string; en: string };
-  accent: string;
-  dayCount: number;
-  stopCount: number;
-};
+import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
+import {
+  getLocalTrip,
+  materializeTemplateLocal,
+  mergeTripLists,
+  templateCardsFromSeed,
+  type TemplateCard,
+} from "@/lib/local-trips";
 
 type Props = {
   locale: Locale;
 };
 
+function formatTripMeta(trip: Trip, locale: Locale): string {
+  const parts: string[] = [];
+  if (trip.destination) parts.push(trip.destination);
+  if (trip.startDate) {
+    const range =
+      trip.endDate && trip.endDate !== trip.startDate
+        ? `${trip.startDate} → ${trip.endDate}`
+        : trip.startDate;
+    parts.push(range);
+  }
+  if (trip.id === "sample-kyoto") {
+    parts.push(t(locale, "trips.sampleBadge"));
+  } else if (getLocalTrip(trip.id)) {
+    parts.push(t(locale, "trips.localBadge"));
+  }
+  return parts.join(" · ") || "—";
+}
+
 export function TripsHome({ locale }: Props) {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [templates, setTemplates] = useState<TemplateCard[]>([]);
+  const [templates, setTemplates] = useState<TemplateCard[]>(() =>
+    templateCardsFromSeed(),
+  );
+  const [softNotice, setSoftNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [creatingId, setCreatingId] = useState<string | null>(null);
@@ -33,41 +51,45 @@ export function TripsHome({ locale }: Props) {
   const [copyJournalIds, setCopyJournalIds] = useState<Record<string, boolean>>(
     {},
   );
+  const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(async () => {
+    let remoteTrips: Trip[] | null = null;
+    let remoteFailed = false;
+
     try {
       const tplRes = await apiGet<{ templates: TemplateCard[] }>("/v1/templates");
-      setTemplates(tplRes.templates);
+      if (tplRes.templates?.length) setTemplates(tplRes.templates);
     } catch {
-      // Demo shell without API: empty templates is fine.
-      setTemplates([]);
+      setTemplates(templateCardsFromSeed());
     }
+
     try {
       const tripRes = await apiGet<{ trips: Trip[] }>("/v1/trips");
-      setTrips(tripRes.trips);
-    } catch {
-      // Demo shell without Neon: still show the curated sample trip.
-      setTrips([
-        {
-          id: "sample-kyoto",
-          title: "京都五日",
-          destination: "Kyoto",
-          startDate: "2026-04-10",
-          endDate: "2026-04-14",
-          timezone: "Asia/Tokyo",
-          locale: "zh-CN",
-          mapEngine: "auto",
-          version: 1,
-          createdAt: "2026-04-01T00:00:00.000Z",
-          updatedAt: "2026-04-01T00:00:00.000Z",
-        },
-      ]);
+      remoteTrips = tripRes.trips;
+    } catch (e) {
+      remoteFailed = true;
+      if (!isPlannerNoiseError(e)) {
+        setError(e instanceof Error ? e.message : "load_failed");
+      }
     }
-  }, []);
+
+    const merged = mergeTripLists(remoteTrips ?? [], {
+      includeSampleFallback: remoteFailed || !remoteTrips?.length,
+    });
+    setTrips(merged);
+    if (remoteFailed) {
+      setSoftNotice(t(locale, "trips.softOffline"));
+      setError(null);
+    } else {
+      setSoftNotice(null);
+    }
+    setHydrated(true);
+  }, [locale]);
 
   useEffect(() => {
     startTransition(() => {
-      void load().catch((e: Error) => setError(e.message));
+      void load();
     });
   }, [load]);
 
@@ -82,6 +104,14 @@ export function TripsHome({ locale }: Props) {
       );
       router.push(`/trips/${res.trip.id}`);
     } catch (e) {
+      if (isPlannerNoiseError(e)) {
+        const local = materializeTemplateLocal(id);
+        if (local) {
+          setSoftNotice(t(locale, "trips.create.demoLocal"));
+          router.push(`/trips/${local.trip.id}`);
+          return;
+        }
+      }
       setError(e instanceof Error ? e.message : "create_failed");
       setCreatingId(null);
     }
@@ -99,10 +129,18 @@ export function TripsHome({ locale }: Props) {
       await load();
       router.push(`/trips/${res.trip.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "duplicate_failed");
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "trips.softOffline"));
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : "duplicate_failed");
+      }
       setDupBusyId(null);
     }
   }
+
+  const ownTrips = trips.filter((x) => x.id !== "sample-kyoto");
+  const showEmptyInvite = hydrated && ownTrips.length === 0;
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -123,12 +161,20 @@ export function TripsHome({ locale }: Props) {
             {t(locale, "trips.support")}
           </p>
         </div>
-        <Link
-          href="/trips/sample-kyoto"
-          className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
-        >
-          {t(locale, "trips.openSample")}
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/trips/new"
+            className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
+          >
+            {t(locale, "trips.new")}
+          </Link>
+          <Link
+            href="/trips/sample-kyoto"
+            className="rounded-bp border border-ink/12 px-5 py-3 text-sm font-semibold text-ink transition hover:border-river hover:text-river"
+          >
+            {t(locale, "trips.openSample")}
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -136,90 +182,84 @@ export function TripsHome({ locale }: Props) {
           {error}
         </p>
       )}
+      {!error && softNotice && (
+        <p
+          className="mt-6 border-l-2 border-river/35 bg-mist/45 px-4 py-3 text-sm text-ink-soft"
+          role="status"
+        >
+          {softNotice}
+        </p>
+      )}
 
       <section className="mt-16">
         <header className="animate-rise mb-8 flex items-baseline justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-              {t(locale, "trips.templates")}
+              {t(locale, "trips.yours")}
             </h2>
             <p className="mt-2 max-w-xl text-sm text-ink-soft">
-              {t(locale, "trips.templatesSupport")}
+              {t(locale, "trips.yoursSupport")}
             </p>
           </div>
         </header>
 
-        <ul className="space-y-0">
-          {templates.map((tpl, index) => {
-            const title = tpl.title[locale] ?? tpl.title["zh-CN"];
-            const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
-            const busy = creatingId === tpl.id;
-            return (
-              <li
-                key={tpl.id}
-                className="animate-rise group grid grid-cols-[auto_1fr_auto] items-center gap-4 border-t border-[color:var(--bp-line)] py-7 last:border-b sm:gap-8"
-                style={{ animationDelay: `${index * 55 + 40}ms` }}
-              >
-                <span className="font-display text-3xl font-bold tabular-nums text-mist md:text-4xl">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`hidden h-1.5 w-8 shrink-0 bg-gradient-to-r ${tpl.accent} sm:block`}
-                      aria-hidden
-                    />
-                    <span className="font-display text-xl font-semibold text-ink transition group-hover:text-river md:text-2xl">
-                      {title}
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
-                    {desc}
-                  </p>
-                  <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
-                    {tpl.destination} · {tpl.dayCount}{" "}
-                    {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
-                    {t(locale, "trips.stopUnit")}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={busy || Boolean(creatingId)}
-                  onClick={() => void createFromTemplate(tpl.id)}
-                  className="shrink-0 rounded-bp border border-ink/15 bg-transparent px-4 py-2 text-sm font-semibold text-ink transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {busy
-                    ? t(locale, "trips.creating")
-                    : t(locale, "trips.useTemplate")}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section className="mt-20">
-        <header className="animate-rise mb-8">
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-            {t(locale, "trips.yours")}
-          </h2>
-        </header>
-
-        {pending && trips.length === 0 ? (
+        {pending && !hydrated ? (
           <p className="text-ink-soft">{t(locale, "trips.loading")}</p>
-        ) : trips.length === 0 ? (
+        ) : showEmptyInvite ? (
           <div className="animate-fade border border-dashed border-river/30 px-6 py-16 text-center">
             <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
               {t(locale, "trips.empty")}
             </p>
-            <p className="mx-auto mt-3 max-w-sm text-sm text-ink-soft">
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
               {t(locale, "trips.emptyCta")}
             </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/trips/new"
+                className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition hover:bg-river-deep"
+              >
+                {t(locale, "trips.new")}
+              </Link>
+              <Link
+                href="/trips/sample-kyoto"
+                className="text-sm font-semibold text-river transition hover:text-river-deep"
+              >
+                {t(locale, "trips.openSample")} →
+              </Link>
+            </div>
+            {trips.some((x) => x.id === "sample-kyoto") && (
+              <ul className="mx-auto mt-12 max-w-lg text-left">
+                {trips
+                  .filter((x) => x.id === "sample-kyoto")
+                  .map((trip) => (
+                    <li
+                      key={trip.id}
+                      className="animate-rise border-t border-[color:var(--bp-line)] last:border-b"
+                    >
+                      <Link
+                        href={`/trips/${trip.id}`}
+                        className="group flex items-baseline gap-4 py-6"
+                      >
+                        <span className="font-display text-2xl font-bold tabular-nums text-mist">
+                          01
+                        </span>
+                        <div className="min-w-0">
+                          <span className="font-display text-xl font-semibold text-ink transition group-hover:text-river md:text-2xl">
+                            {trip.title}
+                          </span>
+                          <span className="mt-1 block text-sm text-ink-soft">
+                            {formatTripMeta(trip, locale)}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         ) : (
           <ul>
             {trips.map((trip, index) => {
-              const isSample = trip.id === "sample-kyoto";
               const busy = dupBusyId === trip.id;
               const journalOn = Boolean(copyJournalIds[trip.id]);
               return (
@@ -233,7 +273,7 @@ export function TripsHome({ locale }: Props) {
                       href={`/trips/${trip.id}`}
                       className="flex min-w-0 flex-1 items-baseline gap-4 transition duration-bp-fast ease-bp"
                     >
-                      <span className="hidden font-display text-2xl font-bold tabular-nums text-mist sm:block">
+                      <span className="hidden font-display text-2xl font-bold tabular-nums text-mist sm:block md:text-3xl">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0">
@@ -241,10 +281,7 @@ export function TripsHome({ locale }: Props) {
                           {trip.title}
                         </span>
                         <span className="mt-1 block text-sm text-ink-soft">
-                          {trip.destination ?? "—"}
-                          {isSample
-                            ? ` · ${t(locale, "trips.sampleBadge")}`
-                            : ""}
+                          {formatTripMeta(trip, locale)}
                         </span>
                       </div>
                     </Link>
@@ -280,6 +317,73 @@ export function TripsHome({ locale }: Props) {
             })}
           </ul>
         )}
+      </section>
+
+      <section className="mt-20">
+        <header className="animate-rise mb-8">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+            {t(locale, "trips.templates")}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm text-ink-soft">
+            {t(locale, "trips.templatesSupport")}
+          </p>
+        </header>
+
+        <ul className="space-y-0">
+          {templates.map((tpl, index) => {
+            const title = tpl.title[locale] ?? tpl.title["zh-CN"];
+            const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
+            const busy = creatingId === tpl.id;
+            return (
+              <li
+                key={tpl.id}
+                className="animate-rise group grid grid-cols-[auto_1fr_auto] items-center gap-4 border-t border-[color:var(--bp-line)] py-7 last:border-b sm:gap-8"
+                style={{ animationDelay: `${index * 55 + 40}ms` }}
+              >
+                <span className="font-display text-3xl font-bold tabular-nums text-mist md:text-4xl">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`hidden h-1.5 w-8 shrink-0 bg-gradient-to-r ${tpl.accent} sm:block`}
+                      aria-hidden
+                    />
+                    <span className="font-display text-xl font-semibold text-ink transition group-hover:text-river md:text-2xl">
+                      {title}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                    {desc}
+                  </p>
+                  <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
+                    {tpl.destination} · {tpl.dayCount}{" "}
+                    {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
+                    {t(locale, "trips.stopUnit")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                  <Link
+                    href={`/trips/new?template=${tpl.id}`}
+                    className="rounded-bp border border-ink/12 px-3 py-2 text-center text-sm font-semibold text-ink-soft transition hover:border-river hover:text-river"
+                  >
+                    {t(locale, "trips.customize")}
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={busy || Boolean(creatingId)}
+                    onClick={() => void createFromTemplate(tpl.id)}
+                    className="rounded-bp border border-ink/15 bg-transparent px-4 py-2 text-sm font-semibold text-ink transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {busy
+                      ? t(locale, "trips.creating")
+                      : t(locale, "trips.useTemplate")}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </section>
     </div>
   );
