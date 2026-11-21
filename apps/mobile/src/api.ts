@@ -93,6 +93,43 @@ export async function fetchTrip(id: string): Promise<TripPayload> {
   return apiGet<TripPayload>(`/v1/trips/${id}`);
 }
 
+export async function listTrips(): Promise<{ trips: Trip[] }> {
+  return apiGet<{ trips: Trip[] }>("/v1/trips");
+}
+
+export type MobileTemplateCard = {
+  id: string;
+  title: { "zh-CN": string; en: string };
+  destination: string;
+  description: { "zh-CN": string; en: string };
+  dayCount: number;
+  stopCount: number;
+};
+
+export async function listTemplates(): Promise<{
+  templates: MobileTemplateCard[];
+}> {
+  return apiGet<{ templates: MobileTemplateCard[] }>("/v1/templates");
+}
+
+export async function createTripFromTemplate(
+  templateId: string,
+): Promise<{ trip: Trip }> {
+  return apiSend<{ trip: Trip }>(
+    `/v1/templates/${encodeURIComponent(templateId)}/create`,
+    "POST",
+    {},
+  );
+}
+
+/** Soft-fail classifier for demo shell when API/Neon is absent. */
+export function isApiSoftFail(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /_503$|_502$|_504$|_404$|_500$|Failed to fetch|Network request failed|ECONNREFUSED|load_failed|TypeError/i.test(
+    msg,
+  );
+}
+
 export type PlacesSearchResponse = {
   places: PlaceSummary[];
   engineId?: MapEngineId;
