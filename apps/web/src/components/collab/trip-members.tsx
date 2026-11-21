@@ -11,6 +11,7 @@ import type { TripInvite, TripMember, TripRole } from "@beaver/core";
 import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type MembersPayload = {
@@ -229,7 +230,7 @@ export function TripMembersBar({
             <button
               type="button"
               onClick={() => void createInvite()}
-              className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
+              className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep"
             >
               {t(locale, "collab.invite")}
             </button>
@@ -244,7 +245,13 @@ export function TripMembersBar({
         ) : null}
       </div>
 
-      {demoSeeded ? (
+      {error ? (
+        <p className="mt-2 text-sm text-timber" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {(demoSeeded || softOffline) && !open ? (
         <SoftFailNotice className="mt-3">
           {softOffline
             ? t(locale, "collab.panel.softOffline")
@@ -252,40 +259,65 @@ export function TripMembersBar({
         </SoftFailNotice>
       ) : null}
 
-      {error ? (
-        <p className="mt-2 text-sm text-timber" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      {open ? (
-        <div className="animate-sheet-in mt-4 space-y-4 border-t border-[color:var(--bp-line)] pt-4">
+      <SheetPresence
+        open={open}
+        className="mt-4 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
+        style={{ animationDelay: "40ms" }}
+        aria-label={t(locale, "collab.invite")}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+            {t(locale, "collab.invite")}
+          </span>
           {lastInvite ? (
-            <div className="space-y-2">
-              <p className="text-sm text-ink-soft">
-                {t(locale, "collab.shareHint")}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <code className="rounded-bp-xs bg-river/10 px-2.5 py-1 font-mono text-sm tracking-wider text-river-deep">
+            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+              {t(locale, `collab.role.${lastInvite.invite.role}`)}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="space-y-4 px-4 py-4">
+          {demoSeeded || softOffline ? (
+            <SoftFailNotice>
+              {softOffline
+                ? t(locale, "collab.panel.softOffline")
+                : t(locale, "collab.panel.demoNotice")}
+            </SoftFailNotice>
+          ) : null}
+
+          {lastInvite ? (
+            <div className="space-y-3">
+              <div>
+                <p className="font-display text-base tracking-tight text-ink">
+                  {t(locale, "collab.shareHint")}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <code className="rounded-bp-sm bg-river/10 px-3 py-2 font-mono text-sm tracking-wider text-river-deep">
                   {lastInvite.code}
                 </code>
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-1.5 text-xs font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river"
+                  className="rounded-bp-sm bg-river px-3.5 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep"
                 >
                   {copied
                     ? t(locale, "collab.copied")
                     : t(locale, "collab.copyLink")}
                 </button>
               </div>
-              <p className="break-all text-xs text-ink-soft/80">
+              <p className="break-all text-xs leading-relaxed text-ink-soft/80">
                 {lastInvite.inviteUrl}
               </p>
             </div>
-          ) : null}
+          ) : (
+            <p className="text-sm text-ink-soft">{t(locale, "collab.shareHint")}</p>
+          )}
 
-          <ul className="space-y-1.5" role="list">
+          <ul
+            className="space-y-1 border-t border-[color:var(--bp-line)] pt-3"
+            role="list"
+          >
             {members.map((m, i) => (
               <li
                 key={m.id}
@@ -312,7 +344,7 @@ export function TripMembersBar({
             ) : null}
           </ul>
         </div>
-      ) : null}
+      </SheetPresence>
     </div>
   );
 }
