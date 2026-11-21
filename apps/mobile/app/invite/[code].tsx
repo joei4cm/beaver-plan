@@ -47,9 +47,10 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Expo invite accept — Lumen Route SoftFailNotice chrome after web #130:
- * azure header rail · compact SoftFailNotice · SheetPresence (#46) ·
- * StyleSheet.flatten. Soft-fail never timber.
+ * Expo invite SoftFailNotice depth (BEA-250) after web #174:
+ * azure sheet rail · soft/live badge · compact SoftFailNotice ·
+ * mist-track trip preview · tip-011 SheetPresence stagger ·
+ * StyleSheet.flatten Pressables. Soft-fail never timber.
  */
 export default function InviteScreen() {
   const { code: raw } = useLocalSearchParams<{ code: string }>();
@@ -133,6 +134,7 @@ export default function InviteScreen() {
     (error && isNoiseError(new Error(error))
       ? t(locale, "invite.softOffline")
       : null);
+  const softOpen = Boolean(softCopy);
 
   const riseStyle = {
     opacity: rise,
@@ -181,22 +183,27 @@ export default function InviteScreen() {
             style={styles.sheet}
             accessibilityLabel={t(locale, "invite.title")}
           >
-            {/* Azure hierarchy — eyebrow · title · soft/role badge · SoftFailNotice */}
+            {/* Azure SoftFail chrome — eyebrow · support · soft/live · SoftFailNotice */}
             <View style={styles.sheetHeader}>
               <View style={styles.sheetHeaderTitles}>
                 <Text style={styles.sheetEyebrow}>
                   {t(locale, "invite.sheetEyebrow")}
                 </Text>
-                <Text style={styles.sheetTitle}>
-                  {t(locale, "invite.title")}
+                <Text style={styles.sheetSupport}>
+                  {t(locale, "invite.sheetSupport")}
                 </Text>
               </View>
               <View style={styles.sheetBadges}>
-                {softCopy ? (
-                  <Text style={styles.softBadge}>
-                    {t(locale, "invite.softBadge")}
-                  </Text>
-                ) : null}
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.statusBadge,
+                    softOpen ? styles.statusBadgeSoft : styles.statusBadgeLive,
+                  ])}
+                >
+                  {softOpen
+                    ? t(locale, "invite.softBadge")
+                    : t(locale, "invite.liveBadge")}
+                </Text>
                 {preview ? (
                   <Text style={styles.roleChip}>
                     {t(locale, `collab.role.${preview.role}`)}
@@ -205,7 +212,7 @@ export default function InviteScreen() {
               </View>
             </View>
 
-            <SoftFailNotice open={Boolean(softCopy)} compact>
+            <SoftFailNotice open={softOpen} compact>
               {softCopy ?? ""}
             </SoftFailNotice>
 
@@ -218,42 +225,55 @@ export default function InviteScreen() {
 
               {preview ? (
                 <>
-                  <View style={styles.tripBlock}>
-                    <Text style={styles.destination}>
-                      {preview.trip.destination ?? t(locale, "planner.trip")}
+                  <SheetPresence open delayMs={40} rise={10} style={styles.tripInset}>
+                    <Text style={styles.previewEyebrow}>
+                      {t(locale, "invite.previewEyebrow")}
                     </Text>
-                    <Text style={styles.tripTitle}>{preview.trip.title}</Text>
-                    <Text style={styles.meta}>
-                      {t(locale, "invite.asRole")}{" "}
-                      <Text style={styles.metaRole}>
-                        {t(locale, `collab.role.${preview.role}`)}
+                    <SheetPresence open delayMs={80} rise={8}>
+                      <Text style={styles.destination}>
+                        {preview.trip.destination ?? t(locale, "planner.trip")}
                       </Text>
-                      {" · "}
-                      <Text style={styles.codeChip}>
-                        {preview.code.toUpperCase()}
+                    </SheetPresence>
+                    <SheetPresence open delayMs={120} rise={8}>
+                      <Text style={styles.tripTitle}>{preview.trip.title}</Text>
+                    </SheetPresence>
+                    <SheetPresence open delayMs={160} rise={6}>
+                      <Text style={styles.meta}>
+                        {t(locale, "invite.asRole")}{" "}
+                        <Text style={styles.metaRole}>
+                          {t(locale, `collab.role.${preview.role}`)}
+                        </Text>
+                        {" · "}
+                        <Text style={styles.codeChip}>
+                          {preview.code.toUpperCase()}
+                        </Text>
                       </Text>
-                    </Text>
-                  </View>
+                    </SheetPresence>
+                  </SheetPresence>
 
-                  <Pressable
-                    style={StyleSheet.flatten([
-                      styles.cta,
-                      joining ? styles.ctaDisabled : null,
-                    ])}
-                    disabled={joining}
-                    onPress={() => void join()}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.ctaLabel}>
-                      {joining
-                        ? t(locale, "invite.joining")
-                        : t(locale, "invite.join")}
-                    </Text>
-                  </Pressable>
+                  <SheetPresence open delayMs={200} rise={8} style={styles.ctaRow}>
+                    <Pressable
+                      style={StyleSheet.flatten([
+                        styles.cta,
+                        joining ? styles.ctaDisabled : null,
+                      ])}
+                      disabled={joining}
+                      onPress={() => void join()}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.ctaLabel}>
+                        {joining
+                          ? t(locale, "invite.joining")
+                          : t(locale, "invite.join")}
+                      </Text>
+                    </Pressable>
+                  </SheetPresence>
 
-                  <Text style={styles.demoNote}>
-                    {t(locale, "invite.demoNote")}
-                  </Text>
+                  <SheetPresence open delayMs={240} rise={6}>
+                    <Text style={styles.demoNote}>
+                      {t(locale, "invite.demoNote")}
+                    </Text>
+                  </SheetPresence>
                 </>
               ) : null}
             </View>
@@ -369,10 +389,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
-  sheetTitle: {
+  sheetSupport: {
     ...type.body,
     fontSize: 11,
-    fontWeight: "500",
+    lineHeight: 16,
     color: "rgba(71, 85, 105, 0.8)",
   },
   sheetBadges: {
@@ -381,18 +401,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  softBadge: {
+  statusBadge: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.xs,
     overflow: "hidden",
+  },
+  statusBadgeSoft: {
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+  },
+  statusBadgeLive: {
+    color: colors.river,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
   roleChip: {
     ...type.body,
@@ -406,14 +432,33 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: radius.xs,
     overflow: "hidden",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
   },
   sheetBody: {
     paddingHorizontal: 18,
     paddingVertical: 18,
     gap: 16,
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
-  tripBlock: {
+  tripInset: {
     gap: 6,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.42)",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  previewEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    color: colors.river,
+    marginBottom: 6,
   },
   destination: {
     ...type.body,
@@ -447,6 +492,11 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.xs,
     overflow: "hidden",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
+  },
+  ctaRow: {
+    alignSelf: "flex-start",
   },
   cta: {
     alignSelf: "flex-start",
