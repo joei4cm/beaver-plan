@@ -152,6 +152,8 @@
   "auth.liveBadge": "在线",
   "auth.signUpEyebrow": "加入",
   "auth.signUpSupport": "注册后即可规划步行行程、邀请同伴，并保持同一条地图线程。",
+  "auth.signUpSheetEyebrow": "注册",
+  "auth.signUpSheetSupport": "Clerk 建号 · 密钥/API 未就绪时柔和提示",
   "auth.signUpFormEyebrow": "创建",
   "auth.signUpFormTitle": "账号表单",
   "auth.signUpFormSupport": "支持 Email、Apple、Google；微信可稍后在 Clerk 中开启。",

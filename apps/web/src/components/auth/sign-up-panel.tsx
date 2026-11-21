@@ -12,8 +12,10 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Lumen Route sign-up chrome: azure hierarchy · SoftFailNotice when Clerk/API
- * absent · tip-011 rise · never timber for keys-missing / transport noise.
+ * Sign-up SoftFailNotice chrome (BEA-246 after #146/#168):
+ * azure sheet rail · SoftFailNotice owned inside the sheet · Demo/Live badge ·
+ * mist-track form inset · tip-011 rise stagger — never timber for keys-missing /
+ * transport noise.
  */
 export function SignUpPanel({
   locale,
@@ -43,6 +45,7 @@ export function SignUpPanel({
     : apiSoft
       ? t(locale, "auth.softOffline")
       : null;
+  const softOpen = Boolean(softCopy);
 
   return (
     <section className="relative mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-5xl flex-col justify-center px-6 py-16 md:px-10">
@@ -51,9 +54,9 @@ export function SignUpPanel({
         className="animate-drift pointer-events-none absolute inset-0 -z-10 opacity-80"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 70% 50% at 18% 18%, rgba(47,107,255,0.17), transparent 55%),
-            radial-gradient(ellipse 48% 38% at 92% 8%, rgba(96,165,250,0.13), transparent 50%),
-            linear-gradient(180deg, #dbe8ff 0%, transparent 65%)
+            radial-gradient(ellipse 72% 52% at 18% 18%, rgba(47,107,255,0.18), transparent 55%),
+            radial-gradient(ellipse 48% 38% at 92% 8%, rgba(96,165,250,0.14), transparent 50%),
+            linear-gradient(180deg, #dbe8ff 0%, transparent 68%)
           `,
         }}
       />
@@ -70,66 +73,101 @@ export function SignUpPanel({
         </p>
       </header>
 
-      <SoftFailNotice open={Boolean(softCopy)} className="mt-8 max-w-xl">
-        {softCopy ?? ""}
-      </SoftFailNotice>
-
+      {/* SoftFail sheet — azure rail · SoftFailNotice · tip-011 hierarchy */}
       <div
-        className="animate-rise mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
-        style={{ animationDelay: "120ms" }}
+        className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+        style={{ animationDelay: "60ms" }}
+        aria-label={t(locale, "nav.signUp")}
       >
-        <div className="space-y-8">
-          <section aria-labelledby="auth-signup-providers-heading">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
-              {t(locale, "auth.signUpFormEyebrow")}
-            </p>
-            <h2
-              id="auth-signup-providers-heading"
-              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
-            >
-              {t(locale, "auth.signUpFormTitle")}
-            </h2>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
-              {t(locale, "auth.signUpFormSupport")}
-            </p>
-          </section>
-
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-            <Link
-              href="/sign-in"
-              className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
-            >
-              {t(locale, "auth.haveAccount")}
-            </Link>
-            <Link
-              href="/trips"
-              className={`inline-flex text-sm font-semibold text-ink-soft bp-transition hover:text-river hover:underline ${FOCUS}`}
-            >
-              ← {t(locale, "nav.trips")}
-            </Link>
+        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              {t(locale, "auth.signUpSheetEyebrow")}
+            </span>
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {t(locale, "auth.signUpSheetSupport")}
+            </span>
           </div>
-        </div>
+          <span
+            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+              softOpen
+                ? "bg-mist text-ink-soft"
+                : "bg-river/12 text-river"
+            }`}
+          >
+            {softOpen
+              ? t(locale, "auth.demoBadge")
+              : t(locale, "auth.liveBadge")}
+          </span>
+        </header>
 
-        <div
-          className="animate-rise min-h-[320px]"
-          style={{ animationDelay: "200ms" }}
-        >
-          {clerkReady ? (
-            <SignUp
-              routing="path"
-              path="/sign-up"
-              signInUrl="/sign-in"
-              fallbackRedirectUrl="/trips"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border border-[color:var(--bp-line)] bg-foam/80",
-                },
-              }}
-            />
-          ) : (
-            <DemoSignUpSheet locale={locale} />
-          )}
+        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
+          {/* SoftFailNotice owned by sign-up sheet — never timber / Failed to fetch. */}
+          <SoftFailNotice open={softOpen} className="max-w-xl">
+            {softCopy ?? ""}
+          </SoftFailNotice>
+
+          <div
+            className="animate-rise grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
+            style={{ animationDelay: "120ms" }}
+          >
+            <div className="space-y-8">
+              <section
+                className="rounded-bp-sm bg-gradient-to-br from-mist/45 via-mist/20 to-transparent p-4 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-5"
+                aria-labelledby="auth-signup-providers-heading"
+              >
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+                  {t(locale, "auth.signUpFormEyebrow")}
+                </p>
+                <h2
+                  id="auth-signup-providers-heading"
+                  className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                >
+                  {t(locale, "auth.signUpFormTitle")}
+                </h2>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "auth.signUpFormSupport")}
+                </p>
+              </section>
+
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-0.5">
+                <Link
+                  href="/sign-in"
+                  className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
+                >
+                  {t(locale, "auth.haveAccount")}
+                </Link>
+                <Link
+                  href="/trips"
+                  className={`inline-flex text-sm font-semibold text-ink-soft bp-transition hover:text-river hover:underline ${FOCUS}`}
+                >
+                  ← {t(locale, "nav.trips")}
+                </Link>
+              </div>
+            </div>
+
+            <div
+              className="animate-rise min-h-[320px]"
+              style={{ animationDelay: "200ms" }}
+            >
+              {clerkReady ? (
+                <SignUp
+                  routing="path"
+                  path="/sign-up"
+                  signInUrl="/sign-in"
+                  fallbackRedirectUrl="/trips"
+                  appearance={{
+                    elements: {
+                      rootBox: "w-full",
+                      card: "shadow-none border border-[color:var(--bp-line)] bg-foam/80",
+                    },
+                  }}
+                />
+              ) : (
+                <DemoSignUpSheet locale={locale} />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -142,7 +180,7 @@ function DemoSignUpSheet({ locale }: { locale: Locale }) {
       className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/80 shadow-bp"
       aria-labelledby="auth-signup-demo-heading"
     >
-      <div className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3">
+      <div className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
           {t(locale, "auth.setupEyebrow")}
         </p>

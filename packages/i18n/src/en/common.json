@@ -152,6 +152,8 @@
   "auth.liveBadge": "Live",
   "auth.signUpEyebrow": "Join",
   "auth.signUpSupport": "Create an account to plan walks, invite companions, and keep one shared map thread.",
+  "auth.signUpSheetEyebrow": "Sign up",
+  "auth.signUpSheetSupport": "Clerk create · SoftFail when keys or API are unset",
   "auth.signUpFormEyebrow": "Create",
   "auth.signUpFormTitle": "Your account form",
   "auth.signUpFormSupport": "Email, Apple, or Google. WeChat can be enabled later in Clerk.",
