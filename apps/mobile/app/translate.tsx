@@ -207,12 +207,13 @@ export default function TranslateScreen() {
    */
   const dualSoftOpen =
     tab === "camera" && (isDemo || camDenied || Boolean(error) || softNotice);
-  const dualSoftCopy = camDenied
-    ? t(uiLocale, "translate.permissionCamera")
-    : softNotice && !online
-      ? t(uiLocale, "translate.softOffline")
-      : isDemo || (error && isNoiseError(new Error(error)))
-        ? t(uiLocale, "translate.dualSoftFail")
+  /** Demo SoftFail owns dual-scoped copy; permission only when not already in demo soft-fail. */
+  const dualSoftCopy = softNotice && !online
+    ? t(uiLocale, "translate.softOffline")
+    : isDemo || (error && isNoiseError(new Error(error)))
+      ? t(uiLocale, "translate.dualSoftFail")
+      : camDenied
+        ? t(uiLocale, "translate.permissionCamera")
         : error
           ? t(uiLocale, "translate.error")
           : t(uiLocale, "translate.dualSoftFail");
