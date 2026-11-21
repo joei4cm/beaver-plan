@@ -52,6 +52,7 @@ type Props = {
  * Depth ladder (after #56/#98/#118):
  *   popovers (shadow-bp · z-30) → search primary → engine chip / tool rail →
  *   SoftFailNotice + transfer legend sheet (field tools).
+ * Search empty: azure rail · empty status · SoftFailNotice compact · tip-011 (#46).
  * Legend: azure rail · SoftFailNotice compact · SheetPresence + tip-011 (#46).
  */
 export function MapChrome({
@@ -182,11 +183,13 @@ export function MapChrome({
 
   const locateNotice = softFailMessage?.trim() || null;
   const legendOpen = layers.legend && hasRoute;
+  // Search sheet owns SoftFailNotice while demo Places results/empty are open.
+  const searchOwnsSoftFail = searchDemo && sheetOpen;
   // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap
-  // popover and transfer legend are closed (each owns SoftFailNotice — no double depth).
+  // popover, search sheet, and transfer legend are closed (each owns SoftFailNotice — no double depth).
   const stageNotice =
     locateNotice ||
-    (softFail && !engineOpen && !legendOpen
+    (softFail && !engineOpen && !legendOpen && !searchOwnsSoftFail
       ? t(locale, "planner.map.softFail")
       : null);
 
@@ -368,6 +371,10 @@ export function MapChrome({
                       String(results.length),
                     )}
                   </span>
+                ) : showEmpty ? (
+                  <span className="text-[11px] font-medium text-ink-soft/80">
+                    {t(locale, "planner.search.emptyCount")}
+                  </span>
                 ) : null}
               </div>
               <span
@@ -444,7 +451,15 @@ export function MapChrome({
                 })}
               </ul>
             ) : showEmpty ? (
-              <div className="animate-fade space-y-1.5 px-3.5 py-4">
+              <div
+                className="animate-rise space-y-1.5 px-3.5 py-4"
+                style={{ animationDelay: "55ms" }}
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                  {t(locale, "planner.search.emptyEyebrow")}
+                </p>
                 <p className="font-display text-sm font-semibold tracking-tight text-ink">
                   {t(locale, "planner.search.emptyTitle")}
                 </p>
@@ -462,6 +477,7 @@ export function MapChrome({
             <SoftFailNotice open={searchDemo && hasResults} compact>
               {t(locale, "planner.searchDemo")}
             </SoftFailNotice>
+            {/* Empty / offline — SoftFailNotice only; never timber Failed to fetch. */}
             <SoftFailNotice open={searchDemo && showEmpty} compact>
               {t(locale, "planner.search.softFailEmpty")}
             </SoftFailNotice>
