@@ -219,13 +219,18 @@ export function TripsHome({ locale }: Props) {
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "trips.emptySoftFail");
   /**
-   * Playbooks SoftFailNotice chrome (BEA-271 after #166/#201):
+   * Playbooks SoftFailNotice depth (BEA-324 after #208):
    * playbooks sheet owns compact SoftFail under azure rail · Soft playbooks
-   * badge · SheetPresence body · tip-011 (#46). Soft copy never timber /
-   * Failed to fetch. Empty + catalog share the same SoftFail strip.
+   * badge · softSupport · SoftFail mist band (`border-b`) · tip-011 mist-wash
+   * body while soft · Empty + catalog share the same SoftFail strip.
+   * Trips empty SoftFail (#224) stays on Start rail (no overlap / yield).
+   * Soft copy never timber / Failed to fetch.
    */
   const playbooksSoftOpen = templatesSoft;
   const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
+  const playbooksSupportCopy = playbooksSoftOpen
+    ? t(locale, "trips.playbooksSoftSupport")
+    : null;
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -551,9 +556,10 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.templatesRail")}
           >
             {/*
-              Empty playbooks SoftFail chrome (BEA-271 after #166/#201):
-              azure rail · Soft playbooks badge · compact SoftFailNotice ·
-              SheetPresence New CTA · tip-011 rise — never timber.
+              Empty playbooks SoftFail depth (BEA-324 after #208):
+              azure rail · Soft playbooks badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash CTA · never timber.
+              Trips empty SoftFail (#224) stays on Start (yield / no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -561,7 +567,8 @@ export function TripsHome({ locale }: Props) {
                   {t(locale, "trips.templatesRail")}
                 </span>
                 <span className="text-[11px] leading-snug text-ink-soft/80">
-                  {t(locale, "trips.templatesEmptySupport")}
+                  {playbooksSupportCopy ??
+                    t(locale, "trips.templatesEmptySupport")}
                 </span>
               </div>
               <span
@@ -577,7 +584,7 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
-            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            {/* Compact SoftFail mist band under azure rail — never timber / Failed to fetch. */}
             <SoftFailNotice
               open={playbooksSoftOpen}
               compact
@@ -588,7 +595,11 @@ export function TripsHome({ locale }: Props) {
 
             <SheetPresence
               open
-              className="flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5"
+              className={`flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5 ${
+                playbooksSoftOpen
+                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  : ""
+              }`}
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "trips.templatesActions")}
             >
@@ -607,21 +618,27 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.templatesRail")}
           >
             {/*
-              Playbooks SoftFail chrome (BEA-271 after #166/#201):
-              azure rail · count · Soft playbooks / Catalog badge · compact
-              SoftFailNotice · SheetPresence body · tip-011 rise · denser
-              marks · Use/Customize — never timber / Failed to fetch.
+              Playbooks SoftFail depth (BEA-324 after #208):
+              azure rail · Soft playbooks badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash body · denser marks ·
+              Use/Customize — never timber / Failed to fetch.
+              Trips empty SoftFail (#224) stays on Start (yield / no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "trips.templatesRail")}
                 </span>
-                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
-                  {t(locale, "trips.templatesCount").replace(
-                    "{n}",
-                    String(templates.length),
-                  )}
+                <span
+                  className={`text-[11px] leading-snug text-ink-soft/80 ${
+                    playbooksSoftOpen ? "" : "font-medium tabular-nums"
+                  }`}
+                >
+                  {playbooksSupportCopy ??
+                    t(locale, "trips.templatesCount").replace(
+                      "{n}",
+                      String(templates.length),
+                    )}
                 </span>
               </div>
               <span
@@ -637,7 +654,7 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
-            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            {/* Compact SoftFail mist band under azure rail — never timber / Failed to fetch. */}
             <SoftFailNotice
               open={playbooksSoftOpen}
               compact
@@ -650,7 +667,11 @@ export function TripsHome({ locale }: Props) {
               open
               as="ul"
               role="list"
-              className="space-y-0"
+              className={`space-y-0 ${
+                playbooksSoftOpen
+                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  : ""
+              }`}
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "trips.templates")}
             >
