@@ -102,6 +102,8 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
   const [swapTick, setSwapTick] = useState(0);
+  /** Bumps past 0 to leave empty SoftFail chrome and kick the first render (BEA-240). */
+  const [renderKick, setRenderKick] = useState(0);
 
   const dayTabsRef = useRef<HTMLDivElement | null>(null);
   const dayTabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -274,11 +276,23 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
   useEffect(() => {
     if (!trip || !editSeeded) return;
+    // Empty SoftFail owns first paint (BEA-240) — no auto-render until CTA /
+    // template pick / day change kicks renderKick, or a preview already exists.
+    if (!preview && renderKick === 0) return;
     const timer = window.setTimeout(() => {
       void render();
     }, 280);
     return () => window.clearTimeout(timer);
-  }, [trip, templateId, dayId, stylePayload, editSeeded, render]);
+  }, [
+    trip,
+    templateId,
+    dayId,
+    stylePayload,
+    editSeeded,
+    render,
+    preview,
+    renderKick,
+  ]);
 
   function resetEdits() {
     if (!trip) return;
@@ -288,12 +302,20 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     setTitleScale(1);
   }
 
+  function kickRender() {
+    setRenderKick((n) => n + 1);
+  }
+
   function pickTemplate(id: ShareTemplateId) {
-    if (id === templateId) return;
+    if (id === templateId) {
+      kickRender();
+      return;
+    }
     setTemplateId(id);
     setSwapTick((n) => n + 1);
     // Persist as default — multiple templates preference (settings + next open).
     patchUserPrefs({ shareImageTemplateId: id });
+    kickRender();
   }
 
   async function downloadPng() {
@@ -376,6 +398,28 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     ? `${preview.template.id}-${swapTick}-${preview.previewUrl.slice(-48)}`
     : `${templateId}-${swapTick}`;
 
+  /**
+   * Empty SoftFailNotice chrome (BEA-240 after #149/#171/#175):
+   * empty canvas owns compact SoftFail under azure canvas rail ·
+   * SheetPresence empty body · tip-011 (#46). Control-sheet SoftFail yields
+   * while empty owns soft-fail (no double depth). Soft copy never timber /
+   * Failed to fetch.
+   */
+  const canvasEmpty = !preview;
+  const emptyOwnsSoft = canvasEmpty && editSeeded;
+  const emptySoftOpen =
+    emptyOwnsSoft && (softDemo || exportSoftFail || !busy);
+  const sheetSoftOpen =
+    !emptyOwnsSoft && (softDemo || exportSoftFail);
+  const emptySoftCopy = exportSoftFail
+    ? t(locale, "share.exportSoftFail")
+    : softDemo || emptyOwnsSoft
+      ? t(locale, "share.emptySoftFail")
+      : t(locale, "share.demoNotice");
+  const sheetSoftCopy = exportSoftFail
+    ? t(locale, "share.exportSoftFail")
+    : t(locale, "share.demoNotice");
+
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
       <header className="animate-rise flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-8">
@@ -437,7 +481,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 if (el) dayTabRefs.current.set(day.id, el);
                 else dayTabRefs.current.delete(day.id);
               }}
-              onClick={() => setDayId(day.id)}
+              onClick={() => {
+                setDayId(day.id);
+                // Day change from empty SoftFail chrome kicks first render.
+                if (!preview) kickRender();
+              }}
               className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
                 activeDay
                   ? "text-foam"
@@ -454,8 +502,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
-        {/* Preview stage — paper wash + azure rail hierarchy */}
-        <section className="animate-fade flex flex-col items-center">
+        {/*
+          Empty SoftFail chrome (BEA-240 after #149/#171/#175):
+          azure canvas rail · Open badge · compact SoftFailNotice ·
+          SheetPresence empty body · tip-011 rise — never timber.
+        */}
+        <section className="animate-rise flex flex-col items-center">
           <div
             className="relative flex w-full max-w-[440px] flex-col items-center overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] p-4 shadow-bp-soft md:p-5"
             style={{
@@ -467,17 +519,44 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               aria-hidden
               className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-river shadow-[0_0_12px_rgba(47,107,255,0.35)]"
             />
-            <div className="mb-3 flex w-full max-w-[400px] items-center justify-between gap-2 pl-2">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-                {t(locale, "share.canvasEyebrow")}
-              </p>
-              <p className="font-mono text-[10px] tracking-wide text-ink-soft">
-                {active.width}×{active.height} · {SHARE_EXPORT_SCALE}× PNG
-              </p>
+            <div className="mb-0 flex w-full max-w-[400px] items-center justify-between gap-2 pl-2">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                  {t(locale, "share.canvasEyebrow")}
+                </p>
+                {canvasEmpty ? (
+                  <span className="text-[11px] leading-snug text-ink-soft/80">
+                    {t(locale, "share.emptySupport")}
+                  </span>
+                ) : null}
+              </div>
+              {canvasEmpty ? (
+                <span
+                  className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                    emptySoftOpen
+                      ? "bg-mist text-ink-soft"
+                      : "bg-river/12 text-river"
+                  }`}
+                >
+                  {t(locale, "share.emptyBadge")}
+                </span>
+              ) : (
+                <p className="font-mono text-[10px] tracking-wide text-ink-soft">
+                  {active.width}×{active.height} · {SHARE_EXPORT_SCALE}× PNG
+                </p>
+              )}
             </div>
+
+            {/* Compact SoftFail under azure canvas rail — never timber / Failed to fetch. */}
+            <div className="w-full max-w-[400px]">
+              <SoftFailNotice open={emptySoftOpen} compact>
+                {emptySoftCopy}
+              </SoftFailNotice>
+            </div>
+
             <div
-              className={`animate-template-swap relative w-full max-w-[400px] overflow-hidden rounded-bp border bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out ${
-                softDemo
+              className={`animate-template-swap relative mt-3 w-full max-w-[400px] overflow-hidden rounded-bp border bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out ${
+                softDemo || emptyOwnsSoft
                   ? "border-river/35 ring-2 ring-river/20"
                   : "border-[color:var(--bp-line)]"
               }`}
@@ -498,15 +577,51 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     locale === "zh-CN" ? active.nameZh : active.nameEn
                   }
                 />
-              ) : (
+              ) : busy && !emptySoftOpen ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-ink-soft">
                   <div className="bp-skeleton h-8 w-40" />
-                  <span className="text-sm">
+                  <span className="text-sm">{t(locale, "share.rendering")}</span>
+                </div>
+              ) : (
+                <SheetPresence
+                  open
+                  className="flex h-full flex-col items-start justify-center px-6 py-8"
+                  style={{ animationDelay: "40ms" }}
+                  aria-label={t(locale, "share.empty")}
+                >
+                  <p
+                    className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                    style={{ animationDelay: "40ms" }}
+                  >
+                    {t(locale, "share.canvasEyebrow")}
+                  </p>
+                  <p
+                    className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]"
+                    style={{ animationDelay: "70ms" }}
+                  >
+                    {t(locale, "share.empty")}
+                  </p>
+                  <p
+                    className="animate-rise mt-2 max-w-sm text-sm leading-relaxed text-ink-soft"
+                    style={{ animationDelay: "100ms" }}
+                  >
                     {busy
                       ? t(locale, "share.rendering")
-                      : t(locale, "share.loading")}
-                  </span>
-                </div>
+                      : t(locale, "share.emptyHint")}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      kickRender();
+                      void render();
+                    }}
+                    className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{ animationDelay: "130ms" }}
+                  >
+                    {t(locale, "share.emptyCta")}
+                  </button>
+                </SheetPresence>
               )}
             </div>
           </div>
@@ -525,7 +640,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           </p>
         </section>
 
-        {/* Control sheet — azure rail · SoftFailNotice · SheetPresence · tip-011 */}
+        {/* Control sheet — azure rail · SoftFail yields while empty owns · tip-011 */}
         <SheetPresence
           open
           className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
@@ -542,27 +657,26 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </span>
             </div>
             <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                softDemo || exportSoftFail
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                softDemo || exportSoftFail || emptyOwnsSoft
                   ? "bg-mist text-ink-soft"
                   : "bg-river/12 text-river"
               }`}
             >
-              {softDemo || exportSoftFail
+              {softDemo || exportSoftFail || emptyOwnsSoft
                 ? t(locale, "share.demoBadge")
                 : t(locale, "share.liveBadge")}
             </span>
           </header>
 
-          <SoftFailNotice open={softDemo || exportSoftFail} compact>
-            {exportSoftFail
-              ? t(locale, "share.exportSoftFail")
-              : t(locale, "share.demoNotice")}
+          {/* Sheet SoftFail yields while empty canvas owns soft-fail. */}
+          <SoftFailNotice open={sheetSoftOpen} compact>
+            {sheetSoftCopy}
           </SoftFailNotice>
 
           <div className="space-y-5 px-4 py-4">
             <section
-              className="animate-fade space-y-3"
+              className="animate-rise space-y-3"
               style={{ animationDelay: "40ms" }}
               aria-labelledby="share-template-heading"
             >
@@ -682,7 +796,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </section>
 
             <section
-              className="animate-fade space-y-3 border-t border-[color:var(--bp-line)] pt-5"
+              className="animate-rise space-y-3 border-t border-[color:var(--bp-line)] pt-5"
               style={{ animationDelay: "70ms" }}
             >
               <div className="flex items-baseline justify-between gap-2">
@@ -798,7 +912,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
             {/* Export — river primary / ink secondary · tip-011 settle */}
             <section
-              className="animate-fade space-y-3 border-t border-[color:var(--bp-line)] pt-5"
+              className="animate-rise space-y-3 border-t border-[color:var(--bp-line)] pt-5"
               style={{ animationDelay: "100ms" }}
             >
               <div>
@@ -838,7 +952,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => void render()}
+                    onClick={() => {
+                      kickRender();
+                      void render();
+                    }}
                     className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
                   >
                     {t(locale, "share.refresh")}

@@ -272,12 +272,17 @@ export function ShareStudioSkeleton() {
       </div>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         <div className="flex flex-col items-center">
-          <div className="w-full max-w-[440px] space-y-3 rounded-bp-lg border border-[color:var(--bp-line)] bg-mist/40 p-4 md:p-5">
-            <div className="flex items-center justify-between gap-2">
-              <Skeleton className="h-2.5 w-20" />
-              <Skeleton className="h-2.5 w-28" />
+          {/* Canvas empty chrome — azure rail · SoftFailNotice slot · empty frame */}
+          <div className="w-full max-w-[440px] space-y-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-mist/40 p-4 md:p-5">
+            <div className="flex items-center justify-between gap-2 pl-2">
+              <div className="flex items-baseline gap-2">
+                <Skeleton className="h-2.5 w-20" />
+                <Skeleton className="h-3 w-36" />
+              </div>
+              <Skeleton className="h-5 w-12 rounded-bp-xs" />
             </div>
-            <Skeleton className="aspect-[9/16] w-full max-w-[400px] rounded-bp" />
+            <Skeleton className="mt-0 h-9 w-full rounded-none" />
+            <Skeleton className="mt-3 aspect-[9/16] w-full max-w-[400px] rounded-bp" />
           </div>
           <Skeleton className="mt-4 h-4 w-56" />
         </div>
