@@ -12,10 +12,10 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-up SoftFailNotice chrome (BEA-246 after #146/#168):
- * azure sheet rail · SoftFailNotice owned inside the sheet · Demo/Live badge ·
- * mist-track form inset · tip-011 rise stagger — never timber for keys-missing /
- * transport noise.
+ * Sign-up SoftFailNotice depth (BEA-301 after #146/#190/#203):
+ * azure sheet rail · Soft sign-up badge · compact SoftFail under rail ·
+ * mist-track form inset · tip-011 rise stagger — never timber / Failed to fetch
+ * for keys-missing / transport noise.
  */
 export function SignUpPanel({
   locale,
@@ -40,10 +40,11 @@ export function SignUpPanel({
     };
   }, []);
 
+  /** SoftFail owned by sign-up sheet — never timber / Failed to fetch. */
   const softCopy = !clerkReady
-    ? t(locale, "auth.demoNotice")
+    ? t(locale, "auth.signUpSoftFail")
     : apiSoft
-      ? t(locale, "auth.softOffline")
+      ? t(locale, "auth.signUpApiSoftFail")
       : null;
   const softOpen = Boolean(softCopy);
 
@@ -73,7 +74,11 @@ export function SignUpPanel({
         </p>
       </header>
 
-      {/* SoftFail sheet — azure rail · SoftFailNotice · tip-011 hierarchy */}
+      {/*
+        SoftFail sheet depth (BEA-301 after #190/#203):
+        azure rail · Soft sign-up badge · compact SoftFailNotice · tip-011 —
+        never timber.
+      */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "60ms" }}
@@ -96,17 +101,21 @@ export function SignUpPanel({
             }`}
           >
             {softOpen
-              ? t(locale, "auth.demoBadge")
+              ? t(locale, "auth.signUpSoftBadge")
               : t(locale, "auth.liveBadge")}
           </span>
         </header>
 
-        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
-          {/* SoftFailNotice owned by sign-up sheet — never timber / Failed to fetch. */}
-          <SoftFailNotice open={softOpen} className="max-w-xl">
-            {softCopy ?? ""}
-          </SoftFailNotice>
+        {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={softOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
+          {softCopy ?? ""}
+        </SoftFailNotice>
 
+        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
           <div
             className="animate-rise grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
             style={{ animationDelay: "120ms" }}
