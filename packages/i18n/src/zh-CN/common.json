@@ -179,6 +179,8 @@
   "planner.searchDemo": "正在显示精选演示地点（API 离线）。",
   "planner.place.loading": "加载地点详情…",
   "planner.place.eyebrow": "地点情报",
+  "planner.place.snapshotEyebrow": "速览",
+  "planner.place.aboutEyebrow": "简介",
   "planner.place.rating": "评分",
   "planner.place.hours": "开放",
   "planner.place.tags": "分类",
