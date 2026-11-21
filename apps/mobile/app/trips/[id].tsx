@@ -1050,37 +1050,63 @@ export default function TripDetailScreen() {
                   {t(locale, "collab.members")}
                 </Text>
                 <View style={styles.presenceRow}>
-                  {members.slice(0, 4).map((m) => (
-                    <View key={m.id} style={styles.presenceChip}>
+                  {members.slice(0, 4).map((m) => {
+                    const presence =
+                      m.role === "owner"
+                        ? "active"
+                        : m.role === "editor"
+                          ? "idle"
+                          : "away";
+                    return (
                       <View
+                        key={m.id}
                         style={[
-                          styles.presenceAvatar,
-                          m.role === "viewer"
-                            ? styles.presenceAvatarMuted
+                          styles.presenceChip,
+                          presence === "active"
+                            ? styles.presenceChipActive
                             : null,
                         ]}
                       >
-                        <Text style={styles.presenceInitials}>
-                          {memberInitials(m.displayName ?? m.userId)}
+                        <View
+                          style={[
+                            styles.presenceAvatar,
+                            m.role === "viewer"
+                              ? styles.presenceAvatarMuted
+                              : null,
+                          ]}
+                        >
+                          <Text style={styles.presenceInitials}>
+                            {memberInitials(m.displayName ?? m.userId)}
+                          </Text>
+                          <View
+                            style={[
+                              styles.presenceDot,
+                              presence === "active"
+                                ? styles.presenceDotActive
+                                : presence === "idle"
+                                  ? styles.presenceDotIdle
+                                  : styles.presenceDotAway,
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.presenceName} numberOfLines={1}>
+                          {(m.displayName ?? m.userId).split(/\s+/)[0]}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.presenceRole,
+                            m.role === "owner"
+                              ? styles.presenceRoleOwner
+                              : m.role === "editor"
+                                ? styles.presenceRoleEditor
+                                : styles.presenceRoleViewer,
+                          ]}
+                        >
+                          {t(locale, `collab.role.${m.role}`)}
                         </Text>
                       </View>
-                      <Text style={styles.presenceName} numberOfLines={1}>
-                        {(m.displayName ?? m.userId).split(/\s+/)[0]}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.presenceRole,
-                          m.role === "owner"
-                            ? styles.presenceRoleOwner
-                            : m.role === "editor"
-                              ? styles.presenceRoleEditor
-                              : styles.presenceRoleViewer,
-                        ]}
-                      >
-                        {t(locale, `collab.role.${m.role}`)}
-                      </Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
                 <Text style={styles.collabMeta}>
                   {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
@@ -1688,6 +1714,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
   },
+  presenceChipActive: {
+    borderColor: "rgba(47,107,255,0.35)",
+  },
   presenceAvatar: {
     width: 22,
     height: 22,
@@ -1698,6 +1727,26 @@ const styles = StyleSheet.create({
   },
   presenceAvatarMuted: {
     backgroundColor: colors.inkSoft,
+  },
+  presenceDot: {
+    position: "absolute",
+    right: -1,
+    bottom: -1,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: colors.foam,
+  },
+  presenceDotActive: {
+    backgroundColor: colors.river,
+  },
+  presenceDotIdle: {
+    backgroundColor: colors.focus,
+  },
+  presenceDotAway: {
+    backgroundColor: colors.inkSoft,
+    opacity: 0.85,
   },
   presenceInitials: {
     color: colors.foam,

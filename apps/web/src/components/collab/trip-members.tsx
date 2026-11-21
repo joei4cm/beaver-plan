@@ -33,6 +33,15 @@ const ROLE_CHIP: Record<TripRole, string> = {
   viewer: "bg-mist text-ink-soft",
 };
 
+/** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
+type PresenceState = "active" | "idle" | "away";
+
+function presenceFor(member: TripMember): PresenceState {
+  if (member.role === "owner") return "active";
+  if (member.role === "editor") return "idle";
+  return "away";
+}
+
 export function TripMembersBar({
   tripId,
   locale,
@@ -179,6 +188,7 @@ export function TripMembersBar({
                 key={m.id}
                 member={m}
                 locale={locale}
+                presence={presenceFor(m)}
                 style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}
               />
             ))}
@@ -189,8 +199,11 @@ export function TripMembersBar({
             ) : null}
             {pending && members.length === 0 ? (
               <span className="inline-flex h-8 items-center gap-1.5" aria-busy="true">
-                <span className="h-7 w-7 animate-pulse rounded-full bg-mist" />
-                <span className="h-6 w-20 animate-pulse rounded-bp-xs bg-mist/70" />
+                <span className="relative inline-flex">
+                  <span className="h-7 w-7 rounded-full bg-mist" />
+                  <span className="bp-presence-dot bp-presence-dot--sm animate-presence-pulse" />
+                </span>
+                <span className="h-6 w-20 rounded-bp-xs bg-mist/70" />
               </span>
             ) : null}
           </div>
@@ -209,6 +222,15 @@ export function TripMembersBar({
             {demoSeeded ? (
               <span className="rounded-bp-xs bg-river/12 px-2 py-0.5 text-[11px] font-semibold text-river-deep">
                 {t(locale, "collab.demoBadge")}
+              </span>
+            ) : null}
+            {members.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-bp-xs bg-river/10 px-2 py-0.5 text-[11px] font-medium text-river-deep">
+                <span
+                  className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
+                  aria-hidden
+                />
+                {t(locale, "collab.presence.live")}
               </span>
             ) : null}
           </div>
@@ -324,7 +346,11 @@ export function TripMembersBar({
                 style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <PresenceAvatar member={m} size="md" />
+                  <PresenceAvatar
+                    member={m}
+                    size="md"
+                    presence={presenceFor(m)}
+                  />
                   <span className="truncate text-sm font-medium text-ink">
                     {m.displayName ?? m.userId}
                   </span>
@@ -351,20 +377,27 @@ export function TripMembersBar({
 function PresenceChip({
   member,
   locale,
+  presence,
   style,
 }: {
   member: TripMember;
   locale: Locale;
+  presence: PresenceState;
   style?: CSSProperties;
 }) {
+  const active = presence === "active";
   return (
     <span
       role="listitem"
-      title={`${member.displayName ?? member.userId} · ${t(locale, `collab.role.${member.role}`)}`}
-      className="animate-rise inline-flex max-w-[11rem] items-center gap-1.5 rounded-bp border border-[color:var(--bp-line)] bg-foam py-0.5 pl-0.5 pr-2 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35"
+      title={`${member.displayName ?? member.userId} · ${t(locale, `collab.role.${member.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
+      className={`animate-rise inline-flex max-w-[11rem] items-center gap-1.5 rounded-bp border bg-foam py-0.5 pl-0.5 pr-2 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/40 ${
+        active
+          ? "border-river/35 ring-1 ring-river/15"
+          : "border-[color:var(--bp-line)]"
+      }`}
       style={style}
     >
-      <PresenceAvatar member={member} size="sm" />
+      <PresenceAvatar member={member} size="sm" presence={presence} />
       <span className="min-w-0 truncate text-xs font-semibold text-ink">
         {shortName(member)}
       </span>
@@ -380,9 +413,11 @@ function PresenceChip({
 function PresenceAvatar({
   member,
   size,
+  presence,
 }: {
   member: TripMember;
   size: "sm" | "md";
+  presence: PresenceState;
 }) {
   const dim = size === "sm" ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-[11px]";
   const tone =
@@ -391,12 +426,20 @@ function PresenceAvatar({
       : member.role === "editor"
         ? "bg-river/85 text-foam"
         : "bg-ink-soft/80 text-foam";
+  const dotSize = size === "sm" ? "bp-presence-dot--sm" : "";
+  const dotTone =
+    presence === "active"
+      ? "animate-presence-pulse"
+      : presence === "idle"
+        ? "bp-presence-dot--idle"
+        : "bp-presence-dot--away";
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${dim} ${tone}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${dim} ${tone}`}
       aria-hidden
     >
       {initials(member)}
+      <span className={`bp-presence-dot ${dotSize} ${dotTone}`} />
     </span>
   );
 }
