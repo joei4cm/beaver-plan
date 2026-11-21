@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import type {
   Day,
@@ -23,6 +30,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { ShareStudioSkeleton } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
 import { resolveMediaUrl } from "@/lib/media-url";
@@ -78,6 +86,14 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [softDemo, setSoftDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [swapTick, setSwapTick] = useState(0);
+
+  const dayTabsRef = useRef<HTMLDivElement | null>(null);
+  const dayTabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [dayTabIndicator, setDayTabIndicator] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
 
   const templates = SHARE_TEMPLATES;
 
@@ -130,6 +146,28 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       void load().catch((e: Error) => setError(e.message));
     });
   }, [load]);
+
+  useEffect(() => {
+    if (!dayId) {
+      setDayTabIndicator(null);
+      return;
+    }
+    const measure = () => {
+      const tab = dayTabRefs.current.get(dayId);
+      if (!tab) return;
+      setDayTabIndicator({
+        left: tab.offsetLeft,
+        width: tab.offsetWidth,
+      });
+    };
+    measure();
+    const frame = requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measure);
+    };
+  }, [dayId, days]);
 
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
@@ -238,6 +276,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   function pickTemplate(id: ShareTemplateId) {
     if (id === templateId) return;
     setTemplateId(id);
+    setSwapTick((n) => n + 1);
   }
 
   async function downloadPng() {
@@ -296,11 +335,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   }
 
   if (!trip && pending) {
-    return (
-      <div className="px-6 py-20 text-ink-soft md:px-10">
-        {t(locale, "share.loading")}
-      </div>
-    );
+    return <ShareStudioSkeleton />;
   }
 
   if (!trip) {
@@ -313,8 +348,8 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
   const active = templates.find((x) => x.id === templateId)!;
   const previewKey = preview
-    ? `${preview.template.id}-${preview.previewUrl.slice(-48)}`
-    : templateId;
+    ? `${preview.template.id}-${swapTick}-${preview.previewUrl.slice(-48)}`
+    : `${templateId}-${swapTick}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
@@ -326,6 +361,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
             {t(locale, "share.title")}
           </h1>
+          <p className="mt-2 font-display text-xl font-semibold tracking-tight text-ink/85 md:text-2xl">
+            {trip.title}
+          </p>
           <p className="mt-3 max-w-xl text-ink-soft">
             {t(locale, "share.support")}
           </p>
@@ -333,91 +371,136 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/trips/${tripId}/journal`}
-            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+            className="bp-transition rounded-bp px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
           >
             {t(locale, "share.toJournal")}
           </Link>
           <Link
             href={`/trips/${tripId}`}
-            className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+            className="bp-transition rounded-bp px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
           >
             {t(locale, "journal.backPlanner")}
           </Link>
         </div>
       </header>
 
-      <div className="mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]">
-        {days.map((day, i) => (
-          <button
-            key={day.id}
-            type="button"
-            onClick={() => setDayId(day.id)}
-            className={`shrink-0 px-5 py-3 text-left transition duration-200 ${
-              dayId === day.id
-                ? "bg-river text-foam"
-                : "text-ink-soft hover:bg-mist/70 hover:text-ink"
-            }`}
-          >
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
-              {t(locale, "planner.day")} {i + 1}
-            </span>
-            <span className="text-sm font-semibold">{day.date}</span>
-          </button>
-        ))}
+      <div
+        ref={dayTabsRef}
+        className="relative mt-6 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/50"
+        role="tablist"
+        aria-label={t(locale, "share.eyebrow")}
+      >
+        {dayTabIndicator && (
+          <span
+            aria-hidden
+            className="animate-tab-indicator pointer-events-none absolute inset-y-0 z-0 bg-river"
+            style={{
+              left: dayTabIndicator.left,
+              width: dayTabIndicator.width,
+            }}
+          />
+        )}
+        {days.map((day, i) => {
+          const activeDay = dayId === day.id;
+          return (
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={activeDay}
+              ref={(el) => {
+                if (el) dayTabRefs.current.set(day.id, el);
+                else dayTabRefs.current.delete(day.id);
+              }}
+              onClick={() => setDayId(day.id)}
+              className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
+                activeDay
+                  ? "text-foam"
+                  : "text-ink-soft hover:bg-mist/70 hover:text-ink"
+              }`}
+            >
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                {t(locale, "planner.day")} {i + 1}
+              </span>
+              <span className="text-sm font-semibold">{day.date}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
-        <div className="animate-fade flex flex-col items-center">
-          <div
-            className="animate-template-swap relative w-full max-w-[420px] overflow-hidden border border-[color:var(--bp-line)] bg-paper shadow-bp transition-[aspect-ratio] duration-300 ease-out"
-            key={`frame-${templateId}`}
-            style={{
-              aspectRatio: `${active.width} / ${active.height}`,
-            }}
-          >
-            {preview ? (
-              <div
-                key={previewKey}
-                className="share-svg-preview animate-preview-in h-full w-full [&_svg]:h-full [&_svg]:w-full"
-                dangerouslySetInnerHTML={{ __html: svgInnerMarkup(preview.svg) }}
-                role="img"
-                aria-label={
-                  locale === "zh-CN" ? active.nameZh : active.nameEn
-                }
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-ink-soft">
-                <span className="font-display text-lg text-ink/80">
-                  Beaver Plan · 海狸旅行
-                </span>
-                <span className="text-sm">
-                  {busy ? t(locale, "share.rendering") : t(locale, "share.loading")}
-                </span>
-              </div>
-            )}
+        {/* Preview stage — primary visual */}
+        <section className="animate-fade flex flex-col items-center">
+          <div className="flex w-full max-w-[440px] flex-col items-center rounded-bp-lg border border-[color:var(--bp-line)] bg-mist/35 p-4 shadow-bp-soft md:p-5">
+            <div
+              className="animate-template-swap relative w-full max-w-[400px] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out"
+              key={`frame-${templateId}-${swapTick}`}
+              style={{
+                aspectRatio: `${active.width} / ${active.height}`,
+              }}
+            >
+              {preview ? (
+                <div
+                  key={previewKey}
+                  className="share-svg-preview animate-preview-in h-full w-full [&_svg]:h-full [&_svg]:w-full"
+                  dangerouslySetInnerHTML={{
+                    __html: svgInnerMarkup(preview.svg),
+                  }}
+                  role="img"
+                  aria-label={
+                    locale === "zh-CN" ? active.nameZh : active.nameEn
+                  }
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-ink-soft">
+                  <div className="bp-skeleton h-8 w-40" />
+                  <span className="text-sm">
+                    {busy
+                      ? t(locale, "share.rendering")
+                      : t(locale, "share.loading")}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-          <p className="mt-4 text-center text-sm text-ink-soft">
-            {trip.title} · {photoCount} {t(locale, "share.photos")} ·{" "}
-            {dayStops.map((s) => s.place.name).slice(0, 3).join(" · ")}
+          <p className="mt-4 max-w-md text-center text-sm text-ink-soft">
+            {trip.title} · {photoCount} {t(locale, "share.photos")}
+            {dayStops.length > 0
+              ? ` · ${dayStops
+                  .map((s) => s.place.name)
+                  .slice(0, 3)
+                  .join(" · ")}`
+              : ""}
           </p>
-        </div>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-river/70">
+            {active.aspect} ·{" "}
+            {locale === "zh-CN" ? active.nameZh : active.nameEn}
+          </p>
+        </section>
 
-        <aside className="animate-rise space-y-5" style={{ animationDelay: "100ms" }}>
-          <h2 className="font-display text-2xl text-ink">
+        {/* Control sheet */}
+        <aside
+          className="animate-sheet-in space-y-5"
+          style={{ animationDelay: "80ms" }}
+        >
+          <h2 className="font-display text-2xl tracking-tight text-ink">
             {t(locale, "share.pickTemplate")}
           </h2>
-          <div className="space-y-2.5">
+
+          <div className="space-y-2" role="listbox" aria-label={t(locale, "share.pickTemplate")}>
             {templates.map((tpl) => {
               const selected = templateId === tpl.id;
               return (
                 <button
                   key={tpl.id}
                   type="button"
+                  role="option"
+                  aria-selected={selected}
                   onClick={() => pickTemplate(tpl.id)}
-                  className={`group w-full rounded-[14px] border px-4 py-3.5 text-left transition duration-200 ${
+                  className={`group w-full rounded-bp border px-4 py-3.5 text-left bp-transition ${
                     selected
-                      ? "border-river bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : "border-[color:var(--bp-line)] bg-foam/60 hover:border-river/40 hover:bg-foam"
+                      ? "animate-stop-select border-river bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : "border-[color:var(--bp-line)] bg-foam/70 hover:border-river/40 hover:bg-foam"
                   }`}
                 >
                   <div className="flex items-baseline justify-between gap-2">
@@ -425,8 +508,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
                     </span>
                     <span
-                      className={`font-mono text-[11px] transition ${
-                        selected ? "text-river" : "text-ink-soft"
+                      className={`rounded-bp-xs px-2 py-0.5 font-mono text-[11px] bp-transition ${
+                        selected
+                          ? "bg-river/15 text-river"
+                          : "bg-mist/80 text-ink-soft group-hover:text-river"
                       }`}
                     >
                       {tpl.aspect}
@@ -442,13 +527,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
           <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
             <div className="flex items-baseline justify-between gap-2">
-              <h2 className="font-display text-2xl text-ink">
+              <h2 className="font-display text-2xl tracking-tight text-ink">
                 {t(locale, "share.lightEdit")}
               </h2>
               <button
                 type="button"
                 onClick={resetEdits}
-                className="text-xs text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+                className="bp-transition text-xs text-ink-soft underline-offset-4 hover:text-river hover:underline"
               >
                 {t(locale, "share.resetEdit")}
               </button>
@@ -463,7 +548,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 value={coverTitle}
                 maxLength={80}
                 onChange={(e) => setCoverTitle(e.target.value)}
-                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
+                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none bp-transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
               />
             </label>
 
@@ -476,7 +561,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 value={coverSubtitle}
                 maxLength={100}
                 onChange={(e) => setCoverSubtitle(e.target.value)}
-                className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
+                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none bp-transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
               />
             </label>
 
@@ -489,7 +574,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   type="color"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-8 w-10 cursor-pointer rounded border border-[color:var(--bp-line)] bg-transparent"
+                  className="h-8 w-10 cursor-pointer rounded-bp-xs border border-[color:var(--bp-line)] bg-transparent"
                   aria-label={t(locale, "share.accentColor")}
                 />
               </div>
@@ -499,7 +584,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     key={hex}
                     type="button"
                     onClick={() => setAccentColor(hex)}
-                    className={`h-7 w-7 rounded-full border transition ${
+                    className={`h-7 w-7 rounded-full border bp-transition ${
                       accentColor.toLowerCase() === hex.toLowerCase()
                         ? "border-ink ring-2 ring-river/40"
                         : "border-[color:var(--bp-line)] hover:scale-105"
@@ -538,18 +623,18 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </p>
           )}
 
-          {softDemo && !error && (
+          {softDemo && !error ? (
             <SoftFailNotice>
               {t(locale, "share.demoNotice")}
             </SoftFailNotice>
-          )}
+          ) : null}
 
-          <div className="flex flex-col gap-2 pt-2">
+          <div className="flex flex-col gap-2 border-t border-[color:var(--bp-line)] pt-5">
             <button
               type="button"
               disabled={busy || !preview}
               onClick={() => void downloadPng()}
-              className="rounded-md bg-river px-4 py-3 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
             >
               {t(locale, "share.downloadPng")}
             </button>
@@ -557,7 +642,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               type="button"
               disabled={busy || !preview}
               onClick={() => void shareNative()}
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-4 py-3 text-sm text-ink-soft transition hover:border-river/40 hover:text-river disabled:opacity-40"
+              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river disabled:opacity-40"
             >
               {t(locale, "share.systemShare")}
             </button>
@@ -565,7 +650,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               type="button"
               disabled={busy}
               onClick={() => void render()}
-              className="rounded-md px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
+              className="bp-transition rounded-bp px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
             >
               {t(locale, "share.refresh")}
             </button>
@@ -578,7 +663,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           )}
 
           {entries[0]?.media[0] ? (
-            <div className="flex gap-2 overflow-x-auto pt-2">
+            <div className="flex gap-2 overflow-x-auto pt-1">
               {entries
                 .flatMap((e) => e.media)
                 .slice(0, 5)
@@ -588,7 +673,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     key={url}
                     src={resolveMediaUrl(url)}
                     alt=""
-                    className="h-14 w-10 shrink-0 object-cover"
+                    className="h-14 w-10 shrink-0 rounded-bp-xs object-cover ring-1 ring-[color:var(--bp-line)]"
                   />
                 ))}
             </div>
