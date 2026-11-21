@@ -9,6 +9,7 @@ import {
   collectPathLines,
   strokeForMode,
 } from "./route-style";
+import { MapSkeleton } from "./map-skeleton";
 
 type GMaps = {
   Map: new (el: HTMLElement, opts: Record<string, unknown>) => GMap;
@@ -156,7 +157,12 @@ export function GoogleBasemap({
     paint();
   }, [paint]);
 
-  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
+  return (
+    <>
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+      {!ready && <MapSkeleton label="Loading Google Maps" />}
+    </>
+  );
 }
 
 const softGoogleStyles: Record<string, unknown>[] = [

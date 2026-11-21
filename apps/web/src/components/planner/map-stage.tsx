@@ -9,15 +9,14 @@ import {
   basemapProviderLabel,
   resolveBasemapKind,
 } from "./basemap/resolve-basemap";
+import { MapSkeleton } from "./basemap/map-skeleton";
 
 const InteractiveBasemap = dynamic(
   () =>
     import("./basemap/interactive-basemap").then((m) => m.InteractiveBasemap),
   {
     ssr: false,
-    loading: () => (
-      <div className="absolute inset-0 animate-pulse bg-[#EAF0F8]" />
-    ),
+    loading: () => <MapSkeleton />,
   },
 );
 
