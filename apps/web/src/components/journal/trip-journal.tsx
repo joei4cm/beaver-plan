@@ -679,14 +679,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
   /**
-   * Empty SoftFailNotice chrome (BEA-248 after #171/#175/#183):
-   * empty owns compact SoftFail under azure list rail · SheetPresence body ·
-   * tip-011 (#46). Compose SoftFail yields while empty owns (no double depth).
-   * Soft copy never timber / Failed to fetch.
+   * Empty SoftFailNotice depth (BEA-303 after #187):
+   * empty owns compact SoftFail under azure list rail · Soft empty badge ·
+   * emptySupport · emptySoftFail copy (never inherit list softNotice) ·
+   * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
+   * Compose SoftFail yields while empty owns (no double depth). Soft copy
+   * never timber / Failed to fetch.
    */
   const entryEmpty = visible.length === 0;
   const emptyOwnsSoft = entryEmpty;
   const emptySoftOpen = emptyOwnsSoft;
+  const emptySoftCopy = t(locale, "journal.emptySoftFail");
   /**
    * Photo strip SoftFailNotice chrome (BEA-282 after #124/#172):
    * compose media rail owns compact SoftFail under azure strip rail · Soft
@@ -700,13 +703,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     composeSoftFail && !emptyOwnsSoft && !photoStripOwnsSoft;
   const showListSoftFail =
     !emptyOwnsSoft && (demoSeeded || softNotice);
-  const listSoftOpen = emptySoftOpen || showListSoftFail;
+  const listSoftOpen = showListSoftFail;
   const listSoftCopy =
     softNotice && !online
       ? t(locale, "journal.softOffline")
-      : emptyOwnsSoft
-        ? t(locale, "journal.emptySoftFail")
-        : t(locale, "journal.demoNotice");
+      : t(locale, "journal.demoNotice");
   const hardComposeError =
     error && !isPlannerNoiseError(new Error(error)) ? error : null;
 
@@ -861,9 +862,10 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             aria-label={t(locale, "journal.listEyebrow")}
           >
             {/*
-              Empty SoftFail chrome (BEA-248 after #171/#175/#183):
-              azure list rail · Open badge · compact SoftFailNotice ·
-              SheetPresence empty body · tip-011 rise — never timber.
+              Empty SoftFail depth (BEA-303 after #187):
+              azure list rail · Soft empty badge · emptySupport ·
+              compact SoftFailNotice mist band · SheetPresence empty body ·
+              tip-011 rise — never timber / Failed to fetch.
             */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -888,13 +890,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   {entryEmpty ? (
                     <span
-                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
                         emptySoftOpen
                           ? "bg-mist text-ink-soft"
                           : "bg-river/12 text-river"
                       }`}
                     >
-                      {t(locale, "journal.emptyBadge")}
+                      {emptySoftOpen
+                        ? t(locale, "journal.emptySoftBadge")
+                        : t(locale, "journal.emptyBadge")}
                     </span>
                   ) : (
                     <>
@@ -924,8 +928,20 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </header>
 
-            {/* Compact SoftFail under azure rail — empty owns; list yields to compose when not empty. */}
-            <SoftFailNotice open={listSoftOpen} compact className="mb-1">
+            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; list yields while empty owns. */}
+            <SoftFailNotice
+              open={emptySoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {emptySoftCopy}
+            </SoftFailNotice>
+            {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
+            <SoftFailNotice
+              open={listSoftOpen}
+              compact
+              className="mb-1"
+            >
               {listSoftCopy}
             </SoftFailNotice>
 
@@ -933,7 +949,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               <SheetPresence
                 key={`list-empty-${dayId ?? "all"}`}
                 open
-                className="mt-6 max-w-lg py-8"
+                className={`mt-6 max-w-lg py-8 ${
+                  emptySoftOpen
+                    ? "rounded-bp-sm bg-mist/25 px-3 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-4"
+                    : ""
+                }`}
                 style={{ animationDelay: "40ms" }}
                 aria-label={t(locale, "journal.empty")}
               >
