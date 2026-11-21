@@ -2,8 +2,8 @@ import Link from "next/link";
 import { brand } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { getLocale } from "@/lib/locale";
+import { LandingFeatures } from "@/components/landing/features";
 import { LandingScrollDeck } from "@/components/landing/scroll-deck";
-import { LandingScrollStack } from "@/components/landing/scroll-stack";
 
 const PILLARS = [
   { title: "landing.pillars.map.title", body: "landing.pillars.map.body" },
@@ -34,7 +34,7 @@ export default async function HomePage() {
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const headline = locale === "zh-CN" ? brand.taglineZh : brand.taglineEn;
 
-  const pillarCards = PILLARS.map((pillar) => ({
+  const featureItems = PILLARS.map((pillar) => ({
     title: t(locale, pillar.title),
     body: t(locale, pillar.body),
   }));
@@ -154,11 +154,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Below fold — tip 019 stacked cards (pillars) */}
-      <LandingScrollStack
+      {/* Below fold — features (editorial hierarchy; after tip 019 scroll craft) */}
+      <LandingFeatures
         title={t(locale, "landing.pillars.title")}
         support={t(locale, "landing.pillars.support")}
-        cards={pillarCards}
+        items={featureItems}
       />
 
       {/* Below fold — tip 019 card deck (how it works) */}

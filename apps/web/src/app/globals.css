@@ -86,11 +86,10 @@
   }
 
   /*
-   * Tip 019 — scroll cards (landing below-fold only).
+   * Tip 019 — scroll deck (landing how-it-works).
    * Progress driven by sticky + passive scroll script (custom props).
    * Animate only transform / opacity / filter — tip §2.
    */
-  .bp-scroll-stack__card,
   .bp-scroll-deck__card {
     backface-visibility: hidden;
   }
@@ -602,17 +601,12 @@
     display: none;
   }
 
-  /* Tip 019 — plain sections (JS also swaps; belt-and-suspenders) */
-  .bp-scroll-stack__card,
+  /* Tip 019 — plain deck (JS also swaps; belt-and-suspenders) */
   .bp-scroll-deck__card {
     position: relative !important;
     top: auto !important;
     margin-bottom: 1.5rem !important;
     height: auto !important;
-  }
-
-  .bp-scroll-stack__card > div,
-  .bp-scroll-deck__card {
     transform: none !important;
     filter: none !important;
   }
