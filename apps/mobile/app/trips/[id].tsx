@@ -45,6 +45,7 @@ import {
   routeTripDay,
   searchPlaces,
 } from "../../src/api";
+import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { TripMap } from "../../src/components/trip-map";
 import {
   flushJournalQueue,
@@ -127,6 +128,8 @@ export default function TripDetailScreen() {
   const [results, setResults] = useState<PlaceSummary[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchDemo, setSearchDemo] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [routing, setRouting] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
@@ -391,10 +394,14 @@ export default function TripDetailScreen() {
       const q = text.trim();
       if (!q) {
         setResults([]);
+        setActiveIndex(0);
         return;
       }
       const gen = ++searchGenRef.current;
-      setResults(searchDemoPlaces(q));
+      const demoHits = searchDemoPlaces(q);
+      setResults(demoHits);
+      setActiveIndex(0);
+      setSearchDemo(true);
       setSearching(true);
       try {
         const center = dayStops[0]?.place;
@@ -406,11 +413,15 @@ export default function TripDetailScreen() {
           timezone: trip?.timezone,
         });
         if (gen !== searchGenRef.current) return;
-        if (data.places.length > 0) setResults(data.places);
+        if (data.places.length > 0) {
+          setResults(data.places);
+          setActiveIndex(0);
+          setSearchDemo(false);
+        }
       } catch (e) {
         if (gen !== searchGenRef.current) return;
         if (isNoiseError(e)) {
-          setSoftNotice(t(locale, "planner.searchDemo"));
+          setSearchDemo(true);
           setError(null);
         }
       } finally {
@@ -425,11 +436,24 @@ export default function TripDetailScreen() {
     setSearchOpen(true);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     const q = text.trim();
-    if (q) setResults(searchDemoPlaces(q));
-    else setResults([]);
+    if (q) {
+      setResults(searchDemoPlaces(q));
+      setActiveIndex(0);
+      setSearchDemo(true);
+    } else {
+      setResults([]);
+      setActiveIndex(0);
+    }
     searchTimerRef.current = setTimeout(() => {
       void runSearch(text);
     }, SEARCH_DEBOUNCE_MS);
+  }
+
+  function clearSearch() {
+    setQuery("");
+    setResults([]);
+    setActiveIndex(0);
+    setSearchOpen(false);
   }
 
   async function addPlace(place: PlaceSummary) {
@@ -442,9 +466,7 @@ export default function TripDetailScreen() {
         place,
         expectedVersion: trip.version,
       });
-      setQuery("");
-      setResults([]);
-      setSearchOpen(false);
+      clearSearch();
       const payload = await fetchTrip(tripId);
       setTrip(payload.trip);
       setDays(payload.days);
@@ -467,14 +489,43 @@ export default function TripDetailScreen() {
       setTrip((prev) =>
         prev ? { ...prev, version: prev.version + 1 } : prev,
       );
-      setQuery("");
-      setResults([]);
-      setSearchOpen(false);
+      clearSearch();
       setSelectedStopId(stop.id);
       setSoftNotice(t(locale, "planner.demoLocal"));
       setError(null);
       void e;
       await routeDayStops(dayId, stopsForDay(nextStops, dayId));
+    }
+  }
+
+  function pickActive() {
+    const place = results[activeIndex];
+    if (place) void addPlace(place);
+  }
+
+  function onSearchKeyPress(e: { nativeEvent: { key: string } }) {
+    const key = e.nativeEvent.key;
+    const q = query.trim();
+    const hasHits = results.length > 0;
+    const emptyOpen = q.length > 0 && !searching && !hasHits;
+    const sheetVisible =
+      searchOpen && q.length > 0 && (hasHits || emptyOpen || searching);
+    if (key === "Enter") {
+      if (hasHits) pickActive();
+      else void runSearch(query);
+      return;
+    }
+    if (key === "Escape") {
+      if (sheetVisible) clearSearch();
+      return;
+    }
+    if (!hasHits) return;
+    if (key === "ArrowDown") {
+      setActiveIndex((i) => Math.min(i + 1, results.length - 1));
+      return;
+    }
+    if (key === "ArrowUp") {
+      setActiveIndex((i) => Math.max(i - 1, 0));
     }
   }
 
@@ -489,6 +540,15 @@ export default function TripDetailScreen() {
 
   const googleKey =
     process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null;
+
+  const searchQ = query.trim();
+  const hasSearchResults = results.length > 0;
+  const showSearchEmpty =
+    searchOpen && searchQ.length > 0 && !searching && !hasSearchResults;
+  const searchSheetOpen =
+    searchOpen &&
+    searchQ.length > 0 &&
+    (hasSearchResults || showSearchEmpty || searching);
 
   const riseStyle = {
     opacity: rise,
@@ -558,18 +618,34 @@ export default function TripDetailScreen() {
             ) : null}
             <View style={styles.actionRow}>
               <Pressable
-                style={[styles.actionBtn, styles.actionPrimary]}
+                style={StyleSheet.flatten([
+                  styles.actionBtn,
+                  styles.actionPrimary,
+                ])}
                 onPress={() => router.push(`/trips/${tripId}/share`)}
               >
-                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.actionLabel,
+                    styles.actionPrimaryLabel,
+                  ])}
+                >
                   {t(locale, "mobile.share")}
                 </Text>
               </Pressable>
               <Pressable
-                style={[styles.actionBtn, styles.actionOutline]}
+                style={StyleSheet.flatten([
+                  styles.actionBtn,
+                  styles.actionOutline,
+                ])}
                 onPress={() => router.push(`/trips/${tripId}/journal`)}
               >
-                <Text style={[styles.actionLabel, styles.actionOutlineLabel]}>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.actionLabel,
+                    styles.actionOutlineLabel,
+                  ])}
+                >
                   {t(locale, "mobile.journal")}
                 </Text>
               </Pressable>
@@ -618,23 +694,26 @@ export default function TripDetailScreen() {
                     <Pressable
                       key={day.id}
                       onPress={() => selectDay(day.id)}
-                      style={[styles.dayChip, active && styles.dayChipActive]}
+                      style={StyleSheet.flatten([
+                        styles.dayChip,
+                        active ? styles.dayChipActive : null,
+                      ])}
                       accessibilityRole="tab"
                       accessibilityState={{ selected: active }}
                     >
                       <Text
-                        style={[
+                        style={StyleSheet.flatten([
                           styles.dayChipLabel,
-                          active && styles.dayChipLabelActive,
-                        ]}
+                          active ? styles.dayChipLabelActive : null,
+                        ])}
                       >
                         {t(locale, "planner.day")} {i + 1}
                       </Text>
                       <Text
-                        style={[
+                        style={StyleSheet.flatten([
                           styles.dayChipDate,
-                          active && styles.dayChipLabelActive,
-                        ]}
+                          active ? styles.dayChipLabelActive : null,
+                        ])}
                       >
                         {day.date}
                       </Text>
@@ -649,12 +728,15 @@ export default function TripDetailScreen() {
                   value={query}
                   onChangeText={scheduleSearch}
                   onFocus={() => setSearchOpen(true)}
+                  onKeyPress={onSearchKeyPress}
                   placeholder={t(locale, "planner.searchPlaceholder")}
                   placeholderTextColor={colors.inkSoft}
                   style={styles.searchInput}
                   autoCorrect={false}
                   autoCapitalize="none"
                   clearButtonMode="while-editing"
+                  accessibilityRole="search"
+                  accessibilityState={{ expanded: searchSheetOpen }}
                 />
                 {searching || routing ? (
                   <ActivityIndicator
@@ -663,22 +745,138 @@ export default function TripDetailScreen() {
                     size="small"
                   />
                 ) : null}
-                {searchOpen && results.length > 0 ? (
-                  <View style={styles.searchSheet}>
-                    {results.map((place) => (
-                      <Pressable
-                        key={place.enginePlaceId}
-                        style={styles.searchHit}
-                        onPress={() => void addPlace(place)}
-                      >
-                        <Text style={styles.searchHitName}>{place.name}</Text>
-                        {place.address ? (
-                          <Text style={styles.searchHitAddr}>
-                            {place.address}
+                {searchSheetOpen ? (
+                  <View
+                    style={styles.searchSheet}
+                    accessibilityRole="list"
+                    accessibilityLabel={t(locale, "planner.search.eyebrow")}
+                  >
+                    <View style={styles.searchSheetHead}>
+                      <View style={styles.searchSheetHeadText}>
+                        <Text style={styles.searchEyebrow}>
+                          {t(locale, "planner.search.eyebrow")}
+                        </Text>
+                        {hasSearchResults ? (
+                          <Text style={styles.searchCount}>
+                            {t(locale, "planner.search.resultsCount").replace(
+                              "{n}",
+                              String(results.length),
+                            )}
                           </Text>
                         ) : null}
-                      </Pressable>
-                    ))}
+                      </View>
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.searchBadge,
+                          searchDemo
+                            ? styles.searchBadgeDemo
+                            : styles.searchBadgeLive,
+                        ])}
+                      >
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.searchBadgeText,
+                            searchDemo
+                              ? styles.searchBadgeTextDemo
+                              : styles.searchBadgeTextLive,
+                          ])}
+                        >
+                          {searchDemo
+                            ? t(locale, "planner.search.demoBadge")
+                            : t(locale, "planner.search.liveBadge")}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {hasSearchResults ? (
+                      <View style={styles.searchHits}>
+                        {results.map((place, i) => {
+                          const selected = i === activeIndex;
+                          return (
+                            <Pressable
+                              key={place.enginePlaceId}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected }}
+                              onPress={() => void addPlace(place)}
+                              onPressIn={() => setActiveIndex(i)}
+                              style={StyleSheet.flatten([
+                                styles.searchHit,
+                                selected ? styles.searchHitSelected : null,
+                                i === results.length - 1
+                                  ? styles.searchHitLast
+                                  : null,
+                              ])}
+                            >
+                              <View
+                                style={StyleSheet.flatten([
+                                  styles.searchHitIndex,
+                                  selected
+                                    ? styles.searchHitIndexSelected
+                                    : null,
+                                ])}
+                              >
+                                <Text
+                                  style={StyleSheet.flatten([
+                                    styles.searchHitIndexText,
+                                    selected
+                                      ? styles.searchHitIndexTextSelected
+                                      : null,
+                                  ])}
+                                >
+                                  {i + 1}
+                                </Text>
+                              </View>
+                              <View style={styles.searchHitBody}>
+                                <Text style={styles.searchHitName}>
+                                  {place.name}
+                                </Text>
+                                {place.address ? (
+                                  <Text style={styles.searchHitAddr}>
+                                    {place.address}
+                                  </Text>
+                                ) : null}
+                              </View>
+                              <Text
+                                style={StyleSheet.flatten([
+                                  styles.searchHitHint,
+                                  selected
+                                    ? styles.searchHitHintSelected
+                                    : null,
+                                ])}
+                              >
+                                {t(locale, "planner.search.addHint")}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ) : showSearchEmpty ? (
+                      <View style={styles.searchEmpty}>
+                        <Text style={styles.searchEmptyTitle}>
+                          {t(locale, "planner.search.emptyTitle")}
+                        </Text>
+                        <Text style={styles.searchEmptyHint}>
+                          {t(locale, "planner.search.emptyHint")}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.searchLoading}>
+                        <Text style={styles.searchLoadingText}>
+                          {t(locale, "planner.search")}…
+                        </Text>
+                      </View>
+                    )}
+
+                    {searchDemo && hasSearchResults ? (
+                      <SoftFailNotice compact>
+                        {t(locale, "planner.searchDemo")}
+                      </SoftFailNotice>
+                    ) : null}
+                    {searchDemo && showSearchEmpty ? (
+                      <SoftFailNotice compact>
+                        {t(locale, "planner.search.softFailEmpty")}
+                      </SoftFailNotice>
+                    ) : null}
                   </View>
                 ) : null}
               </View>
@@ -689,16 +887,19 @@ export default function TripDetailScreen() {
                 return (
                   <Pressable
                     key={stop.id}
-                    style={[styles.stopRow, selected && styles.stopRowSelected]}
+                    style={StyleSheet.flatten([
+                      styles.stopRow,
+                      selected ? styles.stopRowSelected : null,
+                    ])}
                     onPress={() => selectStop(stop.id)}
                   >
                     <Animated.View
                       style={[
                         styles.stopIndex,
-                        selected && styles.stopIndexSelected,
+                        selected ? styles.stopIndexSelected : null,
                         selected
                           ? { transform: [{ scale: stopPop }] }
-                          : undefined,
+                          : null,
                       ]}
                     >
                       <Text style={styles.stopIndexText}>{index + 1}</Text>
@@ -798,18 +999,18 @@ export default function TripDetailScreen() {
 
             <View style={styles.secondaryBlock}>
               <Pressable
-                style={[
+                style={StyleSheet.flatten([
                   styles.pinBtn,
                   pinStatus?.pinned ? styles.pinBtnActive : null,
-                ]}
+                ])}
                 disabled={pinBusy}
                 onPress={() => void onTogglePin()}
               >
                 <Text
-                  style={[
+                  style={StyleSheet.flatten([
                     styles.pinLabel,
                     pinStatus?.pinned ? styles.pinLabelActive : null,
-                  ]}
+                  ])}
                 >
                   {pinBusy
                     ? t(locale, "offline.working")
@@ -818,10 +1019,10 @@ export default function TripDetailScreen() {
                       : t(locale, "offline.pin")}
                 </Text>
                 <Text
-                  style={[
+                  style={StyleSheet.flatten([
                     styles.pinMeta,
                     pinStatus?.pinned ? styles.pinMetaActive : null,
-                  ]}
+                  ])}
                 >
                   {(pinStatus?.online ?? isDeviceOnline())
                     ? t(locale, "offline.online")
@@ -1149,21 +1350,154 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
     overflow: "hidden",
   },
-  searchHit: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  searchSheetHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+  },
+  searchSheetHeadText: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+  },
+  searchEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  searchCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  searchBadge: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  searchBadgeDemo: {
+    backgroundColor: colors.mist,
+  },
+  searchBadgeLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  searchBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  searchBadgeTextDemo: {
+    color: colors.inkSoft,
+  },
+  searchBadgeTextLive: {
+    color: colors.riverDeep,
+  },
+  searchHits: {
+    paddingVertical: 4,
+  },
+  searchHit: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
+  searchHitSelected: {
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingLeft: 9,
+  },
+  searchHitLast: {},
+  searchHitIndex: {
+    marginTop: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.mist,
+  },
+  searchHitIndexSelected: {
+    backgroundColor: colors.river,
+  },
+  searchHitIndexText: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.inkSoft,
+  },
+  searchHitIndexTextSelected: {
+    color: colors.foam,
+  },
+  searchHitBody: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   searchHitName: {
-    ...type.body,
+    ...type.display,
     fontSize: 15,
     fontWeight: "700",
+    letterSpacing: -0.2,
     color: colors.ink,
   },
   searchHitAddr: {
     ...type.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.inkSoft,
+  },
+  searchHitHint: {
+    ...type.body,
     marginTop: 2,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+    color: "rgba(100, 116, 139, 0.5)",
+  },
+  searchHitHintSelected: {
+    color: colors.river,
+  },
+  searchEmpty: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    gap: 6,
+  },
+  searchEmptyTitle: {
+    ...type.display,
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    color: colors.ink,
+  },
+  searchEmptyHint: {
+    ...type.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.inkSoft,
+  },
+  searchLoading: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  searchLoadingText: {
+    ...type.body,
     fontSize: 12,
     color: colors.inkSoft,
   },
