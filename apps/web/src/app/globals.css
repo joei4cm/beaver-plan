@@ -148,10 +148,40 @@
     transform-box: fill-box;
   }
 
+  /*
+   * Tip 015 (g) — day-tab indicator travels with a soft stretch:
+   * left rides in-out (on-screen move); width settles with out-strong
+   * so the leading edge leads and the trailing edge catches up.
+   */
   .animate-tab-indicator {
     transition:
       left var(--bp-duration) var(--bp-ease-in-out),
-      width var(--bp-duration) var(--bp-ease-in-out);
+      width var(--bp-duration) var(--bp-ease-out-strong);
+    will-change: left, width;
+  }
+
+  .bp-day-tab {
+    outline: none;
+    transition:
+      color var(--bp-duration-fast) var(--bp-ease-out),
+      background-color var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-day-tab:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--bp-focus);
+  }
+
+  .bp-day-tab[aria-selected="true"] {
+    color: var(--bp-foam);
+  }
+
+  .bp-day-tab[aria-selected="false"] {
+    color: var(--bp-ink-soft);
+  }
+
+  .bp-day-tab[aria-selected="false"]:hover {
+    color: var(--bp-ink);
+    background-color: color-mix(in srgb, var(--bp-mist) 70%, transparent);
   }
 
   /* Tip 005 — drag-to-reorder (planner stops) */
@@ -427,6 +457,10 @@
   .bp-skeleton::after,
   .animate-tab-indicator {
     animation: none !important;
+    transition: none !important;
+  }
+
+  .bp-day-tab {
     transition: none !important;
   }
 
