@@ -46,6 +46,7 @@ import {
   type LiveTurnResponse,
   type TranslationStatus,
 } from "../src/api";
+import { SheetPresence } from "../src/components/sheet-presence";
 import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { isDeviceOnline } from "../src/offline/trip-offline";
 import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
@@ -119,15 +120,14 @@ export default function TranslateScreen() {
   const [status, setStatus] = useState<TranslationStatus | null>(null);
   const [softNotice, setSoftNotice] = useState(true);
   const [online, setOnline] = useState(isDeviceOnline);
-  const [turns, setTurns] = useState<TurnRow[]>(() =>
-    seedTurns("zh-CN", "en"),
-  );
+  /** Empty first paint — empty SoftFail owns history chrome (BEA-229). */
+  const [turns, setTurns] = useState<TurnRow[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [micDenied, setMicDenied] = useState(false);
-  const [demoIndex, setDemoIndex] = useState(2);
+  const [demoIndex, setDemoIndex] = useState(0);
   const [facing, setFacing] = useState<Facing>("back");
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [overlay, setOverlay] = useState<{
@@ -158,13 +158,35 @@ export default function TranslateScreen() {
   const camDenied = Boolean(camPermission && !camPermission.granted);
 
   /**
+   * Expo Talk empty SoftFailNotice chrome (BEA-229 after #171 planner empty):
+   * empty history owns compact SoftFail under azure history rail ·
+   * SheetPresence body · tip-011 (#46) · StyleSheet.flatten.
+   * Talk SoftFail yields while empty owns soft-fail (no double depth).
+   * Soft copy never timber / Failed to fetch.
+   */
+  const historyEmpty = turns.length === 0;
+  const emptyOwnsSoft = tab === "conversation" && historyEmpty;
+  const emptySoftOpen =
+    emptyOwnsSoft && (isDemo || micDenied || Boolean(error) || softNotice);
+  const emptySoftCopy = micDenied
+    ? t(uiLocale, "translate.permissionMic")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : isDemo || (error && isNoiseError(new Error(error)))
+        ? t(uiLocale, "translate.emptySoftFail")
+        : error
+          ? t(uiLocale, "translate.error")
+          : t(uiLocale, "translate.emptySoftFail");
+
+  /**
    * Expo Talk SoftFailNotice chrome after web #104 / Expo #116:
    * azure talk rail · compact SoftFailNotice · tip-011 (#46) ·
    * StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
-   * Hero SoftFailNotice yields while Talk owns soft-fail (no double depth).
+   * Yields while empty history owns soft-fail (no double depth).
    */
   const talkSoftOpen =
     tab === "conversation" &&
+    !emptyOwnsSoft &&
     (isDemo || micDenied || Boolean(error));
   const talkSoftCopy = micDenied
     ? t(uiLocale, "translate.permissionMic")
@@ -765,9 +787,9 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {/* Hero SoftFailNotice yields while Talk / Lens owns soft-fail — no double depth. */}
+          {/* Hero SoftFail yields while empty / Talk / Lens own soft-fail — no double depth. */}
           <SoftFailNotice
-            open={isDemo && !talkSoftOpen && !cameraSoftOpen}
+            open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !cameraSoftOpen}
             style={styles.heroSoftNotice}
           >
             {softNotice && !online
@@ -863,6 +885,11 @@ export default function TranslateScreen() {
               </Text>
             ) : null}
 
+            {/*
+              Empty SoftFail chrome (BEA-229 after #171):
+              azure history rail · Open badge · compact SoftFailNotice ·
+              SheetPresence empty body · tip-011 rise — never timber.
+            */}
             <Animated.View
               style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
               accessibilityLabel={t(uiLocale, "translate.history")}
@@ -873,10 +900,32 @@ export default function TranslateScreen() {
                     {t(uiLocale, "translate.history")}
                   </Text>
                   <Text style={styles.historyHint}>
-                    {t(uiLocale, "translate.historyHint")}
+                    {historyEmpty
+                      ? t(uiLocale, "translate.emptySupport")
+                      : t(uiLocale, "translate.historyHint")}
                   </Text>
                 </View>
-                {turns.length > 0 ? (
+                {historyEmpty ? (
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.historyEmptyBadge,
+                      emptySoftOpen
+                        ? styles.historyEmptyBadgeSoft
+                        : styles.historyEmptyBadgeLive,
+                    ])}
+                  >
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.historyEmptyBadgeText,
+                        emptySoftOpen
+                          ? styles.historyEmptyBadgeTextSoft
+                          : styles.historyEmptyBadgeTextLive,
+                      ])}
+                    >
+                      {t(uiLocale, "translate.emptyBadge")}
+                    </Text>
+                  </View>
+                ) : (
                   <View style={styles.historyCountChip}>
                     <Text style={styles.historyCountText}>
                       {t(uiLocale, "translate.historyCount").replace(
@@ -885,39 +934,71 @@ export default function TranslateScreen() {
                       )}
                     </Text>
                   </View>
-                ) : null}
+                )}
               </View>
 
-              {busy && turns.length === 0 ? (
+              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+              <SoftFailNotice
+                open={emptySoftOpen}
+                compact
+                style={styles.historySoftFail}
+              >
+                {emptySoftCopy}
+              </SoftFailNotice>
+
+              {busy && historyEmpty ? (
                 <HistorySkeleton rows={2} />
-              ) : turns.length === 0 ? (
-                <View style={styles.historyEmpty}>
-                  <Text style={styles.historyEmptyTitle}>
-                    {t(uiLocale, "translate.empty")}
-                  </Text>
-                  <Text style={styles.historyEmptyHint}>
-                    {t(uiLocale, "translate.emptyHint")}
-                  </Text>
-                  <View style={styles.historyEmptyCtas}>
-                    <Pressable
-                      style={styles.emptyCtaPrimary}
-                      onPress={() => focusComposer("mic")}
-                    >
-                      <Text style={styles.emptyCtaPrimaryLabel}>
-                        {t(uiLocale, "translate.emptyCta")}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={[styles.emptyCtaSecondary, busy && styles.disabled]}
-                      onPress={() => void runTurn({})}
-                      disabled={busy}
-                    >
-                      <Text style={styles.emptyCtaSecondaryLabel}>
-                        {t(uiLocale, "translate.nextDemo")}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
+              ) : historyEmpty ? (
+                <SheetPresence
+                  open
+                  delayMs={40}
+                  rise={12}
+                  style={styles.historyEmpty}
+                  accessibilityLabel={t(uiLocale, "translate.empty")}
+                >
+                  <SheetPresence open delayMs={40} rise={8}>
+                    <Text style={styles.historyEmptyEyebrow}>
+                      {t(uiLocale, "translate.history")}
+                    </Text>
+                  </SheetPresence>
+                  <SheetPresence open delayMs={70} rise={8}>
+                    <Text style={styles.historyEmptyTitle}>
+                      {t(uiLocale, "translate.empty")}
+                    </Text>
+                  </SheetPresence>
+                  <SheetPresence open delayMs={100} rise={6}>
+                    <Text style={styles.historyEmptyHint}>
+                      {t(uiLocale, "translate.emptyHint")}
+                    </Text>
+                  </SheetPresence>
+                  <SheetPresence open delayMs={130} rise={6}>
+                    <View style={styles.historyEmptyCtas}>
+                      <Pressable
+                        style={StyleSheet.flatten([styles.emptyCtaPrimary])}
+                        onPress={() => focusComposer("mic")}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.emptyCtaPrimaryLabel}>
+                          {t(uiLocale, "translate.emptyCta")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={StyleSheet.flatten([
+                          styles.emptyCtaSecondary,
+                          busy ? styles.disabled : null,
+                        ])}
+                        onPress={() => void runTurn({})}
+                        disabled={busy}
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: busy }}
+                      >
+                        <Text style={styles.emptyCtaSecondaryLabel}>
+                          {t(uiLocale, "translate.nextDemo")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </SheetPresence>
+                </SheetPresence>
               ) : (
                 <View>
                   {busy ? <HistorySkeleton rows={1} /> : null}
@@ -1045,8 +1126,9 @@ export default function TranslateScreen() {
                 </View>
               </View>
 
+              {/* Talk SoftFail yields while empty history owns soft-fail. */}
               <SoftFailNotice
-                open={Boolean(talkSoftCopy)}
+                open={talkSoftOpen && Boolean(talkSoftCopy)}
                 compact
                 style={styles.talkSoftFail}
               >
@@ -1724,7 +1806,9 @@ const styles = StyleSheet.create({
     gap: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.6)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    backgroundColor: "rgba(244, 246, 250, 0.72)",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -1757,11 +1841,46 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
+  historyEmptyBadge: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  historyEmptyBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  historyEmptyBadgeLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  historyEmptyBadgeText: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  historyEmptyBadgeTextSoft: {
+    color: colors.inkSoft,
+  },
+  historyEmptyBadgeTextLive: {
+    color: colors.riverDeep,
+  },
+  historySoftFail: {
+    marginBottom: 0,
+  },
   historyEmpty: {
     paddingHorizontal: 16,
     paddingVertical: 28,
     gap: 10,
     maxWidth: 420,
+  },
+  historyEmptyEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
   },
   historyEmptyTitle: {
     ...type.display,
