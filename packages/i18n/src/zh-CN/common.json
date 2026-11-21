@@ -542,6 +542,7 @@
   "translate.talkRail": "按住说话",
   "translate.talkHint": "按住麦克风，听写分片会实时出现；松手即翻译。",
   "translate.talkSoftFail": "按住说话在 ASR/LLM/TTS 密钥未配置或助手段不可达时柔和回退到演示脚本 — 按住与打字仍可用，不会出现 Failed to fetch。",
+  "translate.talkSupport": "按住与打字在 ASR/LLM/TTS 密钥未配置时柔和回退到演示脚本——对话记录与短语本仍共享同一舞台。",
   "translate.talkDemoBadge": "演示对话",
   "translate.talkLiveBadge": "实时对话",
   "translate.lensSoftFail": "镜头在视觉密钥未配置或助手段不可达时柔和回退到演示字幕 — 识别与场景字幕仍可用，不会出现 Failed to fetch。",
