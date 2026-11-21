@@ -237,6 +237,7 @@
   "journal.emptyHint": "先写一句路上的话，再把照片放进图框。",
   "journal.emptyCta": "记一笔",
   "journal.compose": "记一笔",
+  "journal.composeEyebrow": "写手记",
   "journal.composeHint": "短文 + 图框，绑定今日或某个站点；离线也能先记下。",
   "journal.bindStop": "关联站点",
   "journal.dayOnly": "仅今日（不绑站点）",
