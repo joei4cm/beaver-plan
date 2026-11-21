@@ -40,7 +40,10 @@ import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
-import { PlannerSkeleton } from "@/components/ui/skeleton";
+import {
+  PlannerSkeleton,
+  TransferStepsSkeleton,
+} from "@/components/ui/skeleton";
 import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
@@ -795,27 +798,34 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--bp-line)] bg-foam/95 px-4 py-3 backdrop-blur-sm">
-            <div className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
-              {(["walk", "transit", "drive"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setTravelMode(m)}
-                  className={`px-3 py-1.5 text-sm font-medium transition duration-bp-fast ease-bp-out ${
-                    travelMode === m
-                      ? "bg-river text-foam"
-                      : "text-ink-soft hover:text-river"
-                  }`}
-                >
-                  {t(locale, `planner.mode.${m}`)}
-                </button>
-              ))}
+            <div
+              className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)] shadow-bp-soft"
+              role="group"
+              aria-label={t(locale, "planner.mode.transit")}
+            >
+              {(["walk", "transit", "drive"] as const).map((m) => {
+                const on = travelMode === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setTravelMode(m)}
+                    className={`px-3.5 py-1.5 text-sm font-medium transition duration-bp-fast ease-bp-out ${
+                      on
+                        ? "bg-river text-foam shadow-bp-soft"
+                        : "bg-paper/40 text-ink-soft hover:bg-mist/50 hover:text-river"
+                    }`}
+                  >
+                    {t(locale, `planner.mode.${m}`)}
+                  </button>
+                );
+              })}
             </div>
             <button
               type="button"
               disabled={routing || dayStops.length < 2}
               onClick={() => void generateRoutes()}
-              className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {routing
                 ? t(locale, "planner.routing")
@@ -832,7 +842,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </p>
             )}
             {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
-              <span className="rounded-bp-xs bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
+              <span className="rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
                 {t(locale, "planner.transfer.demoBadge")}
               </span>
             )}
@@ -1005,10 +1015,25 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             locale={locale}
                             variant="inline"
                             demoMode={engineInfo?.mode !== "live"}
+                            showSoftFail={selected}
                           />
                         )}
                       </>
                     )}
+                    {routing &&
+                      !leg &&
+                      ctx.index < dayStops.length - 1 &&
+                      selected && (
+                        <div
+                          className="animate-fade"
+                          aria-label={t(locale, "planner.transfer.loadingHint")}
+                        >
+                          <TransferStepsSkeleton />
+                          <p className="mt-1.5 text-xs text-ink-soft">
+                            {t(locale, "planner.transfer.loadingHint")}
+                          </p>
+                        </div>
+                      )}
                     <BookingLinkChips
                       links={stop.bookingLinks}
                       locale={locale}
@@ -1059,8 +1084,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
-{(softNotice ||
-            (error && isPlannerNoiseError(new Error(error)))) && (
+          {(softNotice ||
+            (error && isPlannerNoiseError(new Error(error))) ||
+            (engineInfo?.mode !== "live" && dayLegs.length > 0)) && (
             <SoftFailNotice compact>
               {softNotice ?? t(locale, "planner.transfer.demoNotice")}
             </SoftFailNotice>

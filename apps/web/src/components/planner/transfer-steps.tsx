@@ -2,12 +2,14 @@
 
 import type { Leg, TransitStep } from "@beaver/core";
 import {
+  formatDistance,
   formatDuration,
   formatTransitStepLabel,
   normalizeStepMode,
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 
 type Props = {
   leg: Leg;
@@ -16,6 +18,11 @@ type Props = {
   variant?: "inline" | "panel";
   /** Soft demo badge when live Directions keys are absent. */
   demoMode?: boolean;
+  /**
+   * Show SoftFailNotice under the step list (selected stop only —
+   * avoids repeating the notice on every leg row).
+   */
+  showSoftFail?: boolean;
 };
 
 function stepKindLabel(locale: Locale, mode: string): string {
@@ -75,11 +82,12 @@ function modeTone(mode: string): {
   }
 }
 
-function StepIcon({ mode }: { mode: string }) {
+function StepIcon({ mode, delayMs }: { mode: string; delayMs: number }) {
   const tone = modeTone(mode);
   return (
     <span
-      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tracking-wide ${tone.icon}`}
+      className={`animate-marker-pop mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tracking-wide ${tone.icon}`}
+      style={{ animationDelay: `${delayMs}ms` }}
       aria-hidden
     >
       {tone.mark}
@@ -91,30 +99,36 @@ function StepRow({
   step,
   locale,
   last,
+  index,
 }: {
   step: TransitStep;
   locale: Locale;
   last: boolean;
+  index: number;
 }) {
   const kind = normalizeStepMode(step.mode);
   const label = formatTransitStepLabel(step);
   const tone = modeTone(step.mode);
+  const delay = 40 + index * 45;
   return (
-    <li className="relative flex gap-3">
+    <li
+      className="animate-rise relative flex gap-3"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       {!last && (
         <span
           aria-hidden
-          className={`absolute left-[11px] top-7 bottom-[-4px] w-0.5 rounded-full ${tone.rail}`}
+          className={`absolute left-[11px] top-7 bottom-[-4px] w-0.5 rounded-full transition duration-bp ease-bp-out ${tone.rail}`}
         />
       )}
-      <StepIcon mode={step.mode} />
+      <StepIcon mode={step.mode} delayMs={delay} />
       <div className="min-w-0 flex-1 pb-3.5 last:pb-0">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
             {stepKindLabel(locale, step.mode)}
           </span>
           {step.durationSec != null && step.durationSec > 0 && (
-            <span className="text-[11px] font-semibold tabular-nums text-river">
+            <span className="font-display text-[0.8rem] font-semibold tabular-nums tracking-tight text-river">
               {formatDuration(step.durationSec)}
             </span>
           )}
@@ -125,7 +139,7 @@ function StepRow({
 
         {kind === "transit" && step.lineName ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river">
+            <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river transition duration-bp-fast ease-bp-out">
               <span className="truncate">{step.lineName}</span>
             </span>
             {step.fromStopName && step.toStopName && (
@@ -161,50 +175,75 @@ function modeLabel(locale: Locale, mode: Leg["mode"]): string {
 
 /**
  * Transfer / transit step list — Lumen Route hierarchy under itinerary stops.
- * Soft chrome only; demo badge when Directions keys are absent.
+ * Nested sheet craft (#46 radii / easing); SoftFailNotice when Directions absent.
  */
 export function TransferSteps({
   leg,
   locale,
   variant = "inline",
   demoMode = false,
+  showSoftFail = false,
 }: Props) {
   if (leg.transitSteps.length === 0) return null;
 
   const shell =
     variant === "panel"
-      ? "animate-sheet-in rounded-bp border border-[color:var(--bp-line)] bg-foam/95 px-3.5 py-3 shadow-bp-soft backdrop-blur-sm"
-      : "animate-sheet-in mt-2.5 rounded-bp border border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5 shadow-bp-soft";
+      ? "animate-preview-in overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft backdrop-blur-sm"
+      : "animate-preview-in mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft";
+
+  const notice = demoMode && (showSoftFail || variant === "panel");
 
   return (
-    <div className={shell} style={{ animationDelay: "50ms" }}>
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+    <div
+      className={shell}
+      style={{ animationDelay: "50ms" }}
+      aria-label={t(locale, "planner.transfer.title")}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
             {t(locale, "planner.transfer.title")}
           </span>
-          {demoMode && (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-river/70">
-              {t(locale, "planner.transfer.demoBadge")}
-            </span>
-          )}
+          <span
+            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+              demoMode
+                ? "bg-mist text-ink-soft"
+                : "bg-river/12 text-river-deep"
+            }`}
+          >
+            {demoMode
+              ? t(locale, "planner.transfer.demoBadge")
+              : t(locale, "planner.transfer.liveBadge")}
+          </span>
         </div>
-        <span className="text-[11px] tabular-nums text-ink-soft">
-          {formatDuration(leg.durationSec)}
-          <span className="mx-1 text-ink-soft/40">·</span>
+        <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
+          <span className="font-display text-sm font-semibold tracking-tight text-ink">
+            {formatDuration(leg.durationSec)}
+          </span>
+          <span className="mx-1.5 text-ink-soft/40">·</span>
+          {formatDistance(leg.distanceM)}
+          <span className="mx-1.5 text-ink-soft/40">·</span>
           {modeLabel(locale, leg.mode)}
         </span>
       </div>
-      <ol className="m-0 list-none p-0">
+
+      <ol className="m-0 list-none space-y-0 px-3 pt-3 pb-1">
         {leg.transitSteps.map((step, i) => (
           <StepRow
             key={`${leg.id}-step-${i}`}
             step={step}
             locale={locale}
             last={i === leg.transitSteps.length - 1}
+            index={i}
           />
         ))}
       </ol>
+
+      {notice ? (
+        <SoftFailNotice compact>
+          {t(locale, "planner.transfer.demoNotice")}
+        </SoftFailNotice>
+      ) : null}
     </div>
   );
 }
