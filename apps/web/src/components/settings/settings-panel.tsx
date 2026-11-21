@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SHARE_TEMPLATES, type Trip } from "@beaver/core";
 import { brand } from "@beaver/ui-tokens";
-import { t, type Locale } from "@beaver/i18n";
+import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet } from "@/lib/api";
 import {
@@ -31,30 +31,38 @@ const MAP_OPTS: Trip["mapEngine"][] = ["auto", "google", "amap", "baidu"];
 const LOCALE_OPTS: Locale[] = ["zh-CN", "en"];
 const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
+/** Mist-track segmented control — nested #46 radii, azure active. */
 function Segmented<T extends string>({
   value,
   options,
   labelFor,
   onChange,
+  ariaLabel,
 }: {
   value: T;
   options: readonly T[];
   labelFor: (opt: T) => string;
   onChange: (opt: T) => void;
+  ariaLabel: string;
 }) {
   return (
-    <div className="inline-flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
+    <div
+      className="inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+      role="group"
+      aria-label={ariaLabel}
+    >
       {options.map((opt) => {
         const active = value === opt;
         return (
           <button
             key={opt}
             type="button"
+            aria-pressed={active}
             onClick={() => onChange(opt)}
-            className={`px-3.5 py-2 text-sm font-semibold transition duration-bp-fast ease-bp ${
+            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold bp-transition ${
               active
-                ? "bg-river text-foam"
-                : "bg-foam/50 text-ink-soft hover:text-river"
+                ? "bg-foam text-river shadow-bp-soft"
+                : "text-ink-soft hover:text-river"
             }`}
           >
             {labelFor(opt)}
@@ -136,8 +144,8 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         }}
       />
 
-      <p className="animate-fade text-xs font-semibold uppercase tracking-[0.22em] text-river/80">
-        {brand.en}
+      <p className="animate-fade text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+        {t(locale, "settings.eyebrow")}
       </p>
       <h1 className="animate-rise mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
         {t(locale, "settings.title")}
@@ -148,7 +156,10 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       >
         {t(locale, "settings.support")}
       </p>
-      <p className="mt-2 text-sm text-ink-soft/80">
+      <p
+        className="animate-rise mt-2 text-sm text-ink-soft/80"
+        style={{ animationDelay: "60ms" }}
+      >
         {brandName} · {t(locale, "settings.localHint")}
       </p>
 
@@ -160,19 +171,27 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {/* Language */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "60ms" }}
+          style={{ animationDelay: "80ms" }}
         >
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-            {t(locale, "settings.locale")}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm text-ink-soft">
-            {t(locale, "settings.localeSupport")}
-          </p>
+          <header>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+              {t(locale, "settings.localeEyebrow")}
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+              {t(locale, "settings.locale")}
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+              {t(locale, "settings.localeSupport")}
+            </p>
+          </header>
           <div className="mt-6">
             <Segmented
               value={prefs.locale}
               options={LOCALE_OPTS}
-              labelFor={(opt) => t(locale, `settings.locale.${opt}`)}
+              ariaLabel={t(locale, "settings.locale")}
+              labelFor={(opt) =>
+                t(locale, `settings.locale.${opt}` as MessageKey)
+              }
               onChange={(next) => applyPatch({ locale: next })}
             />
           </div>
@@ -181,23 +200,29 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {/* Map engine */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "100ms" }}
+          style={{ animationDelay: "120ms" }}
         >
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-            {t(locale, "settings.mapEngine")}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm text-ink-soft">
-            {t(locale, "settings.mapEngineSupport")}
-          </p>
+          <header>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+              {t(locale, "settings.mapEyebrow")}
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+              {t(locale, "settings.mapEngine")}
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+              {t(locale, "settings.mapEngineSupport")}
+            </p>
+          </header>
           <div className="mt-6">
             <Segmented
               value={prefs.mapEngine}
               options={MAP_OPTS}
-              labelFor={(opt) => t(locale, `planner.pref.${opt}`)}
+              ariaLabel={t(locale, "settings.mapEngine")}
+              labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
               onChange={(next) => applyPatch({ mapEngine: next })}
             />
           </div>
-          <p className="mt-4 text-sm text-ink-soft">
+          <p className="mt-4 text-sm leading-relaxed text-ink-soft">
             {pending && !resolve
               ? t(locale, "settings.resolving")
               : resolve
@@ -212,19 +237,27 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {/* Distance */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "140ms" }}
+          style={{ animationDelay: "160ms" }}
         >
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-            {t(locale, "settings.distance")}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm text-ink-soft">
-            {t(locale, "settings.distanceSupport")}
-          </p>
+          <header>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+              {t(locale, "settings.distanceEyebrow")}
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+              {t(locale, "settings.distance")}
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+              {t(locale, "settings.distanceSupport")}
+            </p>
+          </header>
           <div className="mt-6">
             <Segmented
               value={prefs.distanceUnit}
               options={DISTANCE_OPTS}
-              labelFor={(opt) => t(locale, `settings.distance.${opt}`)}
+              ariaLabel={t(locale, "settings.distance")}
+              labelFor={(opt) =>
+                t(locale, `settings.distance.${opt}` as MessageKey)
+              }
               onChange={(next) => applyPatch({ distanceUnit: next })}
             />
           </div>
@@ -233,15 +266,20 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {/* Share template */}
         <section
           className="animate-rise border-t border-b border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "180ms" }}
+          style={{ animationDelay: "200ms" }}
         >
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-            {t(locale, "settings.shareTemplate")}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm text-ink-soft">
-            {t(locale, "settings.shareTemplateSupport")}
-          </p>
-          <ul className="mt-6">
+          <header>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+              {t(locale, "settings.shareEyebrow")}
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+              {t(locale, "settings.shareTemplate")}
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+              {t(locale, "settings.shareTemplateSupport")}
+            </p>
+          </header>
+          <ul className="mt-6 space-y-0">
             {SHARE_TEMPLATES.map((tpl, index) => {
               const selected = prefs.shareImageTemplateId === tpl.id;
               const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
@@ -250,22 +288,27 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
                 <li key={tpl.id}>
                   <button
                     type="button"
+                    aria-pressed={selected}
                     onClick={() =>
                       applyPatch({ shareImageTemplateId: tpl.id })
                     }
-                    className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 text-left transition last:border-b ${
-                      selected ? "text-river" : "text-ink"
+                    className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 text-left bp-transition last:border-b ${
+                      selected
+                        ? "border-l-2 border-l-river pl-3 text-river"
+                        : "border-l-2 border-l-transparent pl-3 text-ink hover:border-l-river/35 hover:text-river"
                     }`}
                   >
                     <span
-                      className={`font-display text-xl font-bold tabular-nums ${
-                        selected ? "text-river" : "text-mist"
+                      className={`font-display text-xl font-bold tabular-nums bp-transition ${
+                        selected
+                          ? "text-river"
+                          : "text-mist group-hover:text-river/50"
                       }`}
                     >
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block font-display text-lg font-semibold tracking-tight transition group-hover:text-river md:text-xl">
+                      <span className="block font-display text-lg font-semibold tracking-tight bp-transition md:text-xl">
                         {name}
                       </span>
                       <span className="mt-1 block text-sm text-ink-soft">
@@ -273,7 +316,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
                       </span>
                     </span>
                     {selected ? (
-                      <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-river">
+                      <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
                         {t(locale, "settings.selected")}
                       </span>
                     ) : null}
@@ -288,7 +331,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       <p className="mt-10 text-sm text-ink-soft">
         <Link
           href="/trips"
-          className="font-semibold text-river transition hover:text-river-deep"
+          className="font-semibold text-river bp-transition hover:text-river-deep"
         >
           ← {t(locale, "nav.trips")}
         </Link>
