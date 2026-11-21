@@ -7,8 +7,8 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import type { PlaceSummary } from "@beaver/core";
-import type { Locale } from "@beaver/i18n";
+import type { PlaceSummary, Trip } from "@beaver/core";
+import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
@@ -19,11 +19,16 @@ export type MapLayerFlags = {
   legend: boolean;
 };
 
+const ENGINE_OPTS: Trip["mapEngine"][] = ["auto", "google", "amap", "baidu"];
+
 type Props = {
   locale: Locale;
   engineLabel: string;
   modeLabel: string;
   tileLabel: string;
+  /** Trip map-engine preference (auto / vendor lock). */
+  preference: Trip["mapEngine"];
+  onPreferenceChange: (next: Trip["mapEngine"]) => void;
   /** Soft-fail when Directions/Places live keys or vendor JS map API are absent. */
   softFail: boolean;
   softFailMessage?: string | null;
@@ -44,7 +49,8 @@ type Props = {
 
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
- * Hierarchy: engine chip (identity) → search (primary tool) → layers/locate rail.
+ * Hierarchy: basemap/engine control → search (primary) → layers/locate rail.
+ * Basemap popover: azure mist-track engine chips + SoftFailNotice + #46 motion.
  * Search results: tip-009 popover + SheetPresence in/out, azure keyboard select.
  */
 export function MapChrome({
@@ -52,6 +58,8 @@ export function MapChrome({
   engineLabel,
   modeLabel,
   tileLabel,
+  preference,
+  onPreferenceChange,
   softFail,
   softFailMessage,
   searchDemo = false,
@@ -70,9 +78,12 @@ export function MapChrome({
   const searchId = useId();
   const listboxId = useId();
   const layersId = useId();
+  const engineId = useId();
   const [layersOpen, setLayersOpen] = useState(false);
+  const [engineOpen, setEngineOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const layersRef = useRef<HTMLDivElement | null>(null);
+  const engineRef = useRef<HTMLDivElement | null>(null);
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -86,15 +97,19 @@ export function MapChrome({
   }, [results, q]);
 
   useEffect(() => {
-    if (!layersOpen) return;
+    if (!layersOpen && !engineOpen) return;
     function onDoc(e: MouseEvent) {
-      if (!layersRef.current?.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (layersOpen && !layersRef.current?.contains(target)) {
         setLayersOpen(false);
+      }
+      if (engineOpen && !engineRef.current?.contains(target)) {
+        setEngineOpen(false);
       }
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [layersOpen]);
+  }, [layersOpen, engineOpen]);
 
   useEffect(() => {
     if (!hasResults) return;
@@ -167,12 +182,30 @@ export function MapChrome({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[2]">
-      {/* Top row: engine identity + search */}
+      {/* Top row: basemap/engine control + search */}
       <div className="absolute left-3 right-3 top-3 flex items-start gap-2 sm:left-4 sm:right-4 sm:top-4 sm:gap-3">
-        <div className="pointer-events-auto flex min-w-0 shrink-0 flex-col gap-1">
-          <span className="inline-flex w-fit items-center rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink shadow-bp-soft backdrop-blur">
-            {engineLabel}
-          </span>
+        <div
+          ref={engineRef}
+          className="pointer-events-auto relative flex min-w-0 shrink-0 flex-col gap-1"
+        >
+          <button
+            type="button"
+            aria-expanded={engineOpen}
+            aria-controls={engineId}
+            aria-label={t(locale, "planner.map.engineControl")}
+            onClick={() => {
+              setEngineOpen((o) => !o);
+              setLayersOpen(false);
+            }}
+            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+              engineOpen
+                ? "border-river/45 text-river ring-2 ring-river/25"
+                : "border-[color:var(--bp-line)] text-ink hover:border-river/35 hover:text-river"
+            }`}
+          >
+            <span className="truncate">{engineLabel}</span>
+            <EngineCaret open={engineOpen} />
+          </button>
           <span className="px-0.5 text-[11px] font-medium text-ink-soft">
             {modeLabel}
             <span className="mx-1 text-ink-soft/40" aria-hidden>
@@ -180,6 +213,72 @@ export function MapChrome({
             </span>
             {tileLabel}
           </span>
+
+          <SheetPresence
+            open={engineOpen}
+            id={engineId}
+            role="group"
+            variant="popover"
+            aria-label={t(locale, "planner.map.engineControl")}
+            className="absolute left-0 top-[calc(100%+6px)] z-20 w-[min(100vw-1.5rem,17.5rem)] overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+          >
+            <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.map.basemapEyebrow")}
+              </p>
+              <p className="mt-1 font-display text-sm font-semibold tracking-tight text-ink">
+                {t(locale, "planner.map.basemapTitle")}
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
+                {t(locale, "planner.map.basemapSupport")}
+              </p>
+            </header>
+
+            <div
+              className="flex flex-col gap-2 px-3 py-3"
+              role="group"
+              aria-label={t(locale, "planner.map.basemapTitle")}
+            >
+              <div className="inline-flex w-full gap-0.5 rounded-bp-sm bg-mist/50 p-1">
+                {ENGINE_OPTS.map((opt) => {
+                  const active = preference === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => onPreferenceChange(opt)}
+                      className={`min-w-0 flex-1 rounded-bp-xs px-1.5 py-1.5 text-[11px] font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        active
+                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                          : "text-ink-soft hover:text-river"
+                      }`}
+                    >
+                      {t(locale, `planner.pref.${opt}` as MessageKey)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ink-soft">
+                <span className="font-medium text-ink">{engineLabel}</span>
+                <span className="text-ink-soft/40" aria-hidden>
+                  ·
+                </span>
+                <span>
+                  {t(locale, "planner.map.tiles")} {tileLabel}
+                </span>
+                {preference !== "auto" ? (
+                  <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                    {t(locale, "planner.map.selected")}
+                  </span>
+                ) : null}
+              </p>
+            </div>
+
+            <SoftFailNotice open={softFail} compact>
+              {t(locale, "planner.map.softFail")}
+            </SoftFailNotice>
+          </SheetPresence>
         </div>
 
         <div
@@ -342,8 +441,11 @@ export function MapChrome({
               aria-expanded={layersOpen}
               aria-controls={layersId}
               aria-label={t(locale, "planner.map.layers")}
-              onClick={() => setLayersOpen((o) => !o)}
-              className={`bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink ${
+              onClick={() => {
+                setLayersOpen((o) => !o);
+                setEngineOpen(false);
+              }}
+              className={`bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                 layersOpen ? "bg-mist/80 text-river" : ""
               }`}
             >
@@ -357,7 +459,7 @@ export function MapChrome({
               type="button"
               aria-label={t(locale, "planner.map.locate")}
               onClick={handleLocate}
-              className="bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink"
+              className="bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
             >
               <LocateGlyph />
             </button>
@@ -437,6 +539,29 @@ export function MapChrome({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function EngineCaret({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      aria-hidden
+      className={`shrink-0 opacity-70 transition duration-bp-fast ease-bp-out ${
+        open ? "rotate-180" : ""
+      }`}
+    >
+      <path
+        d="M2.25 3.75 5 6.5l2.75-2.75"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
