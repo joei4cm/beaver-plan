@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
@@ -77,6 +77,7 @@ export default function JournalScreen() {
   const [fromCache, setFromCache] = useState(false);
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [softNotice, setSoftNotice] = useState(false);
+  const composeRef = useRef<TextInput | null>(null);
 
   const applySampleSeed = useCallback(
     (opts?: { soft?: boolean }) => {
@@ -424,6 +425,14 @@ export default function JournalScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>{t(locale, "journal.empty")}</Text>
               <Text style={styles.hint}>{t(locale, "journal.emptyHint")}</Text>
+              <Pressable
+                style={styles.emptyCta}
+                onPress={() => composeRef.current?.focus()}
+              >
+                <Text style={styles.emptyCtaText}>
+                  {t(locale, "journal.emptyCta")}
+                </Text>
+              </Pressable>
               <View style={styles.slotRow}>
                 <View style={styles.slot} />
                 <View style={styles.slot} />
@@ -436,6 +445,7 @@ export default function JournalScreen() {
             <Text style={styles.composeTitle}>{t(locale, "journal.compose")}</Text>
             <Text style={styles.composeHint}>{t(locale, "journal.composeHint")}</Text>
             <TextInput
+              ref={composeRef}
               value={body}
               onChangeText={setBody}
               placeholder={t(locale, "journal.placeholder")}
@@ -611,23 +621,35 @@ const styles = StyleSheet.create({
     height: 96,
     marginRight: 8,
     borderRadius: 8,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "rgba(47, 107, 255, 0.3)",
-    backgroundColor: "rgba(47, 107, 255, 0.06)",
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
   },
-  slotRow: { flexDirection: "row", marginTop: 14 },
+  slotRow: { flexDirection: "row", marginTop: 16 },
   empty: {
     marginTop: 8,
     paddingVertical: 18,
     paddingHorizontal: 4,
+    maxWidth: 360,
   },
   emptyTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
+    letterSpacing: -0.3,
     color: colors.ink,
   },
-  hint: { color: colors.inkSoft, fontSize: 14, marginTop: 8, lineHeight: 20 },
+  hint: { color: colors.inkSoft, fontSize: 14, marginTop: 8, lineHeight: 21 },
+  emptyCta: {
+    marginTop: 16,
+    alignSelf: "flex-start",
+    backgroundColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 12,
+  },
+  emptyCtaText: {
+    color: colors.foam,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   compose: {
     marginTop: 24,
     padding: 16,

@@ -124,6 +124,7 @@ export function MapChrome({
             <SearchGlyph className="shrink-0 text-ink-soft" />
             <input
               id={searchId}
+              data-bp-place-search
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onCompositionEnd={(e) => onSearchCommit(e.currentTarget.value)}

@@ -441,8 +441,8 @@ export function BookingPanel({
             )}
 
             {!searching && searched && suggestions.length === 0 && (
-              <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
-                <p className="text-sm text-ink">
+              <div className="animate-fade max-w-sm px-0.5 py-4">
+                <p className="font-display text-base font-semibold tracking-tight text-ink">
                   {t(locale, "planner.booking.emptyResults")}
                 </p>
               </div>

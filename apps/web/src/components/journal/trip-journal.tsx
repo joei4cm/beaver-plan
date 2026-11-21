@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
 import {
@@ -105,6 +112,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [softNotice, setSoftNotice] = useState(false);
   const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
+  const composeRef = useRef<HTMLTextAreaElement | null>(null);
 
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
@@ -586,13 +594,26 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </div>
 
             {visible.length === 0 && (
-              <div className="animate-fade mt-6 rounded-bp border border-dashed border-river/30 bg-mist/25 px-6 py-14">
-                <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
+              <div className="animate-fade mt-6 max-w-lg py-8">
+                <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
                   {t(locale, "journal.empty")}
                 </p>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
+                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
                   {t(locale, "journal.emptyHint")}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    composeRef.current?.focus();
+                    composeRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "nearest",
+                    });
+                  }}
+                  className="mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+                >
+                  {t(locale, "journal.emptyCta")}
+                </button>
                 <div className="mt-8 grid max-w-sm grid-cols-3 gap-3">
                   {[0, 1, 2].map((i) => (
                     <div
@@ -653,7 +674,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                         {[0, 1].map((i) => (
                           <div
                             key={i}
-                            className="aspect-[3/4] rounded-bp-sm border border-dashed border-river/25 bg-mist/40"
+                            className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/10 via-mist/60 to-foam"
                             aria-label={t(locale, "journal.mediaPlaceholder")}
                           />
                         ))}
@@ -694,6 +715,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </label>
 
             <textarea
+              ref={composeRef}
+              id="journal-compose-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}
@@ -701,7 +724,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               className="mt-4 w-full resize-none rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
             />
 
-            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/[0.04]">
+            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-river/25 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/55 hover:bg-river/[0.04]">
               <span className="text-sm font-semibold text-river">
                 {t(locale, "journal.addPhotos")}
               </span>
@@ -734,7 +757,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 {Array.from({ length: emptySlots }).map((_, i) => (
                   <div
                     key={`slot-${i}`}
-                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
+                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70"
                     aria-hidden
                   >
                     +

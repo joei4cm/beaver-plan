@@ -896,12 +896,30 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             dragHandleLabel={t(locale, "planner.dragReorder")}
             empty={
               <li className="animate-fade list-none px-5 py-12">
-                <p className="font-display text-2xl font-semibold text-ink">
-                  {t(locale, "planner.emptyDay")}
-                </p>
-                <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
-                  {t(locale, "planner.emptyDayHint")}
-                </p>
+                <div className="max-w-sm">
+                  <p className="font-display text-2xl font-semibold tracking-tight text-ink">
+                    {t(locale, "planner.emptyDay")}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                    {t(locale, "planner.emptyDayHint")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.querySelector<HTMLInputElement>(
+                        "[data-bp-place-search]",
+                      );
+                      el?.focus();
+                      el?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                      });
+                    }}
+                    className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+                  >
+                    {t(locale, "planner.emptyDayCta")}
+                  </button>
+                </div>
               </li>
             }
             renderItem={(stop, ctx) => {

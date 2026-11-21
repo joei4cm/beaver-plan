@@ -878,9 +878,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             style={{ animationDelay: "120ms" }}
           >
             {turns.length === 0 ? (
-              <p className="border-y border-[color:var(--bp-line)] py-12 text-ink-soft">
-                {t(locale, "translate.empty")}
-              </p>
+              <div className="animate-fade border-y border-[color:var(--bp-line)] py-12">
+                <p className="font-display text-2xl font-semibold tracking-tight text-ink">
+                  {t(locale, "translate.empty")}
+                </p>
+              </div>
             ) : (
               turns.map((row, idx) => (
                 <article
