@@ -374,6 +374,8 @@
   "planner.booking.demoBadge": "Demo search",
   "planner.booking.configuredBadge": "Keys ready",
   "planner.booking.demoNotice": "Demo catalog — API offline or keys absent. Open external links; nothing is charged here.",
+  "planner.booking.loadingHint": "Pulling demo catalog…",
+  "planner.booking.priceLabel": "From",
   "planner.booking.hint": "No checkout in Beaver Plan — links open the provider site. Payment and inventory sync stay out of scope.",
   "mobile.booking": "Bookings",
   "mobile.bookingEmpty": "No booking links yet",
