@@ -186,6 +186,12 @@ export function TripMembersBar({
   const presenceSoftCopy = softOffline
     ? t(locale, "collab.presenceSoftFail")
     : t(locale, "collab.presenceDemoNotice");
+  /**
+   * Invite SoftFailNotice chrome (BEA-283 after #130/#174):
+   * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
+   * tip-011 rise. Soft copy never timber / Failed to fetch.
+   */
+  const inviteSoftOpen = softOpen && open;
   const inviteSoftCopy = softOffline
     ? t(locale, "collab.inviteSoftFail")
     : t(locale, "collab.inviteDemoNotice");
@@ -339,18 +345,22 @@ export function TripMembersBar({
       </div>
 
       {hardError ? (
-        <p className="mt-2 text-sm text-timber" role="alert">
+        <p className="mt-2 animate-rise text-sm text-ink-soft" role="alert">
           {hardError}
         </p>
       ) : null}
 
+      {/*
+        Invite SoftFail chrome (BEA-283 after #130/#174):
+        azure rail · Soft invite badge · compact SoftFailNotice · tip-011 —
+        never timber / Failed to fetch.
+      */}
       <SheetPresence
         open={open}
         className="mt-4 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "40ms" }}
-        aria-label={t(locale, "collab.invite")}
+        aria-label={t(locale, "collab.inviteEyebrow")}
       >
-        {/* Invite depth (BEA-232) — azure rail · SoftFail · mist-track code · tip-011 */}
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -364,13 +374,13 @@ export function TripMembersBar({
             <div className="flex flex-wrap items-center gap-1.5">
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  softOpen
+                  inviteSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {softOpen
-                  ? t(locale, "collab.demoBadge")
+                {inviteSoftOpen
+                  ? t(locale, "collab.inviteSoftBadge")
                   : t(locale, "collab.inviteLiveBadge")}
               </span>
               {lastInvite ? (
@@ -382,7 +392,12 @@ export function TripMembersBar({
           </div>
         </header>
 
-        <SoftFailNotice open={softOpen} compact>
+        {/* Compact SoftFail under azure invite rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={inviteSoftOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
           {inviteSoftCopy}
         </SoftFailNotice>
 

@@ -35,9 +35,10 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Lumen invite accept depth (BEA-232): azure sheet rail · SoftFailNotice ·
- * mist-track trip preview · tip-011 rise stagger · never timber for
- * transport / demo soft-fail.
+ * Invite SoftFailNotice chrome (BEA-283 after #130/#174):
+ * azure sheet rail · Soft invite badge · compact SoftFail under rail ·
+ * mist-track trip preview · tip-011 rise stagger — never timber /
+ * Failed to fetch for transport / demo soft-fail.
  */
 export function InviteAccept({
   code,
@@ -101,16 +102,17 @@ export function InviteAccept({
   }
 
   const sheetOpen = Boolean(preview) || Boolean(softNotice) || Boolean(error);
-  const hardError =
-    error && !softNotice && !isPlannerNoiseError(new Error(error))
-      ? error
-      : null;
+  /** SoftFail owned by invite sheet — never timber / Failed to fetch. */
   const softCopy =
     softNotice ??
     (error && isPlannerNoiseError(new Error(error))
       ? t(locale, "invite.softOffline")
       : null);
   const softOpen = Boolean(softCopy);
+  const hardError =
+    error && !softOpen && !isPlannerNoiseError(new Error(error))
+      ? error
+      : null;
 
   return (
     <section className="relative mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-3xl flex-col justify-center px-6 py-16 md:px-10">
@@ -145,13 +147,17 @@ export function InviteAccept({
         </p>
       ) : null}
 
+      {/*
+        SoftFail sheet (BEA-283 after #130/#174):
+        azure rail · Soft invite badge · compact SoftFailNotice · tip-011 —
+        never timber.
+      */}
       <SheetPresence
         open={sheetOpen}
         className="mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "100ms" }}
-        aria-label={t(locale, "invite.title")}
+        aria-label={t(locale, "invite.sheetEyebrow")}
       >
-        {/* Azure invite depth — eyebrow · support · Demo/Live · SoftFailNotice */}
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -183,13 +189,18 @@ export function InviteAccept({
           </div>
         </header>
 
-        <SoftFailNotice open={softOpen} compact>
+        {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={softOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
           {softCopy ?? ""}
         </SoftFailNotice>
 
         <div className="space-y-5 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-5 py-5">
           {hardError ? (
-            <p className="text-sm text-timber" role="alert">
+            <p className="animate-rise text-sm text-ink-soft" role="alert">
               {hardError}
             </p>
           ) : null}
