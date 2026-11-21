@@ -1,9 +1,166 @@
-import type { PlaceSummary } from "../ports.js";
+import type { PlaceDetails, PlaceSummary } from "../ports.js";
 
 type DemoPlace = PlaceSummary & {
   /** Extra tokens for client/BFF search (English names, aliases). */
   keywords?: string[];
 };
+
+/** Curated place intel for planner stop cards (demo / soft-fail). */
+export type DemoPlaceIntel = {
+  rating: number;
+  hoursZh: string;
+  hoursEn: string;
+  summaryZh: string;
+  summaryEn: string;
+};
+
+export const DEMO_PLACE_INTEL: Record<string, DemoPlaceIntel> = {
+  "demo-fushimi": {
+    rating: 4.7,
+    hoursZh: "06:00–17:00",
+    hoursEn: "06:00–17:00",
+    summaryZh: "千本鸟居与稻荷山步道，京都标志性神社。",
+    summaryEn: "Thousand torii gates and Inari mountain paths — Kyoto’s iconic shrine.",
+  },
+  "demo-kiyomizu": {
+    rating: 4.6,
+    hoursZh: "06:00–18:00",
+    hoursEn: "06:00–18:00",
+    summaryZh: "清水舞台远眺东山，春季樱花与秋枫最盛。",
+    summaryEn: "Kiyomizu stage overlooks Higashiyama — peak cherry and maple seasons.",
+  },
+  "demo-arashiyama": {
+    rating: 4.5,
+    hoursZh: "全天开放",
+    hoursEn: "Open all day",
+    summaryZh: "嵯峨竹林小径与渡月桥一带，适合慢走拍照。",
+    summaryEn: "Saga bamboo grove and Togetsukyo — best for a slow photo walk.",
+  },
+  "demo-gion": {
+    rating: 4.4,
+    hoursZh: "街区全天 · 茶屋傍晚更盛",
+    hoursEn: "District all day · teahouses best at dusk",
+    summaryZh: "花见小路与茶屋街，夜间灯火最有京都味。",
+    summaryEn: "Hanami-koji and teahouse lanes — Kyoto atmosphere peaks after dusk.",
+  },
+  "demo-nishiki": {
+    rating: 4.3,
+    hoursZh: "10:00–18:00（店铺各异）",
+    hoursEn: "10:00–18:00 (varies by stall)",
+    summaryZh: "京都厨房：腌菜、海鲜与京菓子一条街。",
+    summaryEn: "Kyoto’s kitchen — pickles, seafood, and sweets in one covered market.",
+  },
+  "demo-kinkaku": {
+    rating: 4.6,
+    hoursZh: "09:00–17:00",
+    hoursEn: "09:00–17:00",
+    summaryZh: "镜湖池映金阁，北山经典打卡。",
+    summaryEn: "Golden Pavilion mirrored on Kyoko-chi — classic Kitayama stop.",
+  },
+  "demo-nijo": {
+    rating: 4.5,
+    hoursZh: "08:45–17:00",
+    hoursEn: "08:45–17:00",
+    summaryZh: "德川行宫与「鸣莺廊」，城堡与庭园并赏。",
+    summaryEn: "Tokugawa palace and nightingale floors — castle and gardens together.",
+  },
+  "demo-philosophers": {
+    rating: 4.4,
+    hoursZh: "步道全天",
+    hoursEn: "Path open all day",
+    summaryZh: "疏水旁樱花步道，适合从银阁寺走向南禅寺。",
+    summaryEn: "Canal-side cherry path — stroll from Ginkaku-ji toward Nanzen-ji.",
+  },
+  "demo-tofukuji": {
+    rating: 4.5,
+    hoursZh: "09:00–16:00",
+    hoursEn: "09:00–16:00",
+    summaryZh: "通天桥红叶与禅寺庭园，秋季人气最高。",
+    summaryEn: "Tsutenkyo bridge maples and zen gardens — autumn crowds peak here.",
+  },
+  "demo-thebund": {
+    rating: 4.6,
+    hoursZh: "滨江步道全天",
+    hoursEn: "Waterfront promenade all day",
+    summaryZh: "浦江天际线与历史建筑立面，夜景最出片。",
+    summaryEn: "Huangpu skyline and historic façades — best after dark.",
+  },
+  "demo-yuyuan": {
+    rating: 4.3,
+    hoursZh: "09:00–16:30",
+    hoursEn: "09:00–16:30",
+    summaryZh: "豫园园林与城隍庙市集，上海老城厢一站。",
+    summaryEn: "Classical garden and City God bazaar — old Shanghai in one stop.",
+  },
+  "demo-westlake": {
+    rating: 4.7,
+    hoursZh: "环湖全天",
+    hoursEn: "Lakeside all day",
+    summaryZh: "断桥残雪与苏堤春晓，杭城必走湖岸。",
+    summaryEn: "Broken Bridge and Su Causeway — Hangzhou’s essential lakeshore.",
+  },
+  "demo-forbidden": {
+    rating: 4.8,
+    hoursZh: "08:30–17:00",
+    hoursEn: "08:30–17:00",
+    summaryZh: "紫禁城中轴线与宫殿院落，建议预留半日。",
+    summaryEn: "Forbidden City axis and courtyards — plan a half-day visit.",
+  },
+  "demo-tsukiji": {
+    rating: 4.4,
+    hoursZh: "05:00–14:00（店铺各异）",
+    hoursEn: "05:00–14:00 (varies by stall)",
+    summaryZh: "场外市场海鲜早餐与刀具店，清晨人气最高。",
+    summaryEn: "Outer market seafood breakfast and knife shops — busiest at dawn.",
+  },
+};
+
+const DEFAULT_INTEL: DemoPlaceIntel = {
+  rating: 4.5,
+  hoursZh: "09:00–17:00",
+  hoursEn: "09:00–17:00",
+  summaryZh: "演示地点 — 配置地图密钥后可拉取实时 Places 详情。",
+  summaryEn: "Demo place — live Places details appear once map keys are configured.",
+};
+
+/**
+ * Soft-fail place details for planner intel cards when Neon / Places keys
+ * are absent, or when the BFF is unreachable from the web shell.
+ */
+export function getDemoPlaceDetails(
+  id: string,
+  language?: string,
+  tags?: string[],
+): PlaceDetails {
+  const found = DEMO_PLACES.find((p) => p.enginePlaceId === id);
+  const intel = DEMO_PLACE_INTEL[id] ?? DEFAULT_INTEL;
+  const en = (language ?? "zh-CN").toLowerCase().startsWith("en");
+  const hours = [en ? intel.hoursEn : intel.hoursZh];
+  const base: PlaceDetails = found
+    ? {
+        enginePlaceId: found.enginePlaceId,
+        name: found.name,
+        address: found.address,
+        lat: found.lat,
+        lng: found.lng,
+        rating: intel.rating,
+        openingHours: hours,
+        summary: en ? intel.summaryEn : intel.summaryZh,
+        raw: { demo: true },
+      }
+    : {
+        enginePlaceId: id,
+        name: en ? "Demo place" : "演示地点",
+        lat: 35.0116,
+        lng: 135.7681,
+        rating: intel.rating,
+        openingHours: hours,
+        summary: en ? intel.summaryEn : intel.summaryZh,
+        raw: { demo: true },
+      };
+  if (tags && tags.length > 0) base.tags = [...tags];
+  return base;
+}
 
 /** Curated demo POIs so the planner works without map API keys. */
 export const DEMO_PLACES: DemoPlace[] = [

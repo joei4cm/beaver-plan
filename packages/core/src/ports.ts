@@ -19,6 +19,10 @@ export type PlaceSummary = {
 export type PlaceDetails = PlaceSummary & {
   rating?: number;
   openingHours?: string[];
+  /** Short place blurb for planner intel (demo / vendor when available). */
+  summary?: string;
+  /** Interest-style tags (temples, food, …) when curated or inferred. */
+  tags?: string[];
   raw?: unknown;
 };
 

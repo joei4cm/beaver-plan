@@ -1,8 +1,10 @@
 import { Hono } from "hono";
 import {
   createEngineBundle,
+  DEMO_PLACE_TAGS,
   DemoMapEngine,
   DemoRoutingEngine,
+  getDemoPlaceDetails,
   inferRegionHint,
   resolveMapEngine,
   type MapEnginePreference,
@@ -122,15 +124,30 @@ mapsRoutes.get("/v1/places/:id", async (c) => {
     c.req.query("engine"),
     c.env.DEFAULT_MAP_ENGINE,
   );
+  const language = c.req.query("language") ?? undefined;
   const { map, mode, engineId } = bundleFor(
     c,
     preference,
     c.req.query("timezone"),
   );
+  const id = c.req.param("id");
   try {
-    const place = await map.getPlaceDetails(c.req.param("id"));
+    const place =
+      mode === "demo"
+        ? getDemoPlaceDetails(id, language, DEMO_PLACE_TAGS[id])
+        : await map.getPlaceDetails(id);
     return c.json({ place, engineId, mode });
   } catch (err) {
+    // Soft-fail live vendor outages → curated demo intel (never hard-fail UI).
+    if (mode === "live") {
+      return c.json({
+        place: getDemoPlaceDetails(id, language, DEMO_PLACE_TAGS[id]),
+        engineId,
+        mode: "demo" as const,
+        fallback: "demo_after_live_error",
+        liveError: err instanceof Error ? err.message : "details_failed",
+      });
+    }
     const message = err instanceof Error ? err.message : "details_failed";
     return c.json({ error: message, engineId, mode }, 502);
   }
