@@ -399,13 +399,14 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * SoftFailNotice depth (BEA-315 after #210):
+   * SoftFailNotice depth (BEA-331 after #192 / BEA-315 #243):
    * empty canvas owns SoftFail under azure canvas rail ·
    * Studio sheet owns softDemo under azure Studio rail ·
    * Soft studio badge · softSupport · compact SoftFail mist band (`border-b`) ·
    * mist tip-011 body while soft · Export owns exportSoftFail under Export rail ·
-   * yield child SoftFail ownership (no double depth). Soft copy never timber /
-   * Failed to fetch.
+   * Soft export badge · exportSoftSupport · Export mist tip-011 CTA wash ·
+   * Studio SoftFail yields while Export owns (no double depth). Soft copy never
+   * timber / Failed to fetch.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
@@ -427,6 +428,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const sheetSupportCopy = sheetSoftOpen
     ? t(locale, "share.softSupport")
     : t(locale, "share.sheetSupport");
+  const exportSupportCopy = exportOwnsSoft
+    ? t(locale, "share.exportSoftSupport")
+    : t(locale, "share.exportSupport");
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
@@ -946,9 +950,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             ) : null}
 
             {/*
-              Export SoftFail chrome (BEA-256 after #149/#169/#183):
-              azure Export rail · Demo/Live badge · compact SoftFailNotice ·
-              SheetPresence CTAs · tip-011 rise — never timber.
+              Export SoftFail depth (BEA-331 after #192):
+              azure Export rail · Soft export badge · exportSoftSupport ·
+              compact SoftFail mist band (`border-b`) · mist tip-011 CTA wash ·
+              Studio SoftFail (#243) yields while Export owns — never timber /
+              Failed to fetch.
             */}
             <section
               className="animate-rise border-t border-[color:var(--bp-line)] pt-5"
@@ -968,7 +974,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       {t(locale, "share.export")}
                     </h2>
                     <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-                      {t(locale, "share.exportSupport")}
+                      {exportSupportCopy}
                     </p>
                   </div>
                   <span
@@ -979,7 +985,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     }`}
                   >
                     {exportOwnsSoft
-                      ? t(locale, "share.demoBadge")
+                      ? t(locale, "share.exportSoftBadge")
                       : t(locale, "share.liveBadge")}
                   </span>
                 </div>
@@ -995,7 +1001,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
                 <SheetPresence
                   open
-                  className="flex flex-col gap-2.5 px-3 py-3"
+                  className={`flex flex-col gap-2.5 px-3 py-3 ${
+                    exportOwnsSoft
+                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                      : ""
+                  }`}
                   style={{ animationDelay: "40ms" }}
                   role="group"
                   aria-label={t(locale, "share.export")}
