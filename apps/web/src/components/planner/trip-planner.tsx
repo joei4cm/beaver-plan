@@ -835,7 +835,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           <SoftFailNotice
             open={
               Boolean(softNotice) ||
-              engineInfo?.mode === "demo" ||
+              (engineInfo?.mode ?? "demo") === "demo" ||
               Boolean(error && isPlannerNoiseError(new Error(error)))
             }
             compact
