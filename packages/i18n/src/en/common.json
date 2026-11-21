@@ -274,6 +274,7 @@
   "planner.search.addHint": "Add to day",
   "planner.search.demoBadge": "Demo places",
   "planner.search.liveBadge": "Live places",
+  "planner.search.softFail": "Demo places — Places API offline or keys absent. Curated Kyoto matches stay local until live search is available. Never a Failed to fetch crash.",
   "planner.search.softFailEmpty": "Places API offline or keys absent — no curated demo match for that query. Never a Failed to fetch crash.",
   "planner.emptyDay": "This day is open.",
   "planner.emptyDayHint": "Search the map and pin a place — list and route light up together.",
