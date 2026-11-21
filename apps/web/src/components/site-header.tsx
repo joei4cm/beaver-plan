@@ -27,6 +27,12 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         >
           {t(locale, "nav.translate")}
         </Link>
+        <Link
+          href="/settings"
+          className="transition duration-bp-fast ease-bp hover:text-river"
+        >
+          {t(locale, "nav.settings")}
+        </Link>
         <AuthControls locale={locale} />
       </nav>
     </header>

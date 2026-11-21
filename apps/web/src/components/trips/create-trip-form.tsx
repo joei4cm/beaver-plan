@@ -19,6 +19,7 @@ import {
   templateCardsFromSeed,
   type TemplateCard,
 } from "@/lib/local-trips";
+import { readUserPrefs } from "@/lib/user-prefs";
 
 type Props = {
   locale: Locale;
@@ -115,6 +116,16 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
         endDate: endDate || undefined,
         locale,
       });
+      const preferredEngine = readUserPrefs().mapEngine;
+      if (preferredEngine !== "auto") {
+        try {
+          await apiSend(`/v1/trips/${res.trip.id}`, "PATCH", {
+            mapEngine: preferredEngine,
+          });
+        } catch {
+          // Soft-fail: trip exists; planner can still change engine.
+        }
+      }
       router.push(`/trips/${res.trip.id}`);
     } catch (err) {
       if (isPlannerNoiseError(err)) {
@@ -124,6 +135,7 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
           startDate: startDate || undefined,
           endDate: endDate || undefined,
           locale,
+          mapEngine: readUserPrefs().mapEngine,
           templateId: templateId || undefined,
         });
         setSoftNotice(t(locale, "trips.create.demoLocal"));

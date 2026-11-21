@@ -38,6 +38,7 @@ export type CreateLocalTripInput = {
   endDate?: string;
   timezone?: string;
   locale?: Trip["locale"];
+  mapEngine?: Trip["mapEngine"];
   templateId?: string;
 };
 
@@ -221,7 +222,7 @@ export function createBlankLocalTrip(
     endDate: end,
     timezone: input.timezone?.trim() || "Asia/Shanghai",
     locale,
-    mapEngine: "auto",
+    mapEngine: input.mapEngine ?? "auto",
     version: 1,
     createdAt: stamp,
     updatedAt: stamp,

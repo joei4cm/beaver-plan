@@ -680,9 +680,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 key={opt}
                 type="button"
                 onClick={() => void setEnginePreference(opt)}
-                className={`px-2.5 py-1.5 text-xs font-medium transition ${
+                className={`px-2.5 py-1.5 text-xs font-semibold transition duration-bp-fast ease-bp ${
                   preference === opt
-                    ? "bg-ink text-foam"
+                    ? "bg-river text-foam"
                     : "bg-foam/40 text-ink-soft hover:text-river"
                 }`}
               >

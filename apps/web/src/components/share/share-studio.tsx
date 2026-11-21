@@ -26,6 +26,7 @@ import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
 import { resolveMediaUrl } from "@/lib/media-url";
+import { readUserPrefs } from "@/lib/user-prefs";
 
 type TripPayload = {
   trip: Trip;
@@ -64,7 +65,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [dayId, setDayId] = useState<string | null>(
     initialTrip?.days[0]?.id ?? null,
   );
-  const [templateId, setTemplateId] = useState<ShareTemplateId>("magazine-reel");
+  const [templateId, setTemplateId] = useState<ShareTemplateId>(
+    () => readUserPrefs().shareImageTemplateId,
+  );
   const [coverTitle, setCoverTitle] = useState("");
   const [coverSubtitle, setCoverSubtitle] = useState("");
   const [accentColor, setAccentColor] = useState<string>(DEFAULT_ACCENT);
