@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, Stack, useRouter } from "expo-router";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +23,7 @@ import {
   type CityTemplate,
   type Trip,
 } from "@beaver/core";
-import { colors, radius } from "@beaver/ui-tokens";
+import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import {
   createTripFromTemplate,
@@ -26,6 +35,9 @@ import {
 import { type } from "../src/theme";
 
 const locale = "zh-CN" as const;
+
+/** Tip 011 — shared rise easing from #46 motion tokens. */
+const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
 function templateCardsFromSeed(): MobileTemplateCard[] {
   return CITY_TEMPLATES.map((tpl: CityTemplate) => ({
@@ -58,6 +70,91 @@ function formatTripMeta(trip: Trip): string {
   return parts.join(" · ") || "—";
 }
 
+function IndexMark({ n }: { n: number }) {
+  return (
+    <Text style={styles.index} accessibilityElementsHidden>
+      {String(n).padStart(2, "0")}
+    </Text>
+  );
+}
+
+function TripRow({
+  trip,
+  index,
+  showCta,
+  last,
+}: {
+  trip: Trip;
+  index: number;
+  showCta?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <Link href={`/trips/${trip.id}`} asChild>
+      <Pressable
+        style={[styles.row, last && styles.rowLast]}
+        accessibilityRole="link"
+        accessibilityLabel={`${trip.title}. ${formatTripMeta(trip)}`}
+      >
+        <IndexMark n={index + 1} />
+        <View style={styles.rowBody}>
+          <Text style={styles.rowTitle}>{trip.title}</Text>
+          <Text style={styles.rowMeta}>{formatTripMeta(trip)}</Text>
+          {showCta ? (
+            <Text style={styles.rowCta}>
+              {t(locale, "mobile.viewMap")} →
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
+function RiseIn({
+  children,
+  delayMs = 0,
+  style,
+}: {
+  children: ReactNode;
+  delayMs?: number;
+  style?: object;
+}) {
+  const rise = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    rise.setValue(0);
+    Animated.timing(rise, {
+      toValue: 1,
+      duration: motion.durationMdMs,
+      delay: delayMs,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [rise, delayMs]);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: rise,
+          transform: [
+            {
+              translateY: rise.interpolate({
+                inputRange: [0, 1],
+                outputRange: [14, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function TripsScreen() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -65,6 +162,7 @@ export default function TripsScreen() {
     templateCardsFromSeed(),
   );
   const [softNotice, setSoftNotice] = useState<string | null>(null);
+  const [templatesSoft, setTemplatesSoft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [creatingId, setCreatingId] = useState<string | null>(null);
@@ -75,9 +173,16 @@ export default function TripsScreen() {
 
     try {
       const tplRes = await listTemplates();
-      if (tplRes.templates?.length) setTemplates(tplRes.templates);
+      if (tplRes.templates?.length) {
+        setTemplates(tplRes.templates);
+        setTemplatesSoft(false);
+      } else {
+        setTemplates(templateCardsFromSeed());
+        setTemplatesSoft(true);
+      }
     } catch {
       setTemplates(templateCardsFromSeed());
+      setTemplatesSoft(true);
     }
 
     try {
@@ -157,20 +262,22 @@ export default function TripsScreen() {
 
       <View style={styles.topo} pointerEvents="none" />
 
-      <View style={styles.hero}>
-        <Text style={styles.brand}>Beaver Plan · 海狸旅行</Text>
-        <Text style={styles.title}>{t(locale, "trips.title")}</Text>
-        <Text style={styles.body}>{t(locale, "trips.support")}</Text>
-        <View style={styles.ctaRow}>
-          <Link href="/trips/sample-kyoto" asChild>
-            <Pressable style={styles.primaryCta}>
-              <Text style={styles.primaryCtaText}>
-                {t(locale, "trips.openSample")}
-              </Text>
-            </Pressable>
-          </Link>
+      <RiseIn>
+        <View style={styles.hero}>
+          <Text style={styles.brand}>Beaver Plan · 海狸旅行</Text>
+          <Text style={styles.title}>{t(locale, "trips.title")}</Text>
+          <Text style={styles.body}>{t(locale, "trips.support")}</Text>
+          <View style={styles.ctaRow}>
+            <Link href="/trips/sample-kyoto" asChild>
+              <Pressable style={styles.outlineCta}>
+                <Text style={styles.outlineCtaText}>
+                  {t(locale, "trips.openSample")}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
-      </View>
+      </RiseIn>
 
       {error ? (
         <View style={styles.errorBanner}>
@@ -184,10 +291,12 @@ export default function TripsScreen() {
       ) : null}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t(locale, "trips.yours")}</Text>
-        <Text style={styles.sectionSupport}>
-          {t(locale, "trips.yoursSupport")}
-        </Text>
+        <RiseIn delayMs={40}>
+          <Text style={styles.sectionTitle}>{t(locale, "trips.yours")}</Text>
+          <Text style={styles.sectionSupport}>
+            {t(locale, "trips.yoursSupport")}
+          </Text>
+        </RiseIn>
 
         {!hydrated ? (
           <View style={styles.loadingRow}>
@@ -195,87 +304,93 @@ export default function TripsScreen() {
             <Text style={styles.loadingText}>{t(locale, "trips.loading")}</Text>
           </View>
         ) : showEmptyInvite ? (
-          <View style={styles.emptyInvite}>
-            <Text style={styles.emptyTitle}>{t(locale, "trips.empty")}</Text>
-            <Text style={styles.emptyBody}>{t(locale, "trips.emptyCta")}</Text>
-            <View style={styles.emptyActions}>
+          <RiseIn delayMs={80}>
+            <View style={styles.emptyInvite}>
+              <Text style={styles.emptyTitle}>{t(locale, "trips.empty")}</Text>
+              <Text style={styles.emptyBody}>{t(locale, "trips.emptyCta")}</Text>
               <Link href="/trips/sample-kyoto" asChild>
-                <Pressable style={styles.primaryCta}>
-                  <Text style={styles.primaryCtaText}>
-                    {t(locale, "trips.openSample")}
+                <Pressable style={styles.emptyLink}>
+                  <Text style={styles.emptyLinkText}>
+                    {t(locale, "trips.openSample")} →
                   </Text>
                 </Pressable>
               </Link>
             </View>
             {sampleTrips.map((trip, index) => (
-              <Link key={trip.id} href={`/trips/${trip.id}`} asChild>
-                <Pressable style={styles.row}>
-                  <Text style={styles.index}>
-                    {String(index + 1).padStart(2, "0")}
-                  </Text>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{trip.title}</Text>
-                    <Text style={styles.rowMeta}>{formatTripMeta(trip)}</Text>
-                  </View>
-                </Pressable>
-              </Link>
+              <RiseIn key={trip.id} delayMs={120 + index * 50}>
+                <TripRow
+                  trip={trip}
+                  index={index}
+                  showCta
+                  last={index === sampleTrips.length - 1}
+                />
+              </RiseIn>
             ))}
-          </View>
+          </RiseIn>
         ) : (
           trips.map((trip, index) => (
-            <Link key={trip.id} href={`/trips/${trip.id}`} asChild>
-              <Pressable style={styles.row}>
-                <Text style={styles.index}>
-                  {String(index + 1).padStart(2, "0")}
-                </Text>
-                <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>{trip.title}</Text>
-                  <Text style={styles.rowMeta}>{formatTripMeta(trip)}</Text>
-                  <Text style={styles.rowCta}>{t(locale, "mobile.viewMap")} →</Text>
-                </View>
-              </Pressable>
-            </Link>
+            <RiseIn key={trip.id} delayMs={80 + index * 50}>
+              <TripRow
+                trip={trip}
+                index={index}
+                showCta
+                last={index === trips.length - 1}
+              />
+            </RiseIn>
           ))
         )}
       </View>
 
       <View style={[styles.section, styles.sectionSpaced]}>
-        <Text style={styles.sectionTitle}>{t(locale, "trips.templates")}</Text>
-        <Text style={styles.sectionSupport}>
-          {t(locale, "trips.templatesSupport")}
-        </Text>
+        <RiseIn delayMs={120}>
+          <Text style={styles.templatesEyebrow}>
+            {t(locale, "trips.templatesEyebrow")}
+          </Text>
+          <Text style={styles.sectionTitle}>{t(locale, "trips.templates")}</Text>
+          <Text style={styles.sectionSupport}>
+            {t(locale, "trips.templatesSupport")}
+          </Text>
+        </RiseIn>
+
+        {templatesSoft && hydrated ? (
+          <View style={styles.softBanner}>
+            <Text style={styles.softText}>
+              {t(locale, "trips.templatesSoftOffline")}
+            </Text>
+          </View>
+        ) : null}
 
         {templates.map((tpl, index) => {
           const title = tpl.title[locale] ?? tpl.title["zh-CN"];
           const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
           const busy = creatingId === tpl.id;
+          const last = index === templates.length - 1;
           return (
-            <View key={tpl.id} style={styles.templateRow}>
-              <Text style={styles.index}>
-                {String(index + 1).padStart(2, "0")}
-              </Text>
-              <View style={styles.rowBody}>
-                <View style={styles.accentBar} />
-                <Text style={styles.templateTitle}>{title}</Text>
-                <Text style={styles.rowMeta}>{desc}</Text>
-                <Text style={styles.templateStats}>
-                  {tpl.destination} · {tpl.dayCount}{" "}
-                  {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
-                  {t(locale, "trips.stopUnit")}
-                </Text>
-                <Pressable
-                  style={[styles.useTpl, busy && styles.useTplBusy]}
-                  disabled={busy || Boolean(creatingId)}
-                  onPress={() => void useTemplate(tpl.id)}
-                >
-                  <Text style={styles.useTplText}>
-                    {busy
-                      ? t(locale, "trips.creating")
-                      : t(locale, "trips.useTemplate")}
+            <RiseIn key={tpl.id} delayMs={140 + index * 55}>
+              <View style={[styles.templateRow, last && styles.rowLast]}>
+                <IndexMark n={index + 1} />
+                <View style={styles.rowBody}>
+                  <Text style={styles.templateTitle}>{title}</Text>
+                  <Text style={styles.rowMeta}>{desc}</Text>
+                  <Text style={styles.templateStats}>
+                    {tpl.destination} · {tpl.dayCount}{" "}
+                    {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
+                    {t(locale, "trips.stopUnit")}
                   </Text>
-                </Pressable>
+                  <Pressable
+                    style={[styles.useTpl, busy && styles.useTplBusy]}
+                    disabled={busy || Boolean(creatingId)}
+                    onPress={() => void useTemplate(tpl.id)}
+                  >
+                    <Text style={styles.useTplText}>
+                      {busy
+                        ? t(locale, "trips.creating")
+                        : t(locale, "trips.useTemplate")}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
+            </RiseIn>
           );
         })}
       </View>
@@ -340,23 +455,27 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
   },
-  primaryCta: {
-    backgroundColor: colors.river,
+  outlineCta: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.4)",
+    backgroundColor: colors.foam,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: radius.md,
   },
-  primaryCtaText: {
+  outlineCtaText: {
     ...type.body,
-    color: colors.foam,
+    color: colors.river,
     fontSize: 14,
     fontWeight: "700",
   },
   softBanner: {
     marginTop: 16,
+    marginBottom: 4,
+    borderRadius: radius.sm,
     borderLeftWidth: 2,
     borderLeftColor: "rgba(47, 107, 255, 0.35)",
-    backgroundColor: "rgba(230, 236, 245, 0.45)",
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -368,6 +487,7 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     marginTop: 16,
+    borderRadius: radius.sm,
     borderLeftWidth: 2,
     borderLeftColor: colors.timber,
     backgroundColor: "rgba(225, 29, 72, 0.08)",
@@ -383,7 +503,16 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   sectionSpaced: {
-    marginTop: 40,
+    marginTop: 44,
+  },
+  templatesEyebrow: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: colors.river,
+    marginBottom: 10,
   },
   sectionTitle: {
     ...type.display,
@@ -398,7 +527,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: colors.inkSoft,
-    marginBottom: 14,
+    marginBottom: 18,
     maxWidth: 360,
   },
   loadingRow: {
@@ -413,9 +542,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   emptyInvite: {
-    paddingTop: 8,
+    paddingTop: 4,
     paddingBottom: 8,
     alignItems: "flex-start",
+    maxWidth: 360,
   },
   emptyTitle: {
     ...type.display,
@@ -431,10 +561,17 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.inkSoft,
     maxWidth: 320,
-    marginBottom: 18,
-  },
-  emptyActions: {
     marginBottom: 16,
+  },
+  emptyLink: {
+    paddingVertical: 4,
+    marginBottom: 12,
+  },
+  emptyLinkText: {
+    ...type.body,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.river,
   },
   row: {
     flexDirection: "row",
@@ -442,18 +579,19 @@ const styles = StyleSheet.create({
     gap: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    paddingVertical: 20,
+    paddingVertical: 22,
     width: "100%",
+  },
+  rowLast: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   templateRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    paddingVertical: 20,
-    marginTop: -StyleSheet.hairlineWidth,
+    paddingVertical: 22,
   },
   index: {
     ...type.display,
@@ -462,17 +600,11 @@ const styles = StyleSheet.create({
     color: colors.mist,
     letterSpacing: -0.5,
     minWidth: 40,
+    lineHeight: 32,
   },
   rowBody: {
     flex: 1,
-  },
-  accentBar: {
-    width: 28,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: colors.river,
-    marginBottom: 10,
-    opacity: 0.55,
+    minWidth: 0,
   },
   rowTitle: {
     ...type.display,
@@ -506,7 +638,7 @@ const styles = StyleSheet.create({
   },
   rowCta: {
     ...type.body,
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 14,
     color: colors.river,
     fontWeight: "700",
@@ -515,11 +647,9 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginTop: 14,
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(15, 23, 42, 0.15)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    backgroundColor: colors.foam,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.river,
   },
   useTplBusy: {
     opacity: 0.45,
@@ -528,6 +658,6 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "700",
-    color: colors.ink,
+    color: colors.foam,
   },
 });
