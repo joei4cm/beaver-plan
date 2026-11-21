@@ -278,12 +278,14 @@ export function ShareStudioSkeleton() {
           </div>
           <Skeleton className="mt-4 h-4 w-56" />
         </div>
-        {/* Control sheet chrome — azure rail · SoftFailNotice slot · template grid */}
+        {/* Control sheet SoftFail chrome — azure rail · SoftFailNotice slot · template grid */}
         <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
-          <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
             <Skeleton className="h-2.5 w-28" />
-            <Skeleton className="h-5 w-12 rounded-bp-xs" />
+            <Skeleton className="h-5 w-14 rounded-bp-xs" />
           </div>
+          {/* SoftFailNotice slot under Studio rail */}
+          <Skeleton className="h-9 w-full rounded-none" />
           <div className="space-y-3 px-4 py-4">
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-7 w-36" />
