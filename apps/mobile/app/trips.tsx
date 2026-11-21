@@ -88,10 +88,16 @@ function TripRow({
   showCta?: boolean;
   last?: boolean;
 }) {
+  // Single style object — Link asChild + style arrays crash RN Web
+  // (CSSStyleDeclaration indexed setter).
+  const rowStyle = last
+    ? StyleSheet.flatten([styles.row, styles.rowLast])
+    : styles.row;
+
   return (
     <Link href={`/trips/${trip.id}`} asChild>
       <Pressable
-        style={last ? [styles.row, styles.rowLast] : styles.row}
+        style={rowStyle}
         accessibilityRole="link"
         accessibilityLabel={`${trip.title}. ${formatTripMeta(trip)}`}
       >
@@ -346,11 +352,14 @@ export default function TripsScreen() {
             const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
             const busy = creatingId === tpl.id;
             const last = index === templates.length - 1;
+            const tplRowStyle = last
+              ? StyleSheet.flatten([styles.templateRow, styles.rowLast])
+              : styles.templateRow;
+            const useStyle = busy
+              ? StyleSheet.flatten([styles.useTpl, styles.useTplBusy])
+              : styles.useTpl;
             return (
-              <View
-                key={tpl.id}
-                style={last ? [styles.templateRow, styles.rowLast] : styles.templateRow}
-              >
+              <View key={tpl.id} style={tplRowStyle}>
                 <IndexMark n={index + 1} />
                 <View style={styles.rowBody}>
                   <Text style={styles.templateTitle}>{title}</Text>
@@ -361,7 +370,7 @@ export default function TripsScreen() {
                     {t(locale, "trips.stopUnit")}
                   </Text>
                   <Pressable
-                    style={busy ? [styles.useTpl, styles.useTplBusy] : styles.useTpl}
+                    style={useStyle}
                     disabled={busy || Boolean(creatingId)}
                     onPress={() => void useTemplate(tpl.id)}
                   >
