@@ -179,25 +179,29 @@ export default function TranslateScreen() {
           : t(uiLocale, "translate.emptySoftFail");
 
   /**
-   * Expo Talk SoftFailNotice depth beyond empty (BEA-266 after #150 / #178):
-   * foam talk rail · azure head · talkSupport · mist soft badge ·
-   * compact SoftFailNotice · tip-011 SheetPresence body · StyleSheet.flatten.
-   * Soft-fail never timber / Failed to fetch.
-   * Yields while empty history owns soft-fail (no double depth).
+   * Expo Talk SoftFailNotice depth (BEA-326 after #199 / BEA-266):
+   * foam talk rail · azure head · Soft talk badge · softSupport ·
+   * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
+   * SheetPresence compose/mic · StyleSheet.flatten. Soft-fail never timber /
+   * Failed to fetch. Yields while empty owns soft-fail; yields to Lens
+   * SoftFail (#237) on camera tab (no double depth). SoftFail copy always
+   * talkSoftFail / permission / softOffline (never inherit softNotice timber).
    */
   const talkSoftOpen =
     tab === "conversation" &&
     !emptyOwnsSoft &&
     (isDemo || micDenied || Boolean(error) || softNotice);
-  const talkSoftCopy = micDenied
-    ? t(uiLocale, "translate.permissionMic")
-    : softNotice && !online
-      ? t(uiLocale, "translate.softOffline")
-      : isDemo || (error && isNoiseError(new Error(error)))
-        ? t(uiLocale, "translate.talkSoftFail")
+  /** SoftFail copy owned by Talk chrome — never inherit softNotice / timber. */
+  const talkSoftCopy = softNotice && !online
+    ? t(uiLocale, "translate.softOffline")
+    : isDemo || (error && isNoiseError(new Error(error)))
+      ? t(uiLocale, "translate.talkSoftFail")
+      : micDenied
+        ? t(uiLocale, "translate.permissionMic")
         : error
           ? t(uiLocale, "translate.error")
           : t(uiLocale, "translate.talkSoftFail");
+  const talkSoftSupport = t(uiLocale, "translate.talkSupport");
 
   /**
    * Expo Lens SoftFailNotice depth (BEA-308 after #180 / Dual SoftFail #202):
@@ -789,7 +793,7 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {/* Hero SoftFail yields while empty / Talk / Lens own soft-fail — no double depth. */}
+          {/* Hero SoftFail yields while empty / Talk / Lens (#237) own soft-fail — no double depth. */}
           <SoftFailNotice
             open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !lensSoftOpen}
             style={styles.heroSoftNotice}
@@ -1087,18 +1091,24 @@ export default function TranslateScreen() {
               accessibilityLabel={t(uiLocale, "translate.talkRail")}
             >
               {/*
-                Talk SoftFail chrome (BEA-266 after #150 / empty #178):
-                foam sheet · azure head · talkSupport · mist soft badge ·
-                compact SoftFailNotice · tip-011 SheetPresence — never timber.
+                Talk SoftFail depth (BEA-326 after #199):
+                Soft talk · softSupport · mist SoftFail band · tip-011 mist-wash
+                compose/mic — never timber / Failed to fetch. Yields to empty /
+                Lens SoftFail (#237).
               */}
-              <View style={styles.talkHead}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.talkHead,
+                  talkSoftOpen ? styles.talkHeadSoft : null,
+                ])}
+              >
                 <View style={styles.talkHeadTitles}>
                   <Text style={styles.talkEyebrow}>
                     {t(uiLocale, "translate.talkRail")}
                   </Text>
                   <Text style={styles.talkHint}>
                     {talkSoftOpen
-                      ? t(uiLocale, "translate.talkSupport")
+                      ? talkSoftSupport
                       : t(uiLocale, "translate.talkHint")}
                   </Text>
                 </View>
@@ -1120,7 +1130,7 @@ export default function TranslateScreen() {
                       ])}
                     >
                       {talkSoftOpen
-                        ? t(uiLocale, "translate.talkDemoBadge")
+                        ? t(uiLocale, "translate.talkSoftBadge")
                         : t(uiLocale, "translate.talkLiveBadge")}
                     </Text>
                   </View>
@@ -1146,7 +1156,7 @@ export default function TranslateScreen() {
                 </View>
               </View>
 
-              {/* Compact SoftFail under azure rail — yields while empty owns soft-fail. */}
+              {/* Compact SoftFail mist band under azure Talk rail — never timber. */}
               <SoftFailNotice
                 open={talkSoftOpen && Boolean(talkSoftCopy)}
                 compact
@@ -1159,100 +1169,110 @@ export default function TranslateScreen() {
                 open
                 delayMs={40}
                 rise={12}
-                style={styles.talkBody}
+                style={StyleSheet.flatten([
+                  styles.talkBody,
+                  talkSoftOpen ? styles.talkBodySoft : null,
+                ])}
                 accessibilityLabel={t(uiLocale, "translate.talkRail")}
               >
-                <SheetPresence open delayMs={40} rise={8}>
-                  <View style={styles.compose}>
-                    <TextInput
-                      ref={draftRef}
-                      value={draft}
-                      onChangeText={setDraft}
-                      placeholder={t(uiLocale, "translate.typeHint")}
-                      placeholderTextColor={colors.inkSoft}
-                      style={styles.input}
-                      editable={!busy}
-                      onSubmitEditing={() => void onSendText()}
-                      returnKeyType="send"
-                    />
-                    <Pressable
-                      style={StyleSheet.flatten([
-                        styles.sendBtn,
-                        busy ? styles.disabled : null,
-                      ])}
-                      onPress={() => void onSendText()}
-                      disabled={busy}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: busy }}
-                    >
-                      <Text style={styles.sendLabel}>
-                        {busy
-                          ? t(uiLocale, "translate.translating")
-                          : t(uiLocale, "translate.send")}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </SheetPresence>
-
-                <SheetPresence open delayMs={90} rise={8}>
-                  <View style={styles.micRow}>
-                    <View style={styles.micWrap}>
-                      {listening ? (
-                        <Animated.View
-                          pointerEvents="none"
-                          style={StyleSheet.flatten([
-                            styles.micHalo,
-                            holdHaloStyle,
-                          ])}
-                        />
-                      ) : null}
-                      <Animated.View
+                <View
+                  style={StyleSheet.flatten([
+                    styles.talkStage,
+                    talkSoftOpen ? styles.talkStageSoft : null,
+                  ])}
+                >
+                  <SheetPresence open delayMs={40} rise={8}>
+                    <View style={styles.compose}>
+                      <TextInput
+                        ref={draftRef}
+                        value={draft}
+                        onChangeText={setDraft}
+                        placeholder={t(uiLocale, "translate.typeHint")}
+                        placeholderTextColor={colors.inkSoft}
+                        style={styles.input}
+                        editable={!busy}
+                        onSubmitEditing={() => void onSendText()}
+                        returnKeyType="send"
+                      />
+                      <Pressable
                         style={StyleSheet.flatten([
-                          styles.micBtnShell,
-                          listening ? holdMicScaleStyle : null,
+                          styles.sendBtn,
+                          busy ? styles.disabled : null,
                         ])}
+                        onPress={() => void onSendText()}
+                        disabled={busy}
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: busy }}
                       >
-                        <Pressable
-                          ref={micRef}
-                          onPressIn={() => void startListening()}
-                          onPressOut={() => void stopListening()}
-                          style={StyleSheet.flatten([
-                            styles.micBtn,
-                            listening ? styles.micBtnActive : null,
-                            busy && !listening ? styles.disabled : null,
-                          ])}
-                          disabled={busy && !listening}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: listening }}
-                        >
-                          {busy && !listening ? (
-                            <ActivityIndicator color={colors.foam} />
-                          ) : (
-                            <Text style={styles.micLabel}>
-                              {listening
-                                ? t(uiLocale, "translate.listening")
-                                : t(uiLocale, "translate.holdMic")}
-                            </Text>
-                          )}
-                        </Pressable>
-                      </Animated.View>
+                        <Text style={styles.sendLabel}>
+                          {busy
+                            ? t(uiLocale, "translate.translating")
+                            : t(uiLocale, "translate.send")}
+                        </Text>
+                      </Pressable>
                     </View>
-                    <Pressable
-                      style={StyleSheet.flatten([
-                        styles.demoNext,
-                        busy ? styles.disabled : null,
-                      ])}
-                      onPress={() => void runTurn({})}
-                      disabled={busy}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: busy }}
-                    >
-                      <Text style={styles.demoNextLabel}>
-                        {t(uiLocale, "translate.nextDemo")}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </SheetPresence>
+                  </SheetPresence>
+
+                  <SheetPresence open delayMs={90} rise={8}>
+                    <View style={styles.micRow}>
+                      <View style={styles.micWrap}>
+                        {listening ? (
+                          <Animated.View
+                            pointerEvents="none"
+                            style={StyleSheet.flatten([
+                              styles.micHalo,
+                              holdHaloStyle,
+                            ])}
+                          />
+                        ) : null}
+                        <Animated.View
+                          style={StyleSheet.flatten([
+                            styles.micBtnShell,
+                            listening ? holdMicScaleStyle : null,
+                          ])}
+                        >
+                          <Pressable
+                            ref={micRef}
+                            onPressIn={() => void startListening()}
+                            onPressOut={() => void stopListening()}
+                            style={StyleSheet.flatten([
+                              styles.micBtn,
+                              listening ? styles.micBtnActive : null,
+                              busy && !listening ? styles.disabled : null,
+                            ])}
+                            disabled={busy && !listening}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: listening }}
+                          >
+                            {busy && !listening ? (
+                              <ActivityIndicator color={colors.foam} />
+                            ) : (
+                              <Text style={styles.micLabel}>
+                                {listening
+                                  ? t(uiLocale, "translate.listening")
+                                  : t(uiLocale, "translate.holdMic")}
+                              </Text>
+                            )}
+                          </Pressable>
+                        </Animated.View>
+                      </View>
+                      <Pressable
+                        style={StyleSheet.flatten([
+                          styles.demoNext,
+                          busy ? styles.disabled : null,
+                        ])}
+                        onPress={() => void runTurn({})}
+                        disabled={busy}
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: busy }}
+                      >
+                        <Text style={styles.demoNextLabel}>
+                          {t(uiLocale, "translate.nextDemo")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </SheetPresence>
+                </View>
               </SheetPresence>
             </View>
           </View>
@@ -2137,6 +2157,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  /** Soft azure Talk rail wash when SoftFail owns depth (BEA-326). */
+  talkHeadSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   talkHeadTitles: { flex: 1, minWidth: 160, gap: 4 },
   talkHeadBadges: {
     flexDirection: "row",
@@ -2187,8 +2211,28 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
   },
+  /** Mist-wash Talk compose body when SoftFail open (BEA-326 tip-011). */
+  talkBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
+  },
+  /** Mist SoftFail strip under azure Talk rail — border-b before mist body. */
   talkSoftFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  talkStage: {
+    gap: 12,
+  },
+  /** Mist-wash compose/mic stage inset when SoftFail open (Lens dualFrameSoft parity). */
+  talkStageSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   compose: {
     flexDirection: "row",
