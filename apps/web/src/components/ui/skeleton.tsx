@@ -4,30 +4,53 @@ type SkeletonProps = {
 
 /** Tip 017 — placeholder shape; band is drawn by `.bp-skeleton`. */
 export function Skeleton({ className = "" }: SkeletonProps) {
-  return (
-    <div
-      aria-hidden
-      className={`bp-skeleton ${className}`}
-    />
-  );
+  return <div aria-hidden className={`bp-skeleton ${className}`} />;
 }
 
-export function TripsListSkeleton() {
+/** Layout-matched trips index rows (number · title · meta · azure action). */
+export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <ul aria-busy="true" aria-live="polite" className="space-y-0">
-      {Array.from({ length: 4 }).map((_, i) => (
+      {Array.from({ length: rows }).map((_, i) => (
         <li
           key={i}
           className="border-t border-[color:var(--bp-line)] py-6 last:border-b"
-          style={{ animationDelay: `${i * 40}ms` }}
         >
-          <div className="flex items-baseline gap-4">
-            <Skeleton className="hidden h-8 w-10 sm:block" />
-            <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap sm:gap-6">
+            <Skeleton className="h-8 w-10 shrink-0 md:h-9" />
+            <div className="min-w-0 flex-1 space-y-2.5">
               <Skeleton className="h-6 w-48 max-w-[70%]" />
               <Skeleton className="h-3.5 w-64 max-w-[90%]" />
             </div>
-            <Skeleton className="hidden h-8 w-20 sm:block" />
+            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+              <Skeleton className="h-3.5 w-40" />
+              <Skeleton className="h-8 w-24 rounded-bp" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Layout-matched city playbook rows. */
+export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <ul aria-busy="true" aria-live="polite" className="space-y-0">
+      {Array.from({ length: rows }).map((_, i) => (
+        <li
+          key={i}
+          className="grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] py-7 last:border-b sm:grid-cols-[auto_1fr_auto] sm:gap-8"
+        >
+          <Skeleton className="h-10 w-12 shrink-0 md:h-12" />
+          <div className="min-w-0 space-y-2.5">
+            <Skeleton className="h-6 w-44 max-w-[75%]" />
+            <Skeleton className="h-3.5 w-full max-w-md" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+          <div className="col-span-2 flex gap-2 sm:col-span-1 sm:flex-col sm:items-stretch md:flex-row">
+            <Skeleton className="h-9 w-24 rounded-bp" />
+            <Skeleton className="h-9 w-28 rounded-bp" />
           </div>
         </li>
       ))}
