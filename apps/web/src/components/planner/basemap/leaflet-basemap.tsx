@@ -35,6 +35,9 @@ export function LeafletBasemap({
   legs,
   selectedStopId,
   onSelectStop,
+  showRoutes = true,
+  showStops = true,
+  fitNonce = 0,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -48,6 +51,7 @@ export function LeafletBasemap({
   legsRef.current = legs;
   const fittedRef = useRef(false);
   const lastStopCountRef = useRef(0);
+  const lastFitNonceRef = useRef(0);
   const [engineReady, setEngineReady] = useState(false);
   const [tilesReady, setTilesReady] = useState(false);
 
@@ -72,7 +76,8 @@ export function LeafletBasemap({
       LRef.current = L;
 
       map = L.map(containerRef.current, {
-        zoomControl: true,
+        // Bottom-right so floating map chrome (top) stays clear.
+        zoomControl: false,
         attributionControl: true,
         scrollWheelZoom: true,
         preferCanvas: true,
@@ -81,6 +86,7 @@ export function LeafletBasemap({
         zoomAnimation: true,
         markerZoomAnimation: false,
       });
+      L.control.zoom({ position: "bottomright" }).addTo(map);
 
       // Fit route extent *before* requesting tiles (avoids Kyoto default → re-zoom double fetch).
       const lines = collectPathLines(stopsRef.current, legsRef.current);
@@ -168,7 +174,7 @@ export function LeafletBasemap({
 
     const paint = () => {
       group.clearLayers();
-      const lines = collectPathLines(stops, legs);
+      const lines = showRoutes ? collectPathLines(stops, legs) : [];
 
       for (const line of lines) {
         const style = strokeForMode(line.mode);
@@ -194,34 +200,39 @@ export function LeafletBasemap({
         }).addTo(group);
       }
 
-      stops.forEach((stop, index) => {
-        const selected = stop.id === selectedStopId;
-        const icon = L.divIcon({
-          className: "bp-leaflet-marker",
-          html: markerHtml(index, selected),
-          iconSize: [selected ? 28 : 22, selected ? 28 : 22],
-          iconAnchor: [selected ? 14 : 11, selected ? 14 : 11],
+      if (showStops) {
+        stops.forEach((stop, index) => {
+          const selected = stop.id === selectedStopId;
+          const icon = L.divIcon({
+            className: "bp-leaflet-marker",
+            html: markerHtml(index, selected),
+            iconSize: [selected ? 28 : 22, selected ? 28 : 22],
+            iconAnchor: [selected ? 14 : 11, selected ? 14 : 11],
+          });
+          const marker = L.marker([stop.place.lat, stop.place.lng], { icon });
+          marker.on("click", () => onSelectRef.current(stop.id));
+          marker.addTo(group);
         });
-        const marker = L.marker([stop.place.lat, stop.place.lng], { icon });
-        marker.on("click", () => onSelectRef.current(stop.id));
-        marker.addTo(group);
-      });
+      }
 
-      const fitPts = collectFitPoints(stops, lines).map((p) =>
-        L.latLng(p.lat, p.lng),
+      const fitPts = collectFitPoints(stops, collectPathLines(stops, legs)).map(
+        (p) => L.latLng(p.lat, p.lng),
       );
       const stopCountChanged = stops.length !== lastStopCountRef.current;
       lastStopCountRef.current = stops.length;
+      const locateRequested = fitNonce !== lastFitNonceRef.current;
+      if (locateRequested) lastFitNonceRef.current = fitNonce;
       const shouldFit =
-        fitPts.length > 0 && (!fittedRef.current || stopCountChanged);
+        fitPts.length > 0 &&
+        (!fittedRef.current || stopCountChanged || locateRequested);
       if (shouldFit) {
         map.fitBounds(L.latLngBounds(fitPts), {
-          padding: [48, 48],
+          padding: [56, 56],
           maxZoom: 14,
         });
         fittedRef.current = true;
         window.setTimeout(() => map.invalidateSize(), 50);
-      } else if (selectedStopId) {
+      } else if (selectedStopId && showStops) {
         const sel = stops.find((s) => s.id === selectedStopId);
         if (sel) map.panTo([sel.place.lat, sel.place.lng]);
       }
@@ -230,7 +241,15 @@ export function LeafletBasemap({
     // Defer overlay paint one frame so tile decode stays ahead of markers.
     const id = window.requestAnimationFrame(paint);
     return () => window.cancelAnimationFrame(id);
-  }, [stops, legs, selectedStopId, engineReady]);
+  }, [
+    stops,
+    legs,
+    selectedStopId,
+    engineReady,
+    showRoutes,
+    showStops,
+    fitNonce,
+  ]);
 
   return (
     <>

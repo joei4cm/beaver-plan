@@ -47,12 +47,16 @@ export function BaiduBasemap({
   legs,
   selectedStopId,
   onSelectStop,
+  showRoutes = true,
+  showStops = true,
+  fitNonce = 0,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<BMapInst | null>(null);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
   const fittedRef = useRef(false);
+  const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -85,7 +89,7 @@ export function BaiduBasemap({
     if (!BMap || !map || !ready) return;
 
     map.clearOverlays();
-    const lines = collectPathLines(stops, legs);
+    const lines = showRoutes ? collectPathLines(stops, legs) : [];
     for (const line of lines) {
       const style = strokeForMode(line.mode);
       const pts = line.points.map((p) => new BMap.Point(p.lng, p.lat));
@@ -99,42 +103,46 @@ export function BaiduBasemap({
       );
     }
 
-    stops.forEach((stop, index) => {
-      const selected = stop.id === selectedStopId;
-      const marker = new BMap.Marker(
-        new BMap.Point(stop.place.lng, stop.place.lat),
-      );
-      const label = new BMap.Label(String(index + 1), {
-        offset: new BMap.Size(-8, -8),
+    if (showStops) {
+      stops.forEach((stop, index) => {
+        const selected = stop.id === selectedStopId;
+        const marker = new BMap.Marker(
+          new BMap.Point(stop.place.lng, stop.place.lat),
+        );
+        const label = new BMap.Label(String(index + 1), {
+          offset: new BMap.Size(-8, -8),
+        });
+        label.setStyle({
+          border: "2.5px solid #2F6BFF",
+          borderRadius: "999px",
+          width: selected ? "28px" : "22px",
+          height: selected ? "28px" : "22px",
+          lineHeight: selected ? "23px" : "17px",
+          textAlign: "center",
+          background: selected ? "#2F6BFF" : "#FFFFFF",
+          color: selected ? "#FFFFFF" : "#0F172A",
+          fontWeight: "700",
+          fontSize: "11px",
+        });
+        marker.setLabel(label);
+        marker.addEventListener("click", () => onSelectRef.current(stop.id));
+        map.addOverlay(marker);
       });
-      label.setStyle({
-        border: "2.5px solid #2F6BFF",
-        borderRadius: "999px",
-        width: selected ? "28px" : "22px",
-        height: selected ? "28px" : "22px",
-        lineHeight: selected ? "23px" : "17px",
-        textAlign: "center",
-        background: selected ? "#2F6BFF" : "#FFFFFF",
-        color: selected ? "#FFFFFF" : "#0F172A",
-        fontWeight: "700",
-        fontSize: "11px",
-      });
-      marker.setLabel(label);
-      marker.addEventListener("click", () => onSelectRef.current(stop.id));
-      map.addOverlay(marker);
-    });
+    }
 
-    const fitPts = collectFitPoints(stops, lines).map(
+    const fitPts = collectFitPoints(stops, collectPathLines(stops, legs)).map(
       (p) => new BMap.Point(p.lng, p.lat),
     );
-    if (!fittedRef.current && fitPts.length > 0) {
+    const locateRequested = fitNonce !== lastFitNonceRef.current;
+    if (locateRequested) lastFitNonceRef.current = fitNonce;
+    if ((!fittedRef.current || locateRequested) && fitPts.length > 0) {
       map.setViewport(fitPts);
       fittedRef.current = true;
-    } else if (selectedStopId) {
+    } else if (selectedStopId && showStops) {
       const sel = stops.find((s) => s.id === selectedStopId);
       if (sel) map.panTo(new BMap.Point(sel.place.lng, sel.place.lat));
     }
-  }, [stops, legs, selectedStopId, ready]);
+  }, [stops, legs, selectedStopId, ready, showRoutes, showStops, fitNonce]);
 
   useEffect(() => {
     paint();

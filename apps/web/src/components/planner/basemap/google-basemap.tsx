@@ -41,6 +41,9 @@ export function GoogleBasemap({
   legs,
   selectedStopId,
   onSelectStop,
+  showRoutes = true,
+  showStops = true,
+  fitNonce = 0,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GMap | null>(null);
@@ -49,6 +52,7 @@ export function GoogleBasemap({
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
   const fittedRef = useRef(false);
+  const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -90,7 +94,7 @@ export function GoogleBasemap({
     polysRef.current.forEach((p) => p.setMap(null));
     markersRef.current.forEach((m) => m.setMap(null));
 
-    const lines = collectPathLines(stops, legs);
+    const lines = showRoutes ? collectPathLines(stops, legs) : [];
     polysRef.current = lines.map((line) => {
       const style = strokeForMode(line.mode);
       const dashed = Boolean(style.dasharray);
@@ -117,41 +121,45 @@ export function GoogleBasemap({
       });
     });
 
-    markersRef.current = stops.map((stop, index) => {
-      const selected = stop.id === selectedStopId;
-      const marker = new g.Marker({
-        map,
-        position: { lat: stop.place.lat, lng: stop.place.lng },
-        label: {
-          text: String(index + 1),
-          color: selected ? "#FFFFFF" : "#0F172A",
-          fontWeight: "700",
-          fontSize: "11px",
-        },
-        icon: {
-          path: g.SymbolPath.CIRCLE,
-          scale: selected ? 12 : 10,
-          fillColor: selected ? "#2F6BFF" : "#FFFFFF",
-          fillOpacity: 1,
-          strokeColor: "#2F6BFF",
-          strokeWeight: 2.5,
-        },
-      });
-      marker.addListener("click", () => onSelectRef.current(stop.id));
-      return marker;
-    });
+    markersRef.current = showStops
+      ? stops.map((stop, index) => {
+          const selected = stop.id === selectedStopId;
+          const marker = new g.Marker({
+            map,
+            position: { lat: stop.place.lat, lng: stop.place.lng },
+            label: {
+              text: String(index + 1),
+              color: selected ? "#FFFFFF" : "#0F172A",
+              fontWeight: "700",
+              fontSize: "11px",
+            },
+            icon: {
+              path: g.SymbolPath.CIRCLE,
+              scale: selected ? 12 : 10,
+              fillColor: selected ? "#2F6BFF" : "#FFFFFF",
+              fillOpacity: 1,
+              strokeColor: "#2F6BFF",
+              strokeWeight: 2.5,
+            },
+          });
+          marker.addListener("click", () => onSelectRef.current(stop.id));
+          return marker;
+        })
+      : [];
 
-    const fitPts = collectFitPoints(stops, lines);
-    if (!fittedRef.current && fitPts.length > 0) {
+    const fitPts = collectFitPoints(stops, collectPathLines(stops, legs));
+    const locateRequested = fitNonce !== lastFitNonceRef.current;
+    if (locateRequested) lastFitNonceRef.current = fitNonce;
+    if ((!fittedRef.current || locateRequested) && fitPts.length > 0) {
       const bounds = new g.LatLngBounds();
       for (const p of fitPts) bounds.extend(p);
       map.fitBounds(bounds, 56);
       fittedRef.current = true;
-    } else if (selectedStopId) {
+    } else if (selectedStopId && showStops) {
       const sel = stops.find((s) => s.id === selectedStopId);
       if (sel) map.panTo({ lat: sel.place.lat, lng: sel.place.lng });
     }
-  }, [stops, legs, selectedStopId, ready]);
+  }, [stops, legs, selectedStopId, ready, showRoutes, showStops, fitNonce]);
 
   useEffect(() => {
     paint();
