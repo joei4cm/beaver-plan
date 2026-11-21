@@ -679,12 +679,24 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
   /**
-   * Compose SoftFailNotice chrome (BEA-205): compact under azure rail ·
-   * SheetPresence body · tip-011 (#46). Compose owns soft-fail so list yields
-   * (no double depth). Soft copy never timber / Failed to fetch.
+   * Empty SoftFailNotice chrome (BEA-248 after #171/#175/#183):
+   * empty owns compact SoftFail under azure list rail · SheetPresence body ·
+   * tip-011 (#46). Compose SoftFail yields while empty owns (no double depth).
+   * Soft copy never timber / Failed to fetch.
    */
-  const showComposeSoftFail = composeSoftFail;
-  const showListSoftFail = (demoSeeded || softNotice) && !composeSoftFail;
+  const entryEmpty = visible.length === 0;
+  const emptyOwnsSoft = entryEmpty;
+  const emptySoftOpen = emptyOwnsSoft;
+  const showComposeSoftFail = composeSoftFail && !emptyOwnsSoft;
+  const showListSoftFail =
+    !emptyOwnsSoft && (demoSeeded || softNotice);
+  const listSoftOpen = emptySoftOpen || showListSoftFail;
+  const listSoftCopy =
+    softNotice && !online
+      ? t(locale, "journal.softOffline")
+      : emptyOwnsSoft
+        ? t(locale, "journal.emptySoftFail")
+        : t(locale, "journal.demoNotice");
   const hardComposeError =
     error && !isPlannerNoiseError(new Error(error)) ? error : null;
 
@@ -838,32 +850,57 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             className="min-w-0 space-y-0 px-5 py-6 md:px-7"
             aria-label={t(locale, "journal.listEyebrow")}
           >
-            {/* Entry list chrome — azure rail · count · scrub-linked · SoftFail (#46) */}
+            {/*
+              Empty SoftFail chrome (BEA-248 after #171/#175/#183):
+              azure list rail · Open badge · compact SoftFailNotice ·
+              SheetPresence empty body · tip-011 rise — never timber.
+            */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
               key={`list-head-${dayId ?? "all"}`}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-                  {t(locale, "journal.listEyebrow")}
-                  {" · "}
-                  {t(locale, "journal.daySection").replace(
-                    "{n}",
-                    String(activeDayIndex + 1),
-                  )}
-                </p>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums uppercase tracking-[0.12em] text-river-deep">
-                    {t(locale, "journal.entryCount").replace(
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                    {t(locale, "journal.listEyebrow")}
+                    {" · "}
+                    {t(locale, "journal.daySection").replace(
                       "{n}",
-                      String(visible.length),
+                      String(activeDayIndex + 1),
                     )}
-                  </span>
-                  {stopId ? (
-                    <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river transition duration-bp-fast ease-bp-out">
-                      {t(locale, "journal.entryLinked")}
+                  </p>
+                  {entryEmpty ? (
+                    <span className="text-[11px] leading-snug text-ink-soft/80">
+                      {t(locale, "journal.emptySupport")}
                     </span>
                   ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {entryEmpty ? (
+                    <span
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                        emptySoftOpen
+                          ? "bg-mist text-ink-soft"
+                          : "bg-river/12 text-river"
+                      }`}
+                    >
+                      {t(locale, "journal.emptyBadge")}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums uppercase tracking-[0.12em] text-river-deep">
+                        {t(locale, "journal.entryCount").replace(
+                          "{n}",
+                          String(visible.length),
+                        )}
+                      </span>
+                      {stopId ? (
+                        <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river transition duration-bp-fast ease-bp-out">
+                          {t(locale, "journal.entryLinked")}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
@@ -871,30 +908,41 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </h2>
               <p className="mt-2 text-sm text-ink-soft">
                 {activeDay?.date ? `${activeDay.date} · ` : ""}
-                {t(locale, "journal.entryDetailHint")}
+                {entryEmpty
+                  ? t(locale, "journal.emptyHint")
+                  : t(locale, "journal.entryDetailHint")}
               </p>
             </header>
 
-            {/* List SoftFail yields while compose owns soft-fail — no double depth. */}
-            <SoftFailNotice
-              open={showListSoftFail}
-              compact
-              className="mb-1"
-            >
-              {softNotice && !online
-                ? t(locale, "journal.softOffline")
-                : t(locale, "journal.demoNotice")}
+            {/* Compact SoftFail under azure rail — empty owns; list yields to compose when not empty. */}
+            <SoftFailNotice open={listSoftOpen} compact className="mb-1">
+              {listSoftCopy}
             </SoftFailNotice>
 
-            {visible.length === 0 && (
-              <div
+            {entryEmpty ? (
+              <SheetPresence
                 key={`list-empty-${dayId ?? "all"}`}
-                className="animate-sheet-in mt-6 max-w-lg py-8"
+                open
+                className="mt-6 max-w-lg py-8"
+                style={{ animationDelay: "40ms" }}
+                aria-label={t(locale, "journal.empty")}
               >
-                <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+                <p
+                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                  style={{ animationDelay: "40ms" }}
+                >
+                  {t(locale, "journal.listEyebrow")}
+                </p>
+                <p
+                  className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+                  style={{ animationDelay: "70ms" }}
+                >
                   {t(locale, "journal.empty")}
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                <p
+                  className="animate-rise mt-3 text-sm leading-relaxed text-ink-soft"
+                  style={{ animationDelay: "100ms" }}
+                >
                   {t(locale, "journal.emptyHint")}
                 </p>
                 <button
@@ -906,21 +954,25 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                       block: "nearest",
                     });
                   }}
-                  className="mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                  className="animate-rise mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                  style={{ animationDelay: "130ms" }}
                 >
                   {t(locale, "journal.emptyCta")}
                 </button>
-                <div className="mt-8 grid max-w-sm grid-cols-3 gap-3">
+                <div
+                  className="animate-rise mt-8 grid max-w-sm grid-cols-3 gap-3"
+                  style={{ animationDelay: "160ms" }}
+                  aria-hidden
+                >
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
                       className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/15 via-mist to-foam"
-                      aria-hidden
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              </SheetPresence>
+            ) : null}
 
             <ul
               key={`list-${dayId ?? "all"}`}
