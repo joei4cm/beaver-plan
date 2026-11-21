@@ -13,9 +13,10 @@ import {
   type Stop,
   type Trip,
 } from "@beaver/core";
-import type { Locale } from "@beaver/i18n";
+import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { DayFillSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Props = {
@@ -40,6 +41,15 @@ type StatusResponse = {
 };
 
 const DEFAULT_INTERESTS: DayFillInterest[] = ["temples", "food", "culture"];
+
+const INTEREST_KEYS: Record<DayFillInterest, MessageKey> = {
+  temples: "planner.dayFill.interest.temples",
+  food: "planner.dayFill.interest.food",
+  nature: "planner.dayFill.interest.nature",
+  shopping: "planner.dayFill.interest.shopping",
+  culture: "planner.dayFill.interest.culture",
+  photo: "planner.dayFill.interest.photo",
+};
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -86,6 +96,11 @@ async function buildLocalDemoProposal(input: {
   };
 }
 
+/**
+ * Planner secondary tool — smart day-fill sheet.
+ * Lumen hierarchy: header · SoftFailNotice · prefs · preview.
+ * Soft-fails to local Kyoto demo when LLM/API/Neon are absent.
+ */
 export function DayFillPanel({
   tripId,
   locale,
@@ -114,7 +129,12 @@ export function DayFillPanel({
     let cancelled = false;
     void apiGet<StatusResponse>("/v1/day-fill/status")
       .then((res) => {
-        if (!cancelled) setStatus({ mode: res.mode, provider: res.provider });
+        if (!cancelled) {
+          setStatus({ mode: res.mode, provider: res.provider });
+          if (res.mode === "demo") {
+            setNotice(t(locale, "planner.dayFill.demoNotice"));
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -257,13 +277,17 @@ export function DayFillPanel({
   }
 
   const mode = proposal?.mode ?? status?.mode ?? "demo";
+  const softDemo = mode === "demo" || localOnly;
   const badge =
     mode === "live"
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
+  const softCopy =
+    notice ??
+    (softDemo ? t(locale, "planner.dayFill.demoNotice") : null);
 
   return (
-    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
+    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55 shadow-bp-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -276,7 +300,7 @@ export function DayFillPanel({
               {t(locale, "planner.dayFill.title")}
             </span>
             <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
                 mode === "live"
                   ? "bg-river/12 text-river-deep"
                   : "bg-mist text-ink-soft"
@@ -290,7 +314,7 @@ export function DayFillPanel({
           </p>
         </div>
         <span
-          className={`shrink-0 text-river transition duration-bp ease-bp ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-river transition duration-bp ease-bp-in-out ${open ? "rotate-180" : ""}`}
           aria-hidden
         >
           ▾
@@ -299,220 +323,238 @@ export function DayFillPanel({
 
       {open && (
         <div
-          className="animate-sheet-in space-y-4 border-t border-[color:var(--bp-line)] px-4 py-4"
+          className="animate-sheet-in space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-          {notice && <SoftFailNotice>{notice}</SoftFailNotice>}
+          {softCopy ? <SoftFailNotice>{softCopy}</SoftFailNotice> : null}
 
-          <div>
-            <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-              {t(locale, "planner.dayFill.interests")}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {DAY_FILL_INTERESTS.map((id) => {
-                const on = interests.includes(id);
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggleInterest(id)}
-                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
-                      on
-                        ? "bg-river text-foam"
-                        : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
-                    }`}
-                  >
-                    {t(locale, `planner.dayFill.interest.${id}`)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-                {t(locale, "planner.dayFill.walk")}
-              </span>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={30}
-                  max={150}
-                  step={15}
-                  value={walkMinutes}
-                  onChange={(e) => setWalkMinutes(Number(e.target.value))}
-                  className="w-full accent-[color:var(--bp-river)]"
-                />
-                <span className="shrink-0 tabular-nums text-sm text-ink">
-                  {walkMinutes}
-                  {t(locale, "planner.dayFill.minutes")}
-                </span>
+          <section className="space-y-3" aria-label={t(locale, "planner.dayFill.interests")}>
+              <div>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+                  {t(locale, "planner.dayFill.prefsEyebrow")}
+                </p>
+                <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                  {t(locale, "planner.dayFill.prefsTitle")}
+                </h3>
               </div>
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-                {t(locale, "planner.dayFill.days")}
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={7}
-                value={dayCount}
-                onChange={(e) =>
-                  setDayCount(
-                    Math.max(1, Math.min(7, Number(e.target.value) || 1)),
-                  )
-                }
-                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
-              />
-            </label>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={generating || interests.length === 0}
-              onClick={() => void generate()}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {generating
-                ? t(locale, "planner.dayFill.generating")
-                : t(locale, "planner.dayFill.generate")}
-            </button>
-            {proposal && (
-              <>
-                <span
-                  className={`rounded-bp-xs px-2.5 py-1 text-xs ${
-                    proposal.mode === "live"
-                      ? "bg-river/15 text-river-deep"
-                      : "bg-mist/80 text-ink-soft"
-                  }`}
-                >
-                  {proposal.mode === "live"
-                    ? t(locale, "planner.dayFill.liveBadge")
-                    : t(locale, "planner.dayFill.demoBadge")}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProposal(null);
-                    setLocalOnly(false);
-                    setNotice(null);
-                  }}
-                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
-                >
-                  {t(locale, "planner.dayFill.discard")}
-                </button>
-              </>
-            )}
-          </div>
-
-          {generating && (
-            <div
-              className="animate-fade space-y-3 rounded-bp-sm border border-dashed border-river/25 bg-paper/40 px-3 py-4"
-              role="status"
-              aria-live="polite"
-            >
-              <div className="bp-skeleton h-3 w-40" />
-              <div className="space-y-2">
-                <div className="bp-skeleton h-16 rounded-bp-sm" />
-                <div className="bp-skeleton h-16 rounded-bp-sm" />
-                <div className="bp-skeleton h-16 rounded-bp-sm" />
-              </div>
-              <p className="text-xs text-ink-soft">
-                {t(locale, "planner.dayFill.loadingHint")}
-              </p>
-            </div>
-          )}
-
-          {!proposal && !generating && (
-            <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
-              <p className="text-sm text-ink">{t(locale, "planner.dayFill.empty")}</p>
-              <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-                {t(locale, "planner.dayFill.emptyHint")}
-              </p>
-            </div>
-          )}
-
-          {proposal && !generating && (
-            <div className="animate-rise space-y-3">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-                    {t(locale, "planner.dayFill.preview")}
-                  </div>
-                  {proposal.rationale && (
-                    <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                      {proposal.rationale}
-                    </p>
-                  )}
+              <div>
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+                  {t(locale, "planner.dayFill.interests")}
                 </div>
-                <button
-                  type="button"
-                  disabled={applying}
-                  onClick={() => void apply()}
-                  className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
-                >
-                  {applying
-                    ? t(locale, "planner.dayFill.applying")
-                    : t(locale, "planner.dayFill.apply")}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {DAY_FILL_INTERESTS.map((id) => {
+                    const on = interests.includes(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => toggleInterest(id)}
+                        className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
+                          on
+                            ? "bg-river text-foam"
+                            : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
+                        }`}
+                      >
+                        {t(locale, INTEREST_KEYS[id])}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <ol className="space-y-3">
-                {proposal.days.map((day) => (
-                  <li
-                    key={day.dayIndex}
-                    className="animate-fade rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
-                    style={{ animationDelay: `${day.dayIndex * 40}ms` }}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+                    {t(locale, "planner.dayFill.walk")}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={30}
+                      max={150}
+                      step={15}
+                      value={walkMinutes}
+                      onChange={(e) => setWalkMinutes(Number(e.target.value))}
+                      className="w-full accent-[color:var(--bp-river)]"
+                    />
+                    <span className="shrink-0 tabular-nums text-sm text-ink">
+                      {walkMinutes}
+                      {t(locale, "planner.dayFill.minutes")}
+                    </span>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+                    {t(locale, "planner.dayFill.days")}
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={7}
+                    value={dayCount}
+                    onChange={(e) =>
+                      setDayCount(
+                        Math.max(1, Math.min(7, Number(e.target.value) || 1)),
+                      )
+                    }
+                    className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 transition duration-bp-fast ease-bp-out focus:ring-2"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  disabled={generating || interests.length === 0}
+                  onClick={() => void generate()}
+                  className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {generating
+                    ? t(locale, "planner.dayFill.generating")
+                    : t(locale, "planner.dayFill.generate")}
+                </button>
+                {proposal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProposal(null);
+                      setLocalOnly(false);
+                      if (status?.mode === "demo") {
+                        setNotice(t(locale, "planner.dayFill.demoNotice"));
+                      } else {
+                        setNotice(null);
+                      }
+                    }}
+                    className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river"
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-medium text-ink">
-                        {t(locale, "planner.day")} {day.dayIndex + 1}
-                        {day.date ? (
-                          <span className="ml-2 text-sm font-normal text-ink-soft">
-                            {day.date}
-                          </span>
-                        ) : null}
+                    {t(locale, "planner.dayFill.discard")}
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {generating && (
+              <div role="status" aria-live="polite" className="space-y-2">
+                <DayFillSkeleton days={dayCount} />
+                <p className="text-xs text-ink-soft">
+                  {t(locale, "planner.dayFill.loadingHint")}
+                </p>
+              </div>
+            )}
+
+            {!proposal && !generating && (
+              <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
+                <p className="font-display text-base tracking-tight text-ink">
+                  {t(locale, "planner.dayFill.empty")}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                  {t(locale, "planner.dayFill.emptyHint")}
+                </p>
+              </div>
+            )}
+
+            {proposal && !generating && (
+              <section
+                className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam"
+                aria-label={t(locale, "planner.dayFill.preview")}
+              >
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                        {t(locale, "planner.dayFill.preview")}
                       </span>
-                      {day.note && (
-                        <span className="text-xs text-river">{day.note}</span>
-                      )}
+                      <span
+                        className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                          proposal.mode === "live"
+                            ? "bg-river/12 text-river-deep"
+                            : "bg-mist text-ink-soft"
+                        }`}
+                      >
+                        {proposal.mode === "live"
+                          ? t(locale, "planner.dayFill.liveBadge")
+                          : t(locale, "planner.dayFill.demoBadge")}
+                      </span>
                     </div>
-                    <ol className="mt-2 space-y-1.5">
-                      {day.stops.map((stop, i) => (
-                        <li
-                          key={`${stop.place.enginePlaceId}-${i}`}
-                          className="flex gap-2 text-sm text-ink"
-                        >
-                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-river/12 text-[11px] font-semibold text-river-deep">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="truncate">{stop.place.name}</div>
-                            {typeof stop.estimatedWalkMinutes === "number" &&
-                              stop.estimatedWalkMinutes > 0 && (
-                                <div className="text-xs text-ink-soft">
-                                  {t(locale, "planner.dayFill.stopWalk")}{" "}
-                                  {stop.estimatedWalkMinutes}
-                                  {t(locale, "planner.dayFill.minutes")}
-                                </div>
-                              )}
-                          </div>
-                        </li>
-                      ))}
-                      {day.stops.length === 0 && (
-                        <li className="text-xs text-ink-soft">
-                          {t(locale, "planner.dayFill.noStops")}
-                        </li>
-                      )}
-                    </ol>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+                    {proposal.rationale && (
+                      <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                        {proposal.rationale}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={applying}
+                    onClick={() => void apply()}
+                    className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:opacity-40"
+                  >
+                    {applying
+                      ? t(locale, "planner.dayFill.applying")
+                      : t(locale, "planner.dayFill.apply")}
+                  </button>
+                </div>
+
+                <ol className="divide-y divide-[color:var(--bp-line)]">
+                  {proposal.days.map((day) => (
+                    <li
+                      key={day.dayIndex}
+                      className="animate-rise px-3 py-3"
+                      style={{
+                        animationDelay: `${day.dayIndex * 55}ms`,
+                      }}
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="font-display text-sm font-semibold tracking-tight text-ink">
+                          {t(locale, "planner.day")} {day.dayIndex + 1}
+                          {day.date ? (
+                            <span className="ml-2 text-sm font-normal text-ink-soft">
+                              {day.date}
+                            </span>
+                          ) : null}
+                        </span>
+                        {day.note && (
+                          <span className="text-xs text-river">{day.note}</span>
+                        )}
+                      </div>
+                      <ol className="mt-2.5 space-y-2">
+                        {day.stops.map((stop, i) => (
+                          <li
+                            key={`${stop.place.enginePlaceId}-${i}`}
+                            className="flex gap-2.5 text-sm text-ink"
+                          >
+                            <span
+                              className="animate-marker-pop mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-river/12 text-[11px] font-semibold text-river-deep"
+                              style={{
+                                animationDelay: `${day.dayIndex * 55 + i * 35}ms`,
+                              }}
+                            >
+                              {i + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="truncate">{stop.place.name}</div>
+                              {typeof stop.estimatedWalkMinutes === "number" &&
+                                stop.estimatedWalkMinutes > 0 && (
+                                  <div className="text-xs text-ink-soft">
+                                    {t(locale, "planner.dayFill.stopWalk")}{" "}
+                                    {stop.estimatedWalkMinutes}
+                                    {t(locale, "planner.dayFill.minutes")}
+                                  </div>
+                                )}
+                            </div>
+                          </li>
+                        ))}
+                        {day.stops.length === 0 && (
+                          <li className="text-xs text-ink-soft">
+                            {t(locale, "planner.dayFill.noStops")}
+                          </li>
+                        )}
+                      </ol>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
         </div>
       )}
     </div>

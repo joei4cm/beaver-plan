@@ -196,6 +196,8 @@
   "planner.pref.baidu": "Baidu",
   "planner.dayFill.title": "Smart day fill",
   "planner.dayFill.support": "Propose a day plan from interests and a daily walk budget — preview first, then apply.",
+  "planner.dayFill.prefsEyebrow": "Preferences",
+  "planner.dayFill.prefsTitle": "Shape the draft",
   "planner.dayFill.interests": "Interests",
   "planner.dayFill.walk": "Max walk / day",
   "planner.dayFill.minutes": "min",
