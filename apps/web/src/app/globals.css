@@ -549,29 +549,45 @@
       0 0 0 4px color-mix(in srgb, var(--bp-river) 24%, transparent);
   }
 
-  /* Tip 005 — drag-to-reorder (planner stops) */
+  /*
+   * Tip 005 — planner stop drag chrome (BEA-204).
+   * Mist-track grip · azure lift shell · river drop line · tip-011 settle.
+   * SoftFailNotice stays on the stops rail (trip-planner); never timber.
+   */
   .bp-stop-drag-handle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.5rem;
-    height: 1.75rem;
+    width: 1.625rem;
+    height: 1.875rem;
     margin-top: 0.125rem;
     flex-shrink: 0;
     cursor: grab;
     border-radius: var(--bp-radius-xs);
     color: var(--bp-ink-soft);
+    background: color-mix(in srgb, var(--bp-mist) 70%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bp-river) 10%, transparent);
     transition:
       color var(--bp-duration-fast) var(--bp-ease-out),
       background-color var(--bp-duration-fast) var(--bp-ease-out),
+      box-shadow var(--bp-duration-fast) var(--bp-ease-out),
       transform 180ms var(--bp-ease-overshoot);
   }
 
-  .bp-stop-drag-handle:hover,
+  .bp-stop-drag-handle:hover {
+    color: var(--bp-river);
+    background: color-mix(in srgb, var(--bp-river) 12%, var(--bp-foam));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bp-river) 28%, transparent);
+    transform: scale(1.06);
+  }
+
   .bp-stop-drag-handle:focus-visible {
     color: var(--bp-river);
-    background-color: color-mix(in srgb, var(--bp-river) 10%, transparent);
+    background: color-mix(in srgb, var(--bp-river) 12%, var(--bp-foam));
     outline: none;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--bp-river) 28%, transparent),
+      0 0 0 2px color-mix(in srgb, var(--bp-focus) 45%, transparent);
   }
 
   .bp-stop-drag-handle:active,
@@ -580,35 +596,97 @@
     cursor: grabbing;
   }
 
+  .bp-stop-drag-handle:active,
   .bp-stop-drag-handle--active {
-    color: var(--bp-river);
+    color: var(--bp-foam);
+    background: var(--bp-river);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--bp-river) 22%, transparent),
+      0 2px 8px var(--bp-shadow-deep);
+    transform: scale(1.08);
   }
 
   .bp-stop-drop-line {
-    height: 2px;
-    border-radius: 1px;
-    /* ~15% ink with Lumen azure mid accent */
+    height: 3px;
+    border-radius: 999px;
+    /* Azure mid accent with soft ink fades — tip-011 in-out on slot moves */
     background: linear-gradient(
       90deg,
       transparent 0%,
-      color-mix(in srgb, var(--bp-ink) 15%, transparent) 10%,
-      color-mix(in srgb, var(--bp-river) 45%, transparent) 50%,
-      color-mix(in srgb, var(--bp-ink) 15%, transparent) 90%,
+      color-mix(in srgb, var(--bp-river) 35%, transparent) 12%,
+      var(--bp-river) 50%,
+      color-mix(in srgb, var(--bp-river) 35%, transparent) 88%,
       transparent 100%
     );
     transform: scaleX(0);
     transform-origin: center;
-    animation: bp-drop-line-in 180ms var(--bp-ease-out) forwards;
-    transition: top 180ms var(--bp-ease-in-out);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bp-river) 12%, transparent);
+    animation: bp-drop-line-in var(--bp-duration-fast) var(--bp-ease-out) forwards;
+    transition: top var(--bp-duration) var(--bp-ease-in-out);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--bp-river) 18%, transparent),
+      0 1px 6px color-mix(in srgb, var(--bp-river) 28%, transparent);
+  }
+
+  .bp-stop-drop-line::before,
+  .bp-stop-drop-line::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    margin-top: -3.5px;
+    border-radius: 999px;
+    background: var(--bp-river);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bp-river) 20%, var(--bp-foam));
+  }
+
+  .bp-stop-drop-line::before {
+    left: 0;
+  }
+
+  .bp-stop-drop-line::after {
+    right: 0;
   }
 
   .bp-stop-lift {
-    transition: transform 180ms var(--bp-ease-overshoot);
+    filter: drop-shadow(0 2px 4px var(--bp-shadow))
+      drop-shadow(0 12px 24px var(--bp-shadow-deep));
+    transition:
+      transform var(--bp-duration-fast) var(--bp-ease-overshoot),
+      filter var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-stop-lift__shell {
+    overflow: hidden;
+    border-radius: var(--bp-radius-sm);
+    border: 1px solid color-mix(in srgb, var(--bp-river) 32%, transparent);
+    background: var(--bp-foam);
+    box-shadow:
+      inset 3px 0 0 var(--bp-river),
+      0 0 0 1px color-mix(in srgb, var(--bp-river) 12%, transparent);
+  }
+
+  .bp-stop-row[data-origin="true"] > * {
+    visibility: hidden;
+  }
+
+  .bp-stop-row[data-origin="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 0.35rem 0.5rem;
+    z-index: 1;
+    border-radius: var(--bp-radius-sm);
+    border: 1.5px dashed color-mix(in srgb, var(--bp-river) 28%, transparent);
+    background: color-mix(in srgb, var(--bp-mist) 55%, transparent);
+    pointer-events: none;
   }
 
   .bp-stop-reorder[data-dragging="true"] {
     cursor: grabbing;
+  }
+
+  .bp-stop-reorder[data-dragging="true"] .bp-stop-row:not([data-origin="true"]) {
+    background: color-mix(in srgb, var(--bp-mist) 22%, transparent);
   }
 
   /* Share canvas — crisp vector preview (matches 2× PNG export pipeline) */
@@ -1014,8 +1092,12 @@
   }
 
   .bp-stop-lift,
-  .bp-stop-row {
+  .bp-stop-lift__shell,
+  .bp-stop-row,
+  .bp-stop-drag-handle {
     transition: none !important;
+    transform: none !important;
+    filter: none !important;
   }
 
   /* Tip 005 reduced motion: keep only the drop line */
@@ -1023,6 +1105,11 @@
     animation: none !important;
     transform: scaleX(1) !important;
     transition: top var(--bp-duration-fast) var(--bp-ease-in-out) !important;
+  }
+
+  .bp-stop-drop-line::before,
+  .bp-stop-drop-line::after {
+    box-shadow: none !important;
   }
 
   .bp-skeleton::after,

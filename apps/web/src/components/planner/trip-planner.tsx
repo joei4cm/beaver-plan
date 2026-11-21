@@ -1115,6 +1115,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               <SoftFailNotice open={listSoftOpen} compact>
                 {listSoftCopy}
               </SoftFailNotice>
+
+              {!dayEmpty ? (
+                <p className="animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80">
+                  <span className="font-semibold uppercase tracking-[0.14em] text-river">
+                    {t(locale, "planner.stops.dragEyebrow")}
+                  </span>
+                  <span className="mx-1.5 text-ink-soft/40" aria-hidden>
+                    ·
+                  </span>
+                  {t(locale, "planner.stops.dragSupport")}
+                </p>
+              ) : null}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1197,9 +1209,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <span aria-hidden className="flex flex-col gap-[3px]">
-                          <span className="block h-0.5 w-3 rounded-full bg-current" />
-                          <span className="block h-0.5 w-3 rounded-full bg-current" />
-                          <span className="block h-0.5 w-3 rounded-full bg-current" />
+                          <span className="block h-[2px] w-3 rounded-full bg-current opacity-90" />
+                          <span className="block h-[2px] w-3 rounded-full bg-current opacity-90" />
+                          <span className="block h-[2px] w-3 rounded-full bg-current opacity-90" />
                         </span>
                       </button>
                       <span
@@ -1287,11 +1299,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           locale={locale}
                         />
                       </div>
-                      <div className="flex shrink-0 flex-col gap-0.5 opacity-45 transition duration-bp-fast ease-bp-out group-hover:opacity-100 group-focus-within:opacity-100">
+                      <div
+                        className={`flex shrink-0 flex-col gap-0.5 rounded-bp-xs bg-mist/45 p-0.5 transition duration-bp-fast ease-bp-out ${
+                          ctx.isDragging
+                            ? "opacity-100"
+                            : "opacity-50 group-hover:opacity-100 group-focus-within:opacity-100"
+                        }`}
+                      >
                         <button
                           type="button"
                           aria-label={t(locale, "planner.moveUp")}
-                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-river/10 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-foam hover:text-river hover:shadow-bp-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
                           onClick={(e) => {
                             e.stopPropagation();
                             void moveStop(stop.id, -1);
@@ -1302,7 +1320,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         <button
                           type="button"
                           aria-label={t(locale, "planner.moveDown")}
-                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-river/10 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-foam hover:text-river hover:shadow-bp-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
                           onClick={(e) => {
                             e.stopPropagation();
                             void moveStop(stop.id, 1);
@@ -1313,7 +1331,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         <button
                           type="button"
                           aria-label={t(locale, "planner.removeStop")}
-                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-timber/10 hover:text-timber focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-foam hover:text-timber focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
                           onClick={(e) => {
                             e.stopPropagation();
                             void removeStop(stop.id);

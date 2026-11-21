@@ -288,6 +288,8 @@
   "planner.stops.support": "用芯片聚焦地图与列表中的站点。",
   "planner.stops.filterLabel": "当日站点芯片",
   "planner.stops.chip": "第 {n} 站",
+  "planner.stops.dragEyebrow": "重排",
+  "planner.stops.dragSupport": "拖动手柄 · ↑↓ 亦可。API 不可用时本地软失败。",
   "planner.scrub.label": "当日时间轴",
   "planner.scrub.value": "第 {n} / {total} 站：{name}",
   "planner.scrub.tick": "第 {n} 站：{name}",

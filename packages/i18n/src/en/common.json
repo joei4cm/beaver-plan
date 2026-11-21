@@ -288,6 +288,8 @@
   "planner.stops.support": "Chip strip to focus a stop on the map and list.",
   "planner.stops.filterLabel": "Day stop chips",
   "planner.stops.chip": "Stop {n}",
+  "planner.stops.dragEyebrow": "Reorder",
+  "planner.stops.dragSupport": "Grip to drag · ↑↓ still works. Soft-fails locally when API is down.",
   "planner.scrub.label": "Day timeline",
   "planner.scrub.value": "Stop {n} of {total}: {name}",
   "planner.scrub.tick": "Stop {n}: {name}",
