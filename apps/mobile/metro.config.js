@@ -46,22 +46,26 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       filePath: path.join(projectRoot, "src/camera-web-stub.ts"),
     };
   }
-  if (moduleName === "react") {
-    return { type: "sourceFile", filePath: path.join(reactRoot, "index.js") };
-  }
-  if (moduleName === "react-dom") {
-    return { type: "sourceFile", filePath: path.join(reactDomRoot, "index.js") };
-  }
-  if (moduleName === "react/jsx-runtime") {
+  // Pin every react / react-dom subpath to mobile's React 18 — monorepo
+  // Next (web) React 19 otherwise sneaks in via react-dom/client and blanks Expo web.
+  if (moduleName === "react" || moduleName.startsWith("react/")) {
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-runtime"),
+      filePath: resolveFromPkg(
+        reactRoot,
+        moduleName === "react" ? "./index.js" : `./${moduleName.slice("react/".length)}`,
+      ),
     };
   }
-  if (moduleName === "react/jsx-dev-runtime") {
+  if (moduleName === "react-dom" || moduleName.startsWith("react-dom/")) {
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-dev-runtime"),
+      filePath: resolveFromPkg(
+        reactDomRoot,
+        moduleName === "react-dom"
+          ? "./index.js"
+          : `./${moduleName.slice("react-dom/".length)}`,
+      ),
     };
   }
   if (moduleName === "scheduler" || moduleName.startsWith("scheduler/")) {
