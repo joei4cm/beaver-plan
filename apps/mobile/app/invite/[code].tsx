@@ -14,6 +14,7 @@ import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import type { TripRole } from "@beaver/core";
 import { acceptInvite, previewInvite } from "../../src/api";
+import { SheetPresence } from "../../src/components/sheet-presence";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { type } from "../../src/theme";
 
@@ -45,6 +46,11 @@ function demoPreview(code: string): Preview {
   };
 }
 
+/**
+ * Expo invite accept — Lumen Route SoftFailNotice chrome after web #130:
+ * azure header rail · compact SoftFailNotice · SheetPresence (#46) ·
+ * StyleSheet.flatten. Soft-fail never timber.
+ */
 export default function InviteScreen() {
   const { code: raw } = useLocalSearchParams<{ code: string }>();
   const code = typeof raw === "string" ? raw : "";
@@ -55,7 +61,6 @@ export default function InviteScreen() {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const rise = useRef(new Animated.Value(0)).current;
-  const sheet = useRef(new Animated.Value(0)).current;
 
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
 
@@ -88,27 +93,16 @@ export default function InviteScreen() {
   useEffect(() => {
     if (loading) {
       rise.setValue(0);
-      sheet.setValue(0);
       return;
     }
     rise.setValue(0);
-    sheet.setValue(0);
-    Animated.parallel([
-      Animated.timing(rise, {
-        toValue: 1,
-        duration: motion.durationMdMs,
-        easing: easeRise,
-        useNativeDriver: true,
-      }),
-      Animated.timing(sheet, {
-        toValue: 1,
-        duration: motion.durationLgMs,
-        delay: 90,
-        easing: easeRise,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [loading, preview, softNotice, error, rise, sheet]);
+    Animated.timing(rise, {
+      toValue: 1,
+      duration: motion.durationMdMs,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [loading, preview, softNotice, error, rise]);
 
   async function join() {
     setJoining(true);
@@ -132,6 +126,13 @@ export default function InviteScreen() {
   }
 
   const sheetOpen = Boolean(preview) || Boolean(softNotice) || Boolean(error);
+  const hardError =
+    error && !softNotice && !isNoiseError(new Error(error)) ? error : null;
+  const softCopy =
+    softNotice ??
+    (error && isNoiseError(new Error(error))
+      ? t(locale, "invite.softOffline")
+      : null);
 
   const riseStyle = {
     opacity: rise,
@@ -140,18 +141,6 @@ export default function InviteScreen() {
         translateY: rise.interpolate({
           inputRange: [0, 1],
           outputRange: [14, 0],
-        }),
-      },
-    ],
-  };
-
-  const sheetStyle = {
-    opacity: sheet,
-    transform: [
-      {
-        translateY: sheet.interpolate({
-          inputRange: [0, 1],
-          outputRange: [22, 0],
         }),
       },
     ],
@@ -185,77 +174,90 @@ export default function InviteScreen() {
             <Text style={styles.support}>{t(locale, "invite.support")}</Text>
           </Animated.View>
 
-          {sheetOpen ? (
-            <Animated.View
-              style={StyleSheet.flatten([styles.sheet, sheetStyle])}
-              accessibilityLabel={t(locale, "invite.title")}
-            >
-              <View style={styles.sheetHeader}>
+          <SheetPresence
+            open={sheetOpen}
+            delayMs={90}
+            rise={18}
+            style={styles.sheet}
+            accessibilityLabel={t(locale, "invite.title")}
+          >
+            {/* Azure hierarchy — eyebrow · title · soft/role badge · SoftFailNotice */}
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetHeaderTitles}>
                 <Text style={styles.sheetEyebrow}>
+                  {t(locale, "invite.sheetEyebrow")}
+                </Text>
+                <Text style={styles.sheetTitle}>
                   {t(locale, "invite.title")}
                 </Text>
+              </View>
+              <View style={styles.sheetBadges}>
+                {softCopy ? (
+                  <Text style={styles.softBadge}>
+                    {t(locale, "invite.softBadge")}
+                  </Text>
+                ) : null}
                 {preview ? (
                   <Text style={styles.roleChip}>
                     {t(locale, `collab.role.${preview.role}`)}
                   </Text>
                 ) : null}
               </View>
+            </View>
 
-              <View style={styles.sheetBody}>
-                <SoftFailNotice open={Boolean(softNotice)}>
-                  {softNotice ?? ""}
-                </SoftFailNotice>
+            <SoftFailNotice open={Boolean(softCopy)} compact>
+              {softCopy ?? ""}
+            </SoftFailNotice>
 
-                {error && !softNotice ? (
-                  <Text style={styles.error} accessibilityRole="alert">
-                    {error}
-                  </Text>
-                ) : null}
+            <View style={styles.sheetBody}>
+              {hardError ? (
+                <Text style={styles.error} accessibilityRole="alert">
+                  {hardError}
+                </Text>
+              ) : null}
 
-                {preview ? (
-                  <>
-                    <View style={styles.tripBlock}>
-                      <Text style={styles.destination}>
-                        {preview.trip.destination ??
-                          t(locale, "planner.trip")}
-                      </Text>
-                      <Text style={styles.tripTitle}>{preview.trip.title}</Text>
-                      <Text style={styles.meta}>
-                        {t(locale, "invite.asRole")}{" "}
-                        <Text style={styles.metaRole}>
-                          {t(locale, `collab.role.${preview.role}`)}
-                        </Text>
-                        {" · "}
-                        <Text style={styles.codeChip}>
-                          {preview.code.toUpperCase()}
-                        </Text>
-                      </Text>
-                    </View>
-
-                    <Pressable
-                      style={StyleSheet.flatten([
-                        styles.cta,
-                        joining ? styles.ctaDisabled : null,
-                      ])}
-                      disabled={joining}
-                      onPress={() => void join()}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.ctaLabel}>
-                        {joining
-                          ? t(locale, "invite.joining")
-                          : t(locale, "invite.join")}
-                      </Text>
-                    </Pressable>
-
-                    <Text style={styles.demoNote}>
-                      {t(locale, "invite.demoNote")}
+              {preview ? (
+                <>
+                  <View style={styles.tripBlock}>
+                    <Text style={styles.destination}>
+                      {preview.trip.destination ?? t(locale, "planner.trip")}
                     </Text>
-                  </>
-                ) : null}
-              </View>
-            </Animated.View>
-          ) : null}
+                    <Text style={styles.tripTitle}>{preview.trip.title}</Text>
+                    <Text style={styles.meta}>
+                      {t(locale, "invite.asRole")}{" "}
+                      <Text style={styles.metaRole}>
+                        {t(locale, `collab.role.${preview.role}`)}
+                      </Text>
+                      {" · "}
+                      <Text style={styles.codeChip}>
+                        {preview.code.toUpperCase()}
+                      </Text>
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.cta,
+                      joining ? styles.ctaDisabled : null,
+                    ])}
+                    disabled={joining}
+                    onPress={() => void join()}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.ctaLabel}>
+                      {joining
+                        ? t(locale, "invite.joining")
+                        : t(locale, "invite.join")}
+                    </Text>
+                  </Pressable>
+
+                  <Text style={styles.demoNote}>
+                    {t(locale, "invite.demoNote")}
+                  </Text>
+                </>
+              ) : null}
+            </View>
+          </SheetPresence>
         </ScrollView>
       )}
     </View>
@@ -348,6 +350,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 246, 250, 0.7)",
     paddingHorizontal: 18,
     paddingVertical: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  sheetHeaderTitles: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
   },
   sheetEyebrow: {
     ...type.body,
@@ -355,7 +367,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.6,
     textTransform: "uppercase",
+    color: colors.river,
+  },
+  sheetTitle: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    color: "rgba(71, 85, 105, 0.8)",
+  },
+  sheetBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  softBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
     color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
   },
   roleChip: {
     ...type.body,
