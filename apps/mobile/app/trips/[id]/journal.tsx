@@ -34,6 +34,7 @@ import {
   uploadMediaBase64,
 } from "../../../src/api";
 import { SoftFailNotice } from "../../../src/components/soft-fail-notice";
+import { SheetPresence } from "../../../src/components/sheet-presence";
 import {
   enqueueJournalCreate,
   flushJournalQueue,
@@ -45,6 +46,8 @@ import { type } from "../../../src/theme";
 
 const locale = "zh-CN" as const;
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
+/** Photo strip slots — web #134 / #124 Polarsteps-like. */
+const PHOTO_SLOT_MAX = 3;
 
 type LocalPhoto = {
   id: string;
@@ -64,12 +67,25 @@ function isNoiseError(err: unknown): boolean {
   );
 }
 
-/** Editorial index mark — web #80 EntryIndexMark parity. */
-function EntryIndexMark({ n }: { n: number }) {
+/** Editorial index mark — mist by default; river when stop-linked (#134 / tip-011). */
+function EntryIndexMark({ n, active }: { n: number; active?: boolean }) {
   return (
-    <Text style={styles.indexMark} accessibilityElementsHidden>
-      {String(n).padStart(2, "0")}
-    </Text>
+    <View
+      style={StyleSheet.flatten([
+        styles.indexMark,
+        active ? styles.indexMarkActive : null,
+      ])}
+      accessibilityElementsHidden
+    >
+      <Text
+        style={StyleSheet.flatten([
+          styles.indexMarkText,
+          active ? styles.indexMarkTextActive : null,
+        ])}
+      >
+        {String(n).padStart(2, "0")}
+      </Text>
+    </View>
   );
 }
 
@@ -376,13 +392,15 @@ export default function JournalScreen() {
     ...pendingMedia.map((url) => ({ key: url, uri: resolveMediaUrl(url) })),
     ...pendingLocal.map((p) => ({ key: p.id, uri: p.preview })),
   ];
-  const emptySlots = Math.max(0, 3 - previewMedia.length);
-  const showComposeSoftFail = demoSeeded || softNotice || composeSoftFail;
-  const composeSoftCopy = softNotice
-    ? t(locale, "journal.softOffline")
-    : composeSoftFail && !demoSeeded
-      ? t(locale, "journal.composeSoftFail")
+  const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
+  /** List SoftFail — demo seed / offline; compose SoftFail stays media-scoped (#134). */
+  const showListSoftFail = demoSeeded || softNotice;
+  const listSoftCopy =
+    softNotice && !isDeviceOnline()
+      ? t(locale, "journal.softOffline")
       : t(locale, "journal.demoNotice");
+  const showComposeSoftFail =
+    composeSoftFail && !demoSeeded && !softNotice;
 
   return (
     <View style={styles.root}>
@@ -457,97 +475,213 @@ export default function JournalScreen() {
             </ScrollView>
 
             <View style={styles.listPane}>
+              {/* Entry list chrome — azure rail · count · stop-linked · SoftFail (#134) */}
               <View style={styles.listHead}>
-                <Text style={styles.listEyebrow}>
-                  {t(locale, "journal.listEyebrow")}
-                  {" · "}
-                  {t(locale, "journal.daySection").replace(
-                    "{n}",
-                    String(activeDayIndex + 1),
-                  )}
-                </Text>
+                <View style={styles.listHeadTop}>
+                  <Text style={styles.listEyebrow}>
+                    {t(locale, "journal.listEyebrow")}
+                    {" · "}
+                    {t(locale, "journal.daySection").replace(
+                      "{n}",
+                      String(activeDayIndex + 1),
+                    )}
+                  </Text>
+                  <View style={styles.listBadges}>
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>
+                        {t(locale, "journal.entryCount").replace(
+                          "{n}",
+                          String(visible.length),
+                        )}
+                      </Text>
+                    </View>
+                    {stopId ? (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {t(locale, "journal.entryLinked")}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
                 <Text style={styles.daySectionTitle}>
                   {activeDay?.note ?? activeDay?.date ?? trip?.title ?? "—"}
                 </Text>
-                <Text style={styles.entryCount}>
+                <Text style={styles.entryDetailHint}>
                   {activeDay?.date ? `${activeDay.date} · ` : ""}
-                  {t(locale, "journal.entryCount").replace(
-                    "{n}",
-                    String(visible.length),
-                  )}
+                  {t(locale, "journal.entryDetailHint")}
                 </Text>
               </View>
 
-              {visible.map((entry, index) => {
-                const stop = stops.find((s) => s.id === entry.stopId);
-                const isLast = index === visible.length - 1;
-                return (
-                  <View
-                    key={entry.id}
-                    style={StyleSheet.flatten([
-                      styles.entry,
-                      isLast ? styles.entryLast : null,
-                    ])}
-                  >
-                    <EntryIndexMark n={index + 1} />
-                    <View style={styles.entryBodyCol}>
-                      <Text style={styles.entryMeta}>
-                        {stop?.place.name ??
-                          days.find((d) => d.id === entry.dayId)?.note ??
-                          t(locale, "journal.dayNote")}
-                        {entry.id.startsWith("local-")
-                          ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
-                          : ""}
-                      </Text>
-                      <Text style={styles.entryBody}>
-                        {entry.body || "·"}
-                      </Text>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                      >
-                        {entry.media.map((url) => (
-                          <Image
-                            key={url}
-                            source={{ uri: resolveMediaUrl(url) }}
-                            style={styles.thumb}
-                          />
-                        ))}
-                        {entry.media.length === 0 ? (
-                          <>
-                            <View style={styles.slot} />
-                            <View style={styles.slot} />
-                          </>
+              <SoftFailNotice
+                open={showListSoftFail}
+                compact
+                style={styles.listSoftFail}
+              >
+                {listSoftCopy}
+              </SoftFailNotice>
+
+              <SheetPresence
+                open={!loading}
+                key={`entries-${dayId ?? "all"}`}
+                rise={10}
+                delayMs={40}
+                accessibilityLabel={t(locale, "journal.listEyebrow")}
+              >
+                {visible.map((entry, index) => {
+                  const stop = stops.find((s) => s.id === entry.stopId);
+                  const scrubMatch = Boolean(
+                    stopId && entry.stopId === stopId,
+                  );
+                  const isLast = index === visible.length - 1;
+                  const placeLabel =
+                    stop?.place.name ??
+                    days.find((d) => d.id === entry.dayId)?.note ??
+                    t(locale, "journal.dayNote");
+                  const selectEntry = () => {
+                    if (entry.stopId) setStopId(entry.stopId);
+                  };
+                  return (
+                    <Pressable
+                      key={entry.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: scrubMatch }}
+                      accessibilityLabel={`${t(locale, "journal.entryEyebrow")} ${String(index + 1).padStart(2, "0")} · ${placeLabel}`}
+                      onPress={selectEntry}
+                      style={StyleSheet.flatten([
+                        styles.entry,
+                        scrubMatch ? styles.entrySelected : null,
+                        isLast ? styles.entryLast : null,
+                      ])}
+                    >
+                      <EntryIndexMark n={index + 1} active={scrubMatch} />
+                      <View style={styles.entryBodyCol}>
+                        <View style={styles.entryMetaRow}>
+                          <Text style={styles.entryMeta} numberOfLines={2}>
+                            {t(locale, "journal.entryEyebrow")}
+                            {" · "}
+                            {placeLabel}
+                          </Text>
+                          {scrubMatch ? (
+                            <View style={styles.linkedChip}>
+                              <Text style={styles.linkedChipText}>
+                                {t(locale, "journal.entryLinked")}
+                              </Text>
+                            </View>
+                          ) : null}
+                          {entry.id.startsWith("local-") ? (
+                            <View style={styles.pendingChip}>
+                              <Text style={styles.pendingChipText}>
+                                {t(locale, "offline.pending").replace(
+                                  "{n}",
+                                  "1",
+                                )}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        {entry.body ? (
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.entryBody,
+                              scrubMatch ? styles.entryBodySelected : null,
+                            ])}
+                          >
+                            {entry.body}
+                          </Text>
                         ) : null}
-                      </ScrollView>
+                        {/* Entry photo strip — lead frame larger (#134 / #124). */}
+                        <View
+                          style={styles.photoStrip}
+                          accessibilityLabel={t(locale, "journal.photoStrip")}
+                        >
+                          {entry.media.length > 0 ? (
+                            <>
+                              <View style={styles.photoStripHead}>
+                                <Text style={styles.photoStripLabel}>
+                                  {t(locale, "journal.photoStrip")}
+                                </Text>
+                                <View style={styles.badge}>
+                                  <Text style={styles.badgeText}>
+                                    {t(locale, "journal.photoCount")
+                                      .replace(
+                                        "{n}",
+                                        String(entry.media.length),
+                                      )
+                                      .replace(
+                                        "{max}",
+                                        String(
+                                          Math.max(
+                                            entry.media.length,
+                                            PHOTO_SLOT_MAX,
+                                          ),
+                                        ),
+                                      )}
+                                  </Text>
+                                </View>
+                              </View>
+                              <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                              >
+                                {entry.media.map((url, mediaIndex) => (
+                                  <Image
+                                    key={`${entry.id}-${mediaIndex}`}
+                                    source={{ uri: resolveMediaUrl(url) }}
+                                    style={StyleSheet.flatten([
+                                      styles.thumb,
+                                      mediaIndex === 0
+                                        ? styles.thumbLead
+                                        : null,
+                                    ])}
+                                  />
+                                ))}
+                              </ScrollView>
+                            </>
+                          ) : (
+                            <>
+                              <Text style={styles.photoSlotsLabel}>
+                                {t(locale, "journal.photoSlots")}
+                              </Text>
+                              <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                              >
+                                <View style={styles.slot} />
+                                <View style={styles.slot} />
+                              </ScrollView>
+                            </>
+                          )}
+                        </View>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+
+                {visible.length === 0 ? (
+                  <View style={styles.empty}>
+                    <Text style={styles.emptyTitle}>
+                      {t(locale, "journal.empty")}
+                    </Text>
+                    <Text style={styles.hint}>
+                      {t(locale, "journal.emptyHint")}
+                    </Text>
+                    <Pressable
+                      style={StyleSheet.flatten([styles.emptyCta])}
+                      onPress={() => composeRef.current?.focus()}
+                    >
+                      <Text style={styles.emptyCtaText}>
+                        {t(locale, "journal.emptyCta")}
+                      </Text>
+                    </Pressable>
+                    <View style={styles.slotRow}>
+                      <View style={styles.slot} />
+                      <View style={styles.slot} />
+                      <View style={styles.slot} />
                     </View>
                   </View>
-                );
-              })}
-
-              {visible.length === 0 ? (
-                <View style={styles.empty}>
-                  <Text style={styles.emptyTitle}>
-                    {t(locale, "journal.empty")}
-                  </Text>
-                  <Text style={styles.hint}>
-                    {t(locale, "journal.emptyHint")}
-                  </Text>
-                  <Pressable
-                    style={styles.emptyCta}
-                    onPress={() => composeRef.current?.focus()}
-                  >
-                    <Text style={styles.emptyCtaText}>
-                      {t(locale, "journal.emptyCta")}
-                    </Text>
-                  </Pressable>
-                  <View style={styles.slotRow}>
-                    <View style={styles.slot} />
-                    <View style={styles.slot} />
-                    <View style={styles.slot} />
-                  </View>
-                </View>
-              ) : null}
+                ) : null}
+              </SheetPresence>
             </View>
 
             {/* Azure hierarchy compose rail — web #110 SoftFailNotice + tip-011. */}
@@ -570,11 +704,13 @@ export default function JournalScreen() {
               </View>
 
               <View style={styles.composeBody}>
+                {/* Compose-scoped SoftFail — media/API only; demo seed lives under entry list */}
                 <SoftFailNotice
                   open={showComposeSoftFail}
+                  compact
                   style={styles.composeSoftFail}
                 >
-                  {composeSoftCopy}
+                  {t(locale, "journal.composeSoftFail")}
                 </SoftFailNotice>
 
                 <Text style={styles.bindLabel}>
@@ -831,7 +967,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    marginBottom: 4,
+    marginBottom: 8,
+    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingLeft: 12,
+    marginHorizontal: -4,
+  },
+  listHeadTop: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
   },
   listEyebrow: {
     ...type.body,
@@ -840,6 +988,28 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
+    flexShrink: 1,
+  },
+  listBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  badge: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  badgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.riverDeep,
+    fontVariant: ["tabular-nums"],
   },
   daySectionTitle: {
     ...type.display,
@@ -849,34 +1019,71 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: colors.ink,
   },
-  entryCount: {
+  entryDetailHint: {
     ...type.body,
     marginTop: 8,
     fontSize: 13,
+    lineHeight: 19,
     color: colors.inkSoft,
+  },
+  listSoftFail: {
+    marginBottom: 4,
+    marginHorizontal: -4,
   },
   entry: {
     flexDirection: "row",
     gap: 14,
     paddingVertical: 18,
+    paddingHorizontal: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
+    borderRadius: radius.sm,
+  },
+  entrySelected: {
+    backgroundColor: "rgba(47, 107, 255, 0.08)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   entryLast: {
     borderBottomWidth: 0,
   },
   indexMark: {
-    ...type.display,
+    marginTop: 2,
     width: 36,
-    fontSize: 26,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(230, 236, 245, 0.8)",
+  },
+  indexMarkActive: {
+    backgroundColor: colors.river,
+    shadowColor: colors.river,
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  indexMarkText: {
+    ...type.display,
+    fontSize: 13,
     fontWeight: "700",
     fontVariant: ["tabular-nums"],
-    color: colors.mist,
-    lineHeight: 30,
+    color: colors.inkSoft,
+  },
+  indexMarkTextActive: {
+    color: colors.foam,
   },
   entryBodyCol: {
     flex: 1,
     minWidth: 0,
+  },
+  entryMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
   },
   entryMeta: {
     ...type.body,
@@ -885,7 +1092,35 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
-    marginBottom: 8,
+    flexShrink: 1,
+  },
+  linkedChip: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  linkedChipText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  pendingChip: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  pendingChipText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
   },
   entryBody: {
     ...type.display,
@@ -896,12 +1131,49 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.3,
   },
+  entryBodySelected: {
+    fontWeight: "700",
+  },
+  photoStrip: {
+    marginTop: 2,
+  },
+  photoStripHead: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 8,
+  },
+  photoStripLabel: {
+    ...type.body,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: "rgba(47, 107, 255, 0.8)",
+    fontWeight: "700",
+  },
+  photoSlotsLabel: {
+    ...type.body,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: "rgba(100, 116, 139, 0.7)",
+    fontWeight: "600",
+    marginBottom: 8,
+  },
   thumb: {
     width: 72,
     height: 96,
     marginRight: 8,
     borderRadius: radius.sm,
     backgroundColor: colors.mist,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  thumbLead: {
+    width: 84,
+    height: 112,
+    borderColor: "rgba(47, 107, 255, 0.35)",
   },
   slot: {
     width: 72,
