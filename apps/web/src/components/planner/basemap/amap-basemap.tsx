@@ -61,6 +61,8 @@ export function AmapBasemap({
   onFailRef.current = onEngineFail;
   const fittedRef = useRef(false);
   const lastFitNonceRef = useRef(0);
+  const prevSelectedRef = useRef<string | null>(null);
+  const markersPaintedRef = useRef(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -96,6 +98,8 @@ export function AmapBasemap({
       cancelled = true;
       mapRef.current?.destroy();
       mapRef.current = null;
+      markersPaintedRef.current = false;
+      prevSelectedRef.current = null;
     };
   }, []);
 
@@ -125,23 +129,33 @@ export function AmapBasemap({
       return poly;
     });
 
+    const selectionChanged =
+      selectedStopId !== null && selectedStopId !== prevSelectedRef.current;
+    const firstPaint = !markersPaintedRef.current;
+
     markersRef.current = showStops
       ? stops.map((stop, index) => {
           const selected = stop.id === selectedStopId;
+          // Tip-011 pop only for newly selected / first selected paint.
+          const pop =
+            selected && (selectionChanged || (firstPaint && selected));
           const marker = new AMap.Marker({
             position: [stop.place.lng, stop.place.lat],
             content: markerHtml(index, selected, {
               centerWithTransform: true,
-              pop: selected,
+              pop,
             }),
-            // Anchor at pin center (active footprint ~30px).
-            offset: new AMap.Pixel(selected ? -15 : -11, selected ? -15 : -11),
+            // Shell is 48×48 and CSS-centered; keep AMap offset at origin.
+            offset: new AMap.Pixel(0, 0),
           });
           marker.on("click", () => onSelectRef.current(stop.id));
           map.add(marker);
           return marker;
         })
       : [];
+
+    if (showStops) markersPaintedRef.current = true;
+    prevSelectedRef.current = selectedStopId;
 
     const fitPts = collectFitPoints(stops, collectPathLines(stops, legs));
     const locateRequested = fitNonce !== lastFitNonceRef.current;
@@ -153,7 +167,7 @@ export function AmapBasemap({
         [56, 56, 56, 56],
       );
       fittedRef.current = true;
-    } else if (selectedStopId && showStops) {
+    } else if (selectedStopId && showStops && selectionChanged) {
       const sel = stops.find((s) => s.id === selectedStopId);
       if (sel) map.setCenter([sel.place.lng, sel.place.lat]);
     }

@@ -125,8 +125,9 @@ export function BaiduBasemap({
         const label = new BMap.Label(String(index + 1), {
           offset: new BMap.Size(-8, -8),
         });
+        // Lumen depth parity with .bp-map-marker (tokens inlined for Baidu Label).
         label.setStyle({
-          border: "2.5px solid #2F6BFF",
+          border: selected ? "2.5px solid #1a4fd6" : "2.5px solid #2F6BFF",
           borderRadius: "999px",
           width: selected ? "30px" : "22px",
           height: selected ? "30px" : "22px",
@@ -137,8 +138,8 @@ export function BaiduBasemap({
           fontWeight: "700",
           fontSize: selected ? "12px" : "11px",
           boxShadow: selected
-            ? "0 0 0 4px rgba(47,107,255,0.28),0 6px 16px rgba(15,23,42,0.2)"
-            : "0 2px 8px rgba(15,23,42,0.16)",
+            ? "0 0 0 3px rgba(47,107,255,0.28),0 2px 4px rgba(15,23,42,0.08),0 10px 22px rgba(15,23,42,0.18)"
+            : "0 1px 2px rgba(15,23,42,0.08),0 4px 12px rgba(15,23,42,0.18)",
         });
         marker.setLabel(label);
         marker.addEventListener("click", () => onSelectRef.current(stop.id));

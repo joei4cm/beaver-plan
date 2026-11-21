@@ -148,11 +148,12 @@ export function GoogleBasemap({
             },
             icon: {
               path: g.SymbolPath.CIRCLE,
-              scale: selected ? 14 : 10,
+              // Depth parity with .bp-map-marker — selected lifts via scale + stroke.
+              scale: selected ? 15 : 10,
               fillColor: selected ? "#2F6BFF" : "#FFFFFF",
               fillOpacity: 1,
-              strokeColor: "#2F6BFF",
-              strokeWeight: selected ? 3 : 2.5,
+              strokeColor: selected ? "#1a4fd6" : "#2F6BFF",
+              strokeWeight: selected ? 3.5 : 2.5,
             },
             zIndex: selected ? 1000 : index,
           });

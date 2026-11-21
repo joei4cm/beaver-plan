@@ -23,7 +23,7 @@ import { MapSkeleton } from "./map-skeleton";
  * - Leaflet JS/CSS load only inside this effect (code-split from planner shell).
  * - Fit bounds *before* attaching tiles so the first tile request matches the route.
  * - Skeleton stays until the first tile layer `load` (or soft-fail swap).
- * - Stop markers: tip-011 overshoot pop on select; fixed DivIcon footprint.
+ * - Stop markers: tip-011 overshoot + lift on select; halo depth; fixed DivIcon.
  * - Route polylines: SVG renderer + tip-011 ease draw-in (azure / mode stroke).
  */
 const OSM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
