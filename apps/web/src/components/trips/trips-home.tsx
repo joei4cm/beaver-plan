@@ -209,15 +209,15 @@ export function TripsHome({ locale }: Props) {
   const loading = pending && !hydrated;
   const listSoft = Boolean(softNotice);
   /**
-   * Seed CTA SoftFailNotice chrome (BEA-262 after #142/#175/#196):
-   * seed sheet owns compact SoftFail under azure rail · Soft seed badge ·
-   * SheetPresence CTAs · tip-011 (#46). List SoftFail yields while seed
+   * Empty SoftFailNotice depth (BEA-291 after #175/#201):
+   * empty owns compact SoftFail under azure Start rail · Soft empty badge ·
+   * emptySupport · emptySoftFail copy (never inherit list softNotice) ·
+   * SheetPresence CTAs · tip-011 (#46). List SoftFail yields while empty
    * owns (no double depth). Soft copy never timber / Failed to fetch.
    */
-  const seedOwnsSoft = showEmptyInvite;
-  const seedSoftOpen = seedOwnsSoft;
-  const seedSoftCopy =
-    softNotice ?? t(locale, "trips.seedSoftFail");
+  const emptyOwnsSoft = showEmptyInvite;
+  const emptySoftOpen = emptyOwnsSoft;
+  const emptySoftCopy = t(locale, "trips.emptySoftFail");
   /**
    * Playbooks SoftFailNotice chrome (BEA-271 after #166/#201):
    * playbooks sheet owns compact SoftFail under azure rail · Soft playbooks
@@ -291,10 +291,10 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        {/* Loading SoftFail yields while seed owns soft-fail (no double depth). */}
+        {/* Loading SoftFail yields while empty owns soft-fail (no double depth). */}
         {loading ? (
           <SoftFailNotice
-            open={!error && Boolean(softNotice) && !seedOwnsSoft}
+            open={!error && Boolean(softNotice) && !emptyOwnsSoft}
             className="mb-6"
           >
             {softNotice ?? ""}
@@ -309,9 +309,10 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.seedRail")}
           >
             {/*
-              Seed CTA SoftFail chrome (BEA-262 after #142/#175/#196):
-              azure seed rail · Soft seed badge · compact SoftFailNotice ·
-              SheetPresence CTAs · tip-011 rise — never timber.
+              Empty SoftFail depth (BEA-291 after #175/#201):
+              azure Start rail · Soft empty badge · emptySupport ·
+              compact SoftFailNotice · SheetPresence CTAs · tip-011 rise —
+              never timber / Failed to fetch.
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -319,29 +320,29 @@ export function TripsHome({ locale }: Props) {
                   {t(locale, "trips.seedRail")}
                 </span>
                 <span className="text-[11px] leading-snug text-ink-soft/80">
-                  {t(locale, "trips.seedSupport")}
+                  {t(locale, "trips.emptySupport")}
                 </span>
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  seedSoftOpen
+                  emptySoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {seedSoftOpen
-                  ? t(locale, "trips.seedSoftBadge")
+                {emptySoftOpen
+                  ? t(locale, "trips.emptySoftBadge")
                   : t(locale, "trips.seedReady")}
               </span>
             </header>
 
-            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; never timber / Failed to fetch. */}
             <SoftFailNotice
-              open={!error && seedSoftOpen}
+              open={!error && emptySoftOpen}
               compact
               className="border-b border-[color:var(--bp-line)]"
             >
-              {seedSoftCopy}
+              {emptySoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
@@ -450,9 +451,9 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
-            {/* List SoftFail yields while seed owns soft-fail (no double depth). */}
+            {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
             <SoftFailNotice
-              open={!error && Boolean(softNotice) && !seedOwnsSoft}
+              open={!error && Boolean(softNotice) && !emptyOwnsSoft}
               compact
             >
               {softNotice ?? ""}
