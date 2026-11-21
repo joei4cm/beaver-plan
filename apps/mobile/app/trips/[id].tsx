@@ -16,6 +16,8 @@ import {
 import {
   DEMO_PLACE_TAGS,
   DemoRoutingEngine,
+  formatDistance,
+  formatDuration,
   getDemoPlaceDetails,
   routeAdjacentStops,
   sampleKyotoCollab,
@@ -33,6 +35,9 @@ import {
   type Trip,
   type TripComment,
 } from "@beaver/core";
+
+type TravelMode = "walk" | "transit" | "drive";
+const TRAVEL_MODES: TravelMode[] = ["walk", "transit", "drive"];
 import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import type { JournalEntry, TripMember, TripRole } from "@beaver/core";
@@ -152,12 +157,16 @@ export default function TripDetailScreen() {
   const [routing, setRouting] = useState(false);
   /** Soft demo when Directions API absent / route-day soft-fails. */
   const [routingDemo, setRoutingDemo] = useState(true);
+  /** Transit filter chips — walk / transit / drive (web #129). */
+  const [travelMode, setTravelMode] = useState<TravelMode>("transit");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
   const searchInputRef = useRef<TextInput | null>(null);
   const rise = useRef(new Animated.Value(0)).current;
   const sheet = useRef(new Animated.Value(0)).current;
   const stopPop = useRef(new Animated.Value(1)).current;
+  /** Tip-011 settle on mode chip select (web animate-stop-select). */
+  const modeChipPop = useRef(new Animated.Value(1)).current;
   const presencePulse = useRef(new Animated.Value(0)).current;
   /** Tip 015 stretch + tip-011 settle — underline select (web #117). */
   const dayTabLayouts = useRef(new Map<string, { x: number; width: number }>());
@@ -426,6 +435,20 @@ export default function TripDetailScreen() {
   }, [selectedStopId, stopPop]);
 
   useEffect(() => {
+    if (reduceMotionRef.current) {
+      modeChipPop.setValue(1);
+      return;
+    }
+    modeChipPop.setValue(0.88);
+    Animated.timing(modeChipPop, {
+      toValue: 1,
+      duration: motion.durationSmMs,
+      easing: easePop,
+      useNativeDriver: true,
+    }).start();
+  }, [travelMode, modeChipPop]);
+
+  useEffect(() => {
     let alive = true;
     void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
       if (alive) reduceMotionRef.current = enabled;
@@ -603,7 +626,11 @@ export default function TripDetailScreen() {
   }, [legs, dayStops]);
 
   const routeDayStops = useCallback(
-    async (activeDayId: string, orderedStops: Stop[]) => {
+    async (
+      activeDayId: string,
+      orderedStops: Stop[],
+      mode: TravelMode = travelMode,
+    ) => {
       if (orderedStops.length < 2) {
         setLegs((prev) => {
           const ids = new Set(orderedStops.map((s) => s.id));
@@ -618,7 +645,7 @@ export default function TripDetailScreen() {
         const res = await routeTripDay({
           tripId,
           dayId: activeDayId,
-          mode: "transit",
+          mode,
         });
         setLegs((prev) => {
           const ids = new Set(orderedStops.map((s) => s.id));
@@ -637,7 +664,7 @@ export default function TripDetailScreen() {
         const demoLegs = await routeAdjacentStops(
           routingEngine,
           orderedStops,
-          "transit",
+          mode,
           locale,
         );
         setLegs((prev) => {
@@ -656,8 +683,17 @@ export default function TripDetailScreen() {
         setRouting(false);
       }
     },
-    [tripId],
+    [travelMode, tripId],
   );
+
+  function selectTravelMode(next: TravelMode) {
+    setTravelMode((prev) => (prev === next ? prev : next));
+  }
+
+  function generateRoutes() {
+    if (!dayId || dayStops.length < 2 || routing) return;
+    void routeDayStops(dayId, dayStops, travelMode);
+  }
 
   const runSearch = useCallback(
     async (text: string) => {
@@ -1024,6 +1060,108 @@ export default function TripDetailScreen() {
                   })}
                 </View>
               </ScrollView>
+
+              {/* Transit filter chips — mist-track · azure select · SoftFailNotice · #46 */}
+              <View style={styles.modeFilter}>
+                <View style={styles.modeFilterHead}>
+                  <Text style={styles.modeEyebrow}>
+                    {t(locale, "planner.mode.eyebrow")}
+                  </Text>
+                  <Text style={styles.modeSupport}>
+                    {t(locale, "planner.mode.support")}
+                  </Text>
+                  <View style={styles.modeSelectedBadge}>
+                    <Text style={styles.modeSelectedBadgeText}>
+                      {t(locale, `planner.mode.${travelMode}`)} ·{" "}
+                      {t(locale, "planner.mode.selected")}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.modeFilterBody}>
+                  <View
+                    style={styles.modeMistTrack}
+                    accessibilityRole="tablist"
+                    accessibilityLabel={t(locale, "planner.mode.filterLabel")}
+                  >
+                    {TRAVEL_MODES.map((m) => {
+                      const on = travelMode === m;
+                      return (
+                        <Pressable
+                          key={m}
+                          onPress={() => selectTravelMode(m)}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected: on }}
+                          style={StyleSheet.flatten([
+                            styles.modeChip,
+                            on ? styles.modeChipOn : null,
+                          ])}
+                        >
+                          <Animated.Text
+                            style={StyleSheet.flatten([
+                              styles.modeChipLabel,
+                              on ? styles.modeChipLabelOn : null,
+                              on
+                                ? { transform: [{ scale: modeChipPop }] }
+                                : null,
+                            ])}
+                          >
+                            {t(locale, `planner.mode.${m}`)}
+                          </Animated.Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <Pressable
+                    disabled={routing || dayStops.length < 2}
+                    onPress={generateRoutes}
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      disabled: routing || dayStops.length < 2,
+                      busy: routing,
+                    }}
+                    style={StyleSheet.flatten([
+                      styles.modeGenerate,
+                      routing || dayStops.length < 2
+                        ? styles.modeGenerateDisabled
+                        : null,
+                    ])}
+                  >
+                    <Text style={styles.modeGenerateLabel}>
+                      {routing
+                        ? t(locale, "planner.routing")
+                        : t(locale, "planner.generateRoutes")}
+                    </Text>
+                  </Pressable>
+
+                  {dayLegs.length > 0 ? (
+                    <Text style={styles.modeLegSummary}>
+                      {dayLegs
+                        .map(
+                          (l) =>
+                            `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                        )
+                        .join("  →  ")}
+                    </Text>
+                  ) : null}
+
+                  {routingDemo && dayLegs.length > 0 ? (
+                    <View style={styles.modeDemoBadge}>
+                      <Text style={styles.modeDemoBadgeText}>
+                        {t(locale, "planner.transfer.demoBadge")}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <SoftFailNotice
+                  open={routingDemo && dayLegs.length > 0}
+                  compact
+                >
+                  {t(locale, "planner.transfer.demoNotice")}
+                </SoftFailNotice>
+              </View>
 
               <View style={styles.searchWrap}>
                 <TextInput
@@ -1905,6 +2043,133 @@ const styles = StyleSheet.create({
   dayChipDateActive: {
     color: colors.ink,
     fontWeight: "700",
+  },
+  /* Transit filter chips — mist-track · azure select (web #129). */
+  modeFilter: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  modeFilterHead: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: 8,
+    rowGap: 4,
+    paddingHorizontal: 2,
+  },
+  modeEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  modeSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(100, 116, 139, 0.8)",
+  },
+  modeSelectedBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  modeSelectedBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  modeFilterBody: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: 10,
+    rowGap: 8,
+  },
+  modeMistTrack: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 2,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    padding: 4,
+  },
+  modeChip: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "transparent",
+  },
+  modeChipOn: {
+    backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    /* Azure ring — web ring-river/25 */
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.25)",
+  },
+  modeChipLabel: {
+    ...type.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.inkSoft,
+  },
+  modeChipLabelOn: {
+    color: colors.river,
+    fontWeight: "700",
+  },
+  modeGenerate: {
+    borderRadius: radius.md,
+    backgroundColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  modeGenerateDisabled: {
+    opacity: 0.4,
+  },
+  modeGenerateLabel: {
+    ...type.body,
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.foam,
+  },
+  modeLegSummary: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.inkSoft,
+    fontVariant: ["tabular-nums"],
+    paddingVertical: 2,
+  },
+  modeDemoBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  modeDemoBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
   },
   searchWrap: {
     paddingHorizontal: 12,
