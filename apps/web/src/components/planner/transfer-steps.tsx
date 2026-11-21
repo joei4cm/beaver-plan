@@ -1,11 +1,13 @@
 "use client";
 
+import { useRef } from "react";
 import type { Leg, TransitStep } from "@beaver/core";
 import {
   formatDistance,
   formatDuration,
   formatTransitStepLabel,
   normalizeStepMode,
+  summarizeTransfer,
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
@@ -13,7 +15,7 @@ import { SheetPresence } from "@/components/ui/sheet-presence";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 
 type Props = {
-  leg: Leg;
+  leg: Leg | null;
   locale: Locale;
   /** Compact inline under a stop vs expanded panel. */
   variant?: "inline" | "panel";
@@ -24,7 +26,21 @@ type Props = {
    * avoids repeating the notice on every leg row).
    */
   showSoftFail?: boolean;
+  /**
+   * Soft-fail empty shell when Directions is absent and this stop has
+   * no leg / no transit steps yet (selected stop only).
+   */
+  showEmpty?: boolean;
 };
+
+/** Azure section eyebrow — matches place-intel / booking depth chrome. */
+function SectionEyebrow({ children }: { children: string }) {
+  return (
+    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+      {children}
+    </p>
+  );
+}
 
 function stepKindLabel(locale: Locale, mode: string): string {
   const kind = normalizeStepMode(mode);
@@ -140,7 +156,7 @@ function StepRow({
 
         {kind === "transit" && step.lineName ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river transition duration-bp-fast ease-bp-out">
+            <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river shadow-[inset_2px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out">
               <span className="truncate">{step.lineName}</span>
             </span>
             {step.fromStopName && step.toStopName && (
@@ -174,9 +190,50 @@ function modeLabel(locale: Locale, mode: Leg["mode"]): string {
   return t(locale, "planner.mode.drive");
 }
 
+function LegCardHeader({
+  locale,
+  demoMode,
+  view,
+}: {
+  locale: Locale;
+  demoMode: boolean;
+  view?: Leg | null;
+}) {
+  return (
+    <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+          {t(locale, "planner.transfer.title")}
+        </span>
+        <span
+          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+            demoMode ? "bg-mist text-ink-soft" : "bg-river/12 text-river-deep"
+          }`}
+        >
+          {demoMode
+            ? t(locale, "planner.transfer.demoBadge")
+            : t(locale, "planner.transfer.liveBadge")}
+        </span>
+      </div>
+      {view ? (
+        <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
+          <span className="font-display text-sm font-semibold tracking-tight text-ink">
+            {formatDuration(view.durationSec)}
+          </span>
+          <span className="mx-1.5 text-ink-soft/40">·</span>
+          {formatDistance(view.distanceM)}
+          <span className="mx-1.5 text-ink-soft/40">·</span>
+          {modeLabel(locale, view.mode)}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 /**
- * Transfer / transit step list — Lumen Route hierarchy under itinerary stops.
- * Nested sheet craft (#46 radii / easing); SoftFailNotice when Directions absent.
+ * Transit leg card — deeper Lumen hierarchy after #61:
+ * azure header rail · summary · step rails · SoftFailNotice / soft-fail empty,
+ * SheetPresence + #46 radii / easing.
  */
 export function TransferSteps({
   leg,
@@ -184,14 +241,22 @@ export function TransferSteps({
   variant = "inline",
   demoMode = false,
   showSoftFail = false,
+  showEmpty = false,
 }: Props) {
-  const open = leg.transitSteps.length > 0;
+  const snapRef = useRef<Leg | null>(null);
+  if (leg) snapRef.current = leg;
+
+  const view = leg ?? snapRef.current;
+  const hasSteps = Boolean(view && view.transitSteps.length > 0);
+  const empty = Boolean(showEmpty && !leg);
+  const open = Boolean(leg) || empty;
+  const noticeDemo =
+    demoMode && (showSoftFail || variant === "panel" || empty);
+
   const shell =
     variant === "panel"
       ? "overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft backdrop-blur-sm"
       : "mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft";
-
-  const notice = demoMode && (showSoftFail || variant === "panel");
 
   return (
     <SheetPresence
@@ -200,49 +265,76 @@ export function TransferSteps({
       style={{ animationDelay: "50ms" }}
       aria-label={t(locale, "planner.transfer.title")}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            {t(locale, "planner.transfer.title")}
-          </span>
-          <span
-            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              demoMode
-                ? "bg-mist text-ink-soft"
-                : "bg-river/12 text-river-deep"
-            }`}
+      {empty ? (
+        <>
+          <LegCardHeader locale={locale} demoMode={demoMode} />
+          <div
+            className="animate-fade space-y-1.5 px-3 py-4"
+            style={{ animationDelay: "60ms" }}
           >
-            {demoMode
-              ? t(locale, "planner.transfer.demoBadge")
-              : t(locale, "planner.transfer.liveBadge")}
-          </span>
-        </div>
-        <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
-          <span className="font-display text-sm font-semibold tracking-tight text-ink">
-            {formatDuration(leg.durationSec)}
-          </span>
-          <span className="mx-1.5 text-ink-soft/40">·</span>
-          {formatDistance(leg.distanceM)}
-          <span className="mx-1.5 text-ink-soft/40">·</span>
-          {modeLabel(locale, leg.mode)}
-        </span>
-      </div>
+            <p className="font-display text-sm font-semibold tracking-tight text-ink">
+              {t(locale, "planner.transfer.emptyTitle")}
+            </p>
+            <p className="text-xs leading-relaxed text-ink-soft">
+              {t(locale, "planner.transfer.emptyHint")}
+            </p>
+          </div>
+          <SoftFailNotice open={Boolean(noticeDemo)} compact>
+            {t(locale, "planner.transfer.softFailEmpty")}
+          </SoftFailNotice>
+        </>
+      ) : view ? (
+        <>
+          <LegCardHeader locale={locale} demoMode={demoMode} view={view} />
 
-      <ol className="m-0 list-none space-y-0 px-3 pt-3 pb-1">
-        {leg.transitSteps.map((step, i) => (
-          <StepRow
-            key={`${leg.id}-step-${i}`}
-            step={step}
-            locale={locale}
-            last={i === leg.transitSteps.length - 1}
-            index={i}
-          />
-        ))}
-      </ol>
+          <div className="divide-y divide-[color:var(--bp-line)]">
+            <section
+              className="animate-fade space-y-2 px-3 py-3"
+              style={{ animationDelay: "55ms" }}
+              aria-label={t(locale, "planner.transfer.summaryEyebrow")}
+            >
+              <SectionEyebrow>
+                {t(locale, "planner.transfer.summaryEyebrow")}
+              </SectionEyebrow>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="inline-flex items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                  {modeLabel(locale, view.mode)}
+                </span>
+                <span className="min-w-0 text-sm font-medium leading-snug text-ink">
+                  {summarizeTransfer(view)}
+                </span>
+              </div>
+            </section>
 
-      <SoftFailNotice open={Boolean(notice)} compact>
-        {t(locale, "planner.transfer.demoNotice")}
-      </SoftFailNotice>
+            {hasSteps ? (
+              <section
+                className="animate-fade px-3 pt-3 pb-1"
+                style={{ animationDelay: "75ms" }}
+                aria-label={t(locale, "planner.transfer.stepsEyebrow")}
+              >
+                <SectionEyebrow>
+                  {t(locale, "planner.transfer.stepsEyebrow")}
+                </SectionEyebrow>
+                <ol className="m-0 mt-2.5 list-none space-y-0 p-0">
+                  {view.transitSteps.map((step, i) => (
+                    <StepRow
+                      key={`${view.id}-step-${i}`}
+                      step={step}
+                      locale={locale}
+                      last={i === view.transitSteps.length - 1}
+                      index={i}
+                    />
+                  ))}
+                </ol>
+              </section>
+            ) : null}
+          </div>
+
+          <SoftFailNotice open={Boolean(noticeDemo)} compact>
+            {t(locale, "planner.transfer.demoNotice")}
+          </SoftFailNotice>
+        </>
+      ) : null}
     </SheetPresence>
   );
 }
