@@ -172,7 +172,7 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.how.liveBadge")}
       />
 
-      {/* Below fold — FAQ accordion (mist-track · azure select · SoftFail offline) */}
+      {/* Below fold — FAQ SoftFail sheet (azure rail · Offline/Live · tip-011) */}
       <LandingFaq
         title={t(locale, "landing.faq.title")}
         support={t(locale, "landing.faq.support")}
@@ -180,6 +180,10 @@ export default async function HomePage() {
         items={faqItems}
         offlineNotice={t(locale, "landing.faq.softOffline")}
         filterLabel={t(locale, "landing.faq.filterLabel")}
+        sheetEyebrow={t(locale, "landing.faq.sheetEyebrow")}
+        sheetSupport={t(locale, "landing.faq.sheetSupport")}
+        offlineBadge={t(locale, "landing.faq.offlineBadge")}
+        liveBadge={t(locale, "landing.faq.liveBadge")}
       />
 
       {/* Finale — CTA + quiet site footer (after features / how / faq) */}
