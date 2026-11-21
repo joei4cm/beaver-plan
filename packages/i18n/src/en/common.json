@@ -267,6 +267,8 @@
   "share.accentColor": "Accent",
   "share.titleScale": "Title size",
   "share.resetEdit": "Reset edits",
+  "share.export": "Export",
+  "share.exportSupport": "Download for Moments / Xiaohongshu, or hand off to the system share sheet.",
   "share.downloadPng": "Download PNG",
   "share.systemShare": "System share",
   "share.refresh": "Re-render",

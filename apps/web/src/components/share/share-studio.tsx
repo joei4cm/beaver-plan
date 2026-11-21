@@ -623,44 +623,61 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </p>
           )}
 
-          {softDemo && !error ? (
-            <SoftFailNotice>
-              {t(locale, "share.demoNotice")}
-            </SoftFailNotice>
-          ) : null}
+          {/* Export — SoftFailNotice above CTAs; river primary / ink secondary */}
+          <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
+            <div>
+              <h2 className="font-display text-2xl tracking-tight text-ink">
+                {t(locale, "share.export")}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                {t(locale, "share.exportSupport")}
+              </p>
+            </div>
 
-          <div className="flex flex-col gap-2 border-t border-[color:var(--bp-line)] pt-5">
-            <button
-              type="button"
-              disabled={busy || !preview}
-              onClick={() => void downloadPng()}
-              className="rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
-            >
-              {t(locale, "share.downloadPng")}
-            </button>
-            <button
-              type="button"
-              disabled={busy || !preview}
-              onClick={() => void shareNative()}
-              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-4 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river disabled:opacity-40"
-            >
-              {t(locale, "share.systemShare")}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void render()}
-              className="bp-transition rounded-bp px-4 py-2 text-sm text-ink-soft underline-offset-4 hover:text-river hover:underline"
-            >
-              {t(locale, "share.refresh")}
-            </button>
-          </div>
+            {softDemo ? (
+              <SoftFailNotice>
+                {t(locale, "share.demoNotice")}
+              </SoftFailNotice>
+            ) : null}
 
-          {!softDemo && (
-            <p className="text-xs leading-relaxed text-ink-soft/80">
-              {t(locale, "share.demoHint")}
-            </p>
-          )}
+            <div
+              className="flex flex-col gap-2.5"
+              role="group"
+              aria-label={t(locale, "share.export")}
+            >
+              <button
+                type="button"
+                disabled={busy || !preview}
+                onClick={() => void downloadPng()}
+                className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t(locale, "share.downloadPng")}
+              </button>
+              <button
+                type="button"
+                disabled={busy || !preview}
+                onClick={() => void shareNative()}
+                className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t(locale, "share.systemShare")}
+              </button>
+              <div className="flex items-center justify-between gap-3 pt-0.5">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void render()}
+                  className="rounded-bp px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline disabled:opacity-40"
+                >
+                  {t(locale, "share.refresh")}
+                </button>
+                {!softDemo ? (
+                  <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
+                    {t(locale, "share.demoHint")}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </section>
 
           {entries[0]?.media[0] ? (
             <div className="flex gap-2 overflow-x-auto pt-1">

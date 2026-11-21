@@ -267,6 +267,8 @@
   "share.accentColor": "强调色",
   "share.titleScale": "标题大小",
   "share.resetEdit": "恢复默认",
+  "share.export": "导出",
+  "share.exportSupport": "下载适合朋友圈 / 小红书的图，或交给系统分享面板。",
   "share.downloadPng": "下载 PNG",
   "share.systemShare": "系统分享",
   "share.refresh": "重新渲染",

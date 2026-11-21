@@ -181,8 +181,13 @@ export function ShareStudioSkeleton() {
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-[4.5rem] w-full rounded-bp" />
           ))}
-          <Skeleton className="mt-4 h-11 w-full rounded-bp" />
-          <Skeleton className="h-11 w-full rounded-bp" />
+          <div className="mt-6 space-y-2.5 border-t border-[color:var(--bp-line)] pt-5">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-3.5 w-full max-w-xs" />
+            <Skeleton className="mt-1 h-12 w-full rounded-bp" />
+            <Skeleton className="h-11 w-full rounded-bp" />
+            <Skeleton className="h-4 w-20" />
+          </div>
         </div>
       </div>
     </div>
