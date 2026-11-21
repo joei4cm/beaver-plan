@@ -910,11 +910,12 @@ export default function TripDetailScreen() {
   const detailSoftNoise =
     Boolean(softNotice) || fromCache || !online || detailDemo;
   /**
-   * Expo trip-detail SoftFailNotice (BEA-253 after web #189 / Expo #158):
-   * Stops rail owns compact SoftFail when the day has map stops · soft badge ·
-   * tip-011 chip rise. Empty day still owns SoftFail. Title SoftFail yields
-   * while Stops owns soft-fail (no double depth). Soft copy never timber /
-   * Failed to fetch.
+   * Expo trip-detail SoftFailNotice depth (BEA-298 after #194 / BEA-253):
+   * azure Stops rail · Soft/empty badge · softSupport · compact SoftFailNotice
+   * mist band under rail (`border-b`) · mist-wash tip-011 chips · StyleSheet.flatten.
+   * Empty day still owns SoftFail. Title SoftFail yields while Stops owns
+   * (no double depth). SoftFail copy always emptySoftFail / stops.softFail
+   * (never inherit softNotice). Soft copy never timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
   const stopsOwnsSoft = !dayEmpty;
@@ -926,10 +927,13 @@ export default function TripDetailScreen() {
           !online ||
           (detailDemo && (dayLegs.length > 0 || dayStops.length > 0)),
       );
-  /** Stop-scoped SoftFail copy when Stops owns (empty / map-stop); never timber. */
+  /** SoftFail copy owned by Stops chrome — never inherit softNotice / timber. */
   const stopsSoftCopy = emptyOwnsSoft
-    ? (softNotice ?? t(locale, "planner.emptySoftFail"))
+    ? t(locale, "planner.emptySoftFail")
     : t(locale, "planner.stops.softFail");
+  const stopsSoftSupport = emptyOwnsSoft
+    ? t(locale, "planner.emptySoftSupport")
+    : t(locale, "planner.stops.softSupport");
   /** Title SoftFail yields while Stops rail owns soft-fail. */
   const detailSoftOpen =
     !emptyOwnsSoft && !stopsOwnsSoft && detailSoftNoise;
@@ -1511,13 +1515,18 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                SoftFailNotice under azure Stops rail (BEA-253 + BEA-258):
-                SoftFail stays under Stops — Days chrome never owns SoftFail
-                (web #188 / #189). tip-011 · StyleSheet.flatten · never timber /
-                Failed to fetch.
+                SoftFailNotice depth under azure Stops rail (BEA-298 after #194):
+                Soft/empty badge · softSupport · mist SoftFail band · tip-011
+                mist-wash chips. SoftFail stays under Stops — Days chrome never
+                owns SoftFail (BEA-258). Soft copy never timber / Failed to fetch.
               */}
               <View style={styles.stopsChrome}>
-                <View style={styles.stopsRail}>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.stopsRail,
+                    stopsSoftOpen ? styles.stopsRailSoft : null,
+                  ])}
+                >
                   <View style={styles.stopsRailCopy}>
                     <Text style={styles.stopsEyebrow}>
                       {t(locale, "planner.stops.eyebrow")}
@@ -1530,15 +1539,13 @@ export default function TripDetailScreen() {
                             String(dayStops.length),
                           )}
                     </Text>
-                    {!dayEmpty ? (
-                      <Text style={styles.stopsSupport} numberOfLines={1}>
-                        {t(locale, "planner.stops.support")}
-                      </Text>
-                    ) : (
-                      <Text style={styles.stopsSupport} numberOfLines={1}>
-                        {t(locale, "planner.emptySupport")}
-                      </Text>
-                    )}
+                    <Text style={styles.stopsSupport} numberOfLines={1}>
+                      {stopsSoftOpen
+                        ? stopsSoftSupport
+                        : dayEmpty
+                          ? t(locale, "planner.emptySupport")
+                          : t(locale, "planner.stops.support")}
+                    </Text>
                   </View>
                   <View style={styles.stopsRailBadges}>
                     {dayEmpty ? (
@@ -1558,41 +1565,80 @@ export default function TripDetailScreen() {
                               : styles.stopsEmptyBadgeTextLive,
                           ])}
                         >
-                          {t(locale, "planner.emptyBadge")}
-                        </Text>
-                      </View>
-                    ) : selectedStop ? (
-                      <View style={styles.stopsSelectedBadge}>
-                        <Text
-                          style={styles.stopsSelectedBadgeText}
-                          numberOfLines={1}
-                        >
-                          {selectedStop.place.name} ·{" "}
-                          {t(locale, "planner.stops.selected")}
+                          {stopsSoftOpen
+                            ? t(locale, "planner.emptySoftBadge")
+                            : t(locale, "planner.emptyBadge")}
                         </Text>
                       </View>
                     ) : (
-                      <Text style={styles.stopsListHint}>
-                        {t(locale, "planner.stopsList")}
-                      </Text>
+                      <>
+                        {selectedStop ? (
+                          <View style={styles.stopsSelectedBadge}>
+                            <Text
+                              style={styles.stopsSelectedBadgeText}
+                              numberOfLines={1}
+                            >
+                              {selectedStop.place.name} ·{" "}
+                              {t(locale, "planner.stops.selected")}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.stopsListHint}>
+                            {t(locale, "planner.stopsList")}
+                          </Text>
+                        )}
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.stopsSoftBadge,
+                            stopsSoftOpen
+                              ? styles.stopsSoftBadgeSoft
+                              : styles.stopsSoftBadgeLive,
+                          ])}
+                        >
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.stopsSoftBadgeText,
+                              stopsSoftOpen
+                                ? styles.stopsSoftBadgeTextSoft
+                                : styles.stopsSoftBadgeTextLive,
+                            ])}
+                          >
+                            {stopsSoftOpen
+                              ? t(locale, "planner.stops.softBadge")
+                              : t(locale, "planner.stops.liveBadge")}
+                          </Text>
+                        </View>
+                      </>
                     )}
-                    {stopsOwnsSoft && stopsSoftOpen ? (
-                      <View style={styles.stopsSoftBadge}>
-                        <Text style={styles.stopsSoftBadgeText}>
-                          {t(locale, "planner.stops.softBadge")}
-                        </Text>
-                      </View>
-                    ) : null}
                   </View>
                 </View>
 
+                {/* Compact SoftFail mist band under azure Stops rail — never timber. */}
+                <SoftFailNotice
+                  open={stopsSoftOpen}
+                  compact
+                  style={styles.stopsSoftFail}
+                >
+                  {stopsSoftCopy}
+                </SoftFailNotice>
+
                 {!dayEmpty ? (
-                  <SheetPresence open delayMs={40} rise={8}>
+                  <SheetPresence
+                    open
+                    delayMs={40}
+                    rise={8}
+                    style={
+                      stopsSoftOpen ? styles.stopsChipsWash : undefined
+                    }
+                  >
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
                       style={styles.stopChipScroll}
-                      contentContainerStyle={styles.stopChipTrack}
+                      contentContainerStyle={StyleSheet.flatten([
+                        styles.stopChipTrack,
+                        stopsSoftOpen ? styles.stopChipTrackSoft : null,
+                      ])}
                       accessibilityRole="tablist"
                       accessibilityLabel={t(
                         locale,
@@ -1649,11 +1695,6 @@ export default function TripDetailScreen() {
                     </ScrollView>
                   </SheetPresence>
                 ) : null}
-
-                {/* Compact SoftFail under Stops — Days chrome never owns SoftFail. */}
-                <SoftFailNotice open={stopsSoftOpen} compact>
-                  {stopsSoftCopy}
-                </SoftFailNotice>
               </View>
 
               {dayStops.map((stop, index) => {
@@ -2885,6 +2926,19 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 6,
   },
+  stopsRailSoft: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
+  stopsSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  stopsChipsWash: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
+  },
   stopsRailCopy: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -2961,9 +3015,14 @@ const styles = StyleSheet.create({
   },
   stopsSoftBadge: {
     borderRadius: radius.xs,
-    backgroundColor: colors.mist,
     paddingHorizontal: 6,
     paddingVertical: 2,
+  },
+  stopsSoftBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  stopsSoftBadgeLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
   stopsSoftBadgeText: {
     ...type.body,
@@ -2971,7 +3030,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
+  },
+  stopsSoftBadgeTextSoft: {
     color: colors.inkSoft,
+  },
+  stopsSoftBadgeTextLive: {
+    color: colors.river,
   },
   stopsListHint: {
     ...type.body,
@@ -2995,6 +3059,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.sm,
     backgroundColor: "rgba(230, 236, 245, 0.5)",
+  },
+  stopChipTrackSoft: {
+    marginLeft: 12,
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   stopChip: {
     flexDirection: "row",
