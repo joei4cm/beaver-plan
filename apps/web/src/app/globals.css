@@ -322,6 +322,40 @@
     will-change: left, width;
   }
 
+  /*
+   * Planner day tabs (BEA-153) — underline select + tip-011 settle.
+   * Azure hierarchy: river active / ink-soft idle; mist wash, not full pill.
+   */
+  .bp-day-tab-rail--underline {
+    border-bottom: 1px solid var(--bp-line);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bp-mist) 55%, transparent) 0%,
+        color-mix(in srgb, var(--bp-foam) 88%, transparent) 100%
+      );
+    padding: 0.125rem 0.25rem 0;
+  }
+
+  .animate-tab-indicator--underline {
+    top: auto;
+    bottom: 0;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--bp-river) 78%, #60a5fa) 0%,
+      var(--bp-river) 100%
+    );
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bp-river) 18%, transparent);
+    transform-origin: center bottom;
+  }
+
+  .animate-tab-indicator--underline.bp-tab-indicator--settle {
+    animation: bp-tab-underline-settle var(--bp-duration) var(--bp-ease-out-strong)
+      both;
+  }
+
   .bp-day-tab {
     outline: none;
     transition:
@@ -344,6 +378,30 @@
   .bp-day-tab[aria-selected="false"]:hover {
     color: var(--bp-ink);
     background-color: color-mix(in srgb, var(--bp-mist) 70%, transparent);
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab {
+    border-radius: var(--bp-radius-sm) var(--bp-radius-sm) 0 0;
+    padding-bottom: 0.85rem;
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="true"] {
+    color: var(--bp-ink);
+    background-color: color-mix(in srgb, var(--bp-river) 8%, transparent);
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="true"] .bp-day-tab__eyebrow {
+    color: var(--bp-river);
+    opacity: 1;
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="false"] .bp-day-tab__eyebrow {
+    color: var(--bp-ink-soft);
+    opacity: 0.72;
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="false"]:hover {
+    background-color: color-mix(in srgb, var(--bp-mist) 55%, transparent);
   }
 
   /*
@@ -810,6 +868,22 @@
   }
 }
 
+/* Tip 011 — underline select settle (planner day tabs, BEA-153) */
+@keyframes bp-tab-underline-settle {
+  0% {
+    transform: scaleY(0.35);
+    opacity: 0.55;
+  }
+  55% {
+    transform: scaleY(1.28);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
 @keyframes bp-drop-line-in {
   from {
     transform: scaleX(0);
@@ -884,7 +958,9 @@
   }
 
   .bp-skeleton::after,
-  .animate-tab-indicator {
+  .animate-tab-indicator,
+  .animate-tab-indicator--underline,
+  .bp-tab-indicator--settle {
     animation: none !important;
     transition: none !important;
   }

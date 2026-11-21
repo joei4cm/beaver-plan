@@ -123,6 +123,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     left: number;
     width: number;
   } | null>(null);
+  /** Replays tip-011 underline settle without remounting (keeps tip-015 stretch). */
+  const [dayTabSettleOn, setDayTabSettleOn] = useState(true);
 
   const preference = trip?.mapEngine ?? "auto";
 
@@ -141,7 +143,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       setDayTabIndicator(null);
       return;
     }
-    const INSET_X = 4;
+    /* Underline sits inset under the label block (tip 015 stretch). */
+    const INSET_X = 10;
     const measure = () => {
       const tab = dayTabRefs.current.get(dayId);
       if (!tab) return;
@@ -178,13 +181,20 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     };
   }, [dayId, days]);
 
-  const selectDay = useCallback(
-    (nextId: string) => {
-      setDayId(nextId);
-      setSelectedStopId(null);
-    },
-    [],
-  );
+  const selectDay = useCallback((nextId: string) => {
+    setDayId((prev) => {
+      if (prev === nextId) return prev;
+      return nextId;
+    });
+    setSelectedStopId(null);
+  }, []);
+
+  useEffect(() => {
+    if (!dayId) return;
+    setDayTabSettleOn(false);
+    const frame = requestAnimationFrame(() => setDayTabSettleOn(true));
+    return () => cancelAnimationFrame(frame);
+  }, [dayId]);
 
   const onDayTabsKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -901,13 +911,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             role="tablist"
             aria-label={t(locale, "planner.dayFill.days")}
             onKeyDown={onDayTabsKeyDown}
-            className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60 p-1"
+            className="bp-day-tab-rail--underline relative flex gap-0 overflow-x-auto"
           >
-            {/* Tip 015 — sliding day indicator (pattern g) */}
+            {/* Tip 015 underline + tip-011 settle (pattern g / #46) */}
             {dayTabIndicator && (
               <span
                 aria-hidden
-                className="animate-tab-indicator pointer-events-none absolute top-1 bottom-1 z-0 rounded-bp-sm bg-river shadow-bp-soft"
+                className={`animate-tab-indicator animate-tab-indicator--underline pointer-events-none absolute z-0${
+                  dayTabSettleOn ? " bp-tab-indicator--settle" : ""
+                }`}
                 style={{
                   left: dayTabIndicator.left,
                   width: dayTabIndicator.width,
@@ -930,13 +942,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     else dayTabRefs.current.delete(day.id);
                   }}
                   onClick={() => selectDay(day.id)}
-                  className="bp-day-tab relative z-[1] shrink-0 rounded-bp-sm px-5 py-3 text-left"
+                  className="bp-day-tab relative z-[1] shrink-0 px-5 pt-3 text-left"
                 >
-                  <div
-                    className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                      active ? "opacity-90" : "opacity-70"
-                    }`}
-                  >
+                  <div className="bp-day-tab__eyebrow text-[10px] font-semibold uppercase tracking-[0.16em]">
                     {t(locale, "planner.day")} {i + 1}
                   </div>
                   <div className="mt-0.5 text-sm font-semibold tabular-nums">
