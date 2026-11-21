@@ -251,10 +251,12 @@ export function TripCollabPanel({
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
   const softNoticeOpen = demoSeeded || softOffline;
   /**
-   * Timeline SoftFailNotice chrome (BEA-257 after #164/#181):
-   * Activity sheet owns compact SoftFail under azure Timeline rail · mist
-   * soft badge · tip-011 rise. Panel SoftFail yields on Activity (no double
-   * depth). Soft copy never timber / Failed to fetch.
+   * Timeline SoftFailNotice depth (BEA-332 after #193):
+   * Activity sheet owns SoftFail under azure Timeline rail · Soft timeline
+   * badge · softSupport · compact SoftFail mist band (`border-b`) · tip-011
+   * mist-wash track. Panel SoftFail yields on Activity; presence/invite
+   * SoftFail (#223/#241) own their rails — no double depth. Soft copy never
+   * timber / Failed to fetch.
    */
   const timelineSoftOpen = softNoticeOpen && tab === "activity";
   const panelSoftOpen = softNoticeOpen && tab !== "activity";
@@ -264,6 +266,9 @@ export function TripCollabPanel({
   const timelineSoftCopy = softOffline
     ? t(locale, "collab.panel.timelineSoftFail")
     : t(locale, "collab.panel.timelineDemoNotice");
+  const timelineSupportCopy = timelineSoftOpen
+    ? t(locale, "collab.panel.timelineSoftSupport")
+    : t(locale, "collab.panel.timelineSupport");
   const threadCount = t(locale, "collab.panel.count").replace(
     "{n}",
     String(visibleComments.length),
@@ -322,7 +327,7 @@ export function TripCollabPanel({
         </div>
       </header>
 
-      {/* Panel SoftFail — Comments tab; yields when Timeline owns soft-fail. */}
+      {/* Panel SoftFail — Comments tab; yields when Timeline SoftFail owns Activity depth. */}
       <SoftFailNotice open={panelSoftOpen} className="mb-4">
         {softNoticeCopy}
       </SoftFailNotice>
@@ -505,9 +510,11 @@ export function TripCollabPanel({
       </SheetPresence>
 
       {/*
-        Timeline SoftFail chrome (BEA-257 after #164/#181):
-        azure Timeline rail · soft badge · compact SoftFailNotice · mist-track
-        nodes · tip-011 rise — never timber.
+        Timeline SoftFail depth (BEA-332 after #193):
+        azure Timeline rail · Soft timeline badge · softSupport · compact
+        SoftFail mist band (`border-b`) · tip-011 mist-wash track · panel
+        SoftFail yields on Activity; presence/invite SoftFail (#223/#241)
+        own their rails — never timber / Failed to fetch.
       */}
       <SheetPresence
         open={tab === "activity"}
@@ -530,12 +537,12 @@ export function TripCollabPanel({
             <div className="flex items-center gap-2">
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  softNoticeOpen
+                  timelineSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river-deep"
                 }`}
               >
-                {softNoticeOpen
+                {timelineSoftOpen
                   ? t(locale, "collab.panel.timelineSoftBadge")
                   : t(locale, "collab.panel.liveBadge")}
               </span>
@@ -565,17 +572,27 @@ export function TripCollabPanel({
             className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft"
             style={{ animationDelay: "40ms" }}
           >
-            {t(locale, "collab.panel.timelineSupport")}
+            {timelineSupportCopy}
           </p>
         </header>
 
-        {/* Compact SoftFail under azure Timeline rail — never timber. */}
-        <SoftFailNotice open={timelineSoftOpen} compact>
+        {/* Compact SoftFail mist band under azure Timeline rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={timelineSoftOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
           {timelineSoftCopy}
         </SoftFailNotice>
 
-        <ol className="bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto bg-gradient-to-b from-mist/30 via-mist/10 to-transparent px-4 py-4 pl-5">
-          {/* Mist track — gradient spine behind azure nodes */}
+        <ol
+          className={`bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5 ${
+            timelineSoftOpen
+              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+          }`}
+        >
+          {/* Mist track — tip-011 wash spine behind azure nodes */}
           <span aria-hidden className="bp-collab-timeline__track" />
           {showLoading ? (
             <li

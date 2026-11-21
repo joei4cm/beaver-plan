@@ -255,6 +255,7 @@
   "collab.panel.demoNotice": "Sample companions, comments, and timeline are seeded — soft fallback while Neon/auth are unset.",
   "collab.panel.softOffline": "Showing the seeded collab thread while the API is unreachable.",
   "collab.panel.timelineSoftBadge": "Soft timeline",
+  "collab.panel.timelineSoftSupport": "Soft activity — SoftFail when activity API or auth are unset.",
   "collab.panel.timelineSoftFail": "Activity API unreachable — showing the seeded Kyoto timeline until Neon/auth is available. Never a Failed to fetch crash.",
   "collab.panel.timelineDemoNotice": "Demo timeline stays seeded — soft activity while Neon/auth are unset. Never a Failed to fetch crash.",
   "collab.panel.liveBadge": "Live",
