@@ -393,14 +393,22 @@ export default function JournalScreen() {
     ...pendingLocal.map((p) => ({ key: p.id, uri: p.preview })),
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
-  /** List SoftFail — demo seed / offline; compose SoftFail stays media-scoped (#134). */
-  const showListSoftFail = demoSeeded || softNotice;
+  /**
+   * Compose SoftFailNotice chrome (BEA-273 after web #110/#156 / Expo #113):
+   * azure rail · soft badge · compact SoftFail under rail · tip-011 SheetPresence ·
+   * StyleSheet.flatten. Compose owns soft-fail so list yields (no double depth).
+   * Soft copy never timber / Failed to fetch.
+   */
+  const composeOwnsSoft = composeSoftFail;
+  const showComposeSoftFail = composeOwnsSoft;
+  const showListSoftFail =
+    (demoSeeded || softNotice) && !composeOwnsSoft;
   const listSoftCopy =
     softNotice && !isDeviceOnline()
       ? t(locale, "journal.softOffline")
       : t(locale, "journal.demoNotice");
-  const showComposeSoftFail =
-    composeSoftFail && !demoSeeded && !softNotice;
+  const hardComposeError =
+    error && !isNoiseError(new Error(error)) ? error : null;
 
   return (
     <View style={styles.root}>
@@ -684,35 +692,51 @@ export default function JournalScreen() {
               </SheetPresence>
             </View>
 
-            {/* Azure hierarchy compose rail — web #110 SoftFailNotice + tip-011. */}
+            {/*
+              Compose SoftFail chrome (BEA-273 after web #110/#156 / Expo #113):
+              foam compose · azure head · soft badge · compact SoftFail under rail ·
+              tip-011 SheetPresence — never timber / Failed to fetch.
+            */}
             <View
               style={styles.compose}
               accessibilityLabel={t(locale, "journal.compose")}
             >
               <View style={styles.composeHeader}>
-                <View style={styles.composeHeaderTitleRow}>
-                  <Text style={styles.composeEyebrow}>
-                    {t(locale, "journal.composeEyebrow")}
-                  </Text>
-                  <Text style={styles.composeTitle}>
-                    {t(locale, "journal.compose")}
-                  </Text>
+                <View style={styles.composeHeaderTop}>
+                  <View style={styles.composeHeaderTitleRow}>
+                    <Text style={styles.composeEyebrow}>
+                      {t(locale, "journal.composeEyebrow")}
+                    </Text>
+                    <Text style={styles.composeTitle}>
+                      {t(locale, "journal.compose")}
+                    </Text>
+                  </View>
+                  {showComposeSoftFail ? (
+                    <View style={styles.composeSoftBadge}>
+                      <Text style={styles.composeSoftBadgeText}>
+                        {t(locale, "journal.composeSoftBadge")}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
                 <Text style={styles.composeHint}>
                   {t(locale, "journal.composeHint")}
                 </Text>
               </View>
 
-              <View style={styles.composeBody}>
-                {/* Compose-scoped SoftFail — media/API only; demo seed lives under entry list */}
-                <SoftFailNotice
-                  open={showComposeSoftFail}
-                  compact
-                  style={styles.composeSoftFail}
-                >
-                  {t(locale, "journal.composeSoftFail")}
-                </SoftFailNotice>
+              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+              <SoftFailNotice open={showComposeSoftFail} compact>
+                {t(locale, "journal.composeSoftFail")}
+              </SoftFailNotice>
 
+              <SheetPresence
+                open={!loading}
+                key={`compose-body-${dayId ?? "all"}`}
+                rise={10}
+                delayMs={80}
+                style={styles.composeBody}
+                accessibilityLabel={t(locale, "journal.compose")}
+              >
                 <Text style={styles.bindLabel}>
                   {t(locale, "journal.bindStop")}
                 </Text>
@@ -779,7 +803,7 @@ export default function JournalScreen() {
                 />
 
                 <Pressable
-                  style={styles.photoDrop}
+                  style={StyleSheet.flatten([styles.photoDrop])}
                   onPress={() => void capture()}
                   accessibilityRole="button"
                   accessibilityLabel={t(locale, "journal.addPhotos")}
@@ -813,7 +837,10 @@ export default function JournalScreen() {
                   {Array.from({ length: emptySlots }).map((_, i) => (
                     <View
                       key={`slot-${i}`}
-                      style={StyleSheet.flatten([styles.slot, styles.slotCompose])}
+                      style={StyleSheet.flatten([
+                        styles.slot,
+                        styles.slotCompose,
+                      ])}
                     />
                   ))}
                 </ScrollView>
@@ -823,9 +850,9 @@ export default function JournalScreen() {
                     {info}
                   </Text>
                 ) : null}
-                {error ? (
+                {hardComposeError ? (
                   <Text style={styles.error} accessibilityRole="alert">
-                    {error}
+                    {hardComposeError}
                   </Text>
                 ) : null}
 
@@ -853,7 +880,7 @@ export default function JournalScreen() {
                       : t(locale, "journal.save")}
                   </Text>
                 </Pressable>
-              </View>
+              </SheetPresence>
             </View>
           </Animated.View>
         </ScrollView>
@@ -1232,11 +1259,19 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
+  composeHeaderTop: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+  },
   composeHeaderTitleRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "baseline",
     gap: 8,
+    flexShrink: 1,
   },
   composeEyebrow: {
     ...type.body,
@@ -1253,6 +1288,20 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colors.ink,
   },
+  composeSoftBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  composeSoftBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
   composeHint: {
     ...type.body,
     marginTop: 6,
@@ -1264,9 +1313,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 18,
-  },
-  composeSoftFail: {
-    marginBottom: 14,
   },
   bindLabel: {
     ...type.body,
