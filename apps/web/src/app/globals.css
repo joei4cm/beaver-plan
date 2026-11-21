@@ -851,6 +851,12 @@
     animation: none !important;
   }
 
+  /* Landing SVG routes use .animate-route-draw + dashoffset=1 — reveal fully when motion is off */
+  .animate-route-draw {
+    stroke-dashoffset: 0 !important;
+    opacity: 0.55 !important;
+  }
+
   .bp-route-polyline--draw {
     stroke-dashoffset: 0 !important;
     opacity: 1 !important;
