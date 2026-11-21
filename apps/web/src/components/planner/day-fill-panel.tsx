@@ -107,10 +107,11 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Planner secondary tool — smart day-fill sheet (BEA-195 after #99).
- * Lumen hierarchy: azure header rail · prefs · empty/preview · SoftFailNotice
- * footer, SheetPresence in/out, tip-011 (#46) rise on empty / prefs / chips.
- * Soft-fails to local Kyoto demo when LLM/API/Neon are absent — never timber.
+ * Planner secondary tool — smart day-fill SoftFailNotice (BEA-272 after #151/#195).
+ * Lumen hierarchy: azure header rail · Soft fill badge · compact SoftFail under
+ * rail · prefs / empty / preview · SheetPresence in/out · tip-011 (#46) rise.
+ * Soft-fails to local Kyoto demo when LLM/API/Neon are absent — never timber /
+ * Failed to fetch.
  */
 export function DayFillPanel({
   tripId,
@@ -299,6 +300,11 @@ export function DayFillPanel({
     mode === "live"
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
+  /**
+   * Day-fill SoftFailNotice chrome (BEA-272 after #151/#195):
+   * azure sheet rail · Soft fill badge · compact SoftFail under rail ·
+   * tip-011 (#46). Soft copy never timber / Failed to fetch.
+   */
   const softCopy =
     notice ??
     (softDemo
@@ -306,6 +312,7 @@ export function DayFillPanel({
       : demoMode
         ? t(locale, "planner.dayFill.demoNotice")
         : null);
+  const showSoftFail = Boolean(softCopy);
   const dayCountLabel = t(locale, "planner.dayFill.dayCount").replace(
     "{n}",
     String(dayCount),
@@ -313,6 +320,11 @@ export function DayFillPanel({
 
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+      {/*
+        Day-fill SoftFail chrome (BEA-272 after #151/#195):
+        azure sheet rail · Demo/LLM badge · Soft fill badge · tip-011 —
+        never timber / Failed to fetch.
+      */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -336,6 +348,11 @@ export function DayFillPanel({
             >
               {badge}
             </span>
+            {showSoftFail ? (
+              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                {t(locale, "planner.dayFill.softBadge")}
+              </span>
+            ) : null}
             <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
               {dayCountLabel}
             </span>
@@ -357,6 +374,15 @@ export function DayFillPanel({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "planner.dayFill.title")}
       >
+        {/* Compact SoftFail under azure day-fill rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={showSoftFail}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
+          {softCopy ?? ""}
+        </SoftFailNotice>
+
         <div className="space-y-5 px-4 py-4">
           <section
             className="animate-rise space-y-3"
@@ -618,11 +644,6 @@ export function DayFillPanel({
             </section>
           )}
         </div>
-
-        {/* SoftFailNotice owned by day-fill sheet footer — never timber / Failed to fetch. */}
-        <SoftFailNotice open={Boolean(softCopy)} compact>
-          {softCopy ?? ""}
-        </SoftFailNotice>
       </SheetPresence>
     </div>
   );
