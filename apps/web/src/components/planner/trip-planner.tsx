@@ -1028,39 +1028,89 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             onSelectStop={setSelectedStopId}
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Stop list chrome — azure hierarchy · SoftFailNotice · empty / #46 */}
-            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
-              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-                  {t(locale, "planner.stops.eyebrow")}
-                </span>
-                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
-                  {dayEmpty
-                    ? t(locale, "planner.emptyDay")
-                    : t(locale, "planner.stops.count").replace(
-                        "{n}",
-                        String(dayStops.length),
-                      )}
-                </span>
-              </div>
-              {dayEmpty ? (
-                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
-                  {t(locale, "planner.emptyBadge")}
-                </span>
-              ) : selectedStopId ? (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
-                  {t(locale, "planner.stops.selected")}
-                </span>
-              ) : (
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/55">
-                  {t(locale, "planner.stopsList")}
-                </span>
-              )}
-            </header>
+            {/* Stop list chip hierarchy — mist-track · azure select · SoftFailNotice · #46 */}
+            <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                    {t(locale, "planner.stops.eyebrow")}
+                  </span>
+                  <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                    {dayEmpty
+                      ? t(locale, "planner.emptyDay")
+                      : t(locale, "planner.stops.count").replace(
+                          "{n}",
+                          String(dayStops.length),
+                        )}
+                  </span>
+                  {!dayEmpty ? (
+                    <span className="text-[11px] leading-snug text-ink-soft/80">
+                      {t(locale, "planner.stops.support")}
+                    </span>
+                  ) : null}
+                </div>
+                {dayEmpty ? (
+                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    {t(locale, "planner.emptyBadge")}
+                  </span>
+                ) : selectedStopId ? (
+                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+                    {dayStops.find((s) => s.id === selectedStopId)?.place
+                      .name ?? t(locale, "planner.stops.selected")}{" "}
+                    · {t(locale, "planner.stops.selected")}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/55">
+                    {t(locale, "planner.stopsList")}
+                  </span>
+                )}
+              </header>
 
-            <SoftFailNotice open={listSoftOpen} compact>
-              {listSoftCopy}
-            </SoftFailNotice>
+              {!dayEmpty ? (
+                <div className="px-4 pb-2.5">
+                  <div
+                    className="flex gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1"
+                    role="group"
+                    aria-label={t(locale, "planner.stops.filterLabel")}
+                  >
+                    {dayStops.map((stop, i) => {
+                      const on = selectedStopId === stop.id;
+                      return (
+                        <button
+                          key={stop.id}
+                          type="button"
+                          aria-pressed={on}
+                          aria-label={`${t(locale, "planner.stops.chip").replace("{n}", String(i + 1))}: ${stop.place.name}`}
+                          onClick={() => setSelectedStopId(stop.id)}
+                          className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                            on
+                              ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                              : "text-ink-soft hover:text-river"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-bp-xs text-[10px] font-bold tabular-nums ${
+                              on
+                                ? "bg-river text-foam"
+                                : "bg-ink/10 text-ink-soft"
+                            }`}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="min-w-0 truncate">
+                            {stop.place.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              <SoftFailNotice open={listSoftOpen} compact>
+                {listSoftCopy}
+              </SoftFailNotice>
+            </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <StopReorderList

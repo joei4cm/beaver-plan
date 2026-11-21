@@ -731,7 +731,7 @@ export function BookingPanel({
   );
 }
 
-/** Compact chips for a stop list row. */
+/** Compact booking chips on a stop list row — mist-track · #46 focus. */
 export function BookingLinkChips({
   links,
   locale,
@@ -742,7 +742,11 @@ export function BookingLinkChips({
   const rows = links ?? [];
   if (rows.length === 0) return null;
   return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
+    <div
+      className="mt-2 inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+      role="group"
+      aria-label={t(locale, "planner.booking.linksEyebrow")}
+    >
       {rows.map((link) => (
         <a
           key={`${link.kind}-${link.url}`}
@@ -750,11 +754,13 @@ export function BookingLinkChips({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 rounded-bp-xs border border-river/25 bg-river/5 px-2 py-0.5 text-[11px] font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/50 hover:bg-river/10"
+          className="inline-flex max-w-full items-center gap-1 rounded-bp-xs bg-foam px-2 py-1 text-[11px] font-semibold text-river shadow-bp-soft ring-1 ring-river/20 bp-transition hover:ring-river/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
         >
           <span>{kindLabel(locale, link.kind)}</span>
           {link.providerLabel ? (
-            <span className="text-ink-soft">· {link.providerLabel}</span>
+            <span className="truncate font-medium text-ink-soft">
+              · {link.providerLabel}
+            </span>
           ) : null}
         </a>
       ))}
