@@ -265,6 +265,7 @@
   "planner.emptyDayHint": "在地图上搜索并钉一个地点——列表与路线会一起亮起来。",
   "planner.emptyDayCta": "搜索地图",
   "planner.emptyBadge": "空日",
+  "planner.emptySupport": "从地图搜索钉点——列表与路线一起亮起。",
   "planner.emptySoftFail": "演示壳层 — 这一天还没有站点。从地图搜索钉点；API/Neon 可用前先在本地更新。不会出现 Failed to fetch。",
   "planner.map.layers": "图层",
   "planner.map.layersEyebrow": "叠加",
