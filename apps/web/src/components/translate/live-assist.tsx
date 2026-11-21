@@ -232,20 +232,36 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   /**
    * Empty SoftFailNotice depth (BEA-310 after #81):
    * empty owns compact SoftFail under azure history rail · Soft empty badge ·
-   * emptySupport · emptySoftFail copy (never inherit header softNotice) ·
+   * emptySupport · emptySoftFail copy (never inherit Assist softNotice) ·
    * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
-   * Header + Talk SoftFail yield while empty owns (no double depth). Soft copy
+   * Assist + Talk SoftFail yield while empty owns (no double depth). Soft copy
    * never timber / Failed to fetch.
    */
   const historyEmpty = turns.length === 0;
   const emptyOwnsSoft = tab === "conversation" && historyEmpty;
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "translate.emptySoftFail");
-  const headerSoftOpen = isDemo && !emptyOwnsSoft;
   const talkSoftOpen =
     tab === "conversation" &&
     !emptyOwnsSoft &&
     Boolean(micDenied || error);
+  /**
+   * Offline banner SoftFailNotice depth (BEA-309 after #87):
+   * azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
+   * compact SoftFailNotice (border-b) · mist-wash status body · tip-011.
+   * SoftFail yields while empty history owns soft-fail (no double depth).
+   * Soft copy never timber / Failed to fetch.
+   */
+  const bannerSoftOpen = isDemo && !emptyOwnsSoft;
+  const bannerSoftCopy =
+    softNotice && !online
+      ? t(locale, "translate.softOffline")
+      : t(locale, "translate.demoNotice");
+  const bannerBadge = !online
+    ? t(locale, "translate.offlineBadge")
+    : isDemo
+      ? t(locale, "translate.softBadge")
+      : t(locale, "translate.liveBadge");
 
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
@@ -774,44 +790,90 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           {t(locale, "translate.webSupport")}
         </p>
 
-        {!status ? (
-          <TranslateStatusSkeleton />
-        ) : (
-          <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
+        {/*
+          Offline banner SoftFail depth (BEA-309 after #87):
+          azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
+          compact SoftFailNotice · mist-wash status chips · tip-011 —
+          SoftFail yields while empty history owns soft-fail —
+          never timber / Failed to fetch.
+        */}
+        <div
+          className="animate-rise mt-5 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+          style={{ animationDelay: "40ms" }}
+          aria-label={t(locale, "translate.bannerEyebrow")}
+        >
+          <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "translate.bannerEyebrow")}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {isDemo
+                  ? t(locale, "translate.softSupport")
+                  : t(locale, "translate.bannerSupport")}
+              </span>
+            </div>
             <span
-              className={`rounded-bp-xs px-2.5 py-1 font-semibold ${
-                isDemo
-                  ? "bg-river/12 text-river-deep"
-                  : "bg-river text-foam"
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                !online || isDemo
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river-deep"
               }`}
             >
-              {isDemo
-                ? t(locale, "translate.demoBadge")
-                : t(locale, "translate.liveBadge")}
-            </span>
-            <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-river-deep">
-              {t(locale, "translate.streamingBadge")}
-            </span>
-            <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
-              {online
-                ? t(locale, "offline.online")
-                : t(locale, "translate.offlineBadge")}
-            </span>
-            <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
-              {t(locale, "translate.asrReady")} · {status.asr}
-            </span>
-            <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
-              {t(locale, "translate.ttsReady")} · {status.tts}
+              {bannerBadge}
             </span>
           </div>
-        )}
 
-        {/* Header SoftFail yields while empty history owns soft-fail (no double depth). */}
-        <SoftFailNotice open={headerSoftOpen} className="mt-4">
-          {softNotice && !online
-            ? t(locale, "translate.softOffline")
-            : t(locale, "translate.demoNotice")}
-        </SoftFailNotice>
+          {/* Compact SoftFail under azure rail — yields while empty owns soft-fail. */}
+          <SoftFailNotice
+            open={bannerSoftOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {bannerSoftCopy}
+          </SoftFailNotice>
+
+          <div
+            className={`animate-rise px-4 py-3 sm:px-5 ${
+              bannerSoftOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
+            style={{ animationDelay: "70ms" }}
+          >
+            {!status ? (
+              <TranslateStatusSkeleton />
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-bp-xs px-2.5 py-1 font-semibold ${
+                    isDemo
+                      ? "bg-river/12 text-river-deep"
+                      : "bg-river text-foam"
+                  }`}
+                >
+                  {isDemo
+                    ? t(locale, "translate.demoBadge")
+                    : t(locale, "translate.liveBadge")}
+                </span>
+                <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-river-deep">
+                  {t(locale, "translate.streamingBadge")}
+                </span>
+                <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
+                  {online
+                    ? t(locale, "offline.online")
+                    : t(locale, "translate.offlineBadge")}
+                </span>
+                <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+                  {t(locale, "translate.asrReady")} · {status.asr}
+                </span>
+                <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+                  {t(locale, "translate.ttsReady")} · {status.tts}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       <div
