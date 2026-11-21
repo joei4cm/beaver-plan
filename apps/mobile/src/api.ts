@@ -78,6 +78,11 @@ async function apiGet<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Soft probe for sign-in chrome — never surfaces timber / Failed to fetch. */
+export async function fetchHealth(): Promise<{ status?: string }> {
+  return apiGet<{ status?: string }>("/health");
+}
+
 async function apiSend<T>(
   path: string,
   method: "POST" | "PATCH" | "DELETE",
