@@ -399,11 +399,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * SoftFail ownership (BEA-279 after #149/#183/#192):
+   * SoftFailNotice depth (BEA-315 after #210):
    * empty canvas owns SoftFail under azure canvas rail ·
    * Studio sheet owns softDemo under azure Studio rail ·
-   * Export owns exportSoftFail under azure Export rail ·
-   * no double depth. Soft copy never timber / Failed to fetch.
+   * Soft studio badge · softSupport · compact SoftFail mist band (`border-b`) ·
+   * mist tip-011 body while soft · Export owns exportSoftFail under Export rail ·
+   * yield child SoftFail ownership (no double depth). Soft copy never timber /
+   * Failed to fetch.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
@@ -422,6 +424,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const exportSoftCopy = exportSoftFail
     ? t(locale, "share.exportSoftFail")
     : t(locale, "share.demoNotice");
+  const sheetSupportCopy = sheetSoftOpen
+    ? t(locale, "share.softSupport")
+    : t(locale, "share.sheetSupport");
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
@@ -550,9 +555,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               )}
             </div>
 
-            {/* Compact SoftFail under azure canvas rail — never timber / Failed to fetch. */}
+            {/* Compact SoftFail mist band under azure canvas rail — Studio SoftFail yields. */}
             <div className="w-full max-w-[400px]">
-              <SoftFailNotice open={emptySoftOpen} compact>
+              <SoftFailNotice
+                open={emptySoftOpen}
+                compact
+                className="border-b border-[color:var(--bp-line)]"
+              >
                 {emptySoftCopy}
               </SoftFailNotice>
             </div>
@@ -588,7 +597,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               ) : (
                 <SheetPresence
                   open
-                  className="flex h-full flex-col items-start justify-center px-6 py-8"
+                  className={`flex h-full flex-col items-start justify-center px-6 py-8 ${
+                    emptySoftOpen
+                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                      : ""
+                  }`}
                   style={{ animationDelay: "40ms" }}
                   aria-label={t(locale, "share.empty")}
                 >
@@ -644,10 +657,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         </section>
 
         {/*
-          Studio SoftFail chrome (BEA-279 after #149/#183/#192):
-          azure Studio rail · Soft studio badge · compact SoftFailNotice ·
-          tip-011 rise — never timber / Failed to fetch. Empty + Export yield
-          while sheet owns softDemo (no double depth).
+          Studio SoftFail depth (BEA-315 after #210):
+          azure Studio rail · Soft studio badge · softSupport ·
+          compact SoftFail mist band (`border-b`) · mist tip-011 body while soft —
+          Empty + Export SoftFail ownership yield (no double depth) —
+          never timber / Failed to fetch.
         */}
         <SheetPresence
           open
@@ -661,7 +675,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 {t(locale, "share.sheetEyebrow")}
               </span>
               <span className="text-[11px] leading-snug text-ink-soft/80">
-                {t(locale, "share.sheetSupport")}
+                {sheetSupportCopy}
               </span>
             </div>
             <span
@@ -679,7 +693,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </span>
           </header>
 
-          {/* Compact SoftFail under azure Studio rail — never timber / Failed to fetch. */}
+          {/* Compact SoftFail under azure Studio rail — yields while empty / Export own. */}
           <SoftFailNotice
             open={sheetSoftOpen}
             compact
@@ -688,7 +702,14 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             {sheetSoftCopy}
           </SoftFailNotice>
 
-          <div className="space-y-5 px-4 py-4">
+          <div
+            className={`animate-rise space-y-5 px-4 py-4 ${
+              sheetSoftOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
+            style={{ animationDelay: "70ms" }}
+          >
             <section
               className="animate-rise space-y-3"
               style={{ animationDelay: "40ms" }}
