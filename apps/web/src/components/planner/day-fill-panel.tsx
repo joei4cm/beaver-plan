@@ -107,11 +107,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Planner secondary tool — smart day-fill SoftFailNotice (BEA-272 after #151/#195).
- * Lumen hierarchy: azure header rail · Soft fill badge · compact SoftFail under
- * rail · prefs / empty / preview · SheetPresence in/out · tip-011 (#46) rise.
- * Soft-fails to local Kyoto demo when LLM/API/Neon are absent — never timber /
- * Failed to fetch.
+ * Planner secondary tool — smart day-fill SoftFailNotice depth (BEA-323 after #206).
+ * Lumen hierarchy: azure header rail · Soft fill badge · softSupport · compact
+ * SoftFail mist band under rail · mist-wash tip-011 body · SheetPresence in/out.
+ * Stop drawer SoftFail (#225) owns Itinerary — day-fill SoftFail stays under the
+ * Day fill rail (no double depth). Soft-fails to local Kyoto demo when LLM/API/
+ * Neon are absent — never timber / Failed to fetch.
  */
 export function DayFillPanel({
   tripId,
@@ -301,9 +302,11 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice chrome (BEA-272 after #151/#195):
-   * azure sheet rail · Soft fill badge · compact SoftFail under rail ·
-   * tip-011 (#46). Soft copy never timber / Failed to fetch.
+   * Day-fill SoftFailNotice depth (BEA-323 after #206):
+   * azure sheet rail · Soft fill badge · softSupport · compact SoftFail mist
+   * band (`border-b`) · mist tip-011 body while soft. Stop drawer SoftFail
+   * (#225) owns Itinerary — no double depth. Soft copy never timber /
+   * Failed to fetch.
    */
   const softCopy =
     notice ??
@@ -313,6 +316,9 @@ export function DayFillPanel({
         ? t(locale, "planner.dayFill.demoNotice")
         : null);
   const showSoftFail = Boolean(softCopy);
+  const sheetSupportCopy = showSoftFail
+    ? t(locale, "planner.dayFill.softSupport")
+    : t(locale, "planner.dayFill.support");
   const dayCountLabel = t(locale, "planner.dayFill.dayCount").replace(
     "{n}",
     String(dayCount),
@@ -321,8 +327,9 @@ export function DayFillPanel({
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        Day-fill SoftFail chrome (BEA-272 after #151/#195):
-        azure sheet rail · Demo/LLM badge · Soft fill badge · tip-011 —
+        Day-fill SoftFail depth (BEA-323 after #206):
+        azure sheet rail · Soft fill badge · softSupport · tip-011 mist-wash —
+        yields stop drawer SoftFail (#225) ownership on Itinerary —
         never timber / Failed to fetch.
       */}
       <button
@@ -357,8 +364,8 @@ export function DayFillPanel({
               {dayCountLabel}
             </span>
           </div>
-          <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
-            {t(locale, "planner.dayFill.support")}
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-soft/80">
+            {sheetSupportCopy}
           </p>
         </div>
         <span
@@ -374,7 +381,7 @@ export function DayFillPanel({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "planner.dayFill.title")}
       >
-        {/* Compact SoftFail under azure day-fill rail — never timber / Failed to fetch. */}
+        {/* Compact SoftFail mist band under azure Day fill rail — stop drawer SoftFail (#225) stays on Itinerary. */}
         <SoftFailNotice
           open={showSoftFail}
           compact
@@ -383,7 +390,14 @@ export function DayFillPanel({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div className="space-y-5 px-4 py-4">
+        <div
+          className={`animate-rise space-y-5 px-4 py-4 ${
+            showSoftFail
+              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+              : ""
+          }`}
+          style={{ animationDelay: "70ms" }}
+        >
           <section
             className="animate-rise space-y-3"
             style={{ animationDelay: "50ms" }}
