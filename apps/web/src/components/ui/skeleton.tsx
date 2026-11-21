@@ -373,24 +373,22 @@ export function DayFillSkeleton({ days = 3 }: { days?: number }) {
     <div
       aria-busy="true"
       aria-live="polite"
-      className="animate-fade space-y-3"
+      className="animate-fade overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
     >
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
         <div className="min-w-0 space-y-2">
-          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-2.5 w-14" />
+          <Skeleton className="h-4 w-28" />
           <Skeleton className="h-3.5 w-56 max-w-full" />
         </div>
         <Skeleton className="h-9 w-28 rounded-bp" />
       </div>
-      <ol className="space-y-3">
+      <ol className="divide-y divide-[color:var(--bp-line)]">
         {Array.from({ length: days }).map((_, i) => (
-          <li
-            key={i}
-            className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
-          >
+          <li key={i} className="px-3 py-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-3 w-36 max-w-[50%]" />
+              <Skeleton className="h-5 w-28 max-w-[50%] rounded-bp-xs" />
             </div>
             <div className="mt-2.5 space-y-2">
               <div className="flex gap-2">
