@@ -59,6 +59,23 @@ import { type } from "../../src/theme";
 const locale = "zh-CN" as const;
 const SEARCH_DEBOUNCE_MS = 220;
 
+/** Tip 011 — shared #46 motion easings (match Expo cards #67). */
+const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
+const easePop = Easing.bezier(0.34, 1.56, 0.64, 1);
+
+function formatTripSupport(trip: Trip): string {
+  const parts: string[] = [];
+  if (trip.destination) parts.push(trip.destination);
+  if (trip.startDate) {
+    const range =
+      trip.endDate && trip.endDate !== trip.startDate
+        ? `${trip.startDate} → ${trip.endDate}`
+        : trip.startDate;
+    parts.push(range);
+  }
+  return parts.join(" · ");
+}
+
 function memberInitials(label: string): string {
   const parts = label.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -285,14 +302,14 @@ export default function TripDetailScreen() {
       Animated.timing(rise, {
         toValue: 1,
         duration: motion.durationMdMs,
-        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        easing: easeRise,
         useNativeDriver: true,
       }),
       Animated.timing(sheet, {
         toValue: 1,
         duration: motion.durationLgMs,
         delay: 80,
-        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        easing: easeRise,
         useNativeDriver: true,
       }),
     ]).start();
@@ -304,7 +321,7 @@ export default function TripDetailScreen() {
     Animated.timing(stopPop, {
       toValue: 1,
       duration: motion.durationSmMs,
-      easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+      easing: easePop,
       useNativeDriver: true,
     }).start();
   }, [selectedStopId, stopPop]);
@@ -513,7 +530,9 @@ export default function TripDetailScreen() {
       )}
       {!loading && error && (
         <View style={styles.center}>
-          <Text style={styles.error}>{error}</Text>
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{error}</Text>
+          </View>
           <Text style={styles.hint}>{t(locale, "planner.notFound")}</Text>
           <Pressable style={styles.retry} onPress={() => void load()}>
             <Text style={styles.retryLabel}>Retry</Text>
@@ -534,6 +553,9 @@ export default function TripDetailScreen() {
               {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
             </Text>
             <Text style={styles.title}>{trip.title}</Text>
+            {formatTripSupport(trip) ? (
+              <Text style={styles.support}>{formatTripSupport(trip)}</Text>
+            ) : null}
             <View style={styles.actionRow}>
               <Pressable
                 style={[styles.actionBtn, styles.actionPrimary]}
@@ -544,18 +566,18 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                style={styles.actionBtn}
+                style={[styles.actionBtn, styles.actionOutline]}
                 onPress={() => router.push(`/trips/${tripId}/journal`)}
               >
-                <Text style={styles.actionLabel}>
+                <Text style={[styles.actionLabel, styles.actionOutlineLabel]}>
                   {t(locale, "mobile.journal")}
                 </Text>
               </Pressable>
               <Pressable
-                style={[styles.actionBtn, styles.actionSecondary]}
+                style={styles.actionBtn}
                 onPress={() => router.push("/translate")}
               >
-                <Text style={[styles.actionLabel, styles.actionSecondaryLabel]}>
+                <Text style={styles.actionLabel}>
                   {t(locale, "mobile.translate")}
                 </Text>
               </Pressable>
@@ -564,7 +586,13 @@ export default function TripDetailScreen() {
 
           {softNotice ? (
             <Animated.View style={[styles.softBanner, riseStyle]}>
-              <Text style={styles.softText}>{softNotice}</Text>
+              <Pressable
+                onPress={() => setSoftNotice(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss"
+              >
+                <Text style={styles.softText}>{softNotice}</Text>
+              </Pressable>
             </Animated.View>
           ) : null}
 
@@ -591,6 +619,8 @@ export default function TripDetailScreen() {
                       key={day.id}
                       onPress={() => selectDay(day.id)}
                       style={[styles.dayChip, active && styles.dayChipActive]}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: active }}
                     >
                       <Text
                         style={[
@@ -958,10 +988,10 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 2.4,
     textTransform: "uppercase",
     color: colors.river,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   title: {
     ...type.display,
@@ -969,7 +999,15 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.9,
     color: colors.ink,
-    marginBottom: 14,
+    marginBottom: 8,
+  },
+  support: {
+    ...type.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.inkSoft,
+    marginBottom: 16,
+    maxWidth: 360,
   },
   actionRow: {
     flexDirection: "row",
@@ -988,9 +1026,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.river,
     borderColor: colors.river,
   },
-  actionSecondary: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+  actionOutline: {
+    backgroundColor: colors.foam,
+    borderColor: "rgba(47, 107, 255, 0.4)",
   },
   actionLabel: {
     ...type.body,
@@ -1002,8 +1040,9 @@ const styles = StyleSheet.create({
     color: colors.foam,
     fontWeight: "700",
   },
-  actionSecondaryLabel: {
-    color: colors.foam,
+  actionOutlineLabel: {
+    color: colors.river,
+    fontWeight: "700",
   },
   softBanner: {
     marginBottom: 14,
@@ -1020,6 +1059,21 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
+  errorBanner: {
+    borderRadius: radius.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.timber,
+    backgroundColor: "rgba(225, 29, 72, 0.08)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    maxWidth: 360,
+    width: "100%",
+  },
+  errorBannerText: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.timber,
+  },
   sheet: {
     marginTop: 2,
     marginBottom: 20,
@@ -1034,10 +1088,15 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     backgroundColor: "rgba(244, 246, 250, 0.7)",
   },
-  dayRowContent: { gap: 0, paddingHorizontal: 4 },
+  dayRowContent: {
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
   dayChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
     backgroundColor: "transparent",
   },
   dayChipActive: {
@@ -1206,21 +1265,21 @@ const styles = StyleSheet.create({
   pinBtn: {
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
+    borderColor: "rgba(47, 107, 255, 0.35)",
     backgroundColor: colors.foam,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 8,
   },
   pinBtnActive: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+    backgroundColor: colors.river,
+    borderColor: colors.river,
   },
   pinLabel: {
     ...type.body,
     fontSize: 14,
-    fontWeight: "600",
-    color: colors.inkSoft,
+    fontWeight: "700",
+    color: colors.river,
   },
   pinLabelActive: {
     color: colors.foam,
@@ -1232,7 +1291,7 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
   },
   pinMetaActive: {
-    color: "rgba(255,255,255,0.72)",
+    color: "rgba(255,255,255,0.78)",
   },
   pinHint: {
     ...type.body,
@@ -1479,11 +1538,6 @@ const styles = StyleSheet.create({
     color: colors.foam,
     fontSize: 14,
     fontWeight: "700",
-  },
-  error: {
-    ...type.body,
-    color: colors.timber,
-    fontSize: 14,
   },
   retry: {
     marginTop: 8,
