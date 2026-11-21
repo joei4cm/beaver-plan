@@ -315,8 +315,10 @@ export function TripCollabPanel({
               </li>
             ) : null}
             {!showLoading && visibleComments.length === 0 ? (
-              <li className="border-l-2 border-mist py-3 pl-4 text-sm text-ink-soft">
-                {t(locale, "collab.panel.emptyComments")}
+              <li className="animate-fade list-none py-4">
+                <p className="font-display text-lg font-semibold tracking-tight text-ink">
+                  {t(locale, "collab.panel.emptyComments")}
+                </p>
               </li>
             ) : null}
             {visibleComments.map((c, i) => (

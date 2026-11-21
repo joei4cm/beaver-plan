@@ -444,11 +444,11 @@ export function DayFillPanel({
             )}
 
             {!proposal && !generating && (
-              <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
-                <p className="font-display text-base tracking-tight text-ink">
+              <div className="animate-fade max-w-sm px-0.5 py-4">
+                <p className="font-display text-lg font-semibold tracking-tight text-ink">
                   {t(locale, "planner.dayFill.empty")}
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
                   {t(locale, "planner.dayFill.emptyHint")}
                 </p>
               </div>

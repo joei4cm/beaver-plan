@@ -105,6 +105,7 @@ export default function TripDetailScreen() {
   const [routing, setRouting] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
+  const searchInputRef = useRef<TextInput | null>(null);
   const rise = useRef(new Animated.Value(0)).current;
   const sheet = useRef(new Animated.Value(0)).current;
   const stopPop = useRef(new Animated.Value(1)).current;
@@ -606,6 +607,7 @@ export default function TripDetailScreen() {
 
               <View style={styles.searchWrap}>
                 <TextInput
+                  ref={searchInputRef}
                   value={query}
                   onChangeText={scheduleSearch}
                   onFocus={() => setSearchOpen(true)}
@@ -734,9 +736,25 @@ export default function TripDetailScreen() {
                 );
               })}
               {dayStops.length === 0 && (
-                <Text style={styles.hint}>
-                  {t(locale, "planner.emptyDayHint")}
-                </Text>
+                <View style={styles.emptyDay}>
+                  <Text style={styles.emptyDayTitle}>
+                    {t(locale, "planner.emptyDay")}
+                  </Text>
+                  <Text style={styles.emptyDayHint}>
+                    {t(locale, "planner.emptyDayHint")}
+                  </Text>
+                  <Pressable
+                    style={styles.emptyDayCta}
+                    onPress={() => {
+                      setSearchOpen(true);
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <Text style={styles.emptyDayCtaText}>
+                      {t(locale, "planner.emptyDayCta")}
+                    </Text>
+                  </Pressable>
+                </View>
               )}
             </View>
 
@@ -1307,6 +1325,39 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 14,
     paddingVertical: 18,
+  },
+  emptyDay: {
+    paddingHorizontal: 14,
+    paddingVertical: 22,
+    maxWidth: 360,
+  },
+  emptyDayTitle: {
+    ...type.display,
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    color: colors.ink,
+  },
+  emptyDayHint: {
+    ...type.body,
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.inkSoft,
+  },
+  emptyDayCta: {
+    marginTop: 16,
+    alignSelf: "flex-start",
+    backgroundColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: radius.md,
+  },
+  emptyDayCtaText: {
+    ...type.body,
+    color: colors.foam,
+    fontSize: 14,
+    fontWeight: "700",
   },
   error: {
     ...type.body,
