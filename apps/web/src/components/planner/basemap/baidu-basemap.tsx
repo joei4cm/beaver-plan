@@ -9,6 +9,7 @@ import {
   collectPathLines,
   strokeForMode,
 } from "./route-style";
+import { MapSkeleton } from "./map-skeleton";
 
 type BMapNS = {
   Map: new (el: string | HTMLElement) => BMapInst;
@@ -139,5 +140,10 @@ export function BaiduBasemap({
     paint();
   }, [paint]);
 
-  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
+  return (
+    <>
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+      {!ready && <MapSkeleton label="Loading Baidu Maps" />}
+    </>
+  );
 }

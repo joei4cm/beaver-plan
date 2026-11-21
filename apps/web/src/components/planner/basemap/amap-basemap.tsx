@@ -9,6 +9,7 @@ import {
   collectPathLines,
   strokeForMode,
 } from "./route-style";
+import { MapSkeleton } from "./map-skeleton";
 
 type AMapNS = {
   Map: new (el: string | HTMLElement, opts: Record<string, unknown>) => AMapInst;
@@ -136,7 +137,12 @@ export function AmapBasemap({
     paint();
   }, [paint]);
 
-  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
+  return (
+    <>
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+      {!ready && <MapSkeleton label="Loading Amap" />}
+    </>
+  );
 }
 
 function pinContent(index: number, selected: boolean): string {
