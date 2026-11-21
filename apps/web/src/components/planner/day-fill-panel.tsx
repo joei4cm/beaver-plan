@@ -97,9 +97,19 @@ async function buildLocalDemoProposal(input: {
   };
 }
 
+/** Azure section eyebrow — matches booking / place-intel depth chrome. */
+function SectionEyebrow({ children }: { children: string }) {
+  return (
+    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+      {children}
+    </p>
+  );
+}
+
 /**
- * Planner secondary tool — smart day-fill sheet.
- * Lumen hierarchy: header · SoftFailNotice · prefs · preview.
+ * Planner secondary tool — smart day-fill sheet chrome after #58/#69.
+ * Lumen hierarchy: azure header rail · SoftFailNotice · prefs · preview,
+ * SheetPresence in/out, #46 motion on CTAs / chips / marker pop.
  * Soft-fails to local Kyoto demo when LLM/API/Neon are absent.
  */
 export function DayFillPanel({
@@ -124,6 +134,7 @@ export function DayFillPanel({
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [softDemo, setSoftDemo] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -132,15 +143,17 @@ export function DayFillPanel({
       .then((res) => {
         if (!cancelled) {
           setStatus({ mode: res.mode, provider: res.provider });
-          if (res.mode === "demo") {
-            setNotice(t(locale, "planner.dayFill.demoNotice"));
-          }
+          setSoftDemo(false);
+          setNotice(
+            res.mode === "demo" ? t(locale, "planner.dayFill.demoNotice") : null,
+          );
         }
       })
       .catch(() => {
         if (!cancelled) {
           setStatus({ mode: "demo", provider: "demo-day-fill" });
-          setNotice(t(locale, "planner.dayFill.demoNotice"));
+          setSoftDemo(true);
+          setNotice(t(locale, "planner.dayFill.softFail"));
         }
       });
     return () => {
@@ -175,6 +188,7 @@ export function DayFillPanel({
       );
       setProposal(res.proposal);
       setLocalOnly(false);
+      setSoftDemo(false);
       setStatus({ mode: res.proposal.mode, provider: res.proposal.provider });
       if (res.proposal.mode === "demo") {
         setNotice(t(locale, "planner.dayFill.demoNotice"));
@@ -193,6 +207,7 @@ export function DayFillPanel({
         });
         setProposal(draft);
         setLocalOnly(true);
+        setSoftDemo(isPlannerNoiseError(e));
         setStatus({ mode: "demo", provider: draft.provider });
         setNotice(
           isPlannerNoiseError(e)
@@ -202,6 +217,7 @@ export function DayFillPanel({
         onError("");
       } catch {
         if (isPlannerNoiseError(e)) {
+          setSoftDemo(true);
           setNotice(t(locale, "planner.dayFill.softFail"));
           onError("");
         } else {
@@ -278,21 +294,25 @@ export function DayFillPanel({
   }
 
   const mode = proposal?.mode ?? status?.mode ?? "demo";
-  const softDemo = mode === "demo" || localOnly;
+  const demoMode = mode === "demo" || localOnly || softDemo;
   const badge =
     mode === "live"
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   const softCopy =
     notice ??
-    (softDemo ? t(locale, "planner.dayFill.demoNotice") : null);
+    (softDemo
+      ? t(locale, "planner.dayFill.softFail")
+      : demoMode
+        ? t(locale, "planner.dayFill.demoNotice")
+        : null);
 
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55 shadow-bp-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35"
+        className="relative flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out hover:bg-mist/35"
         aria-expanded={open}
       >
         <div className="min-w-0">
@@ -331,11 +351,15 @@ export function DayFillPanel({
             {softCopy ?? ""}
           </SoftFailNotice>
 
-          <section className="space-y-3" aria-label={t(locale, "planner.dayFill.interests")}>
+          <section
+            className="animate-fade space-y-3"
+            style={{ animationDelay: "50ms" }}
+            aria-label={t(locale, "planner.dayFill.interests")}
+          >
               <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+                <SectionEyebrow>
                   {t(locale, "planner.dayFill.prefsEyebrow")}
-                </p>
+                </SectionEyebrow>
                 <h3 className="mt-1 font-display text-base tracking-tight text-ink">
                   {t(locale, "planner.dayFill.prefsTitle")}
                 </h3>
@@ -345,18 +369,23 @@ export function DayFillPanel({
                 <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                   {t(locale, "planner.dayFill.interests")}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div
+                  className="flex flex-wrap gap-1 rounded-bp-sm bg-mist/50 p-1"
+                  role="group"
+                  aria-label={t(locale, "planner.dayFill.interests")}
+                >
                   {DAY_FILL_INTERESTS.map((id) => {
                     const on = interests.includes(id);
                     return (
                       <button
                         key={id}
                         type="button"
+                        aria-pressed={on}
                         onClick={() => toggleInterest(id)}
-                        className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
+                        className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition ${
                           on
-                            ? "bg-river text-foam"
-                            : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
+                            ? "bg-river text-foam shadow-bp-soft"
+                            : "text-ink-soft hover:bg-foam/70 hover:text-river"
                         }`}
                       >
                         {t(locale, INTEREST_KEYS[id])}
@@ -411,7 +440,7 @@ export function DayFillPanel({
                   type="button"
                   disabled={generating || interests.length === 0}
                   onClick={() => void generate()}
-                  className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {generating
                     ? t(locale, "planner.dayFill.generating")
@@ -423,7 +452,9 @@ export function DayFillPanel({
                     onClick={() => {
                       setProposal(null);
                       setLocalOnly(false);
-                      if (status?.mode === "demo") {
+                      if (softDemo) {
+                        setNotice(t(locale, "planner.dayFill.softFail"));
+                      } else if (status?.mode === "demo") {
                         setNotice(t(locale, "planner.dayFill.demoNotice"));
                       } else {
                         setNotice(null);
@@ -438,7 +469,11 @@ export function DayFillPanel({
             </section>
 
             {generating && (
-              <div role="status" aria-live="polite" className="space-y-2">
+              <div
+                role="status"
+                aria-live="polite"
+                className="animate-fade space-y-2"
+              >
                 <DayFillSkeleton days={dayCount} />
                 <p className="text-xs text-ink-soft">
                   {t(locale, "planner.dayFill.loadingHint")}
@@ -447,7 +482,10 @@ export function DayFillPanel({
             )}
 
             {!proposal && !generating && (
-              <div className="animate-fade max-w-sm px-0.5 py-4">
+              <div
+                className="animate-fade max-w-sm px-0.5 py-4"
+                style={{ animationDelay: "70ms" }}
+              >
                 <p className="font-display text-lg font-semibold tracking-tight text-ink">
                   {t(locale, "planner.dayFill.empty")}
                 </p>
@@ -459,15 +497,15 @@ export function DayFillPanel({
 
             {proposal && !generating && (
               <section
-                className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam"
+                className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
                 aria-label={t(locale, "planner.dayFill.preview")}
               >
-                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3">
+                <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-                        {t(locale, "planner.dayFill.preview")}
-                      </span>
+                      <SectionEyebrow>
+                        {t(locale, "planner.dayFill.previewEyebrow")}
+                      </SectionEyebrow>
                       <span
                         className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
                           proposal.mode === "live"
@@ -480,6 +518,9 @@ export function DayFillPanel({
                           : t(locale, "planner.dayFill.demoBadge")}
                       </span>
                     </div>
+                    <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                      {t(locale, "planner.dayFill.preview")}
+                    </h3>
                     {proposal.rationale && (
                       <p className="mt-1 text-sm leading-relaxed text-ink-soft">
                         {proposal.rationale}
@@ -490,7 +531,7 @@ export function DayFillPanel({
                     type="button"
                     disabled={applying}
                     onClick={() => void apply()}
-                    className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:opacity-40"
+                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:opacity-40"
                   >
                     {applying
                       ? t(locale, "planner.dayFill.applying")
@@ -517,7 +558,9 @@ export function DayFillPanel({
                           ) : null}
                         </span>
                         {day.note && (
-                          <span className="text-xs text-river">{day.note}</span>
+                          <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                            {day.note}
+                          </span>
                         )}
                       </div>
                       <ol className="mt-2.5 space-y-2">
