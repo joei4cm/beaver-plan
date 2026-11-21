@@ -364,18 +364,24 @@
   }
 
   /*
-   * Planner day tabs (BEA-153) — underline select + tip-011 settle.
-   * Azure hierarchy: river active / ink-soft idle; mist wash, not full pill.
+   * Planner day tabs (BEA-247 after #117) — azure Days chrome · mist-track
+   * underline select · tip-011 settle. SoftFailNotice stays under Stops.
    */
-  .bp-day-tab-rail--underline {
+  .bp-day-tabs-chrome {
     border-bottom: 1px solid var(--bp-line);
+    background-color: color-mix(in srgb, var(--bp-paper) 70%, transparent);
+    box-shadow: inset 3px 0 0 var(--bp-river);
+  }
+
+  .bp-day-tab-rail--underline {
     background:
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--bp-mist) 55%, transparent) 0%,
-        color-mix(in srgb, var(--bp-foam) 88%, transparent) 100%
+        color-mix(in srgb, var(--bp-mist) 62%, transparent) 0%,
+        color-mix(in srgb, var(--bp-foam) 92%, transparent) 72%,
+        color-mix(in srgb, var(--bp-foam) 100%, transparent) 100%
       );
-    padding: 0.125rem 0.25rem 0;
+    padding: 0.15rem 0.35rem 0;
   }
 
   .animate-tab-indicator--underline {
@@ -388,7 +394,9 @@
       color-mix(in srgb, var(--bp-river) 78%, #60a5fa) 0%,
       var(--bp-river) 100%
     );
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bp-river) 18%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--bp-river) 18%, transparent),
+      0 1px 6px color-mix(in srgb, var(--bp-river) 22%, transparent);
     transform-origin: center bottom;
   }
 
@@ -400,8 +408,9 @@
   .bp-day-tab {
     outline: none;
     transition:
-      color var(--bp-duration-fast) var(--bp-ease-out),
-      background-color var(--bp-duration-fast) var(--bp-ease-out);
+      color var(--bp-duration-fast) var(--bp-ease-out-strong),
+      background-color var(--bp-duration) var(--bp-ease-out-strong),
+      box-shadow var(--bp-duration-fast) var(--bp-ease-out);
   }
 
   .bp-day-tab:focus-visible {
@@ -423,12 +432,13 @@
 
   .bp-day-tab-rail--underline .bp-day-tab {
     border-radius: var(--bp-radius-sm) var(--bp-radius-sm) 0 0;
-    padding-bottom: 0.85rem;
+    padding-bottom: 0.9rem;
   }
 
   .bp-day-tab-rail--underline .bp-day-tab[aria-selected="true"] {
     color: var(--bp-ink);
-    background-color: color-mix(in srgb, var(--bp-river) 8%, transparent);
+    background-color: color-mix(in srgb, var(--bp-foam) 88%, var(--bp-river));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bp-river) 12%, transparent);
   }
 
   .bp-day-tab-rail--underline .bp-day-tab[aria-selected="true"] .bp-day-tab__eyebrow {
@@ -443,6 +453,24 @@
 
   .bp-day-tab-rail--underline .bp-day-tab[aria-selected="false"]:hover {
     background-color: color-mix(in srgb, var(--bp-mist) 55%, transparent);
+  }
+
+  .bp-day-tab__meta {
+    margin-top: 0.2rem;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.72;
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="true"] .bp-day-tab__meta {
+    color: var(--bp-river);
+    opacity: 0.9;
+  }
+
+  .bp-day-tab-rail--underline .bp-day-tab[aria-selected="false"] .bp-day-tab__meta {
+    color: var(--bp-ink-soft);
   }
 
   /*
