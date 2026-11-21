@@ -46,22 +46,24 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       filePath: path.join(projectRoot, "src/camera-web-stub.ts"),
     };
   }
-  if (moduleName === "react") {
-    return { type: "sourceFile", filePath: path.join(reactRoot, "index.js") };
-  }
-  if (moduleName === "react-dom") {
-    return { type: "sourceFile", filePath: path.join(reactDomRoot, "index.js") };
-  }
-  if (moduleName === "react/jsx-runtime") {
+  // Pin every react / react-dom subpath to Expo React 18 — workspace Next
+  // React 19 otherwise wins on `react-dom/client` → ReactSharedInternals.S crash.
+  if (moduleName === "react" || moduleName.startsWith("react/")) {
+    const sub =
+      moduleName === "react" ? "./index.js" : `./${moduleName.slice("react/".length)}`;
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-runtime"),
+      filePath: resolveFromPkg(reactRoot, sub),
     };
   }
-  if (moduleName === "react/jsx-dev-runtime") {
+  if (moduleName === "react-dom" || moduleName.startsWith("react-dom/")) {
+    const sub =
+      moduleName === "react-dom"
+        ? "./index.js"
+        : `./${moduleName.slice("react-dom/".length)}`;
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-dev-runtime"),
+      filePath: resolveFromPkg(reactDomRoot, sub),
     };
   }
   if (moduleName === "scheduler" || moduleName.startsWith("scheduler/")) {
