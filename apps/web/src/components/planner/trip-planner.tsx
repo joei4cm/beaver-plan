@@ -776,7 +776,21 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               engineLabel={engineLabel}
               modeLabel={modeLabel}
               engineId={engineInfo?.engineId}
+              mode={engineInfo?.mode ?? "demo"}
               locale={locale}
+              query={query}
+              results={results}
+              searching={searching}
+              onQueryChange={(v) => {
+                setQuery(v);
+                scheduleSearch(v);
+              }}
+              onSearchCommit={(v) => {
+                setQuery(v);
+                if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+                void runSearch(v);
+              }}
+              onPickPlace={(place) => void addPlace(place)}
             />
           </div>
 
@@ -787,7 +801,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   key={m}
                   type="button"
                   onClick={() => setTravelMode(m)}
-                  className={`px-3 py-1.5 text-sm font-medium transition ${
+                  className={`px-3 py-1.5 text-sm font-medium transition duration-bp-fast ease-bp-out ${
                     travelMode === m
                       ? "bg-river text-foam"
                       : "text-ink-soft hover:text-river"
@@ -801,7 +815,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               type="button"
               disabled={routing || dayStops.length < 2}
               onClick={() => void generateRoutes()}
-              className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {routing
                 ? t(locale, "planner.routing")
@@ -818,7 +832,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </p>
             )}
             {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
-              <span className="rounded-md bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
+              <span className="rounded-bp-xs bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
                 {t(locale, "planner.transfer.demoBadge")}
               </span>
             )}
@@ -871,66 +885,6 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </button>
               );
             })}
-          </div>
-
-          <div className="relative border-b border-[color:var(--bp-line)] px-4 py-3">
-            <label className="sr-only" htmlFor="poi-search">
-              {t(locale, "planner.search")}
-            </label>
-            <input
-              id="poi-search"
-              value={query}
-              onChange={(e) => {
-                const v = e.target.value;
-                setQuery(v);
-                scheduleSearch(v);
-              }}
-              onCompositionEnd={(e) => {
-                const v = e.currentTarget.value;
-                setQuery(v);
-                void runSearch(v);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-                  void runSearch(query);
-                }
-              }}
-              placeholder={t(locale, "planner.searchPlaceholder")}
-              className="w-full border-0 bg-transparent px-1 py-2 text-sm text-ink outline-none ring-0 placeholder:text-ink-soft/45 focus:outline-none"
-              autoComplete="off"
-            />
-            {searching && (
-              <span className="absolute right-4 top-4 text-xs text-ink-soft">
-                …
-              </span>
-            )}
-            {results.length > 0 && (
-              <ul
-                role="listbox"
-                className="bp-popover absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp"
-              >
-                {results.map((place) => (
-                  <li key={place.enginePlaceId} role="option">
-                    <button
-                      type="button"
-                      onClick={() => void addPlace(place)}
-                      className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/60"
-                    >
-                      <span className="text-sm font-medium text-ink">
-                        {place.name}
-                      </span>
-                      {place.address && (
-                        <span className="text-xs text-ink-soft">
-                          {place.address}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           <StopReorderList

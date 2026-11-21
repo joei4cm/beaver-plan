@@ -1,15 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { Leg, MapEngineId, Stop } from "@beaver/core";
+import type { Leg, MapEngineId, PlaceSummary, Stop } from "@beaver/core";
 import { legPathSegments } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
-import { t } from "@beaver/i18n";
 import {
   basemapProviderLabel,
   resolveBasemapKind,
 } from "./basemap/resolve-basemap";
 import { MapSkeleton } from "./basemap/map-skeleton";
+import { MapChrome, type MapLayerFlags } from "./map-chrome";
 
 const InteractiveBasemap = dynamic(
   () =>
@@ -20,6 +21,12 @@ const InteractiveBasemap = dynamic(
   },
 );
 
+const DEFAULT_LAYERS: MapLayerFlags = {
+  routes: true,
+  stops: true,
+  legend: true,
+};
+
 type Props = {
   stops: Stop[];
   legs: Leg[];
@@ -28,7 +35,14 @@ type Props = {
   engineLabel: string;
   modeLabel: string;
   engineId?: MapEngineId;
+  mode?: "live" | "demo";
   locale?: Locale;
+  query: string;
+  results: PlaceSummary[];
+  searching: boolean;
+  onQueryChange: (value: string) => void;
+  onSearchCommit: (value: string) => void;
+  onPickPlace: (place: PlaceSummary) => void;
 };
 
 export function MapStage({
@@ -39,10 +53,25 @@ export function MapStage({
   engineLabel,
   modeLabel,
   engineId,
+  mode = "demo",
   locale = "zh-CN",
+  query,
+  results,
+  searching,
+  onQueryChange,
+  onSearchCommit,
+  onPickPlace,
 }: Props) {
   const basemapKind = resolveBasemapKind(engineId);
   const tileLabel = basemapProviderLabel(basemapKind);
+  // Soft-fail when Directions/Places are demo *or* vendor JS map keys are absent (Leaflet fallback).
+  const softFail = mode !== "live" || basemapKind === "leaflet";
+  const [layers, setLayers] = useState<MapLayerFlags>(DEFAULT_LAYERS);
+  const [fitNonce, setFitNonce] = useState(0);
+  const [locateNotice, setLocateNotice] = useState<string | null>(null);
+
+  const hasRoute =
+    stops.length > 0 || legs.some((l) => legPathSegments(l).length > 0);
 
   return (
     <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-[#EAF0F8] lg:min-h-[640px] lg:rounded-none">
@@ -52,39 +81,33 @@ export function MapStage({
         selectedStopId={selectedStopId}
         onSelectStop={onSelectStop}
         engineId={engineId}
+        showRoutes={layers.routes}
+        showStops={layers.stops}
+        fitNonce={fitNonce}
       />
 
-      <div className="pointer-events-none absolute left-4 top-4 z-[2] flex flex-col gap-1">
-        <span className="rounded-bp bg-foam/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink shadow-bp-soft backdrop-blur">
-          {engineLabel}
-        </span>
-        <span className="text-[11px] font-medium text-ink-soft">
-          {modeLabel} · {tileLabel}
-        </span>
-      </div>
-
-      {legs.some((l) => legPathSegments(l).length > 0) && (
-        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap items-center gap-3 rounded-bp border border-[color:var(--bp-line)] bg-foam/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"
-              aria-hidden
-            />
-            {t(locale, "planner.transfer.walk")}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-4 rounded-full bg-river" aria-hidden />
-            {t(locale, "planner.transfer.ride")}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-river/70"
-              aria-hidden
-            />
-            {t(locale, "planner.transfer.change")}
-          </span>
-        </div>
-      )}
+      <MapChrome
+        locale={locale}
+        engineLabel={engineLabel}
+        modeLabel={modeLabel}
+        tileLabel={tileLabel}
+        softFail={softFail}
+        softFailMessage={locateNotice}
+        query={query}
+        results={results}
+        searching={searching}
+        onQueryChange={onQueryChange}
+        onSearchCommit={onSearchCommit}
+        onPickPlace={onPickPlace}
+        layers={layers}
+        onLayersChange={setLayers}
+        onLocate={() => {
+          setLocateNotice(null);
+          setFitNonce((n) => n + 1);
+        }}
+        onLocateSoftFail={setLocateNotice}
+        hasRoute={hasRoute}
+      />
     </div>
   );
 }

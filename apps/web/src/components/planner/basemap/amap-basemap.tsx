@@ -45,6 +45,9 @@ export function AmapBasemap({
   legs,
   selectedStopId,
   onSelectStop,
+  showRoutes = true,
+  showStops = true,
+  fitNonce = 0,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<AMapInst | null>(null);
@@ -53,6 +56,7 @@ export function AmapBasemap({
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
   const fittedRef = useRef(false);
+  const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -91,7 +95,7 @@ export function AmapBasemap({
     overlaysRef.current = [];
     markersRef.current = [];
 
-    const lines = collectPathLines(stops, legs);
+    const lines = showRoutes ? collectPathLines(stops, legs) : [];
     overlaysRef.current = lines.map((line) => {
       const style = strokeForMode(line.mode);
       const poly = new AMap.Polyline({
@@ -107,31 +111,35 @@ export function AmapBasemap({
       return poly;
     });
 
-    markersRef.current = stops.map((stop, index) => {
-      const selected = stop.id === selectedStopId;
-      const marker = new AMap.Marker({
-        position: [stop.place.lng, stop.place.lat],
-        content: pinContent(index, selected),
-        offset: new AMap.Pixel(selected ? -14 : -11, selected ? -14 : -11),
-      });
-      marker.on("click", () => onSelectRef.current(stop.id));
-      map.add(marker);
-      return marker;
-    });
+    markersRef.current = showStops
+      ? stops.map((stop, index) => {
+          const selected = stop.id === selectedStopId;
+          const marker = new AMap.Marker({
+            position: [stop.place.lng, stop.place.lat],
+            content: pinContent(index, selected),
+            offset: new AMap.Pixel(selected ? -14 : -11, selected ? -14 : -11),
+          });
+          marker.on("click", () => onSelectRef.current(stop.id));
+          map.add(marker);
+          return marker;
+        })
+      : [];
 
-    const fitPts = collectFitPoints(stops, lines);
-    if (!fittedRef.current && fitPts.length > 0) {
+    const fitPts = collectFitPoints(stops, collectPathLines(stops, legs));
+    const locateRequested = fitNonce !== lastFitNonceRef.current;
+    if (locateRequested) lastFitNonceRef.current = fitNonce;
+    if ((!fittedRef.current || locateRequested) && fitPts.length > 0) {
       map.setFitView(
         [...overlaysRef.current, ...markersRef.current],
         false,
         [56, 56, 56, 56],
       );
       fittedRef.current = true;
-    } else if (selectedStopId) {
+    } else if (selectedStopId && showStops) {
       const sel = stops.find((s) => s.id === selectedStopId);
       if (sel) map.setCenter([sel.place.lng, sel.place.lat]);
     }
-  }, [stops, legs, selectedStopId, ready]);
+  }, [stops, legs, selectedStopId, ready, showRoutes, showStops, fitNonce]);
 
   useEffect(() => {
     paint();
