@@ -7,6 +7,7 @@ import {
   useState,
   type AnimationEvent,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 
 /**
@@ -17,7 +18,7 @@ export type SheetPresenceVariant = "sheet" | "popover";
 
 type Props = {
   open: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
   variant?: SheetPresenceVariant;

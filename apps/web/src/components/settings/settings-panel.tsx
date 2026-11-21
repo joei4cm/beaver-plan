@@ -85,10 +85,11 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Settings section SoftFailNotice chrome (BEA-269 after #97/#162):
- * azure prefs rail · Soft maps badge · compact SoftFail under rail ·
- * tip-011 (#46) chip/row settle. Hero SoftFail yields while section owns
- * (no double depth). Soft copy never timber / Failed to fetch.
+ * Settings section SoftFailNotice depth (BEA-339 after #209):
+ * azure Device rail · Soft maps badge · softSupport · compact SoftFail
+ * mist band under rail (`border-b`) · tip-011 mist-wash Language / Maps ·
+ * Hero SoftFail yields while section owns (no double depth). SoftFail copy
+ * always softFail (never timber / Failed to fetch) — prefs still save locally.
  */
 export function SettingsPanel({ locale: initialLocale }: Props) {
   const router = useRouter();
@@ -117,8 +118,8 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         setSoftNotice(null);
       } catch {
         setResolve(null);
-        // Soft inline notice for any resolve miss — prefs still persist locally.
-        setSoftNotice(t(locale, "settings.softOffline"));
+        // SoftFail under Device rail — prefs still persist locally; never timber.
+        setSoftNotice(t(locale, "settings.softFail"));
       }
     },
     [locale],
@@ -147,13 +148,16 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
 
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
   /**
-   * Section owns SoftFail under azure prefs rail. Hero SoftFail yields while
-   * sectionOwnsSoft (no double depth) — map-resolve soft copy never timber.
+   * Device rail owns SoftFail under azure prefs chrome. SoftFail copy always
+   * softFail (never inherit noise / timber). Hide while resolving. Hero SoftFail
+   * yields while sectionOwnsSoft (no double depth).
    */
   const sectionOwnsSoft = Boolean(softNotice);
   const sectionSoftOpen = sectionOwnsSoft && !pending;
-  const softCopy =
-    softNotice ?? t(locale, "settings.resolvedDemo");
+  const softCopy = softNotice ?? t(locale, "settings.softFail");
+  const sheetSupportCopy = sectionSoftOpen
+    ? t(locale, "settings.softSupport")
+    : t(locale, "settings.sheetSupport");
   const statusCopy = pending
     ? t(locale, "settings.resolving")
     : resolve
@@ -198,22 +202,26 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       </header>
 
       {/*
-        SoftFail chrome (BEA-269 after #97/#162):
-        azure prefs rail · Soft maps badge · compact SoftFailNotice ·
-        tip-011 rise — never timber / Failed to fetch.
+        SoftFail depth (BEA-339 after #209):
+        azure Device rail · Soft maps badge · softSupport · SoftFailNotice mist
+        band · tip-011 mist-wash Language / Maps — never timber / Failed to fetch.
       */}
       <div
         className="animate-rise mt-12 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "settings.sheetEyebrow")}
       >
-        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+        <header
+          className={`relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out sm:px-5 ${
+            sectionSoftOpen ? "bg-mist/40" : "bg-paper/70"
+          }`}
+        >
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "settings.sheetEyebrow")}
             </span>
             <span className="text-[11px] leading-snug text-ink-soft/80">
-              {t(locale, "settings.sheetSupport")}
+              {sheetSupportCopy}
             </span>
           </div>
           <span
@@ -229,7 +237,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
           </span>
         </header>
 
-        {/* Compact SoftFail under azure prefs rail — never timber / Failed to fetch. */}
+        {/* Compact SoftFail mist band under azure Device rail — never timber. */}
         <SoftFailNotice
           open={sectionSoftOpen}
           compact
@@ -239,9 +247,13 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         </SoftFailNotice>
 
         <div className="divide-y divide-[color:var(--bp-line)]">
-          {/* Language */}
+          {/* Language — tip-011 mist wash while SoftFail owns Device rail. */}
           <section
-            className="animate-rise px-4 py-8 sm:px-5"
+            className={`animate-rise px-4 py-8 sm:px-5 ${
+              sectionSoftOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
             style={{ animationDelay: "60ms" }}
             aria-labelledby="settings-locale-heading"
           >
@@ -270,9 +282,13 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
             />
           </section>
 
-          {/* Map engine — soft-fail owned by sheet rail above (yields Maps body SoftFail). */}
+          {/* Map engine — SoftFail owned by Device rail; tip-011 mist-wash body. */}
           <section
-            className="animate-rise px-4 py-8 sm:px-5"
+            className={`animate-rise px-4 py-8 sm:px-5 ${
+              sectionSoftOpen
+                ? "bg-gradient-to-b from-mist/30 via-mist/12 to-transparent shadow-[inset_3px_0_0_var(--bp-river)]"
+                : ""
+            }`}
             style={{ animationDelay: "90ms" }}
             aria-labelledby="settings-map-heading"
           >
