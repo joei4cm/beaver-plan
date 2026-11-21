@@ -20,6 +20,7 @@ import {
   SHARE_TEMPLATES,
   getShareTemplate,
   renderShareSvg,
+  sampleKyotoFixture,
   stopsForDay,
   svgToDataUrl,
   type Day,
@@ -31,7 +32,7 @@ import {
 } from "@beaver/core";
 import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
-import { fetchTrip, renderShare } from "../../../src/api";
+import { fetchTrip, isApiSoftFail, renderShare } from "../../../src/api";
 import { SoftFailNotice } from "../../../src/components/soft-fail-notice";
 import { type } from "../../../src/theme";
 import {
@@ -113,6 +114,20 @@ export default function ShareScreen() {
     return { svg: markup, previewUrl: svgToDataUrl(markup) };
   }, [trip, days, dayId, dayStops, templateId, stylePayload]);
 
+  const seedSampleFixture = useCallback(() => {
+    if (tripId !== "sample-kyoto") return false;
+    const fixture = sampleKyotoFixture();
+    setTrip(fixture.trip);
+    setDays(fixture.days);
+    setStops(fixture.stops);
+    setDayId(fixture.days[0]?.id ?? null);
+    setCoverTitle(fixture.trip.title);
+    setCoverSubtitle(fixture.trip.destination ?? "");
+    setSoftDemo(true);
+    setError(null);
+    return true;
+  }, [tripId]);
+
   const loadTrip = useCallback(async () => {
     setLoading(true);
     try {
@@ -126,14 +141,21 @@ export default function ShareScreen() {
       setDayId(data.days[0]?.id ?? null);
       setCoverTitle(data.trip.title);
       setCoverSubtitle(data.trip.destination ?? "");
+      setSoftDemo(false);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "load_failed");
-      setPrefsReady(true);
+      // Soft-fail: sample-kyoto fixture + SoftFailNotice — never timber / Failed to fetch.
+      if (isApiSoftFail(e) && seedSampleFixture()) {
+        setPrefsReady(true);
+      } else {
+        setError(isApiSoftFail(e) ? null : e instanceof Error ? e.message : "load_failed");
+        if (isApiSoftFail(e)) setSoftDemo(true);
+        setPrefsReady(true);
+      }
     } finally {
       setLoading(false);
     }
-  }, [tripId]);
+  }, [tripId, seedSampleFixture]);
 
   const refreshPreview = useCallback(async () => {
     setBusy(true);
