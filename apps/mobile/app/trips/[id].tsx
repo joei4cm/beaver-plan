@@ -1851,7 +1851,7 @@ export default function TripDetailScreen() {
                 {(yourRole === "owner" || yourRole === "editor") && (
                   <View style={styles.inviteActions}>
                     <Pressable
-                      style={styles.inviteBtn}
+                      style={StyleSheet.flatten([styles.inviteBtn])}
                       onPress={() => void onInvite()}
                       accessibilityRole="button"
                     >
@@ -1860,7 +1860,7 @@ export default function TripDetailScreen() {
                       </Text>
                     </Pressable>
                     <Pressable
-                      style={styles.inviteToggle}
+                      style={StyleSheet.flatten([styles.inviteToggle])}
                       onPress={() => setInviteOpen((v) => !v)}
                       accessibilityRole="button"
                     >
@@ -1880,22 +1880,29 @@ export default function TripDetailScreen() {
                   style={styles.inviteSheet}
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
-                  {/* Azure invite chrome — SoftFailNotice under header rail */}
+                  {/* Invite SoftFail depth (BEA-250) — azure rail · SoftFail · mist code · tip-011 */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
                       <Text style={styles.inviteSheetEyebrow}>
                         {t(locale, "collab.inviteEyebrow")}
                       </Text>
-                      <Text style={styles.inviteSheetTitle}>
-                        {t(locale, "collab.invite")}
+                      <Text style={styles.inviteSheetSupport}>
+                        {t(locale, "collab.inviteSupport")}
                       </Text>
                     </View>
                     <View style={styles.inviteSheetBadges}>
-                      {inviteSoftOpen ? (
-                        <Text style={styles.inviteSoftBadge}>
-                          {t(locale, "collab.demoBadge")}
-                        </Text>
-                      ) : null}
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.inviteStatusBadge,
+                          inviteSoftOpen
+                            ? styles.inviteStatusBadgeSoft
+                            : styles.inviteStatusBadgeLive,
+                        ])}
+                      >
+                        {inviteSoftOpen
+                          ? t(locale, "collab.demoBadge")
+                          : t(locale, "collab.inviteLiveBadge")}
+                      </Text>
                       {inviteCode ? (
                         <Text style={styles.inviteRoleChip}>
                           {t(locale, "collab.role.editor")}
@@ -1908,16 +1915,31 @@ export default function TripDetailScreen() {
                   </SoftFailNotice>
                   <View style={styles.inviteSheetBody}>
                     {inviteCode ? (
-                      <View style={styles.inviteShareBlock}>
-                        <Text style={styles.inviteShareHint}>
-                          {t(locale, "collab.shareHint")}
+                      <SheetPresence
+                        open
+                        delayMs={40}
+                        rise={10}
+                        style={styles.inviteCodeInset}
+                      >
+                        <Text style={styles.inviteCodeEyebrow}>
+                          {t(locale, "collab.inviteCodeEyebrow")}
                         </Text>
-                        <View style={styles.inviteCodeRow}>
+                        <SheetPresence open delayMs={80} rise={8}>
+                          <Text style={styles.inviteShareHint}>
+                            {t(locale, "collab.shareHint")}
+                          </Text>
+                        </SheetPresence>
+                        <SheetPresence
+                          open
+                          delayMs={120}
+                          rise={8}
+                          style={styles.inviteCodeRow}
+                        >
                           <Text style={styles.inviteCodeChip}>
                             {inviteCode}
                           </Text>
                           <Pressable
-                            style={styles.copyBtn}
+                            style={StyleSheet.flatten([styles.copyBtn])}
                             onPress={() => void onCopyInvite()}
                             accessibilityRole="button"
                           >
@@ -1927,15 +1949,19 @@ export default function TripDetailScreen() {
                                 : t(locale, "collab.copyLink")}
                             </Text>
                           </Pressable>
-                        </View>
+                        </SheetPresence>
                         {inviteUrl ? (
-                          <Text style={styles.inviteUrl}>{inviteUrl}</Text>
+                          <SheetPresence open delayMs={160} rise={6}>
+                            <Text style={styles.inviteUrl}>{inviteUrl}</Text>
+                          </SheetPresence>
                         ) : null}
-                      </View>
+                      </SheetPresence>
                     ) : (
-                      <Text style={styles.inviteShareHint}>
-                        {t(locale, "collab.shareHint")}
-                      </Text>
+                      <SheetPresence open delayMs={40} rise={8}>
+                        <Text style={styles.inviteShareHintMuted}>
+                          {t(locale, "collab.shareHint")}
+                        </Text>
+                      </SheetPresence>
                     )}
                     <View style={styles.inviteMemberList}>
                       {members.map((m) => {
@@ -3152,10 +3178,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
-  inviteSheetTitle: {
+  inviteSheetSupport: {
     ...type.body,
     fontSize: 11,
-    fontWeight: "500",
+    lineHeight: 16,
     color: "rgba(71, 85, 105, 0.8)",
   },
   inviteSheetBadges: {
@@ -3164,18 +3190,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  inviteSoftBadge: {
+  inviteStatusBadge: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: radius.xs,
     overflow: "hidden",
+  },
+  inviteStatusBadgeSoft: {
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+  },
+  inviteStatusBadgeLive: {
+    color: colors.river,
+    backgroundColor: "rgba(47,107,255,0.12)",
   },
   inviteRoleChip: {
     ...type.body,
@@ -3189,14 +3221,32 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.xs,
     overflow: "hidden",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
   },
   inviteSheetBody: {
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 12,
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
-  inviteShareBlock: {
+  inviteCodeInset: {
     gap: 10,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.42)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  inviteCodeEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    color: colors.river,
   },
   inviteShareHint: {
     ...type.display,
@@ -3204,6 +3254,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
+  },
+  inviteShareHintMuted: {
+    ...type.body,
+    fontSize: 14,
+    color: colors.inkSoft,
   },
   inviteCodeRow: {
     flexDirection: "row",
@@ -3221,12 +3276,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: radius.sm,
     overflow: "hidden",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
   },
   copyBtn: {
     backgroundColor: colors.river,
     borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 9,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   copyBtnLabel: {
     ...type.body,
