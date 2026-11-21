@@ -52,7 +52,8 @@ type Props = {
  * Depth ladder (BEA-224 after #56/#98/#118):
  *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
  *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
- * Tip-011 (#46) rise / stop-select settle · SoftFailNotice ownership intact ·
+ * Search SoftFailNotice (BEA-238): azure Places rail · compact SoftFail under
+ * rail · tip-011 (#46) · stage/legend yield while search owns soft-fail.
  * Lumen tokens — never timber / Failed to fetch.
  */
 export function MapChrome({
@@ -183,8 +184,16 @@ export function MapChrome({
 
   const locateNotice = softFailMessage?.trim() || null;
   const legendOpen = layers.legend && hasRoute;
-  // Search sheet owns SoftFailNotice while demo Places results/empty are open.
+  /**
+   * Search SoftFailNotice chrome (BEA-238 after #144/#159):
+   * demo Places sheet owns compact SoftFail under azure Places rail ·
+   * tip-011 (#46). Stage + transfer legend yield (no double depth).
+   * Soft copy never timber / Failed to fetch.
+   */
   const searchOwnsSoftFail = searchDemo && sheetOpen;
+  const searchSoftCopy = showEmpty
+    ? t(locale, "planner.search.softFailEmpty")
+    : t(locale, "planner.search.softFail");
   // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap
   // popover, search sheet, and transfer legend are closed (each owns SoftFailNotice — no double depth).
   const stageNotice =
@@ -363,6 +372,11 @@ export function MapChrome({
             variant="popover"
             className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
+            {/*
+              Search SoftFail chrome (BEA-238 after #144/#159):
+              azure Places rail · demo/live badge · compact SoftFailNotice ·
+              tip-011 rise body — never timber / Failed to fetch.
+            */}
             <div
               className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
               style={{ animationDelay: "40ms" }}
@@ -386,7 +400,7 @@ export function MapChrome({
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  searchDemo
+                  searchOwnsSoftFail
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river-deep"
                 }`}
@@ -397,18 +411,29 @@ export function MapChrome({
               </span>
             </div>
 
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            <SoftFailNotice open={searchOwnsSoftFail} compact>
+              {searchSoftCopy}
+            </SoftFailNotice>
+
             {hasResults ? (
               <ul
                 id={listboxId}
                 role="listbox"
                 aria-label={t(locale, "planner.search.eyebrow")}
-                className="max-h-64 overflow-auto py-1"
+                className="animate-rise max-h-64 overflow-auto py-1"
+                style={{ animationDelay: "70ms" }}
               >
                 {results.map((place, i) => {
                   const selected = i === activeIndex;
                   const optionId = `${listboxId}-opt-${i}`;
                   return (
-                    <li key={place.enginePlaceId} role="presentation">
+                    <li
+                      key={place.enginePlaceId}
+                      role="presentation"
+                      className="animate-rise"
+                      style={{ animationDelay: `${i * 40 + 85}ms` }}
+                    >
                       <button
                         ref={(el) => {
                           optionRefs.current[i] = el;
@@ -460,7 +485,7 @@ export function MapChrome({
             ) : showEmpty ? (
               <div
                 className="animate-rise space-y-1.5 px-3.5 py-4"
-                style={{ animationDelay: "55ms" }}
+                style={{ animationDelay: "70ms" }}
                 role="status"
                 aria-live="polite"
               >
@@ -475,19 +500,15 @@ export function MapChrome({
                 </p>
               </div>
             ) : (
-              <div className="px-3.5 py-3 text-xs text-ink-soft" aria-busy>
+              <div
+                className="animate-rise px-3.5 py-3 text-xs text-ink-soft"
+                style={{ animationDelay: "70ms" }}
+                aria-busy
+              >
                 {t(locale, "planner.search")}
                 …
               </div>
             )}
-
-            <SoftFailNotice open={searchDemo && hasResults} compact>
-              {t(locale, "planner.searchDemo")}
-            </SoftFailNotice>
-            {/* Empty / offline — SoftFailNotice only; never timber Failed to fetch. */}
-            <SoftFailNotice open={searchDemo && showEmpty} compact>
-              {t(locale, "planner.search.softFailEmpty")}
-            </SoftFailNotice>
           </SheetPresence>
         </div>
 

@@ -274,6 +274,7 @@
   "planner.search.addHint": "加入当日",
   "planner.search.demoBadge": "演示地点",
   "planner.search.liveBadge": "实时地点",
+  "planner.search.softFail": "演示地点 — Places API 离线或密钥未配置。精选京都匹配先留在本地，等实时搜索就绪后再同步。绝不是 Failed to fetch 崩溃。",
   "planner.search.softFailEmpty": "Places API 离线或密钥未配置 — 该关键词暂无精选演示匹配。不会出现 Failed to fetch。",
   "planner.emptyDay": "这一天还空着。",
   "planner.emptyDayHint": "在地图上搜索并钉一个地点——列表与路线会一起亮起来。",
