@@ -230,18 +230,24 @@ export function JournalSkeleton() {
             <div className="p-5 md:p-6">
               <Skeleton className="h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
-              {/* Compose media rail — azure header · SoftFail slot · drop · strip */}
+              {/* Compose media rail SoftFail depth — azure · softSupport · SoftFail · mist tip-011 body */}
               <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]">
                 <div className="flex items-center justify-between border-b border-[color:var(--bp-line)] px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
-                  <Skeleton className="h-3 w-36" />
+                  <div className="flex items-baseline gap-2">
+                    <Skeleton className="h-2.5 w-16" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
                   <Skeleton className="h-4 w-14 rounded-bp-xs" />
                 </div>
+                {/* SoftFailNotice mist band under photo-frames rail */}
                 <Skeleton className="h-9 w-full rounded-none" />
-                <Skeleton className="mx-3.5 mt-3 h-16 w-[calc(100%-1.75rem)] rounded-bp-sm" />
-                <div className="mt-3 flex gap-2 px-3.5 pb-3">
-                  <Skeleton className="h-[6.25rem] w-[4.5rem] shrink-0 rounded-bp-sm" />
-                  <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
-                  <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
+                  <Skeleton className="mx-3.5 mt-3 h-16 w-[calc(100%-1.75rem)] rounded-bp-sm" />
+                  <div className="mt-3 flex gap-2 px-3.5 pb-3">
+                    <Skeleton className="h-[6.25rem] w-[4.5rem] shrink-0 rounded-bp-sm" />
+                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                  </div>
                 </div>
               </div>
               <Skeleton className="mt-4 h-11 w-full rounded-bp" />

@@ -691,14 +691,25 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
   /**
-   * Photo strip SoftFailNotice chrome (BEA-282 after #124/#172):
+   * Photo strip SoftFailNotice depth (BEA-325 after #217):
    * compose media rail owns compact SoftFail under azure strip rail · Soft
-   * strip badge · tip-011 (#46). Compose SoftFail yields while strip owns
-   * (no double depth). Soft copy never timber / Failed to fetch.
+   * strip badge · softSupport · mist SoftFail band (`border-b`) · mist tip-011
+   * body while soft · tip-011 (#46). Yield journal empty SoftFail (#231) and
+   * compose SoftFail while strip owns (no double depth). Soft copy never
+   * timber / Failed to fetch.
    */
   const photoStripOwnsSoft = composeSoftFail && !emptyOwnsSoft;
   const photoStripSoftOpen = photoStripOwnsSoft;
   const photoStripSoftCopy = t(locale, "journal.photoStripSoftFail");
+  const photoStripSupportCopy = photoStripSoftOpen
+    ? t(locale, "journal.photoStripSoftSupport").replace(
+        "{max}",
+        String(PHOTO_SLOT_MAX),
+      )
+    : t(locale, "journal.photoStripSupport").replace(
+        "{max}",
+        String(PHOTO_SLOT_MAX),
+      );
   const showComposeSoftFail =
     composeSoftFail && !emptyOwnsSoft && !photoStripOwnsSoft;
   const showListSoftFail =
@@ -1169,10 +1180,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               />
 
               {/*
-                Photo strip SoftFail chrome (BEA-282 after #124/#172):
-                azure strip rail · Soft strip badge · compact SoftFailNotice ·
-                drop · lead/empty strip · tip-011 rise — never timber /
-                Failed to fetch. Compose SoftFail yields while strip owns.
+                Photo strip SoftFail depth (BEA-325 after #217):
+                azure strip rail · Soft strip badge · softSupport ·
+                compact SoftFail mist band (`border-b`) · mist tip-011 body
+                while soft · tip-011 rise — never timber / Failed to fetch.
+                Yield empty SoftFail (#231) + compose SoftFail while strip owns.
               */}
               <section
                 className="animate-rise mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
@@ -1185,10 +1197,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                       {t(locale, "journal.photoSlots")}
                     </p>
                     <p className="truncate text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "journal.photoStripSupport").replace(
-                        "{max}",
-                        String(PHOTO_SLOT_MAX),
-                      )}
+                      {photoStripSupportCopy}
                     </p>
                   </div>
                   <span
@@ -1208,7 +1217,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   </span>
                 </header>
 
-                {/* Compact SoftFail under azure strip rail — never timber / Failed to fetch. */}
+                {/* Compact SoftFail under azure strip rail — yields while empty owns. */}
                 <SoftFailNotice
                   open={photoStripSoftOpen}
                   compact
@@ -1217,56 +1226,65 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   {photoStripSoftCopy}
                 </SoftFailNotice>
 
-                <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
-                  <span className="text-sm font-semibold text-river">
-                    {t(locale, "journal.addPhotos")}
-                  </span>
-                  <span className="text-xs leading-relaxed text-ink-soft">
-                    {t(locale, "journal.uploadHint")}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => void onPickFiles(e.target.files)}
-                  />
-                </label>
-
                 <div
-                  className="flex gap-2 overflow-x-auto px-3.5 py-3 [scrollbar-width:thin]"
-                  aria-label={t(locale, "journal.photoStrip")}
+                  className={`animate-rise ${
+                    photoStripSoftOpen
+                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                      : ""
+                  }`}
+                  style={{ animationDelay: "70ms" }}
                 >
-                  {stripMedia.map((item, i) => {
-                    const lead = i === 0;
-                    return (
-                      <MediaFrame
-                        key={item.key}
-                        src={item.src}
-                        alt={
-                          lead
-                            ? t(locale, "journal.photoLead")
-                            : t(locale, "journal.mediaPlaceholder")
-                        }
-                        label={t(locale, "journal.mediaPlaceholder")}
-                        className={`animate-stop-select shrink-0 rounded-bp-sm object-cover transition duration-bp ease-bp-out-strong ${
-                          lead
-                            ? "h-[6.25rem] w-[4.5rem] shadow-bp ring-1 ring-river/40"
-                            : "h-[5.5rem] w-16 shadow-bp-soft ring-1 ring-river/30"
-                        }`}
-                        style={{ animationDelay: `${i * 40}ms` }}
-                      />
-                    );
-                  })}
-                  {Array.from({ length: emptySlots }).map((_, i) => (
-                    <div
-                      key={`slot-${i}`}
-                      className="flex h-[5.5rem] w-16 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/50 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out"
-                      aria-hidden
-                    >
-                      +
-                    </div>
-                  ))}
+                  <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
+                    <span className="text-sm font-semibold text-river">
+                      {t(locale, "journal.addPhotos")}
+                    </span>
+                    <span className="text-xs leading-relaxed text-ink-soft">
+                      {t(locale, "journal.uploadHint")}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => void onPickFiles(e.target.files)}
+                    />
+                  </label>
+
+                  <div
+                    className="flex gap-2 overflow-x-auto px-3.5 py-3 [scrollbar-width:thin]"
+                    aria-label={t(locale, "journal.photoStrip")}
+                  >
+                    {stripMedia.map((item, i) => {
+                      const lead = i === 0;
+                      return (
+                        <MediaFrame
+                          key={item.key}
+                          src={item.src}
+                          alt={
+                            lead
+                              ? t(locale, "journal.photoLead")
+                              : t(locale, "journal.mediaPlaceholder")
+                          }
+                          label={t(locale, "journal.mediaPlaceholder")}
+                          className={`animate-stop-select shrink-0 rounded-bp-sm object-cover transition duration-bp ease-bp-out-strong ${
+                            lead
+                              ? "h-[6.25rem] w-[4.5rem] shadow-bp ring-1 ring-river/40"
+                              : "h-[5.5rem] w-16 shadow-bp-soft ring-1 ring-river/30"
+                          }`}
+                          style={{ animationDelay: `${i * 40}ms` }}
+                        />
+                      );
+                    })}
+                    {Array.from({ length: emptySlots }).map((_, i) => (
+                      <div
+                        key={`slot-${i}`}
+                        className="flex h-[5.5rem] w-16 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/50 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out"
+                        aria-hidden
+                      >
+                        +
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
 
