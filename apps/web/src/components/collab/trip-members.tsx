@@ -177,9 +177,9 @@ export function TripMembersBar({
   const overflow = Math.max(0, members.length - visible.length);
   const softOpen = demoSeeded || softOffline;
   /**
-   * Presence SoftFailNotice chrome (BEA-241 after #141/#130):
-   * presence owns compact SoftFail under azure rail · mist soft badge ·
-   * SheetPresence chips body · tip-011 (#46). Invite sheet open → SoftFail
+   * Presence SoftFailNotice depth (BEA-292 after #181):
+   * azure rail · Soft/Live badge · compact SoftFailNotice (border-b) ·
+   * mist-wash SheetPresence chips · tip-011. Invite sheet open → SoftFail
    * yields (no double depth). Soft copy never timber / Failed to fetch.
    */
   const presenceSoftOpen = softOpen && !open;
@@ -202,12 +202,12 @@ export function TripMembersBar({
   return (
     <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
       {/*
-        Presence SoftFail chrome (BEA-241 after #141/#186):
-        azure rail · soft badge · compact SoftFailNotice · SheetPresence
-        chips · tip-011 rise — never timber.
+        Presence SoftFail depth (BEA-292 after #181):
+        azure rail · Soft/Live badge · compact SoftFailNotice · mist-wash
+        SheetPresence chips · tip-011 rise — never timber.
       */}
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
-        <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
+        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "collab.presence.eyebrow")}
@@ -219,7 +219,9 @@ export function TripMembersBar({
               )}
             </span>
             <span className="text-[11px] leading-snug text-ink-soft/80">
-              {t(locale, "collab.presence.support")}
+              {softOpen
+                ? t(locale, "collab.presence.softSupport")
+                : t(locale, "collab.presence.support")}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -233,40 +235,58 @@ export function TripMembersBar({
             <span className="rounded-bp-xs bg-mist/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-soft">
               v{tripVersion}
             </span>
-            {softOpen ? (
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                {t(locale, "collab.presence.softBadge")}
-              </span>
-            ) : members.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                softOpen
+                  ? "bg-mist text-ink-soft"
+                  : members.length > 0
+                    ? "bg-river/12 text-river-deep"
+                    : "bg-mist/60 text-ink-soft/70"
+              }`}
+            >
+              {!softOpen && members.length > 0 ? (
                 <span
                   className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
                   aria-hidden
                 />
-                {t(locale, "collab.presence.live")}
-                {activeCount > 0 ? (
-                  <span className="tabular-nums font-medium normal-case tracking-normal text-river/80">
-                    · {activeCount}
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
+              ) : null}
+              {softOpen
+                ? t(locale, "collab.presence.softBadge")
+                : t(locale, "collab.presence.live")}
+              {!softOpen && activeCount > 0 ? (
+                <span className="tabular-nums font-medium normal-case tracking-normal text-river/80">
+                  · {activeCount}
+                </span>
+              ) : null}
+            </span>
           </div>
         </header>
 
         {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-        <SoftFailNotice open={presenceSoftOpen} compact>
+        <SoftFailNotice
+          open={presenceSoftOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
           {presenceSoftCopy}
         </SoftFailNotice>
 
         <SheetPresence
           open
-          className="flex flex-wrap items-center justify-between gap-3 px-4 pb-2.5 pt-1"
+          className={`flex flex-wrap items-center justify-between gap-3 px-4 pb-2.5 pt-1.5 ${
+            presenceSoftOpen
+              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+              : ""
+          }`}
           style={{ animationDelay: "40ms" }}
           aria-label={t(locale, "collab.members")}
         >
           <div
-            className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1"
+            className={`flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-bp-sm p-1 ${
+              presenceSoftOpen
+                ? "bg-mist/55 shadow-[inset_3px_0_0_var(--bp-river)]"
+                : "bg-mist/50"
+            }`}
             role="list"
             aria-label={t(locale, "collab.members")}
           >
