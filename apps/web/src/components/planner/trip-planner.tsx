@@ -834,14 +834,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
           <SoftFailNotice
             open={
-              Boolean(softNotice) ||
-              engineInfo?.mode === "demo" ||
+              (engineInfo?.mode ?? "demo") === "demo" ||
               Boolean(error && isPlannerNoiseError(new Error(error)))
             }
             compact
             className="w-full sm:max-w-md"
           >
-            {softNotice ?? t(locale, "planner.shareSoftFail")}
+            {t(locale, "planner.shareSoftFail")}
           </SoftFailNotice>
         </div>
       </header>
