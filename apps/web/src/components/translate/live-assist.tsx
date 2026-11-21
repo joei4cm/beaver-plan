@@ -28,6 +28,7 @@ import { SoftFailNotice } from "@/components/soft-fail-notice";
 import {
   DualCameraSkeleton,
   Skeleton,
+  TranslateHistorySkeleton,
   TranslateStatusSkeleton,
 } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
@@ -205,6 +206,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [cameraDenied, setCameraDenied] = useState(false);
+  const [micDenied, setMicDenied] = useState(false);
+  const micRef = useRef<HTMLButtonElement | null>(null);
+  const draftRef = useRef<HTMLInputElement | null>(null);
   const [overlay, setOverlay] = useState<{
     source: string;
     translated: string;
@@ -499,6 +503,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
   async function startMic() {
     setError(null);
+    setMicDenied(false);
     setPartialText("");
     sequenceRef.current = 0;
     sessionIdRef.current = `sess_${Date.now().toString(36)}`;
@@ -535,11 +540,23 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       mediaRecorderRef.current = recorder;
       recorder.start(chunkMs);
       setListening(true);
+      setMicDenied(false);
     } catch {
       stopDeviceInterim();
-      setError(t(locale, "translate.permissionMic"));
+      setMicDenied(true);
+      setSoftNotice(true);
       await runTurn({});
     }
+  }
+
+  function focusComposer(mode: "mic" | "draft" = "mic") {
+    if (mode === "draft") {
+      draftRef.current?.focus();
+      draftRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    micRef.current?.focus();
+    micRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function stopMic() {
@@ -858,10 +875,6 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </div>
       </section>
 
-      {error ? (
-        <p className="mt-4 text-sm text-timber">{error}</p>
-      ) : null}
-
       {tab === "conversation" ? (
         <>
           {(listening || partialText) && (
@@ -873,50 +886,130 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             </p>
           )}
 
-          <div
-            className="animate-rise mt-8 space-y-0"
+          {(micDenied || error) && (
+            <SoftFailNotice className="mt-6 max-w-xl">
+              {micDenied
+                ? t(locale, "translate.permissionMic")
+                : (error ?? t(locale, "translate.error"))}
+            </SoftFailNotice>
+          )}
+
+          <section
+            className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
             style={{ animationDelay: "120ms" }}
+            aria-label={t(locale, "translate.history")}
           >
-            {turns.length === 0 ? (
-              <div className="animate-fade border-y border-[color:var(--bp-line)] py-12">
-                <p className="font-display text-2xl font-semibold tracking-tight text-ink">
-                  {t(locale, "translate.empty")}
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 md:px-6">
+              <div>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                  {t(locale, "translate.history")}
+                </p>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "translate.historyHint")}
                 </p>
               </div>
+              {turns.length > 0 ? (
+                <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
+                  {t(locale, "translate.historyCount").replace(
+                    "{n}",
+                    String(turns.length),
+                  )}
+                </span>
+              ) : null}
+            </div>
+
+            {busy && turns.length === 0 ? (
+              <TranslateHistorySkeleton rows={2} />
+            ) : turns.length === 0 ? (
+              <div className="animate-fade max-w-lg px-5 py-10 md:px-6">
+                <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+                  {t(locale, "translate.empty")}
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "translate.emptyHint")}
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => focusComposer("mic")}
+                    className="bp-transition rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam duration-bp ease-bp-out hover:bg-river-deep"
+                  >
+                    {t(locale, "translate.emptyCta")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void runTurn({})}
+                    disabled={busy}
+                    className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 disabled:opacity-50"
+                  >
+                    {t(locale, "translate.nextDemo")}
+                  </button>
+                </div>
+              </div>
             ) : (
-              turns.map((row, idx) => (
-                <article
-                  key={row.id}
-                  className="animate-turn-in border-b border-[color:var(--bp-line)] py-5"
-                  style={{ animationDelay: `${Math.min(idx, 4) * 40}ms` }}
-                >
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div>
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-                        {t(locale, "translate.source")}
-                      </p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
-                        {row.sourceText}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
-                        {t(locale, "translate.target")}
-                      </p>
-                      <p className="mt-1.5 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl">
-                        {row.translatedText}
-                      </p>
-                    </div>
+              <div className="divide-y divide-[color:var(--bp-line)]">
+                {busy ? (
+                  <div className="border-b border-[color:var(--bp-line)]">
+                    <TranslateHistorySkeleton rows={1} />
                   </div>
-                  {row.mode === "offline" ? (
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-ink-soft">
-                      {t(locale, "translate.offlineBadge")}
-                    </p>
-                  ) : null}
-                </article>
-              ))
+                ) : null}
+                {turns.map((row, idx) => (
+                  <article
+                    key={row.id}
+                    className="animate-turn-in px-5 py-5 md:px-6"
+                    style={{ animationDelay: `${Math.min(idx, 4) * 40}ms` }}
+                  >
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-bp-xs px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                          row.mode === "live"
+                            ? "bg-river text-foam"
+                            : row.mode === "offline"
+                              ? "bg-mist text-ink-soft"
+                              : "bg-river/12 text-river-deep"
+                        }`}
+                      >
+                        {row.mode === "live"
+                          ? t(locale, "translate.liveBadge")
+                          : row.mode === "offline"
+                            ? t(locale, "translate.offlineBadge")
+                            : t(locale, "translate.demoBadge")}
+                      </span>
+                      {row.translatedText ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void speakLocal(row.translatedText, targetLocale)
+                          }
+                          className="bp-transition ml-auto text-[11px] font-medium uppercase tracking-[0.12em] text-river duration-bp-fast ease-bp-out hover:text-river-deep"
+                        >
+                          {t(locale, "translate.speak")}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                          {t(locale, "translate.source")}
+                        </p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                          {row.sourceText}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                          {t(locale, "translate.target")}
+                        </p>
+                        <p className="mt-1.5 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl">
+                          {row.translatedText}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             )}
-          </div>
+          </section>
 
           <section
             className="animate-rise mt-12"
@@ -1213,7 +1306,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             <button
               type="button"
               onClick={() => setTtsEnabled((v) => !v)}
-              className={`rounded-bp-sm px-3 py-1.5 text-xs font-semibold transition ${
+              className={`bp-transition rounded-bp-sm px-3 py-1.5 text-xs font-semibold duration-bp-fast ease-bp-out ${
                 ttsEnabled
                   ? "bg-river/12 text-river-deep"
                   : "bg-mist text-ink-soft"
@@ -1227,20 +1320,21 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
+              ref={draftRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void onSend();
               }}
               placeholder={t(locale, "translate.typeHint")}
-              className="flex-1 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
+              className="bp-transition flex-1 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus duration-bp-fast ease-bp-out focus:ring-2"
               disabled={busy}
             />
             <button
               type="button"
               onClick={() => void onSend()}
               disabled={busy}
-              className="rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-50"
+              className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam duration-bp-fast ease-bp-out hover:bg-river-deep disabled:opacity-50"
             >
               {busy
                 ? t(locale, "translate.translating")
@@ -1250,13 +1344,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void onQueueDraft()}
               disabled={busy || !draft.trim()}
-              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river disabled:opacity-50"
+              className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river duration-bp-fast ease-bp-out disabled:opacity-50"
             >
               {t(locale, "translate.queueAdd")}
             </button>
           </div>
           <div className="mt-3 flex flex-wrap gap-3">
             <button
+              ref={micRef}
               type="button"
               onMouseDown={() => void startMic()}
               onMouseUp={stopMic}
@@ -1272,7 +1367,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 stopMic();
               }}
               disabled={busy && !listening}
-              className={`min-w-[10rem] flex-1 rounded-bp-sm px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
+              className={`bp-transition min-w-[10rem] flex-1 rounded-bp-sm px-4 py-3 text-sm font-semibold text-foam duration-bp-fast ease-bp-out disabled:opacity-50 ${
                 listening ? "bg-ink" : "bg-river hover:bg-river-deep"
               }`}
             >
@@ -1284,7 +1379,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void runTurn({})}
               disabled={busy}
-              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition hover:border-river/40 disabled:opacity-50"
+              className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 disabled:opacity-50"
             >
               {t(locale, "translate.nextDemo")}
             </button>
