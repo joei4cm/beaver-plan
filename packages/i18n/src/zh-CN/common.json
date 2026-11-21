@@ -482,6 +482,8 @@
   "journal.photoStripSupport": "主图优先 · 最多 {max} 张",
   "journal.photoLead": "主图",
   "journal.photoCount": "{n} / {max}",
+  "journal.photoStripSoftBadge": "柔和照片条",
+  "journal.photoStripSoftFail": "柔和照片条 — 媒体 / R2 离线或密钥未配置。主图与空框先留在本机，直到同步就绪。绝不是 Failed to fetch 崩溃。",
   "journal.save": "写入日记",
   "journal.saving": "保存中…",
   "journal.remove": "删除",
