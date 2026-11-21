@@ -33,6 +33,7 @@ import {
 import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { fetchTrip, isApiSoftFail, renderShare } from "../../../src/api";
+import { SheetPresence } from "../../../src/components/sheet-presence";
 import { SoftFailNotice } from "../../../src/components/soft-fail-notice";
 import { type } from "../../../src/theme";
 import {
@@ -550,83 +551,121 @@ export default function ShareScreen() {
               })}
             </View>
 
-            {/* Export — SoftFailNotice above CTAs; river primary / ink secondary (#62/#121) */}
-            <View
+            {/* Export depth — azure rail · SoftFailNotice · SheetPresence · tip-011 (#149/#126) */}
+            <SheetPresence
+              open
+              delayMs={90}
+              rise={14}
               style={styles.exportSection}
-              accessibilityRole="summary"
               accessibilityLabel={t(locale, "share.export")}
             >
-              <Text style={styles.exportTitle}>
-                {t(locale, "share.export")}
-              </Text>
-              <Text style={styles.exportSupport}>
-                {t(locale, "share.exportSupport")}
-              </Text>
-
-              <SoftFailNotice
-                open={softDemo || exportSoftFail}
-                style={styles.softNotice}
-              >
-                {exportSoftFail
-                  ? t(locale, "share.exportSoftFail")
-                  : t(locale, "share.demoNotice")}
-              </SoftFailNotice>
-
               <View
-                style={styles.exportActions}
-                accessibilityRole="toolbar"
+                style={styles.exportRail}
+                accessibilityRole="summary"
                 accessibilityLabel={t(locale, "share.export")}
               >
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.primary,
-                    busy || !svg ? styles.disabled : null,
-                  ])}
-                  disabled={busy || !svg}
-                  onPress={() => void downloadExport()}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: busy || !svg }}
-                >
-                  <Text style={styles.primaryLabel}>
-                    {t(locale, "share.downloadPng")}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.secondaryInk,
-                    busy || !svg ? styles.disabled : null,
-                  ])}
-                  disabled={busy || !svg}
-                  onPress={() => void shareOut()}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: busy || !svg }}
-                >
-                  <Text style={styles.secondaryInkLabel}>
-                    {t(locale, "share.systemShare")}
-                  </Text>
-                </Pressable>
-                <View style={styles.exportTertiaryRow}>
-                  <Pressable
+                <View style={styles.exportHeader}>
+                  <View style={styles.exportHeaderText}>
+                    <Text style={styles.exportEyebrow}>
+                      {t(locale, "share.exportEyebrow")}
+                    </Text>
+                    <Text
+                      nativeID="expo-share-export-title"
+                      style={styles.exportTitle}
+                    >
+                      {t(locale, "share.export")}
+                    </Text>
+                    <Text style={styles.exportSupport}>
+                      {t(locale, "share.exportSupport")}
+                    </Text>
+                  </View>
+                  <Text
                     style={StyleSheet.flatten([
-                      styles.refreshLink,
-                      busy ? styles.disabled : null,
+                      styles.exportBadge,
+                      softDemo || exportSoftFail
+                        ? styles.exportBadgeDemo
+                        : styles.exportBadgeLive,
                     ])}
-                    disabled={busy}
-                    onPress={() => void refreshPreview()}
-                    accessibilityRole="button"
                   >
-                    <Text style={styles.refreshLinkLabel}>
-                      {t(locale, "share.refresh")}
-                    </Text>
-                  </Pressable>
-                  {!softDemo && !exportSoftFail ? (
-                    <Text style={styles.demoHint}>
-                      {t(locale, "share.demoHint")}
-                    </Text>
-                  ) : null}
+                    {softDemo || exportSoftFail
+                      ? t(locale, "share.demoBadge")
+                      : t(locale, "share.liveBadge")}
+                  </Text>
+                </View>
+
+                <SoftFailNotice
+                  open={softDemo || exportSoftFail}
+                  compact
+                  style={styles.softNotice}
+                >
+                  {exportSoftFail
+                    ? t(locale, "share.exportSoftFail")
+                    : t(locale, "share.demoNotice")}
+                </SoftFailNotice>
+
+                <View
+                  style={styles.exportActions}
+                  accessibilityRole="toolbar"
+                  accessibilityLabel={t(locale, "share.export")}
+                  accessibilityLabelledBy="expo-share-export-title"
+                >
+                  <SheetPresence open delayMs={40} rise={8}>
+                    <Pressable
+                      style={StyleSheet.flatten([
+                        styles.primary,
+                        busy || !svg ? styles.disabled : null,
+                      ])}
+                      disabled={busy || !svg}
+                      onPress={() => void downloadExport()}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: busy || !svg }}
+                    >
+                      <Text style={styles.primaryLabel}>
+                        {t(locale, "share.downloadPng")}
+                      </Text>
+                    </Pressable>
+                  </SheetPresence>
+                  <SheetPresence open delayMs={70} rise={8}>
+                    <Pressable
+                      style={StyleSheet.flatten([
+                        styles.secondaryInk,
+                        busy || !svg ? styles.disabled : null,
+                      ])}
+                      disabled={busy || !svg}
+                      onPress={() => void shareOut()}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: busy || !svg }}
+                    >
+                      <Text style={styles.secondaryInkLabel}>
+                        {t(locale, "share.systemShare")}
+                      </Text>
+                    </Pressable>
+                  </SheetPresence>
+                  <SheetPresence open delayMs={100} rise={6}>
+                    <View style={styles.exportTertiaryRow}>
+                      <Pressable
+                        style={StyleSheet.flatten([
+                          styles.refreshLink,
+                          busy ? styles.disabled : null,
+                        ])}
+                        disabled={busy}
+                        onPress={() => void refreshPreview()}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.refreshLinkLabel}>
+                          {t(locale, "share.refresh")}
+                        </Text>
+                      </Pressable>
+                      {!softDemo && !exportSoftFail ? (
+                        <Text style={styles.demoHint}>
+                          {t(locale, "share.demoHint")}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </SheetPresence>
                 </View>
               </View>
-            </View>
+            </SheetPresence>
             {error && !softDemo && !exportSoftFail ? (
               <Text style={styles.error}>{error}</Text>
             ) : null}
@@ -943,14 +982,49 @@ const styles = StyleSheet.create({
   scaleChipLabelActive: { color: colors.foam, fontWeight: "600" },
   exportSection: {
     marginTop: 24,
-    paddingTop: 20,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
-    gap: 10,
+  },
+  exportRail: {
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  exportHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244,246,250,0.7)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  exportHeaderText: {
+    flex: 1,
+    minWidth: 180,
+    gap: 4,
+  },
+  exportEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: colors.river,
   },
   exportTitle: {
     ...type.display,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
@@ -961,12 +1035,34 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
+  exportBadge: {
+    ...type.body,
+    alignSelf: "flex-start",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  exportBadgeDemo: {
+    backgroundColor: colors.mist,
+    color: colors.inkSoft,
+  },
+  exportBadgeLive: {
+    backgroundColor: "rgba(47,107,255,0.12)",
+    color: colors.river,
+  },
   softNotice: {
-    marginTop: 4,
+    marginTop: 0,
   },
   exportActions: {
     gap: 10,
-    marginTop: 2,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   primary: {
     backgroundColor: colors.river,
@@ -974,7 +1070,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: "center",
-    shadowColor: colors.shadowDeep,
+    shadowColor: colors.river,
     shadowOpacity: 0.22,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
