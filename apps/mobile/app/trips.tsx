@@ -30,6 +30,7 @@ import {
   listTrips,
   type MobileTemplateCard,
 } from "../src/api";
+import { SheetPresence } from "../src/components/sheet-presence";
 import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { type } from "../src/theme";
 
@@ -150,6 +151,39 @@ function TripRow({
   );
 }
 
+/** Azure inset seed rail — SoftFail chrome for empty invite (web trips-home). */
+function SeedRail({ soft }: { soft: boolean }) {
+  return (
+    <View style={styles.listRail}>
+      <View style={styles.listRailCopy}>
+        <Text style={styles.listRailLabel}>
+          {t(locale, "trips.seedRail")}
+        </Text>
+        <Text style={styles.listRailCount}>
+          {t(locale, "trips.seedSupport")}
+        </Text>
+      </View>
+      <View
+        style={StyleSheet.flatten([
+          styles.statusChip,
+          soft ? styles.statusChipDemo : styles.statusChipLive,
+        ])}
+      >
+        <Text
+          style={StyleSheet.flatten([
+            styles.statusChipText,
+            soft ? styles.statusChipTextDemo : styles.statusChipTextLive,
+          ])}
+        >
+          {soft
+            ? t(locale, "trips.seedDemo")
+            : t(locale, "trips.seedReady")}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 /** Azure inset list rail — count + Demo/Live chip (web #136). */
 function TripsListRail({
   count,
@@ -211,6 +245,11 @@ function TripsListSkeleton() {
   );
 }
 
+/**
+ * Expo home SoftFailNotice chrome (BEA-234 after web trips-home seed sheet):
+ * azure seed / list rail · compact SoftFailNotice · tip-011 SheetPresence ·
+ * StyleSheet.flatten · Lumen tokens. Never timber / Failed to fetch.
+ */
 export default function TripsScreen() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -418,89 +457,105 @@ export default function TripsScreen() {
             </Text>
           </View>
 
-          {/* Empty / loading: SoftFailNotice under section header.
-              Populated list: compact SoftFailNotice lives under the azure rail. */}
-          <SoftFailNotice
-            open={
-              !error &&
-              Boolean(softNotice) &&
-              hydrated &&
-              showEmptyInvite
-            }
-            style={styles.sectionSoftFail}
-          >
-            {softNotice ?? ""}
-          </SoftFailNotice>
-
+          {/* SoftFailNotice stays section-scoped — seed / list sheet, never page hero. */}
           {!hydrated ? (
-            <TripsListSkeleton />
+            <SheetPresence open rise={10} delayMs={40}>
+              <TripsListSkeleton />
+            </SheetPresence>
           ) : showEmptyInvite ? (
-            <View>
-              <View style={styles.emptyCtaRow}>
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.solidCta,
-                    newBusy ? styles.ctaBusy : null,
-                  ])}
-                  disabled={newBusy}
-                  onPress={startNewTrip}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(locale, "trips.new")}
+            <SheetPresence
+              open
+              rise={10}
+              delayMs={60}
+              accessibilityLabel={t(locale, "trips.seedActions")}
+            >
+              <View style={styles.listSheet}>
+                <SeedRail soft={listSoft} />
+                <SoftFailNotice
+                  open={!error && Boolean(softNotice)}
+                  compact
+                  style={styles.listSoftFail}
                 >
-                  <Text style={styles.solidCtaText}>
-                    {t(locale, "trips.new")}
-                  </Text>
-                </Pressable>
-                <Link href="/trips/sample-kyoto" asChild>
+                  {softNotice ?? ""}
+                </SoftFailNotice>
+                <View
+                  style={styles.seedActions}
+                  accessibilityLabel={t(locale, "trips.seedActions")}
+                >
                   <Pressable
-                    style={styles.outlineCta}
-                    accessibilityRole="link"
-                    accessibilityLabel={t(locale, "trips.openSample")}
+                    style={StyleSheet.flatten([
+                      styles.solidCta,
+                      newBusy ? styles.ctaBusy : null,
+                    ])}
+                    disabled={newBusy}
+                    onPress={startNewTrip}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(locale, "trips.new")}
                   >
-                    <Text style={styles.outlineCtaText}>
-                      {t(locale, "trips.openSample")}
+                    <Text style={styles.solidCtaText}>
+                      {t(locale, "trips.new")}
                     </Text>
                   </Pressable>
-                </Link>
-              </View>
-
-              {sampleTrips.length > 0 ? (
-                <View style={styles.sampleSheet}>
-                  <Text style={styles.sampleEyebrow}>
-                    {t(locale, "trips.sampleEyebrow")}
+                  <Link href="/trips/sample-kyoto" asChild>
+                    <Pressable
+                      style={styles.outlineCta}
+                      accessibilityRole="link"
+                      accessibilityLabel={t(locale, "trips.openSample")}
+                    >
+                      <Text style={styles.outlineCtaText}>
+                        {t(locale, "trips.openSample")}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                  <Text style={styles.seedPlaybooksHint}>
+                    {t(locale, "trips.seedPlaybooks")}
                   </Text>
-                  {sampleTrips.map((trip, index) => (
-                    <TripRow
-                      key={trip.id}
-                      trip={trip}
-                      index={index}
-                      showCta
-                      last={index === sampleTrips.length - 1}
-                    />
-                  ))}
                 </View>
-              ) : null}
-            </View>
+                {sampleTrips.length > 0 ? (
+                  <View style={styles.seedSampleBlock}>
+                    <Text style={styles.sampleEyebrow}>
+                      {t(locale, "trips.sampleEyebrow")}
+                    </Text>
+                    {sampleTrips.map((trip, index) => (
+                      <TripRow
+                        key={trip.id}
+                        trip={trip}
+                        index={index}
+                        showCta
+                        last={index === sampleTrips.length - 1}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            </SheetPresence>
           ) : (
-            <View style={styles.listSheet}>
-              <TripsListRail count={trips.length} soft={listSoft} />
-              <SoftFailNotice
-                open={!error && Boolean(softNotice)}
-                compact
-                style={styles.listSoftFail}
-              >
-                {softNotice ?? ""}
-              </SoftFailNotice>
-              {trips.map((trip, index) => (
-                <TripRow
-                  key={trip.id}
-                  trip={trip}
-                  index={index}
-                  showCta
-                  last={index === trips.length - 1}
-                />
-              ))}
-            </View>
+            <SheetPresence
+              open
+              rise={10}
+              delayMs={60}
+              accessibilityLabel={t(locale, "trips.yours")}
+            >
+              <View style={styles.listSheet}>
+                <TripsListRail count={trips.length} soft={listSoft} />
+                <SoftFailNotice
+                  open={!error && Boolean(softNotice)}
+                  compact
+                  style={styles.listSoftFail}
+                >
+                  {softNotice ?? ""}
+                </SoftFailNotice>
+                {trips.map((trip, index) => (
+                  <TripRow
+                    key={trip.id}
+                    trip={trip}
+                    index={index}
+                    showCta
+                    last={index === trips.length - 1}
+                  />
+                ))}
+              </View>
+            </SheetPresence>
           )}
         </View>
 
@@ -625,12 +680,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-  },
-  emptyCtaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 4,
   },
   solidCta: {
     backgroundColor: colors.river,
@@ -800,13 +849,25 @@ const styles = StyleSheet.create({
   listSoftFail: {
     marginBottom: 0,
   },
-  sampleSheet: {
-    marginTop: 24,
-    overflow: "hidden",
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+  seedActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
+  seedPlaybooksHint: {
+    ...type.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "rgba(100, 116, 139, 0.85)",
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  seedSampleBlock: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
   },
   sampleEyebrow: {
     ...type.body,
