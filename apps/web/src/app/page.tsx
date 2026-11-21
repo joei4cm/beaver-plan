@@ -5,6 +5,22 @@ import { LandingFeatures } from "@/components/landing/features";
 import { LandingFooterCta } from "@/components/landing/footer-cta";
 import { LandingHero } from "@/components/landing/hero";
 import { LandingScrollDeck } from "@/components/landing/scroll-deck";
+import { LandingSocialProof } from "@/components/landing/social-proof";
+
+const TRUST_SIGNALS = [
+  {
+    label: "landing.trust.signal1.label",
+    detail: "landing.trust.signal1.detail",
+  },
+  {
+    label: "landing.trust.signal2.label",
+    detail: "landing.trust.signal2.detail",
+  },
+  {
+    label: "landing.trust.signal3.label",
+    detail: "landing.trust.signal3.detail",
+  },
+] as const;
 
 const PILLARS = [
   { title: "landing.pillars.map.title", body: "landing.pillars.map.body" },
@@ -35,6 +51,11 @@ export default async function HomePage() {
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const headline = locale === "zh-CN" ? brand.taglineZh : brand.taglineEn;
 
+  const trustSignals = TRUST_SIGNALS.map((signal) => ({
+    label: t(locale, signal.label),
+    detail: t(locale, signal.detail),
+  }));
+
   const featureItems = PILLARS.map((pillar) => ({
     title: t(locale, pillar.title),
     body: t(locale, pillar.body),
@@ -57,6 +78,15 @@ export default async function HomePage() {
         primaryHref="/trips"
         secondaryLabel={t(locale, "nav.translate")}
         secondaryHref="/translate"
+      />
+
+      {/* Below hero — trust / social proof (one job; no card clutter) */}
+      <LandingSocialProof
+        title={t(locale, "landing.trust.title")}
+        support={t(locale, "landing.trust.support")}
+        quote={t(locale, "landing.trust.quote")}
+        attribution={t(locale, "landing.trust.attribution")}
+        signals={trustSignals}
       />
 
       {/* Below fold — features (editorial hierarchy; after tip 019 scroll craft) */}
