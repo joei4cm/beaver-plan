@@ -1173,13 +1173,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
-          {(softNotice ||
-            (error && isPlannerNoiseError(new Error(error))) ||
-            (engineInfo?.mode !== "live" && dayLegs.length > 0)) && (
-            <SoftFailNotice compact>
-              {softNotice ?? t(locale, "planner.transfer.demoNotice")}
-            </SoftFailNotice>
-          )}
+          <SoftFailNotice
+            open={Boolean(
+              softNotice ||
+                (error && isPlannerNoiseError(new Error(error))) ||
+                (engineInfo?.mode !== "live" && dayLegs.length > 0),
+            )}
+            compact
+          >
+            {softNotice ?? t(locale, "planner.transfer.demoNotice")}
+          </SoftFailNotice>
           <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
             {t(locale, "planner.hint")}
           </p>

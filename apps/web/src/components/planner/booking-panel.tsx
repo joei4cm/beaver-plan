@@ -348,7 +348,9 @@ export function BookingPanel({
         className="space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
         style={{ animationDelay: "40ms" }}
       >
-          {softCopy ? <SoftFailNotice>{softCopy}</SoftFailNotice> : null}
+          <SoftFailNotice open={Boolean(softCopy)}>
+            {softCopy ?? ""}
+          </SoftFailNotice>
 
           {/* Primary flow: search → ranked offers → azure deep-link out */}
           <section className="space-y-3">

@@ -251,13 +251,14 @@ export function TripMembersBar({
         </p>
       ) : null}
 
-      {(demoSeeded || softOffline) && !open ? (
-        <SoftFailNotice className="mt-3">
-          {softOffline
-            ? t(locale, "collab.panel.softOffline")
-            : t(locale, "collab.panel.demoNotice")}
-        </SoftFailNotice>
-      ) : null}
+      <SoftFailNotice
+        open={(demoSeeded || softOffline) && !open}
+        className="mt-3"
+      >
+        {softOffline
+          ? t(locale, "collab.panel.softOffline")
+          : t(locale, "collab.panel.demoNotice")}
+      </SoftFailNotice>
 
       <SheetPresence
         open={open}
@@ -277,13 +278,11 @@ export function TripMembersBar({
         </div>
 
         <div className="space-y-4 px-4 py-4">
-          {demoSeeded || softOffline ? (
-            <SoftFailNotice>
-              {softOffline
-                ? t(locale, "collab.panel.softOffline")
-                : t(locale, "collab.panel.demoNotice")}
-            </SoftFailNotice>
-          ) : null}
+          <SoftFailNotice open={demoSeeded || softOffline}>
+            {softOffline
+              ? t(locale, "collab.panel.softOffline")
+              : t(locale, "collab.panel.demoNotice")}
+          </SoftFailNotice>
 
           {lastInvite ? (
             <div className="space-y-3">

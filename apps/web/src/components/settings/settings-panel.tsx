@@ -163,9 +163,9 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {brandName} · {t(locale, "settings.localHint")}
       </p>
 
-      {softNotice ? (
-        <SoftFailNotice className="mt-8">{softNotice}</SoftFailNotice>
-      ) : null}
+      <SoftFailNotice open={Boolean(softNotice)} className="mt-8">
+        {softNotice ?? ""}
+      </SoftFailNotice>
 
       <div className="mt-14 space-y-0">
         {/* Language */}

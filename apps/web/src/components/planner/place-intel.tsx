@@ -182,11 +182,9 @@ export function PlaceIntel({
             )}
           </div>
 
-          {demo && (
-            <SoftFailNotice compact>
-              {t(locale, "planner.place.softFail")}
-            </SoftFailNotice>
-          )}
+          <SoftFailNotice open={demo} compact>
+            {t(locale, "planner.place.softFail")}
+          </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>
