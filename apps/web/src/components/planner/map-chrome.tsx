@@ -186,10 +186,10 @@ export function MapChrome({
   const locateNotice = softFailMessage?.trim() || null;
   const legendOpen = layers.legend && hasRoute;
   /**
-   * Search SoftFailNotice chrome (BEA-238 after #144/#159):
-   * demo Places sheet owns compact SoftFail under azure Places rail ·
-   * tip-011 (#46). Stage + transfer legend yield (no double depth).
-   * Soft copy never timber / Failed to fetch.
+   * Search SoftFailNotice depth (BEA-302 after #179):
+   * azure Places rail · Soft/Live badge · softSupport · compact SoftFail
+   * (border-b) · mist-wash tip-011 body. Stage + transfer legend yield
+   * (no double depth). Soft copy never timber / Failed to fetch.
    */
   const searchOwnsSoftFail = searchDemo && sheetOpen;
   const searchSoftCopy = showEmpty
@@ -378,12 +378,13 @@ export function MapChrome({
             className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
             {/*
-              Search SoftFail chrome (BEA-238 after #144/#159):
-              azure Places rail · demo/live badge · compact SoftFailNotice ·
-              tip-011 rise body — never timber / Failed to fetch.
+              Search SoftFail depth (BEA-302 after #179):
+              azure Places rail · Soft/Live badge · softSupport ·
+              compact SoftFailNotice · mist-wash tip-011 body —
+              never timber / Failed to fetch.
             */}
             <div
-              className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+              className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
               style={{ animationDelay: "40ms" }}
             >
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -402,6 +403,11 @@ export function MapChrome({
                     {t(locale, "planner.search.emptyCount")}
                   </span>
                 ) : null}
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {searchOwnsSoftFail
+                    ? t(locale, "planner.search.softSupport")
+                    : t(locale, "planner.search.support")}
+                </span>
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
@@ -410,14 +416,20 @@ export function MapChrome({
                     : "bg-river/12 text-river-deep"
                 }`}
               >
-                {searchDemo
-                  ? t(locale, "planner.search.demoBadge")
-                  : t(locale, "planner.search.liveBadge")}
+                {searchOwnsSoftFail
+                  ? t(locale, "planner.search.softBadge")
+                  : searchDemo
+                    ? t(locale, "planner.search.demoBadge")
+                    : t(locale, "planner.search.liveBadge")}
               </span>
             </div>
 
             {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-            <SoftFailNotice open={searchOwnsSoftFail} compact>
+            <SoftFailNotice
+              open={searchOwnsSoftFail}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
               {searchSoftCopy}
             </SoftFailNotice>
 
@@ -426,7 +438,11 @@ export function MapChrome({
                 id={listboxId}
                 role="listbox"
                 aria-label={t(locale, "planner.search.eyebrow")}
-                className="animate-rise max-h-64 overflow-auto py-1"
+                className={`animate-rise max-h-64 overflow-auto py-1 ${
+                  searchOwnsSoftFail
+                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                    : ""
+                }`}
                 style={{ animationDelay: "70ms" }}
               >
                 {results.map((place, i) => {
@@ -489,7 +505,11 @@ export function MapChrome({
               </ul>
             ) : showEmpty ? (
               <div
-                className="animate-rise space-y-1.5 px-3.5 py-4"
+                className={`animate-rise space-y-1.5 px-3.5 py-4 ${
+                  searchOwnsSoftFail
+                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                    : ""
+                }`}
                 style={{ animationDelay: "70ms" }}
                 role="status"
                 aria-live="polite"
@@ -506,7 +526,11 @@ export function MapChrome({
               </div>
             ) : (
               <div
-                className="animate-rise px-3.5 py-3 text-xs text-ink-soft"
+                className={`animate-rise px-3.5 py-3 text-xs text-ink-soft ${
+                  searchOwnsSoftFail
+                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                    : ""
+                }`}
                 style={{ animationDelay: "70ms" }}
                 aria-busy
               >
