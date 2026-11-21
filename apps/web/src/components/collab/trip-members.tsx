@@ -169,6 +169,12 @@ export function TripMembersBar({
   const canInvite = yourRole === "owner" || yourRole === "editor";
   const visible = members.slice(0, 5);
   const overflow = Math.max(0, members.length - visible.length);
+  const softOpen = demoSeeded || softOffline;
+  const softCopy = softOffline
+    ? t(locale, "collab.inviteSoftFail")
+    : t(locale, "collab.inviteDemoNotice");
+  const hardError =
+    error && !isPlannerNoiseError(new Error(error)) ? error : null;
 
   return (
     <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
@@ -252,14 +258,14 @@ export function TripMembersBar({
             <button
               type="button"
               onClick={() => void createInvite()}
-              className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep"
+              className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
             >
               {t(locale, "collab.invite")}
             </button>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
+              className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
             >
               {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
             </button>
@@ -267,19 +273,15 @@ export function TripMembersBar({
         ) : null}
       </div>
 
-      {error ? (
+      {hardError ? (
         <p className="mt-2 text-sm text-timber" role="alert">
-          {error}
+          {hardError}
         </p>
       ) : null}
 
-      <SoftFailNotice
-        open={(demoSeeded || softOffline) && !open}
-        className="mt-3"
-      >
-        {softOffline
-          ? t(locale, "collab.panel.softOffline")
-          : t(locale, "collab.panel.demoNotice")}
+      {/* Closed-bar SoftFailNotice — invite-scoped copy; rise in/out (#46) */}
+      <SoftFailNotice open={softOpen && !open} className="mt-3">
+        {softCopy}
       </SoftFailNotice>
 
       <SheetPresence
@@ -288,24 +290,35 @@ export function TripMembersBar({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "collab.invite")}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            {t(locale, "collab.invite")}
-          </span>
-          {lastInvite ? (
-            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
-              {t(locale, `collab.role.${lastInvite.invite.role}`)}
+        {/* Azure invite chrome — SoftFailNotice under header rail */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              {t(locale, "collab.inviteEyebrow")}
             </span>
-          ) : null}
+            <span className="text-[11px] font-medium text-ink-soft/80">
+              {t(locale, "collab.invite")}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {softOpen ? (
+              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
+                {t(locale, "collab.demoBadge")}
+              </span>
+            ) : null}
+            {lastInvite ? (
+              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+                {t(locale, `collab.role.${lastInvite.invite.role}`)}
+              </span>
+            ) : null}
+          </div>
         </div>
 
-        <div className="space-y-4 px-4 py-4">
-          <SoftFailNotice open={demoSeeded || softOffline}>
-            {softOffline
-              ? t(locale, "collab.panel.softOffline")
-              : t(locale, "collab.panel.demoNotice")}
-          </SoftFailNotice>
+        <SoftFailNotice open={softOpen} compact>
+          {softCopy}
+        </SoftFailNotice>
 
+        <div className="space-y-4 px-4 py-4">
           {lastInvite ? (
             <div className="space-y-3">
               <div>
@@ -320,7 +333,7 @@ export function TripMembersBar({
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-bp-sm bg-river px-3.5 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep"
+                  className="rounded-bp-sm bg-river px-3.5 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 >
                   {copied
                     ? t(locale, "collab.copied")
