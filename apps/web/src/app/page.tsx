@@ -3,6 +3,7 @@ import { brand } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { getLocale } from "@/lib/locale";
 import { LandingFeatures } from "@/components/landing/features";
+import { LandingFooterCta } from "@/components/landing/footer-cta";
 import { LandingScrollDeck } from "@/components/landing/scroll-deck";
 
 const PILLARS = [
@@ -168,6 +169,22 @@ export default async function HomePage() {
         cards={howCards}
         ctaLabel={t(locale, "cta.viewTrips")}
         ctaHref="/trips"
+      />
+
+      {/* Finale — CTA + quiet site footer (after features / how) */}
+      <LandingFooterCta
+        brandPrimary={brandPrimary}
+        brandSecondary={brandSecondary}
+        title={t(locale, "landing.finale.title")}
+        support={t(locale, "landing.finale.support")}
+        primaryLabel={t(locale, "cta.startPlanning")}
+        primaryHref="/trips"
+        secondaryLabel={t(locale, "nav.translate")}
+        secondaryHref="/translate"
+        navTrips={t(locale, "nav.trips")}
+        navTranslate={t(locale, "nav.translate")}
+        navSettings={t(locale, "nav.settings")}
+        meta={t(locale, "landing.finale.meta")}
       />
     </>
   );
