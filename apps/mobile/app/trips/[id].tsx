@@ -297,10 +297,10 @@ export default function TripDetailScreen() {
           );
           return [...kept, ...demoLegs];
         });
-        if (isNoiseError(e)) {
-          setSoftNotice(t(locale, "planner.demoLocal"));
-          setError(null);
-        }
+        // Soft-fail always — demo legs painted; never Failed to fetch timber.
+        setSoftNotice(t(locale, "planner.transfer.demoNotice"));
+        setError(null);
+        void e;
       } finally {
         setRouting(false);
       }
@@ -1020,16 +1020,26 @@ const styles = StyleSheet.create({
   stopBody: { flex: 1 },
   stopName: { fontSize: 16, fontWeight: "700", color: colors.ink },
   stopAddr: { marginTop: 3, fontSize: 12, color: colors.inkSoft },
-  legBlock: { marginTop: 6, gap: 4 },
+  legBlock: { marginTop: 8, gap: 6 },
   leg: { fontSize: 12, fontWeight: "600", color: colors.river },
   stepList: {
-    marginTop: 2,
-    paddingLeft: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.mist,
-    gap: 2,
+    marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(244,246,250,0.95)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    gap: 4,
   },
-  stepLine: { fontSize: 11, color: colors.inkSoft, lineHeight: 16 },
+  stepLine: {
+    fontSize: 12,
+    color: colors.ink,
+    lineHeight: 17,
+    fontWeight: "500",
+  },
   bookingBlock: { marginTop: 8, gap: 6 },
   bookingTitle: {
     fontSize: 11,

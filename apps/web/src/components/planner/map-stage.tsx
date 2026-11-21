@@ -65,7 +65,7 @@ export function MapStage({
       </div>
 
       {legs.some((l) => legPathSegments(l).length > 0) && (
-        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap gap-3 rounded-bp bg-foam/90 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-[2] flex flex-wrap items-center gap-3 rounded-bp border border-[color:var(--bp-line)] bg-foam/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
           <span className="inline-flex items-center gap-1.5">
             <span
               className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"
@@ -74,12 +74,12 @@ export function MapStage({
             {t(locale, "planner.transfer.walk")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-4 bg-river" aria-hidden />
+            <span className="inline-block h-0.5 w-4 rounded-full bg-river" aria-hidden />
             {t(locale, "planner.transfer.ride")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-timber"
+              className="inline-block h-0.5 w-4 border-t-2 border-dashed border-river/70"
               aria-hidden
             />
             {t(locale, "planner.transfer.change")}
