@@ -261,6 +261,13 @@ export default function TripsScreen() {
                 </Text>
               </Pressable>
             </Link>
+            <Link href="/settings" asChild>
+              <Pressable style={styles.ghostCta}>
+                <Text style={styles.ghostCtaText}>
+                  {t(locale, "nav.settings")}
+                </Text>
+              </Pressable>
+            </Link>
           </View>
         </View>
 
@@ -460,6 +467,17 @@ const styles = StyleSheet.create({
     color: colors.river,
     fontSize: 14,
     fontWeight: "700",
+  },
+  ghostCta: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    justifyContent: "center",
+  },
+  ghostCtaText: {
+    ...type.body,
+    color: colors.river,
+    fontSize: 14,
+    fontWeight: "600",
   },
   softBanner: {
     marginTop: 16,
