@@ -187,9 +187,11 @@ export function TripMembersBar({
     ? t(locale, "collab.presenceSoftFail")
     : t(locale, "collab.presenceDemoNotice");
   /**
-   * Invite SoftFailNotice chrome (BEA-283 after #130/#174):
+   * Invite SoftFailNotice depth (BEA-319 after #216):
    * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
-   * tip-011 rise. Soft copy never timber / Failed to fetch.
+   * softSupport · mist-wash tip-011 SheetPresence code · tip-011 rise.
+   * Presence SoftFail yields while invite open (#223). Soft copy never
+   * timber / Failed to fetch.
    */
   const inviteSoftOpen = softOpen && open;
   const inviteSoftCopy = softOffline
@@ -371,9 +373,10 @@ export function TripMembersBar({
       ) : null}
 
       {/*
-        Invite SoftFail chrome (BEA-283 after #130/#174):
-        azure rail · Soft invite badge · compact SoftFailNotice · tip-011 —
-        never timber / Failed to fetch.
+        Invite SoftFail depth (BEA-319 after #216):
+        azure rail · Soft invite badge · softSupport · compact SoftFailNotice
+        (border-b) · mist-wash tip-011 SheetPresence code · presence SoftFail
+        yields (#223) — never timber / Failed to fetch.
       */}
       <SheetPresence
         open={open}
@@ -388,7 +391,9 @@ export function TripMembersBar({
                 {t(locale, "collab.inviteEyebrow")}
               </span>
               <span className="text-[11px] leading-snug text-ink-soft/80">
-                {t(locale, "collab.inviteSupport")}
+                {inviteSoftOpen
+                  ? t(locale, "collab.inviteSoftSupport")
+                  : t(locale, "collab.inviteSupport")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -421,11 +426,23 @@ export function TripMembersBar({
           {inviteSoftCopy}
         </SoftFailNotice>
 
-        <div className="space-y-4 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 py-4">
+        <div
+          className={`space-y-4 px-4 py-4 ${
+            inviteSoftOpen
+              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+          }`}
+        >
           {lastInvite ? (
-            <div
-              className="animate-rise overflow-hidden rounded-bp-sm bg-gradient-to-br from-mist/45 via-mist/20 to-transparent p-3.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-4"
+            <SheetPresence
+              open
+              className={`overflow-hidden rounded-bp-sm p-3.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-4 ${
+                inviteSoftOpen
+                  ? "bg-gradient-to-br from-mist/55 via-mist/28 to-transparent"
+                  : "bg-gradient-to-br from-mist/45 via-mist/20 to-transparent"
+              }`}
               style={{ animationDelay: "40ms" }}
+              aria-label={t(locale, "collab.inviteCodeEyebrow")}
             >
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
                 {t(locale, "collab.inviteCodeEyebrow")}
@@ -459,7 +476,7 @@ export function TripMembersBar({
               >
                 {lastInvite.inviteUrl}
               </p>
-            </div>
+            </SheetPresence>
           ) : (
             <p className="animate-fade text-sm text-ink-soft">
               {t(locale, "collab.shareHint")}
