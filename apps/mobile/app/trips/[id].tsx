@@ -15,15 +15,12 @@ import {
 import {
   DEMO_PLACE_TAGS,
   DemoRoutingEngine,
-  formatDuration,
   getDemoPlaceDetails,
-  normalizeStepMode,
   routeAdjacentStops,
   sampleKyotoCollab,
   sampleKyotoFixture,
   searchDemoPlaces,
   stopsForDay,
-  summarizeTransfer,
   toPlaceRef,
   type ActivityEvent,
   type BookingLinkKind,
@@ -54,6 +51,7 @@ import { BookingPanel } from "../../src/components/booking-panel";
 import { DayFillPanel } from "../../src/components/day-fill-panel";
 import { PlaceIntel } from "../../src/components/place-intel";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
+import { TransferSteps } from "../../src/components/transfer-steps";
 import { TripMap } from "../../src/components/trip-map";
 import {
   flushJournalQueue,
@@ -148,6 +146,8 @@ export default function TripDetailScreen() {
   const [searchDemo, setSearchDemo] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [routing, setRouting] = useState(false);
+  /** Soft demo when Directions API absent / route-day soft-fails. */
+  const [routingDemo, setRoutingDemo] = useState(true);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
   const searchInputRef = useRef<TextInput | null>(null);
@@ -518,6 +518,11 @@ export default function TripDetailScreen() {
           );
           return [...kept, ...res.legs];
         });
+        const demo = res.mode !== "live";
+        setRoutingDemo(demo);
+        if (demo) {
+          setSoftNotice(t(locale, "planner.transfer.demoNotice"));
+        }
       } catch (e) {
         const routingEngine = new DemoRoutingEngine("google");
         const demoLegs = await routeAdjacentStops(
@@ -534,6 +539,7 @@ export default function TripDetailScreen() {
           return [...kept, ...demoLegs];
         });
         // Soft-fail always — demo legs painted; never Failed to fetch timber.
+        setRoutingDemo(true);
         setSoftNotice(t(locale, "planner.transfer.demoNotice"));
         setError(null);
         void e;
@@ -1077,39 +1083,23 @@ export default function TripDetailScreen() {
                           userNote={stop.userNote}
                         />
                       ) : null}
-                      {leg ? (
-                        <View style={styles.legBlock}>
-                          <Text style={styles.leg}>
-                            → {summarizeTransfer(leg)}
-                          </Text>
-                          {leg.transitSteps.length > 1 ? (
-                            <View style={styles.stepList}>
-                              {leg.transitSteps.map((step, si) => {
-                                const kind = normalizeStepMode(step.mode);
-                                const label =
-                                  kind === "transit" && step.lineName
-                                    ? step.lineName
-                                    : kind === "walk"
-                                      ? t(locale, "planner.transfer.walk")
-                                      : kind === "transfer"
-                                        ? t(locale, "planner.transfer.change")
-                                        : step.instruction || step.mode;
-                                return (
-                                  <Text
-                                    key={`${leg.id}-m-${si}`}
-                                    style={styles.stepLine}
-                                  >
-                                    {label}
-                                    {step.durationSec
-                                      ? ` · ${formatDuration(step.durationSec)}`
-                                      : ""}
-                                  </Text>
-                                );
-                              })}
-                            </View>
-                          ) : null}
-                        </View>
-                      ) : null}
+                      {(leg ||
+                        (selected &&
+                          !routing &&
+                          index < dayStops.length - 1)) && (
+                        <TransferSteps
+                          leg={leg ?? null}
+                          locale={locale}
+                          demoMode={routingDemo}
+                          showSoftFail={selected && Boolean(leg)}
+                          showEmpty={
+                            selected &&
+                            !routing &&
+                            !leg &&
+                            index < dayStops.length - 1
+                          }
+                        />
+                      )}
                       {(stop.bookingLinks ?? []).length > 0 ? (
                         <View style={styles.bookingBlock}>
                           <Text style={styles.bookingTitle}>
@@ -1956,32 +1946,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontSize: 12,
     color: colors.inkSoft,
-  },
-  legBlock: { marginTop: 8, gap: 6 },
-  leg: {
-    ...type.body,
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.river,
-  },
-  stepList: {
-    marginTop: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: "rgba(244,246,250,0.95)",
-    borderLeftWidth: 3,
-    borderLeftColor: colors.river,
-    gap: 4,
-  },
-  stepLine: {
-    ...type.body,
-    fontSize: 12,
-    color: colors.ink,
-    lineHeight: 17,
-    fontWeight: "500",
   },
   bookingBlock: { marginTop: 8, gap: 6 },
   bookingTitle: {
