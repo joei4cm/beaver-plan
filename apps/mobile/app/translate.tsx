@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Animated,
   Easing,
@@ -141,8 +142,27 @@ export default function TranslateScreen() {
   const sequenceRef = useRef(0);
   const seededPairRef = useRef("zh-CN|en");
   const historyRise = useRef(new Animated.Value(0)).current;
+  const holdListen = useRef(new Animated.Value(0)).current;
+  const reduceMotionRef = useRef(false);
 
   const isDemo = !status || status.mode === "demo" || softNotice;
+
+  useEffect(() => {
+    let alive = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (alive) reduceMotionRef.current = enabled;
+    });
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (enabled) => {
+        reduceMotionRef.current = enabled;
+      },
+    );
+    return () => {
+      alive = false;
+      sub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     historyRise.setValue(0);
@@ -154,6 +174,37 @@ export default function TranslateScreen() {
     }).start();
   }, [historyRise, tab, sourceLocale, targetLocale]);
 
+  /* Tip 011 / #46 — hold-to-talk listen pulse (match web animate-hold-listen). */
+  useEffect(() => {
+    if (!listening || reduceMotionRef.current) {
+      holdListen.stopAnimation();
+      holdListen.setValue(0);
+      return;
+    }
+    holdListen.setValue(0);
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(holdListen, {
+          toValue: 1,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(holdListen, {
+          toValue: 0,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => {
+      loop.stop();
+      holdListen.setValue(0);
+    };
+  }, [holdListen, listening]);
+
   const historyRiseStyle = {
     opacity: historyRise,
     transform: [
@@ -161,6 +212,32 @@ export default function TranslateScreen() {
         translateY: historyRise.interpolate({
           inputRange: [0, 1],
           outputRange: [14, 0],
+        }),
+      },
+    ],
+  };
+
+  const holdHaloStyle = {
+    opacity: holdListen.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.42, 0],
+    }),
+    transform: [
+      {
+        scale: holdListen.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.28],
+        }),
+      },
+    ],
+  };
+
+  const holdMicScaleStyle = {
+    transform: [
+      {
+        scale: holdListen.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.015],
         }),
       },
     ],
@@ -673,25 +750,48 @@ export default function TranslateScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.pairHeading}>
-          {t(uiLocale, "translate.pairLabel")}
-        </Text>
-        <View style={styles.pairRow}>
-          <LocalePicker
-            label={t(uiLocale, "translate.source")}
-            value={sourceLocale}
-            locales={orderedLocales}
-            onChange={setSourceLocale}
-          />
-          <Pressable onPress={onSwap} style={styles.swapBtn}>
-            <Text style={styles.swapLabel}>⇄</Text>
-          </Pressable>
-          <LocalePicker
-            label={t(uiLocale, "translate.target")}
-            value={targetLocale}
-            locales={orderedLocales}
-            onChange={setTargetLocale}
-          />
+        <View
+          style={styles.pairStage}
+          accessibilityLabel={t(uiLocale, "translate.pairLabel")}
+        >
+          <View style={styles.pairHead}>
+            <View style={styles.pairHeadCopy}>
+              <Text style={styles.pairEyebrow}>
+                {t(uiLocale, "translate.pairLabel")}
+              </Text>
+              <Text style={styles.pairHint}>
+                {t(uiLocale, "translate.pairHint")}
+              </Text>
+            </View>
+            <View style={styles.pairDirectionChip}>
+              <Text style={styles.pairDirectionText}>
+                {localeLabel(sourceLocale, uiLocale)}
+                {" → "}
+                {localeLabel(targetLocale, uiLocale)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.pairBody}>
+            <LocalePicker
+              label={t(uiLocale, "translate.source")}
+              value={sourceLocale}
+              locales={orderedLocales}
+              onChange={setSourceLocale}
+            />
+            <Pressable
+              onPress={onSwap}
+              style={styles.swapBtn}
+              accessibilityLabel={t(uiLocale, "translate.swap")}
+            >
+              <Text style={styles.swapLabel}>⇄</Text>
+            </Pressable>
+            <LocalePicker
+              label={t(uiLocale, "translate.target")}
+              value={targetLocale}
+              locales={orderedLocales}
+              onChange={setTargetLocale}
+            />
+          </View>
         </View>
 
         {tab === "conversation" ? (
@@ -702,17 +802,8 @@ export default function TranslateScreen() {
               </Text>
             ) : null}
 
-            <SoftFailNotice
-              open={Boolean(micDenied || error)}
-              style={styles.historySoftFail}
-            >
-              {micDenied
-                ? t(uiLocale, "translate.permissionMic")
-                : (error ?? t(uiLocale, "translate.error"))}
-            </SoftFailNotice>
-
             <Animated.View
-              style={[styles.historyStage, historyRiseStyle]}
+              style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
               accessibilityLabel={t(uiLocale, "translate.history")}
             >
               <View style={styles.historyHead}>
@@ -847,80 +938,134 @@ export default function TranslateScreen() {
               ) : null}
             </View>
 
-            <View style={styles.controlRail}>
-              <Pressable
-                onPress={() => setTtsEnabled((v) => !v)}
-                style={[
-                  styles.ttsChip,
-                  ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.ttsChipText,
-                    ttsEnabled && styles.ttsChipTextOn,
-                  ]}
-                >
-                  {t(uiLocale, "translate.ttsReady")}{" "}
-                  {ttsEnabled ? "· on" : "· off"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.compose}>
-              <TextInput
-                ref={draftRef}
-                value={draft}
-                onChangeText={setDraft}
-                placeholder={t(uiLocale, "translate.typeHint")}
-                placeholderTextColor={colors.inkSoft}
-                style={styles.input}
-                editable={!busy}
-                onSubmitEditing={() => void onSendText()}
-                returnKeyType="send"
-              />
-              <Pressable
-                style={[styles.sendBtn, busy && styles.disabled]}
-                onPress={() => void onSendText()}
-                disabled={busy}
-              >
-                <Text style={styles.sendLabel}>
-                  {t(uiLocale, "translate.send")}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.micRow}>
-              <Pressable
-                ref={micRef}
-                onPressIn={() => void startListening()}
-                onPressOut={() => void stopListening()}
-                style={[
-                  styles.micBtn,
-                  listening && styles.micBtnActive,
-                  busy && styles.disabled,
-                ]}
-                disabled={busy && !listening}
-              >
-                {busy && !listening ? (
-                  <ActivityIndicator color={colors.foam} />
-                ) : (
-                  <Text style={styles.micLabel}>
-                    {listening
-                      ? t(uiLocale, "translate.listening")
-                      : t(uiLocale, "translate.holdMic")}
+            <View
+              style={styles.talkRail}
+              accessibilityLabel={t(uiLocale, "translate.talkRail")}
+            >
+              <View style={styles.talkHead}>
+                <View style={styles.talkHeadCopy}>
+                  <Text style={styles.talkEyebrow}>
+                    {t(uiLocale, "translate.talkRail")}
                   </Text>
-                )}
-              </Pressable>
-              <Pressable
-                style={styles.demoNext}
-                onPress={() => void runTurn({})}
-                disabled={busy}
-              >
-                <Text style={styles.demoNextLabel}>
-                  {t(uiLocale, "translate.nextDemo")}
-                </Text>
-              </Pressable>
+                  <Text style={styles.talkHint}>
+                    {t(uiLocale, "translate.talkHint")}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setTtsEnabled((v) => !v)}
+                  style={StyleSheet.flatten([
+                    styles.ttsChip,
+                    ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
+                  ])}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: ttsEnabled }}
+                >
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.ttsChipText,
+                      ttsEnabled ? styles.ttsChipTextOn : null,
+                    ])}
+                  >
+                    {t(uiLocale, "translate.ttsReady")}{" "}
+                    {ttsEnabled ? "· on" : "· off"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.talkBody}>
+                <SoftFailNotice
+                  open={Boolean(micDenied || error)}
+                  style={styles.talkSoftFail}
+                >
+                  {micDenied
+                    ? t(uiLocale, "translate.permissionMic")
+                    : (error ?? t(uiLocale, "translate.error"))}
+                </SoftFailNotice>
+
+                <View style={styles.compose}>
+                  <TextInput
+                    ref={draftRef}
+                    value={draft}
+                    onChangeText={setDraft}
+                    placeholder={t(uiLocale, "translate.typeHint")}
+                    placeholderTextColor={colors.inkSoft}
+                    style={styles.input}
+                    editable={!busy}
+                    onSubmitEditing={() => void onSendText()}
+                    returnKeyType="send"
+                  />
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.sendBtn,
+                      busy ? styles.disabled : null,
+                    ])}
+                    onPress={() => void onSendText()}
+                    disabled={busy}
+                  >
+                    <Text style={styles.sendLabel}>
+                      {busy
+                        ? t(uiLocale, "translate.translating")
+                        : t(uiLocale, "translate.send")}
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View style={styles.micRow}>
+                  <View style={styles.micWrap}>
+                    {listening ? (
+                      <Animated.View
+                        pointerEvents="none"
+                        style={StyleSheet.flatten([
+                          styles.micHalo,
+                          holdHaloStyle,
+                        ])}
+                      />
+                    ) : null}
+                    <Animated.View
+                      style={StyleSheet.flatten([
+                        styles.micBtnShell,
+                        listening ? holdMicScaleStyle : null,
+                      ])}
+                    >
+                      <Pressable
+                        ref={micRef}
+                        onPressIn={() => void startListening()}
+                        onPressOut={() => void stopListening()}
+                        style={StyleSheet.flatten([
+                          styles.micBtn,
+                          listening ? styles.micBtnActive : null,
+                          busy && !listening ? styles.disabled : null,
+                        ])}
+                        disabled={busy && !listening}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: listening }}
+                      >
+                        {busy && !listening ? (
+                          <ActivityIndicator color={colors.foam} />
+                        ) : (
+                          <Text style={styles.micLabel}>
+                            {listening
+                              ? t(uiLocale, "translate.listening")
+                              : t(uiLocale, "translate.holdMic")}
+                          </Text>
+                        )}
+                      </Pressable>
+                    </Animated.View>
+                  </View>
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.demoNext,
+                      busy ? styles.disabled : null,
+                    ])}
+                    onPress={() => void runTurn({})}
+                    disabled={busy}
+                  >
+                    <Text style={styles.demoNextLabel}>
+                      {t(uiLocale, "translate.nextDemo")}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           </View>
         ) : (
@@ -1141,27 +1286,27 @@ function HistoryTurn({
         : t(uiLocale, "translate.demoBadge");
 
   return (
-    <Animated.View style={[styles.turnRow, enterStyle]}>
+    <Animated.View style={StyleSheet.flatten([styles.turnRow, enterStyle])}>
       <View style={styles.turnMetaRow}>
         <View
-          style={[
+          style={StyleSheet.flatten([
             styles.modeBadge,
             row.mode === "live"
               ? styles.modeBadgeLive
               : row.mode === "offline"
                 ? styles.modeBadgeOffline
                 : styles.modeBadgeDemo,
-          ]}
+          ])}
         >
           <Text
-            style={[
+            style={StyleSheet.flatten([
               styles.modeBadgeText,
               row.mode === "live"
                 ? styles.modeBadgeTextLive
                 : row.mode === "offline"
                   ? styles.modeBadgeTextOffline
                   : styles.modeBadgeTextDemo,
-            ]}
+            ])}
           >
             {modeLabel}
           </Text>
@@ -1215,13 +1360,16 @@ function LocalePicker({
           <Pressable
             key={loc}
             onPress={() => onChange(loc)}
-            style={[styles.localeChip, value === loc && styles.localeChipActive]}
+            style={StyleSheet.flatten([
+              styles.localeChip,
+              value === loc ? styles.localeChipActive : null,
+            ])}
           >
             <Text
-              style={[
+              style={StyleSheet.flatten([
                 styles.localeChipText,
-                value === loc && styles.localeChipTextActive,
-              ]}
+                value === loc ? styles.localeChipTextActive : null,
+              ])}
             >
               {localeLabel(loc, uiLocale)}
             </Text>
@@ -1340,28 +1488,74 @@ const styles = StyleSheet.create({
   },
   tabLabel: { color: colors.inkSoft, fontWeight: "600", fontSize: 14 },
   tabLabelActive: { color: colors.foam },
-  pairHeading: {
-    marginTop: 16,
-    marginHorizontal: 20,
-    fontSize: 11,
-    letterSpacing: 1.6,
+  pairStage: {
+    marginTop: 14,
+    marginHorizontal: 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    overflow: "hidden",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  pairHead: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.6)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  pairHeadCopy: { flex: 1, minWidth: 160, gap: 4 },
+  pairEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
   },
-  pairRow: {
-    marginTop: 8,
-    marginHorizontal: 12,
+  pairHint: {
+    ...type.body,
+    color: colors.inkSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  pairDirectionChip: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  pairDirectionText: {
+    ...type.body,
+    color: colors.riverDeep,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  pairBody: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
   localeCol: {
     flex: 1,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     padding: 10,
   },
   localeLabel: {
@@ -1374,10 +1568,10 @@ const styles = StyleSheet.create({
   },
   localeChips: { gap: 6 },
   localeChip: {
-    borderRadius: 8,
+    borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.paper,
+    backgroundColor: colors.foam,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginRight: 6,
@@ -1390,20 +1584,20 @@ const styles = StyleSheet.create({
   localeChipTextActive: { color: colors.foam, fontWeight: "600" },
   swapBtn: {
     marginTop: 28,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.river,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   swapLabel: { fontSize: 16, color: colors.foam, fontWeight: "700" },
   panel: { marginTop: 8 },
-  historySoftFail: {
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 4,
-  },
   historyStage: {
     marginTop: 12,
     marginHorizontal: 16,
@@ -1613,59 +1807,137 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     letterSpacing: -0.2,
   },
+  talkRail: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    overflow: "hidden",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -8 },
+    elevation: 3,
+  },
+  talkHead: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.72)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  talkHeadCopy: { flex: 1, minWidth: 180, gap: 4 },
+  talkEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
+  },
+  talkHint: {
+    ...type.body,
+    color: colors.inkSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  talkBody: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  talkSoftFail: {
+    marginBottom: 0,
+  },
   compose: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 8,
   },
   input: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: colors.paper,
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: colors.ink,
     fontSize: 14,
   },
   sendBtn: {
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.river,
     paddingHorizontal: 14,
     justifyContent: "center",
   },
   sendLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
-  controlRail: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-  },
   ttsChip: {
     alignSelf: "flex-start",
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   ttsChipOn: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
   ttsChipOff: { backgroundColor: colors.mist },
-  ttsChipText: { color: colors.inkSoft, fontSize: 12, fontWeight: "600" },
+  ttsChipText: {
+    color: colors.inkSoft,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
   ttsChipTextOn: { color: colors.riverDeep },
   micRow: {
-    padding: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "stretch",
     gap: 10,
+  },
+  micWrap: {
+    flex: 1,
+    minWidth: 160,
+    position: "relative",
+    justifyContent: "center",
+  },
+  micHalo: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radius.md,
+    backgroundColor: "rgba(47, 107, 255, 0.28)",
+  },
+  micBtnShell: {
+    borderRadius: radius.md,
+    overflow: "hidden",
   },
   micBtn: {
     borderRadius: radius.md,
     backgroundColor: colors.river,
-    paddingVertical: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     alignItems: "center",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   micBtnActive: { backgroundColor: colors.ink },
-  micLabel: { color: colors.foam, fontSize: 16, fontWeight: "600" },
+  micLabel: { color: colors.foam, fontSize: 15, fontWeight: "700" },
   demoNext: {
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
     alignItems: "center",
-    paddingVertical: 8,
+    justifyContent: "center",
   },
   demoNextLabel: { color: colors.river, fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.55 },
