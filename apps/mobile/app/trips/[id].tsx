@@ -914,11 +914,10 @@ export default function TripDetailScreen() {
           !online ||
           (detailDemo && (dayLegs.length > 0 || dayStops.length > 0)),
       );
-  const stopsSoftCopy =
-    softNotice ??
-    (dayEmpty
-      ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.stops.softFail"));
+  /** Stop-scoped SoftFail copy when Stops owns (empty / map-stop); never timber. */
+  const stopsSoftCopy = emptyOwnsSoft
+    ? (softNotice ?? t(locale, "planner.emptySoftFail"))
+    : t(locale, "planner.stops.softFail");
   /** Title SoftFail yields while Stops rail owns soft-fail. */
   const detailSoftOpen =
     !emptyOwnsSoft && !stopsOwnsSoft && detailSoftNoise;
