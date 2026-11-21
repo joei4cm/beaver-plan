@@ -834,14 +834,26 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       </div>
 
       <section
-        className="animate-rise mt-6"
+        className="animate-rise mt-6 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
         style={{ animationDelay: "80ms" }}
         aria-label={t(locale, "translate.pairLabel")}
       >
-        <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
-          {t(locale, "translate.pairLabel")}
-        </p>
-        <div className="grid items-stretch gap-3 sm:grid-cols-[1fr_auto_1fr]">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 md:px-6">
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+              {t(locale, "translate.pairLabel")}
+            </p>
+            <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
+              {t(locale, "translate.pairHint")}
+            </p>
+          </div>
+          <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
+            {localeLabel(sourceLocale, locale === "en" ? "en" : "zh-CN")}
+            {" → "}
+            {localeLabel(targetLocale, locale === "en" ? "en" : "zh-CN")}
+          </span>
+        </div>
+        <div className="grid items-stretch gap-3 px-5 py-5 sm:grid-cols-[1fr_auto_1fr] md:px-6">
           <LocaleSelect
             label={t(locale, "translate.source")}
             value={sourceLocale}
@@ -857,7 +869,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               setSourceLocale(next.sourceLocale);
               setTargetLocale(next.targetLocale);
             }}
-            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep"
+            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-95"
             aria-label={t(locale, "translate.swap")}
           >
             ⇄
@@ -883,15 +895,6 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               {partialText || "…"}
             </p>
           )}
-
-          <SoftFailNotice
-            open={Boolean(micDenied || error)}
-            className="mt-6 max-w-xl"
-          >
-            {micDenied
-              ? t(locale, "translate.permissionMic")
-              : (error ?? t(locale, "translate.error"))}
-          </SoftFailNotice>
 
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1296,90 +1299,118 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
       {tab === "conversation" ? (
         <div
-          className="animate-rise sticky bottom-0 mt-10 -mx-6 border-t border-[color:var(--bp-line)] bg-foam/85 px-6 py-4 backdrop-blur-md md:-mx-10 md:px-10"
+          className="animate-rise sticky bottom-0 z-20 mt-10 -mx-6 overflow-hidden rounded-t-bp-lg border border-b-0 border-[color:var(--bp-line)] bg-foam/92 shadow-[0_-12px_40px_rgba(15,23,42,0.06)] backdrop-blur-md md:-mx-10"
           style={{ animationDelay: "160ms" }}
         >
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setTtsEnabled((v) => !v)}
-              className={`bp-transition rounded-bp-sm px-3 py-1.5 text-xs font-semibold duration-bp-fast ease-bp-out ${
-                ttsEnabled
-                  ? "bg-river/12 text-river-deep"
-                  : "bg-mist text-ink-soft"
-              }`}
-              aria-pressed={ttsEnabled}
-            >
-              {t(locale, "translate.ttsReady")}{" "}
-              {ttsEnabled ? "· on" : "· off"}
-            </button>
-            <span className="text-[11px] text-ink-soft/60">{apiBase()}</span>
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-6 py-3.5 md:px-10">
+            <div className="min-w-0">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                {t(locale, "translate.talkRail")}
+              </p>
+              <p className="mt-1 max-w-lg text-sm leading-relaxed text-ink-soft">
+                {t(locale, "translate.talkHint")}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTtsEnabled((v) => !v)}
+                className={`bp-transition rounded-bp-xs px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] duration-bp-fast ease-bp-out ${
+                  ttsEnabled
+                    ? "bg-river/12 text-river-deep"
+                    : "bg-mist text-ink-soft"
+                }`}
+                aria-pressed={ttsEnabled}
+              >
+                {t(locale, "translate.ttsReady")}{" "}
+                {ttsEnabled ? "· on" : "· off"}
+              </button>
+              <span className="hidden text-[11px] text-ink-soft/55 sm:inline">
+                {apiBase()}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              ref={draftRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void onSend();
-              }}
-              placeholder={t(locale, "translate.typeHint")}
-              className="bp-transition flex-1 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus duration-bp-fast ease-bp-out focus:ring-2"
-              disabled={busy}
-            />
-            <button
-              type="button"
-              onClick={() => void onSend()}
-              disabled={busy}
-              className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam duration-bp-fast ease-bp-out hover:bg-river-deep disabled:opacity-50"
+
+          <div className="space-y-3 px-6 py-4 md:px-10">
+            <SoftFailNotice
+              open={Boolean(micDenied || error)}
+              className="max-w-xl"
             >
-              {busy
-                ? t(locale, "translate.translating")
-                : t(locale, "translate.send")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onQueueDraft()}
-              disabled={busy || !draft.trim()}
-              className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river duration-bp-fast ease-bp-out disabled:opacity-50"
-            >
-              {t(locale, "translate.queueAdd")}
-            </button>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <button
-              ref={micRef}
-              type="button"
-              onMouseDown={() => void startMic()}
-              onMouseUp={stopMic}
-              onMouseLeave={() => {
-                if (listening) stopMic();
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                void startMic();
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                stopMic();
-              }}
-              disabled={busy && !listening}
-              className={`bp-transition min-w-[10rem] flex-1 rounded-bp-sm px-4 py-3 text-sm font-semibold text-foam duration-bp-fast ease-bp-out disabled:opacity-50 ${
-                listening ? "bg-ink" : "bg-river hover:bg-river-deep"
-              }`}
-            >
-              {listening
-                ? t(locale, "translate.listening")
-                : t(locale, "translate.holdMic")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void runTurn({})}
-              disabled={busy}
-              className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 disabled:opacity-50"
-            >
-              {t(locale, "translate.nextDemo")}
-            </button>
+              {micDenied
+                ? t(locale, "translate.permissionMic")
+                : (error ?? t(locale, "translate.error"))}
+            </SoftFailNotice>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                ref={draftRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void onSend();
+                }}
+                placeholder={t(locale, "translate.typeHint")}
+                className="bp-transition flex-1 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus duration-bp-fast ease-bp-out focus:border-river/35 focus:ring-2"
+                disabled={busy}
+              />
+              <button
+                type="button"
+                onClick={() => void onSend()}
+                disabled={busy}
+                className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
+              >
+                {busy
+                  ? t(locale, "translate.translating")
+                  : t(locale, "translate.send")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void onQueueDraft()}
+                disabled={busy || !draft.trim()}
+                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
+              >
+                {t(locale, "translate.queueAdd")}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-stretch gap-3">
+              <button
+                ref={micRef}
+                type="button"
+                onMouseDown={() => void startMic()}
+                onMouseUp={stopMic}
+                onMouseLeave={() => {
+                  if (listening) stopMic();
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  void startMic();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  stopMic();
+                }}
+                disabled={busy && !listening}
+                aria-pressed={listening}
+                className={`bp-transition relative min-w-[12rem] flex-1 rounded-bp px-5 py-3.5 text-sm font-semibold text-foam duration-bp ease-bp-out disabled:opacity-50 ${
+                  listening
+                    ? "animate-hold-listen bg-ink"
+                    : "bg-river shadow-bp-soft hover:bg-river-deep active:scale-[0.98]"
+                }`}
+              >
+                {listening
+                  ? t(locale, "translate.listening")
+                  : t(locale, "translate.holdMic")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void runTurn({})}
+                disabled={busy}
+                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3.5 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
+              >
+                {t(locale, "translate.nextDemo")}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1403,14 +1434,14 @@ function LocaleSelect({
   onChange: (v: TranslationLocale) => void;
 }) {
   return (
-    <label className="block rounded-bp border border-[color:var(--bp-line)] bg-foam/90 p-3 shadow-bp-soft backdrop-blur-sm">
+    <label className="block rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 p-3 shadow-bp-soft backdrop-blur-sm">
       <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as TranslationLocale)}
-        className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm font-medium text-ink outline-none ring-focus focus:ring-2"
+        className="bp-transition mt-2 w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2.5 text-sm font-medium text-ink outline-none ring-focus duration-bp-fast ease-bp-out focus:border-river/35 focus:ring-2"
       >
         {locales.map((loc) => (
           <option key={loc} value={loc}>
