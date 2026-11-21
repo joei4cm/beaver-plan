@@ -744,6 +744,7 @@
   "planner.booking.confirmSoftSupport": "柔和保存 — Neon/API 或密钥未就绪时 SoftFail；钉链留在天蓝确认轨下。",
   "planner.booking.confirmSoftFail": "柔和保存 — Neon/API 离线或密钥未配置。已钉深链先留在天蓝确认轨下，等同步可用。绝不是 Failed to fetch 崩溃。",
   "planner.booking.confirmSoftBadge": "柔和保存",
+  "planner.booking.confirmSoftLiveBadge": "在线",
   "planner.booking.confirmPending": "已钉 {n}",
   "planner.booking.confirmDirty": "未保存",
   "planner.booking.demoNotice": "演示目录 — 未配置预订密钥时使用京都精选住宿与门票。",
