@@ -959,198 +959,256 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             selectedStopId={selectedStopId}
             onSelectStop={setSelectedStopId}
           />
-          <div className="min-h-0 flex-1 overflow-y-auto">
-          <StopReorderList
-            items={dayStops}
-            onReorder={(orderedIds) => {
-              void commitStopOrder(orderedIds);
-            }}
-            label={t(locale, "planner.stopsList")}
-            dragHandleLabel={t(locale, "planner.dragReorder")}
-            empty={
-              <li className="animate-fade list-none px-5 py-12">
-                <div className="max-w-sm">
-                  <p className="font-display text-2xl font-semibold tracking-tight text-ink">
-                    {t(locale, "planner.emptyDay")}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                    {t(locale, "planner.emptyDayHint")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.querySelector<HTMLInputElement>(
-                        "[data-bp-place-search]",
-                      );
-                      el?.focus();
-                      el?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "nearest",
-                      });
-                    }}
-                    className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
-                  >
-                    {t(locale, "planner.emptyDayCta")}
-                  </button>
-                </div>
-              </li>
-            }
-            renderItem={(stop, ctx) => {
-              const selected = selectedStopId === stop.id;
-              const leg = dayLegs.find((l) => l.fromStopId === stop.id);
-              return (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    if (ctx.isDragging) return;
-                    setSelectedStopId(stop.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedStopId(stop.id);
-                    }
-                    if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      void moveStop(stop.id, -1);
-                    }
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      void moveStop(stop.id, 1);
-                    }
-                  }}
-                  className={`group flex gap-2 px-3 py-4 transition duration-bp-fast ease-bp-out sm:gap-3 sm:px-4 ${
-                    selected
-                      ? "animate-stop-select"
-                      : "hover:bg-mist/30"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    {...ctx.dragHandleProps}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span aria-hidden className="flex flex-col gap-[3px]">
-                      <span className="block h-0.5 w-3 rounded-full bg-current" />
-                      <span className="block h-0.5 w-3 rounded-full bg-current" />
-                      <span className="block h-0.5 w-3 rounded-full bg-current" />
-                    </span>
-                  </button>
-                  <span
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-bp text-xs font-bold ${
-                      selected
-                        ? "bg-river text-foam"
-                        : "bg-ink text-foam"
-                    }`}
-                  >
-                    {ctx.index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* Stop list chrome — hierarchy · azure select · SoftFailNotice · #46 */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "planner.stops.eyebrow")}
+                </span>
+                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                  {t(locale, "planner.stops.count").replace(
+                    "{n}",
+                    String(dayStops.length),
+                  )}
+                </span>
+              </div>
+              {selectedStopId ? (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                  {t(locale, "planner.stops.selected")}
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/55">
+                  {t(locale, "planner.stopsList")}
+                </span>
+              )}
+            </header>
+
+            <SoftFailNotice
+              open={Boolean(
+                softNotice ||
+                  (error && isPlannerNoiseError(new Error(error))) ||
+                  (engineInfo?.mode !== "live" &&
+                    (dayLegs.length > 0 || dayStops.length > 0)),
+              )}
+              compact
+            >
+              {softNotice ?? t(locale, "planner.transfer.demoNotice")}
+            </SoftFailNotice>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <StopReorderList
+                items={dayStops}
+                onReorder={(orderedIds) => {
+                  void commitStopOrder(orderedIds);
+                }}
+                label={t(locale, "planner.stopsList")}
+                dragHandleLabel={t(locale, "planner.dragReorder")}
+                empty={
+                  <li className="animate-fade list-none px-5 py-12">
+                    <div className="max-w-sm">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+                        {t(locale, "planner.stops.eyebrow")}
+                      </p>
+                      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+                        {t(locale, "planner.emptyDay")}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                        {t(locale, "planner.emptyDayHint")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.querySelector<HTMLInputElement>(
+                            "[data-bp-place-search]",
+                          );
+                          el?.focus();
+                          el?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                          });
+                        }}
+                        className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                      >
+                        {t(locale, "planner.emptyDayCta")}
+                      </button>
+                      <SoftFailNotice
+                        open={engineInfo?.mode !== "live"}
+                        className="mt-5"
+                      >
+                        {softNotice ?? t(locale, "planner.demoLocal")}
+                      </SoftFailNotice>
+                    </div>
+                  </li>
+                }
+                renderItem={(stop, ctx) => {
+                  const selected = selectedStopId === stop.id;
+                  const leg = dayLegs.find((l) => l.fromStopId === stop.id);
+                  return (
                     <div
-                      className={`truncate text-ink ${
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={selected}
+                      onClick={() => {
+                        if (ctx.isDragging) return;
+                        setSelectedStopId(stop.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedStopId(stop.id);
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          void moveStop(stop.id, -1);
+                        }
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          void moveStop(stop.id, 1);
+                        }
+                      }}
+                      className={`group relative flex gap-2 px-3 py-4 bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 sm:gap-3 sm:px-4 ${
                         selected
-                          ? "font-display text-base font-bold tracking-tight"
-                          : "font-semibold"
+                          ? "animate-stop-select bg-river/[0.08] shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : "hover:bg-mist/30"
                       }`}
                     >
-                      {stop.place.name}
-                    </div>
-                    {stop.place.address && (
-                      <div className="mt-0.5 truncate text-xs text-ink-soft">
-                        {stop.place.address}
-                      </div>
-                    )}
-                    {selected && (
-                      <PlaceIntel
-                        details={
-                          placeDetails?.enginePlaceId ===
-                          stop.place.enginePlaceId
-                            ? placeDetails
-                            : null
-                        }
-                        loading={placeDetailsLoading}
-                        locale={locale}
-                        demoMode={placeDetailsMode === "demo"}
-                        userNote={stop.userNote}
-                      />
-                    )}
-                    {(leg ||
-                      (selected &&
-                        !routing &&
-                        ctx.index < dayStops.length - 1)) && (
-                      <TransferSteps
-                        leg={leg ?? null}
-                        locale={locale}
-                        variant="inline"
-                        demoMode={engineInfo?.mode !== "live"}
-                        showSoftFail={selected && Boolean(leg)}
-                        showEmpty={
-                          selected &&
-                          !routing &&
-                          !leg &&
-                          ctx.index < dayStops.length - 1
-                        }
-                      />
-                    )}
-                    {routing &&
-                      !leg &&
-                      ctx.index < dayStops.length - 1 &&
-                      selected && (
-                        <div
-                          className="animate-fade"
-                          aria-label={t(locale, "planner.transfer.loadingHint")}
-                        >
-                          <TransferStepsSkeleton />
-                          <p className="mt-1.5 text-xs text-ink-soft">
-                            {t(locale, "planner.transfer.loadingHint")}
-                          </p>
+                      <button
+                        type="button"
+                        {...ctx.dragHandleProps}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span aria-hidden className="flex flex-col gap-[3px]">
+                          <span className="block h-0.5 w-3 rounded-full bg-current" />
+                          <span className="block h-0.5 w-3 rounded-full bg-current" />
+                          <span className="block h-0.5 w-3 rounded-full bg-current" />
+                        </span>
+                      </button>
+                      <span
+                        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-bp text-xs font-bold tabular-nums shadow-bp-soft transition duration-bp-fast ease-bp-out ${
+                          selected
+                            ? "bg-river text-foam ring-1 ring-river/30"
+                            : "bg-ink text-foam"
+                        }`}
+                      >
+                        {ctx.index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-baseline gap-2">
+                          <div
+                            className={`min-w-0 truncate text-ink ${
+                              selected
+                                ? "font-display text-base font-bold tracking-tight"
+                                : "font-semibold"
+                            }`}
+                          >
+                            {stop.place.name}
+                          </div>
+                          {selected ? (
+                            <span className="shrink-0 rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                              {t(locale, "planner.stops.selected")}
+                            </span>
+                          ) : null}
                         </div>
-                      )}
-                    <BookingLinkChips
-                      links={stop.bookingLinks}
-                      locale={locale}
-                    />
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-1 opacity-50 transition group-hover:opacity-100">
-                    <button
-                      type="button"
-                      aria-label={t(locale, "planner.moveUp")}
-                      className="px-1 text-ink-soft hover:text-river"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void moveStop(stop.id, -1);
-                      }}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t(locale, "planner.moveDown")}
-                      className="px-1 text-ink-soft hover:text-river"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void moveStop(stop.id, 1);
-                      }}
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t(locale, "planner.removeStop")}
-                      className="px-1 text-ink-soft hover:text-timber"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void removeStop(stop.id);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              );
-            }}
-          />
+                        {stop.place.address && (
+                          <div className="mt-0.5 truncate text-xs text-ink-soft">
+                            {stop.place.address}
+                          </div>
+                        )}
+                        {selected && (
+                          <PlaceIntel
+                            details={
+                              placeDetails?.enginePlaceId ===
+                              stop.place.enginePlaceId
+                                ? placeDetails
+                                : null
+                            }
+                            loading={placeDetailsLoading}
+                            locale={locale}
+                            demoMode={placeDetailsMode === "demo"}
+                            userNote={stop.userNote}
+                          />
+                        )}
+                        {(leg ||
+                          (selected &&
+                            !routing &&
+                            ctx.index < dayStops.length - 1)) && (
+                          <TransferSteps
+                            leg={leg ?? null}
+                            locale={locale}
+                            variant="inline"
+                            demoMode={engineInfo?.mode !== "live"}
+                            showSoftFail={selected && Boolean(leg)}
+                            showEmpty={
+                              selected &&
+                              !routing &&
+                              !leg &&
+                              ctx.index < dayStops.length - 1
+                            }
+                          />
+                        )}
+                        {routing &&
+                          !leg &&
+                          ctx.index < dayStops.length - 1 &&
+                          selected && (
+                            <div
+                              className="animate-fade"
+                              aria-label={t(
+                                locale,
+                                "planner.transfer.loadingHint",
+                              )}
+                            >
+                              <TransferStepsSkeleton />
+                              <p className="mt-1.5 text-xs text-ink-soft">
+                                {t(locale, "planner.transfer.loadingHint")}
+                              </p>
+                            </div>
+                          )}
+                        <BookingLinkChips
+                          links={stop.bookingLinks}
+                          locale={locale}
+                        />
+                      </div>
+                      <div className="flex shrink-0 flex-col gap-0.5 opacity-45 transition duration-bp-fast ease-bp-out group-hover:opacity-100 group-focus-within:opacity-100">
+                        <button
+                          type="button"
+                          aria-label={t(locale, "planner.moveUp")}
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-river/10 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void moveStop(stop.id, -1);
+                          }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={t(locale, "planner.moveDown")}
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-river/10 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void moveStop(stop.id, 1);
+                          }}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={t(locale, "planner.removeStop")}
+                          className="rounded-bp-xs px-1.5 py-0.5 text-ink-soft bp-transition hover:bg-timber/10 hover:text-timber focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void removeStop(stop.id);
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+            </div>
           </div>
           </div>
 
@@ -1159,16 +1217,6 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
-          <SoftFailNotice
-            open={Boolean(
-              softNotice ||
-                (error && isPlannerNoiseError(new Error(error))) ||
-                (engineInfo?.mode !== "live" && dayLegs.length > 0),
-            )}
-            compact
-          >
-            {softNotice ?? t(locale, "planner.transfer.demoNotice")}
-          </SoftFailNotice>
           <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
             {t(locale, "planner.hint")}
           </p>
