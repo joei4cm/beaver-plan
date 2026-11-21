@@ -224,6 +224,35 @@ export function DualCameraSkeleton() {
   );
 }
 
+/** Tip 017 — nested place intel sheet while Places soft-fetches. */
+export function PlaceIntelSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="mt-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-5 w-16 rounded-bp-xs" />
+      </div>
+      <div className="space-y-2.5 px-3 py-3">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <Skeleton className="h-5 w-12" />
+          <Skeleton className="h-3.5 w-36 max-w-full" />
+        </div>
+        <div className="flex gap-1.5">
+          <Skeleton className="h-5 w-14 rounded-bp-xs" />
+          <Skeleton className="h-5 w-16 rounded-bp-xs" />
+          <Skeleton className="h-5 w-12 rounded-bp-xs" />
+        </div>
+        <Skeleton className="h-3.5 w-full max-w-[95%]" />
+        <Skeleton className="h-3.5 w-[80%] max-w-[80%]" />
+      </div>
+    </div>
+  );
+}
+
 /** Tip 017 — status chip placeholders while translation BFF warms. */
 export function TranslateStatusSkeleton() {
   return (

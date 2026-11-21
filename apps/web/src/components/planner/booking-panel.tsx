@@ -298,7 +298,7 @@ export function BookingPanel({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-mist/35"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35"
         aria-expanded={open}
       >
         <div>
@@ -323,7 +323,7 @@ export function BookingPanel({
           </p>
         </div>
         <span
-          className={`text-river transition ${open ? "rotate-180" : ""}`}
+          className={`text-river transition duration-bp ease-bp ${open ? "rotate-180" : ""}`}
           aria-hidden
         >
           ▾
@@ -332,10 +332,10 @@ export function BookingPanel({
 
       {open && (
         <div
-          className="animate-fade space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
+          className="animate-sheet-in space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-{(softDemo || status?.mode === "demo") && (
+          {(softDemo || status?.mode === "demo") && (
             <SoftFailNotice>
               {t(locale, "planner.booking.demoNotice")}
             </SoftFailNotice>
@@ -364,7 +364,7 @@ export function BookingPanel({
                     key={id}
                     type="button"
                     onClick={() => setKindFilter(id)}
-                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition ${
+                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
                       on
                         ? "bg-river text-foam"
                         : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
@@ -416,7 +416,7 @@ export function BookingPanel({
               type="button"
               disabled={searching}
               onClick={() => void runSearch()}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {searching
                 ? t(locale, "planner.booking.searching")
@@ -469,7 +469,7 @@ export function BookingPanel({
                           <button
                             type="button"
                             onClick={() => openExternal(s.url)}
-                            className="rounded-bp bg-river px-3 py-1.5 text-xs font-semibold text-foam transition hover:bg-river-deep"
+                            className="rounded-bp bg-river px-3 py-1.5 text-xs font-semibold text-foam transition duration-bp-fast ease-bp-out hover:bg-river-deep"
                           >
                             {t(locale, "planner.booking.openExternal")}
                           </button>
@@ -477,7 +477,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => applySuggestion(s)}
-                              className="rounded-bp-sm border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition hover:bg-river/10"
+                              className="rounded-bp-sm border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:bg-river/10"
                             >
                               {t(locale, "planner.booking.useLink")}
                             </button>
@@ -545,7 +545,7 @@ export function BookingPanel({
                   type="button"
                   disabled={saving}
                   onClick={() => void save()}
-                  className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-40"
+                  className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
                 >
                   {saving
                     ? t(locale, "planner.booking.saving")
