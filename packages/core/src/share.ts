@@ -153,6 +153,11 @@ function titlePx(base: number, snap: ShareSnapshot): number {
   return Math.round(base * s);
 }
 
+/** SVG root with crisp text/path hints for hi-res PNG rasterization. */
+function svgRoot(W: number, H: number): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">`;
+}
+
 function pathHintSvg(
   points: Array<{ lat: number; lng: number }>,
   box: { x: number; y: number; w: number; h: number },
@@ -221,7 +226,7 @@ function renderMagazineReel(snap: ShareSnapshot): string {
   const titleSize = titlePx(88, snap);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+${svgRoot(W, H)}
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
       <stop offset="0%" stop-color="${SKY}"/>
@@ -276,7 +281,7 @@ function renderPathSquare(snap: ShareSnapshot): string {
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+${svgRoot(W, H)}
   <defs>
     <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${PAPER}"/>
@@ -337,7 +342,7 @@ function renderDayFilm(snap: ShareSnapshot): string {
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+${svgRoot(W, H)}
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${PAPER}"/>
@@ -386,7 +391,7 @@ function renderStoryPanel(snap: ShareSnapshot): string {
   const rail = 48;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+${svgRoot(W, H)}
   <defs>
     <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${SKY}"/>
@@ -432,7 +437,7 @@ function renderStampSquare(snap: ShareSnapshot): string {
   const inset = 56;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+${svgRoot(W, H)}
   <defs>
     <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${PAPER}"/>
