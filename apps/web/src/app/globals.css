@@ -144,6 +144,68 @@
       width var(--bp-duration) var(--bp-ease-in-out);
   }
 
+  /* Tip 005 — drag-to-reorder (planner stops) */
+  .bp-stop-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.75rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+    cursor: grab;
+    border-radius: var(--bp-radius-xs);
+    color: var(--bp-ink-soft);
+    transition:
+      color var(--bp-duration-fast) var(--bp-ease-out),
+      background-color var(--bp-duration-fast) var(--bp-ease-out),
+      transform 180ms var(--bp-ease-overshoot);
+  }
+
+  .bp-stop-drag-handle:hover,
+  .bp-stop-drag-handle:focus-visible {
+    color: var(--bp-river);
+    background-color: color-mix(in srgb, var(--bp-river) 10%, transparent);
+    outline: none;
+  }
+
+  .bp-stop-drag-handle:active,
+  .bp-stop-drag-handle--active,
+  .bp-stop-reorder[data-dragging="true"] .bp-stop-drag-handle {
+    cursor: grabbing;
+  }
+
+  .bp-stop-drag-handle--active {
+    color: var(--bp-river);
+  }
+
+  .bp-stop-drop-line {
+    height: 2px;
+    border-radius: 1px;
+    /* ~15% ink with Lumen azure mid accent */
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--bp-ink) 15%, transparent) 10%,
+      color-mix(in srgb, var(--bp-river) 45%, transparent) 50%,
+      color-mix(in srgb, var(--bp-ink) 15%, transparent) 90%,
+      transparent 100%
+    );
+    transform: scaleX(0);
+    transform-origin: center;
+    animation: bp-drop-line-in 180ms var(--bp-ease-out) forwards;
+    transition: top 180ms var(--bp-ease-in-out);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bp-river) 12%, transparent);
+  }
+
+  .bp-stop-lift {
+    transition: transform 180ms var(--bp-ease-overshoot);
+  }
+
+  .bp-stop-reorder[data-dragging="true"] {
+    cursor: grabbing;
+  }
+
   .share-svg-preview text.bp-display {
     font-family: var(--bp-font-display) !important;
   }
@@ -303,6 +365,17 @@
   }
 }
 
+@keyframes bp-drop-line-in {
+  from {
+    transform: scaleX(0);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
 ::view-transition-group(*) {
   animation-duration: var(--bp-duration);
   animation-timing-function: var(--bp-ease-out);
@@ -323,6 +396,18 @@
   .animate-marker-pop,
   .bp-popover {
     animation: none !important;
+  }
+
+  .bp-stop-lift,
+  .bp-stop-row {
+    transition: none !important;
+  }
+
+  /* Tip 005 reduced motion: keep only the drop line */
+  .bp-stop-drop-line {
+    animation: none !important;
+    transform: scaleX(1) !important;
+    transition: top var(--bp-duration-fast) var(--bp-ease-in-out) !important;
   }
 
   .bp-skeleton::after,
