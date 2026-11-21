@@ -115,7 +115,11 @@ export default function TripDetailScreen() {
   const [comments, setComments] = useState<TripComment[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [collabSeeded, setCollabSeeded] = useState(false);
+  const [collabSoftOffline, setCollabSoftOffline] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [softNotice, setSoftNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +141,8 @@ export default function TripDetailScreen() {
   const rise = useRef(new Animated.Value(0)).current;
   const sheet = useRef(new Animated.Value(0)).current;
   const stopPop = useRef(new Animated.Value(1)).current;
+  const inviteSheet = useRef(new Animated.Value(0)).current;
+  const presencePulse = useRef(new Animated.Value(0)).current;
 
   const refreshPin = useCallback(async () => {
     try {
@@ -181,10 +187,12 @@ export default function TripDetailScreen() {
           setComments(seed.comments);
           setActivity(seed.events);
           setCollabSeeded(true);
+          setCollabSoftOffline(false);
         } else {
           setMembers(m.members);
           setYourRole(m.yourRole);
           setCollabSeeded(false);
+          setCollabSoftOffline(false);
         }
       } catch {
         if (tripId === "sample-kyoto") {
@@ -194,6 +202,7 @@ export default function TripDetailScreen() {
           setComments(seed.comments);
           setActivity(seed.events);
           setCollabSeeded(true);
+          setCollabSoftOffline(true);
         }
       }
       await refreshPin();
@@ -215,6 +224,7 @@ export default function TripDetailScreen() {
           setComments(seed.comments);
           setActivity(seed.events);
           setCollabSeeded(true);
+          setCollabSoftOffline(true);
         }
         await refreshPin();
       } else if (tripId === "sample-kyoto") {
@@ -230,6 +240,7 @@ export default function TripDetailScreen() {
         setComments(seed.comments);
         setActivity(seed.events);
         setCollabSeeded(true);
+        setCollabSoftOffline(true);
         setFromCache(true);
         setSoftNotice(t(locale, "planner.demoLocal"));
         setError(null);
@@ -241,18 +252,63 @@ export default function TripDetailScreen() {
     }
   }, [refreshPin, tripId]);
 
+  function seedDemoInvite() {
+    const code = "BP-DEMO42";
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "https://beaver.plan";
+    setInviteCode(code);
+    setInviteUrl(`${origin}/invite/${code}`);
+    setInviteCopied(false);
+    setInviteOpen(true);
+  }
+
   async function onInvite() {
+    setError(null);
+    setInviteCopied(false);
+    if (collabSeeded || collabSoftOffline) {
+      seedDemoInvite();
+      return;
+    }
     try {
       const inv = await createInvite(tripId, "editor");
       setInviteCode(inv.code);
+      setInviteUrl(inv.inviteUrl);
+      setInviteOpen(true);
     } catch (e) {
       if (isNoiseError(e)) {
-        setSoftNotice(t(locale, "planner.demoLocal"));
+        setCollabSeeded(true);
+        setCollabSoftOffline(true);
+        seedDemoInvite();
         setError(null);
         return;
       }
       setError(e instanceof Error ? e.message : "invite_failed");
     }
+  }
+
+  async function onCopyInvite() {
+    if (!inviteUrl) return;
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.clipboard?.writeText
+      ) {
+        await navigator.clipboard.writeText(inviteUrl);
+        setInviteCopied(true);
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    setInviteCopied(false);
+  }
+
+  function presenceFor(role: TripRole): "active" | "idle" | "away" {
+    if (role === "owner") return "active";
+    if (role === "editor") return "idle";
+    return "away";
   }
 
   async function onTogglePin() {
@@ -328,6 +384,41 @@ export default function TripDetailScreen() {
       useNativeDriver: true,
     }).start();
   }, [selectedStopId, stopPop]);
+
+  useEffect(() => {
+    if (!inviteOpen) {
+      inviteSheet.setValue(0);
+      return;
+    }
+    inviteSheet.setValue(0);
+    Animated.timing(inviteSheet, {
+      toValue: 1,
+      duration: motion.durationMdMs,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [inviteOpen, inviteSheet]);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(presencePulse, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(presencePulse, {
+          toValue: 0,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [presencePulse]);
 
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
@@ -1049,58 +1140,66 @@ export default function TripDetailScreen() {
                 <Text style={styles.collabTitle}>
                   {t(locale, "collab.members")}
                 </Text>
-                <View style={styles.presenceRow}>
+                <View
+                  style={styles.presenceRow}
+                  accessibilityRole="list"
+                  accessibilityLabel={t(locale, "collab.members")}
+                >
                   {members.slice(0, 4).map((m) => {
-                    const presence =
-                      m.role === "owner"
-                        ? "active"
-                        : m.role === "editor"
-                          ? "idle"
-                          : "away";
+                    const presence = presenceFor(m.role);
+                    const pulseOpacity =
+                      presence === "active"
+                        ? presencePulse.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.55, 1],
+                          })
+                        : 1;
                     return (
                       <View
                         key={m.id}
-                        style={[
+                        style={StyleSheet.flatten([
                           styles.presenceChip,
                           presence === "active"
                             ? styles.presenceChipActive
                             : null,
-                        ]}
+                        ])}
+                        accessibilityLabel={`${m.displayName ?? m.userId} · ${t(locale, `collab.role.${m.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
                       >
                         <View
-                          style={[
+                          style={StyleSheet.flatten([
                             styles.presenceAvatar,
                             m.role === "viewer"
                               ? styles.presenceAvatarMuted
                               : null,
-                          ]}
+                          ])}
                         >
                           <Text style={styles.presenceInitials}>
                             {memberInitials(m.displayName ?? m.userId)}
                           </Text>
-                          <View
-                            style={[
+                          <Animated.View
+                            style={StyleSheet.flatten([
                               styles.presenceDot,
                               presence === "active"
                                 ? styles.presenceDotActive
                                 : presence === "idle"
                                   ? styles.presenceDotIdle
                                   : styles.presenceDotAway,
-                            ]}
+                              { opacity: pulseOpacity },
+                            ])}
                           />
                         </View>
                         <Text style={styles.presenceName} numberOfLines={1}>
                           {(m.displayName ?? m.userId).split(/\s+/)[0]}
                         </Text>
                         <Text
-                          style={[
+                          style={StyleSheet.flatten([
                             styles.presenceRole,
                             m.role === "owner"
                               ? styles.presenceRoleOwner
                               : m.role === "editor"
                                 ? styles.presenceRoleEditor
                                 : styles.presenceRoleViewer,
-                          ]}
+                          ])}
                         >
                           {t(locale, `collab.role.${m.role}`)}
                         </Text>
@@ -1108,34 +1207,189 @@ export default function TripDetailScreen() {
                     );
                   })}
                 </View>
-                <Text style={styles.collabMeta}>
-                  {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
-                  {collabSeeded
-                    ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
-                    : ""}
-                </Text>
-                {collabSeeded ? (
-                  <Text style={styles.collabNotice}>
-                    {softNotice
-                      ? t(locale, "collab.panel.softOffline")
-                      : t(locale, "collab.panel.demoNotice")}
+                <View style={styles.collabMetaRow}>
+                  <Text style={styles.collabMeta}>
+                    {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
+                    {collabSeeded
+                      ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
+                      : ""}
                   </Text>
-                ) : null}
+                  {members.length > 0 ? (
+                    <View style={styles.liveBadge}>
+                      <Animated.View
+                        style={StyleSheet.flatten([
+                          styles.liveDot,
+                          {
+                            opacity: presencePulse.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.45, 1],
+                            }),
+                          },
+                        ])}
+                      />
+                      <Text style={styles.liveLabel}>
+                        {t(locale, "collab.presence.live")}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <SoftFailNotice
+                  open={(collabSeeded || collabSoftOffline) && !inviteOpen}
+                  style={styles.collabSoftFail}
+                >
+                  {collabSoftOffline
+                    ? t(locale, "collab.panel.softOffline")
+                    : t(locale, "collab.panel.demoNotice")}
+                </SoftFailNotice>
+
                 {(yourRole === "owner" || yourRole === "editor") && (
-                  <Pressable
-                    style={styles.inviteBtn}
-                    onPress={() => void onInvite()}
-                  >
-                    <Text style={styles.inviteLabel}>
-                      {t(locale, "collab.invite")}
-                    </Text>
-                  </Pressable>
+                  <View style={styles.inviteActions}>
+                    <Pressable
+                      style={styles.inviteBtn}
+                      onPress={() => void onInvite()}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.inviteLabel}>
+                        {t(locale, "collab.invite")}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.inviteToggle}
+                      onPress={() => setInviteOpen((v) => !v)}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.inviteToggleLabel}>
+                        {inviteOpen
+                          ? t(locale, "collab.hide")
+                          : t(locale, "collab.show")}
+                      </Text>
+                    </Pressable>
+                  </View>
                 )}
-                {inviteCode ? (
-                  <Text style={styles.inviteCode}>
-                    {t(locale, "collab.shareHint")} {inviteCode}
-                  </Text>
+
+                {inviteOpen ? (
+                  <Animated.View
+                    style={StyleSheet.flatten([
+                      styles.inviteSheet,
+                      {
+                        opacity: inviteSheet,
+                        transform: [
+                          {
+                            translateY: inviteSheet.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [14, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ])}
+                    accessibilityLabel={t(locale, "collab.invite")}
+                  >
+                    <View style={styles.inviteSheetHeader}>
+                      <Text style={styles.inviteSheetEyebrow}>
+                        {t(locale, "collab.invite")}
+                      </Text>
+                      <Text style={styles.inviteRoleChip}>
+                        {t(locale, "collab.role.editor")}
+                      </Text>
+                    </View>
+                    <View style={styles.inviteSheetBody}>
+                      <SoftFailNotice
+                        open={collabSeeded || collabSoftOffline}
+                      >
+                        {collabSoftOffline
+                          ? t(locale, "collab.panel.softOffline")
+                          : t(locale, "collab.panel.demoNotice")}
+                      </SoftFailNotice>
+                      {inviteCode ? (
+                        <View style={styles.inviteShareBlock}>
+                          <Text style={styles.inviteShareHint}>
+                            {t(locale, "collab.shareHint")}
+                          </Text>
+                          <View style={styles.inviteCodeRow}>
+                            <Text style={styles.inviteCodeChip}>
+                              {inviteCode}
+                            </Text>
+                            <Pressable
+                              style={styles.copyBtn}
+                              onPress={() => void onCopyInvite()}
+                              accessibilityRole="button"
+                            >
+                              <Text style={styles.copyBtnLabel}>
+                                {inviteCopied
+                                  ? t(locale, "collab.copied")
+                                  : t(locale, "collab.copyLink")}
+                              </Text>
+                            </Pressable>
+                          </View>
+                          {inviteUrl ? (
+                            <Text style={styles.inviteUrl}>{inviteUrl}</Text>
+                          ) : null}
+                        </View>
+                      ) : (
+                        <Text style={styles.inviteShareHint}>
+                          {t(locale, "collab.shareHint")}
+                        </Text>
+                      )}
+                      <View style={styles.inviteMemberList}>
+                        {members.map((m) => {
+                          const presence = presenceFor(m.role);
+                          return (
+                            <View key={m.id} style={styles.inviteMemberRow}>
+                              <View style={styles.inviteMemberLeft}>
+                                <View
+                                  style={StyleSheet.flatten([
+                                    styles.presenceAvatar,
+                                    styles.presenceAvatarMd,
+                                    m.role === "viewer"
+                                      ? styles.presenceAvatarMuted
+                                      : null,
+                                  ])}
+                                >
+                                  <Text style={styles.presenceInitialsMd}>
+                                    {memberInitials(
+                                      m.displayName ?? m.userId,
+                                    )}
+                                  </Text>
+                                  <View
+                                    style={StyleSheet.flatten([
+                                      styles.presenceDot,
+                                      presence === "active"
+                                        ? styles.presenceDotActive
+                                        : presence === "idle"
+                                          ? styles.presenceDotIdle
+                                          : styles.presenceDotAway,
+                                    ])}
+                                  />
+                                </View>
+                                <Text
+                                  style={styles.inviteMemberName}
+                                  numberOfLines={1}
+                                >
+                                  {m.displayName ?? m.userId}
+                                </Text>
+                              </View>
+                              <Text
+                                style={StyleSheet.flatten([
+                                  styles.presenceRole,
+                                  m.role === "owner"
+                                    ? styles.presenceRoleOwner
+                                    : m.role === "editor"
+                                      ? styles.presenceRoleEditor
+                                      : styles.presenceRoleViewer,
+                                ])}
+                              >
+                                {t(locale, `collab.role.${m.role}`)}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </Animated.View>
                 ) : null}
+
                 {comments.length > 0 ? (
                   <View style={styles.collabThread}>
                     <Text style={styles.collabSectionLabel}>
@@ -1690,10 +1944,38 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
+  collabMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
   collabMeta: {
     ...type.body,
     fontSize: 13,
     color: colors.inkSoft,
+  },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(47,107,255,0.1)",
+    borderRadius: radius.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.river,
+  },
+  liveLabel: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.riverDeep,
   },
   presenceRow: {
     flexDirection: "row",
@@ -1718,12 +2000,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(47,107,255,0.35)",
   },
   presenceAvatar: {
+    position: "relative",
     width: 22,
     height: 22,
     borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.river,
+  },
+  presenceAvatarMd: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   presenceAvatarMuted: {
     backgroundColor: colors.inkSoft,
@@ -1753,6 +2041,11 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "700",
   },
+  presenceInitialsMd: {
+    color: colors.foam,
+    fontSize: 11,
+    fontWeight: "700",
+  },
   presenceName: {
     flexShrink: 1,
     fontSize: 12,
@@ -1779,19 +2072,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
-  collabNotice: {
-    ...type.body,
-    marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.2)",
-    backgroundColor: "rgba(47,107,255,0.06)",
-    color: colors.riverDeep,
-    fontSize: 12,
-    lineHeight: 18,
-    overflow: "hidden",
+  collabSoftFail: {
+    marginTop: 6,
   },
   collabThread: {
     marginTop: 10,
@@ -1860,27 +2142,158 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: colors.ink,
   },
+  inviteActions: {
+    marginTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
   inviteBtn: {
-    marginTop: 6,
     alignSelf: "flex-start",
     backgroundColor: colors.river,
     borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    shadowColor: colors.river,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   inviteLabel: {
     ...type.body,
     color: colors.foam,
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 13,
   },
-  inviteCode: {
-    ...type.body,
-    marginTop: 4,
-    fontSize: 12,
-    color: colors.ink,
-    fontFamily: "monospace",
+  inviteToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
+  inviteToggleLabel: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.inkSoft,
+  },
+  inviteSheet: {
+    marginTop: 10,
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+  },
+  inviteSheetHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  inviteSheetEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  inviteRoleChip: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.riverDeep,
+    backgroundColor: "rgba(47,107,255,0.12)",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  inviteSheetBody: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  inviteShareBlock: {
+    gap: 10,
+  },
+  inviteShareHint: {
+    ...type.display,
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    color: colors.ink,
+  },
+  inviteCodeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  inviteCodeChip: {
+    fontFamily: "monospace",
+    fontSize: 14,
+    letterSpacing: 1.4,
+    color: colors.riverDeep,
+    backgroundColor: "rgba(47,107,255,0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.sm,
+    overflow: "hidden",
+  },
+  copyBtn: {
+    backgroundColor: colors.river,
+    borderRadius: radius.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  copyBtnLabel: {
+    ...type.body,
+    color: colors.foam,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  inviteUrl: {
+    ...type.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "rgba(71, 85, 105, 0.85)",
+  },
+  inviteMemberList: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+    paddingTop: 10,
+    gap: 4,
+  },
+  inviteMemberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 6,
+  },
+  inviteMemberLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  inviteMemberName: {
+    ...type.body,
+    flexShrink: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+
   hint: {
     ...type.body,
     color: colors.inkSoft,
