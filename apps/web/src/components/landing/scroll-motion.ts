@@ -10,6 +10,51 @@ export function scrollScale(viewportHeight: number): number {
   return Math.min(1.2, Math.max(0.7, viewportHeight / 896));
 }
 
+/** Tip 019 §4 Standard — px of scroll that throws one card. */
+export function deckThrowDistance(scale: number): number {
+  return 420 * scale;
+}
+
+/** Tip 019 §4 Standard — hold after the last throw so art can settle. */
+export function deckHoldDistance(scale: number): number {
+  return 240 * scale;
+}
+
+/**
+ * Tip 019 §4 Standard throw arc (scroll-driven, not timed).
+ * t ∈ [0,1]; side = ±1. Tip 011 out-strong is reserved for chrome settles
+ * (dots / CTA), not the scroll-scrubbed path.
+ */
+export function deckThrowTransform(
+  t: number,
+  side: number,
+): { x: number; y: number; rotate: number; hidden: boolean } {
+  const clamped = Math.min(1, Math.max(0, t));
+  const x = side * clamped * clamped * 1000;
+  const y = clamped * (160 * clamped - 40);
+  const rotate = side * clamped * 16;
+  return {
+    x,
+    y,
+    rotate,
+    hidden: clamped >= 0.99,
+  };
+}
+
+/** Tip 019 §4 — cards below the top sit back in the pile. */
+export function deckDepthTransform(depth: number): {
+  y: number;
+  scale: number;
+  brightness: number;
+} {
+  const d = Math.min(3, Math.max(0, depth));
+  return {
+    y: d * 18,
+    scale: 1 - d * 0.05,
+    brightness: 1 - d * 0.04,
+  };
+}
+
 function readReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
