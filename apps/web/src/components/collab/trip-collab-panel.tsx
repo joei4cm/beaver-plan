@@ -287,13 +287,11 @@ export function TripCollabPanel({
         </div>
       </header>
 
-      {demoSeeded ? (
-        <SoftFailNotice className="mb-4">
-          {softOffline
-            ? t(locale, "collab.panel.softOffline")
-            : t(locale, "collab.panel.demoNotice")}
-        </SoftFailNotice>
-      ) : null}
+      <SoftFailNotice open={demoSeeded} className="mb-4">
+        {softOffline
+          ? t(locale, "collab.panel.softOffline")
+          : t(locale, "collab.panel.demoNotice")}
+      </SoftFailNotice>
 
       {error ? (
         <p className="mb-3 text-sm text-timber" role="alert">

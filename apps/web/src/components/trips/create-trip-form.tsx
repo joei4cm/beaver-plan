@@ -255,9 +255,9 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
             {error}
           </p>
         ) : null}
-        {!error && softNotice ? (
-          <SoftFailNotice>{softNotice}</SoftFailNotice>
-        ) : null}
+        <SoftFailNotice open={!error && Boolean(softNotice)}>
+          {softNotice ?? ""}
+        </SoftFailNotice>
 
         <div className="flex flex-wrap items-center gap-4 pt-2">
           <button

@@ -240,11 +240,9 @@ export function TransferSteps({
         ))}
       </ol>
 
-      {notice ? (
-        <SoftFailNotice compact>
-          {t(locale, "planner.transfer.demoNotice")}
-        </SoftFailNotice>
-      ) : null}
+      <SoftFailNotice open={Boolean(notice)} compact>
+        {t(locale, "planner.transfer.demoNotice")}
+      </SoftFailNotice>
     </SheetPresence>
   );
 }

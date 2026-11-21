@@ -90,9 +90,9 @@ export default function BookingPreviewPage() {
           }}
         />
       </div>
-      {softNotice && (
-        <SoftFailNotice className="mt-4">{softNotice}</SoftFailNotice>
-      )}
+      <SoftFailNotice open={Boolean(softNotice)} className="mt-4">
+        {softNotice ?? ""}
+      </SoftFailNotice>
       {error && (
         <p className="mt-4 text-sm text-timber" role="alert">
           {error}

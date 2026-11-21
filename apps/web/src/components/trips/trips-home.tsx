@@ -225,9 +225,9 @@ export function TripsHome({ locale }: Props) {
           {error}
         </p>
       ) : null}
-      {!error && softNotice ? (
-        <SoftFailNotice className="mt-6">{softNotice}</SoftFailNotice>
-      ) : null}
+      <SoftFailNotice open={!error && Boolean(softNotice)} className="mt-6">
+        {softNotice ?? ""}
+      </SoftFailNotice>
 
       <section className="mt-16" aria-labelledby="trips-yours-heading">
         <header className="animate-rise mb-8">
@@ -368,11 +368,9 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        {templatesSoft && !loading ? (
-          <SoftFailNotice className="mb-6">
-            {t(locale, "trips.templatesSoftOffline")}
-          </SoftFailNotice>
-        ) : null}
+        <SoftFailNotice open={templatesSoft && !loading} className="mb-6">
+          {t(locale, "trips.templatesSoftOffline")}
+        </SoftFailNotice>
 
         {loading ? (
           <TemplatesListSkeleton />

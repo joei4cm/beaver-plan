@@ -148,7 +148,9 @@ export function InviteAccept({
         </div>
 
         <div className="space-y-5 px-5 py-5">
-          {softNotice ? <SoftFailNotice>{softNotice}</SoftFailNotice> : null}
+          <SoftFailNotice open={Boolean(softNotice)}>
+            {softNotice ?? ""}
+          </SoftFailNotice>
           {error && !softNotice ? (
             <p className="text-sm text-timber" role="alert">
               {error}

@@ -101,6 +101,12 @@
     animation: bp-rise var(--bp-duration) var(--bp-ease-out) both;
   }
 
+  /* Tip 011 — SoftFailNotice / offline banner exit (paired with .animate-rise) */
+  .animate-rise-out {
+    animation: bp-rise-out var(--bp-duration) var(--bp-ease-in) both;
+    pointer-events: none;
+  }
+
   .animate-fade {
     animation: bp-fade var(--bp-duration-slow) var(--bp-ease-out) both;
   }
@@ -468,6 +474,17 @@
   }
 }
 
+@keyframes bp-rise-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
 @keyframes bp-fade {
   from {
     opacity: 0;
@@ -682,6 +699,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
+  .animate-rise-out,
   .animate-fade,
   .animate-drift,
   .animate-stop-select,

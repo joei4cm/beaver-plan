@@ -731,13 +731,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </div>
 
-            {demoSeeded || softNotice ? (
-              <SoftFailNotice className="mt-5">
-                {softNotice && !online
-                  ? t(locale, "journal.softOffline")
-                  : t(locale, "journal.demoNotice")}
-              </SoftFailNotice>
-            ) : null}
+            <SoftFailNotice open={demoSeeded || softNotice} className="mt-5">
+              {softNotice && !online
+                ? t(locale, "journal.softOffline")
+                : t(locale, "journal.demoNotice")}
+            </SoftFailNotice>
 
             {visible.length === 0 && (
               <div

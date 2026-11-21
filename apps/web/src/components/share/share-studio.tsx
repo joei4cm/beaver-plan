@@ -689,11 +689,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </p>
             </div>
 
-            {softDemo ? (
-              <SoftFailNotice>
-                {t(locale, "share.demoNotice")}
-              </SoftFailNotice>
-            ) : null}
+            <SoftFailNotice open={softDemo}>
+              {t(locale, "share.demoNotice")}
+            </SoftFailNotice>
 
             <div
               className="flex flex-col gap-2.5"

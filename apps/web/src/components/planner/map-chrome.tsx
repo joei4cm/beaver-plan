@@ -322,16 +322,12 @@ export function MapChrome({
               </div>
             )}
 
-            {searchDemo && hasResults ? (
-              <SoftFailNotice compact>
-                {t(locale, "planner.searchDemo")}
-              </SoftFailNotice>
-            ) : null}
-            {searchDemo && showEmpty ? (
-              <SoftFailNotice compact>
-                {t(locale, "planner.search.softFailEmpty")}
-              </SoftFailNotice>
-            ) : null}
+            <SoftFailNotice open={searchDemo && hasResults} compact>
+              {t(locale, "planner.searchDemo")}
+            </SoftFailNotice>
+            <SoftFailNotice open={searchDemo && showEmpty} compact>
+              {t(locale, "planner.search.softFailEmpty")}
+            </SoftFailNotice>
           </SheetPresence>
         </div>
 
@@ -406,13 +402,14 @@ export function MapChrome({
 
       {/* Bottom-left stack: SoftFailNotice + transfer legend (clears Leaflet zoom) */}
       <div className="absolute bottom-4 left-3 z-[2] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
-        {notice ? (
-          <div className="pointer-events-auto">
-            <SoftFailNotice className="shadow-bp-soft backdrop-blur">
-              {notice}
-            </SoftFailNotice>
-          </div>
-        ) : null}
+        <div className="pointer-events-auto">
+          <SoftFailNotice
+            open={Boolean(notice)}
+            className="shadow-bp-soft backdrop-blur"
+          >
+            {notice ?? ""}
+          </SoftFailNotice>
+        </div>
         {layers.legend && hasRoute ? (
           <div className="pointer-events-none flex flex-wrap items-center gap-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
             <span className="inline-flex items-center gap-1.5">

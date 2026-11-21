@@ -787,13 +787,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           </div>
         )}
 
-        {isDemo ? (
-          <SoftFailNotice className="mt-4">
-            {softNotice && !online
-              ? t(locale, "translate.softOffline")
-              : t(locale, "translate.demoNotice")}
-          </SoftFailNotice>
-        ) : null}
+        <SoftFailNotice open={isDemo} className="mt-4">
+          {softNotice && !online
+            ? t(locale, "translate.softOffline")
+            : t(locale, "translate.demoNotice")}
+        </SoftFailNotice>
       </header>
 
       <div
@@ -886,13 +884,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             </p>
           )}
 
-          {(micDenied || error) && (
-            <SoftFailNotice className="mt-6 max-w-xl">
-              {micDenied
-                ? t(locale, "translate.permissionMic")
-                : (error ?? t(locale, "translate.error"))}
-            </SoftFailNotice>
-          )}
+          <SoftFailNotice
+            open={Boolean(micDenied || error)}
+            className="mt-6 max-w-xl"
+          >
+            {micDenied
+              ? t(locale, "translate.permissionMic")
+              : (error ?? t(locale, "translate.error"))}
+          </SoftFailNotice>
 
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1134,11 +1133,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 {t(locale, "translate.dualHint")}
               </p>
             </div>
-            {cameraDenied ? (
-              <SoftFailNotice className="max-w-sm">
-                {t(locale, "translate.permissionCamera")}
-              </SoftFailNotice>
-            ) : null}
+            <SoftFailNotice open={cameraDenied} className="max-w-sm">
+              {t(locale, "translate.permissionCamera")}
+            </SoftFailNotice>
           </div>
 
           {cameraStarting && !cameraReady ? (

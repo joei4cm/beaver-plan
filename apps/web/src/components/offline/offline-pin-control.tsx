@@ -158,11 +158,9 @@ export function OfflinePinControl({
           {t(locale, "offline.statusHint")}
         </p>
       ) : null}
-      {error ? (
-        <SoftFailNotice className="max-w-md text-xs">
-          {error}
-        </SoftFailNotice>
-      ) : null}
+      <SoftFailNotice open={Boolean(error)} className="max-w-md text-xs">
+        {error ?? ""}
+      </SoftFailNotice>
     </div>
   );
 }
