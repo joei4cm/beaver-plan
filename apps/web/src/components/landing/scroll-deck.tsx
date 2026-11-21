@@ -40,20 +40,24 @@ type Props = {
   liveBadge: string;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   softLiveBadge: string;
 };
 
 /**
- * How-it-works SoftFail sheet — azure rail · Offline/Live · compact SoftFailNotice
- * under rail · SheetPresence body (step rail / PlainHow rows). Tip-019 throw
- * cards stay outside when provided as a sibling.
+ * How SoftFail sheet — azure section rail · Soft/Live badge · softSupport ·
+ * compact SoftFailNotice mist band (`border-b`) · tip-011 mist-wash
+ * SheetPresence body (step rail / PlainHow rows). Tip-019 throw cards stay
+ * outside when provided as a sibling — SoftFail yields if a child owned it
+ * (none today). Never timber / Failed to fetch.
  */
 function HowSoftFailSheet({
   softOpen,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   softLiveBadge,
   offlineNotice,
   bodyLabel,
@@ -64,7 +68,8 @@ function HowSoftFailSheet({
   softOpen: boolean;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   softLiveBadge: string;
   offlineNotice: string;
   bodyLabel: string;
@@ -73,6 +78,9 @@ function HowSoftFailSheet({
   className?: string;
   children: React.ReactNode;
 }) {
+  const pad = dense
+    ? "px-3 py-3 sm:px-4 sm:py-3.5"
+    : "px-4 py-5 sm:px-5 sm:py-6";
   return (
     <div
       className={`overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft ${className ?? ""}`}
@@ -84,7 +92,7 @@ function HowSoftFailSheet({
             {sheetEyebrow}
           </span>
           <span className="text-[11px] leading-snug text-ink-soft/80">
-            {sheetSupport}
+            {softOpen ? softSupport : sheetSupport}
           </span>
         </div>
         <span
@@ -92,10 +100,10 @@ function HowSoftFailSheet({
             softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
           }`}
         >
-          {softOpen ? offlineBadge : softLiveBadge}
+          {softOpen ? softBadge : softLiveBadge}
         </span>
       </header>
-      {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+      {/* Compact SoftFail under azure rail — mist band + border-b depth. */}
       <SoftFailNotice
         open={softOpen}
         compact
@@ -107,11 +115,11 @@ function HowSoftFailSheet({
       <SheetPresence
         open
         role="group"
-        className={
-          dense
-            ? "px-3 py-3 sm:px-4 sm:py-3.5"
-            : "px-4 py-5 sm:px-5 sm:py-6"
-        }
+        className={`${pad} ${
+          softOpen
+            ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+            : ""
+        }`}
         style={{ animationDelay: "40ms" }}
         aria-label={bodyLabel}
       >
@@ -274,7 +282,8 @@ function PlainHow({
   focusLabel,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   softLiveBadge,
 }: Omit<Props, "progressLabel" | "liveBadge">) {
   const online = useBrowserOnline();
@@ -309,27 +318,34 @@ function PlainHow({
         </header>
 
         {/*
-          How SoftFail sheet (BEA-280 after #173/#205):
-          azure rail · Offline/Live · compact SoftFailNotice · mist-track steps ·
-          tip-011 SheetPresence rows — never timber.
+          How SoftFail depth (BEA-317 after #212):
+          azure rail · Soft badge · softSupport · mist SoftFail band ·
+          tip-011 mist-wash steps — never timber.
         */}
         <div className={reduced ? "mt-10" : "mt-10 animate-rise"}>
           <HowSoftFailSheet
             softOpen={softOpen}
             sheetEyebrow={sheetEyebrow}
             sheetSupport={sheetSupport}
-            offlineBadge={offlineBadge}
+            softSupport={softSupport}
+            softBadge={softBadge}
             softLiveBadge={softLiveBadge}
             offlineNotice={offlineNotice}
             bodyLabel={focusLabel}
           >
             {/* Step focus rail — mist-track · azure select (#46 / tip-011) */}
             <div
-              className="animate-rise"
+              className={`animate-rise ${
+                softOpen
+                  ? "rounded-bp-sm shadow-[inset_3px_0_0_var(--bp-river)]"
+                  : ""
+              }`}
               style={reduced ? undefined : { animationDelay: "55ms" }}
             >
               <div
-                className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                className={`inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1 ${
+                  softOpen ? "ml-0.5" : ""
+                }`}
                 role="group"
                 aria-label={focusLabel}
               >
@@ -419,11 +435,11 @@ function PlainHow({
 }
 
 /**
- * Landing how-it-works SoftFailNotice chrome (BEA-280 after #173/#205):
- * azure SoftFail sheet · Offline/Live badge · compact SoftFailNotice under rail ·
- * SheetPresence mist-track step rail · tip-019 throw deck stays outside ·
- * tip-011 chrome settles — SoftFail owned by the sheet (no floating notice).
- * Never timber / Failed to fetch.
+ * Landing how-it-works SoftFailNotice depth (BEA-317 after #212):
+ * azure SoftFail sheet · Soft/Live badge · softSupport · compact SoftFailNotice
+ * mist band under rail · tip-011 mist-wash SheetPresence step rail · tip-019
+ * throw deck stays outside — SoftFail owned by the sheet (yield if a child
+ * owned SoftFail; none today). Never timber / Failed to fetch.
  */
 export function LandingScrollDeck({
   title,
@@ -438,7 +454,8 @@ export function LandingScrollDeck({
   liveBadge,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   softLiveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
@@ -579,7 +596,8 @@ export function LandingScrollDeck({
         focusLabel={focusLabel}
         sheetEyebrow={sheetEyebrow}
         sheetSupport={sheetSupport}
-        offlineBadge={offlineBadge}
+        softSupport={softSupport}
+        softBadge={softBadge}
         softLiveBadge={softLiveBadge}
       />
     );
@@ -642,9 +660,10 @@ export function LandingScrollDeck({
         </header>
 
         {/*
-          How SoftFail sheet (BEA-280 after #173/#205):
-          azure rail · Offline/Live · compact SoftFailNotice · mist-track step
-          rail in SheetPresence — tip-019 throw cards stay outside; never timber.
+          How SoftFail depth (BEA-317 after #212):
+          azure rail · Soft badge · softSupport · mist SoftFail band ·
+          tip-011 mist-wash step rail — tip-019 throw cards stay outside;
+          never timber.
         */}
         <div
           className={`mb-4 w-full max-w-xl ${revealClass}`}
@@ -654,7 +673,8 @@ export function LandingScrollDeck({
             softOpen={softOpen}
             sheetEyebrow={sheetEyebrow}
             sheetSupport={sheetSupport}
-            offlineBadge={offlineBadge}
+            softSupport={softSupport}
+            softBadge={softBadge}
             softLiveBadge={softLiveBadge}
             offlineNotice={offlineNotice}
             bodyLabel={focusLabel}
@@ -662,11 +682,17 @@ export function LandingScrollDeck({
           >
             {/* Step focus rail — mist-track · jumps throw progress (tip-011) */}
             <div
-              className="animate-rise"
+              className={`animate-rise ${
+                softOpen
+                  ? "rounded-bp-sm shadow-[inset_3px_0_0_var(--bp-river)]"
+                  : ""
+              }`}
               style={reduced ? undefined : { animationDelay: "55ms" }}
             >
               <div
-                className="mx-auto flex max-w-full flex-wrap justify-center gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                className={`mx-auto flex max-w-full flex-wrap justify-center gap-0.5 rounded-bp-sm bg-mist/50 p-1 ${
+                  softOpen ? "ml-0.5" : ""
+                }`}
                 role="group"
                 aria-label={focusLabel}
               >
