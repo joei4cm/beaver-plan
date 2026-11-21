@@ -149,6 +149,76 @@
   }
 
   /*
+   * Planner map stop markers (Leaflet DivIcon + shared markerHtml).
+   * Tip 011 overshoot on select/pop; idle pins stay foam + river ring.
+   */
+  .bp-map-marker {
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: 2.5px solid var(--bp-river);
+    border-radius: 999px;
+    background: var(--bp-foam);
+    color: var(--bp-ink);
+    font: 700 11px/1 "Plus Jakarta Sans", system-ui, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+    transform-origin: center;
+    transition:
+      transform 220ms var(--bp-ease-overshoot),
+      background-color var(--bp-duration-fast) var(--bp-ease-out),
+      color var(--bp-duration-fast) var(--bp-ease-out),
+      box-shadow var(--bp-duration) var(--bp-ease-out),
+      width var(--bp-duration-fast) var(--bp-ease-out),
+      height var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-map-marker:hover {
+    transform: scale(1.06);
+  }
+
+  .bp-map-marker:focus-visible {
+    outline: 2px solid var(--bp-focus);
+    outline-offset: 2px;
+  }
+
+  .bp-map-marker--active {
+    width: 30px;
+    height: 30px;
+    background: var(--bp-river);
+    color: var(--bp-foam);
+    font-size: 12px;
+    box-shadow:
+      0 0 0 4px rgba(47, 107, 255, 0.28),
+      0 6px 16px rgba(15, 23, 42, 0.2);
+  }
+
+  .bp-map-marker--active:hover {
+    transform: scale(1.05);
+  }
+
+  /* Select pop settles on the active footprint (tip 011 overshoot). */
+  .bp-map-marker--active.animate-marker-pop {
+    animation-name: bp-map-marker-select;
+  }
+
+  .bp-leaflet-marker {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .bp-leaflet-marker--active {
+    z-index: 600 !important;
+  }
+
+  /*
    * Tip 015 (g) — day-tab indicator travels with a soft stretch:
    * left rides in-out (on-screen move); width settles with out-strong
    * so the leading edge leads and the trailing edge catches up.
@@ -369,8 +439,27 @@
 
 @keyframes bp-marker-pop {
   from {
+    transform: scale(0.72);
+    opacity: 0.45;
+  }
+  70% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bp-map-marker-select {
+  from {
     transform: scale(0.78);
     opacity: 0.55;
+  }
+  68% {
+    transform: scale(1.16);
+    opacity: 1;
   }
   to {
     transform: scale(1);
@@ -440,6 +529,15 @@
   .animate-marker-pop,
   .bp-popover {
     animation: none !important;
+  }
+
+  .bp-map-marker {
+    transition: none !important;
+  }
+
+  .bp-map-marker:hover,
+  .bp-map-marker--active:hover {
+    transform: none !important;
   }
 
   .bp-stop-lift,

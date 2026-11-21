@@ -14,6 +14,13 @@ export type BasemapProps = {
   showStops?: boolean;
   /** Increment to re-fit the map to the current day route (locate control). */
   fitNonce?: number;
+  /**
+   * Soft-fail hook when vendor map JS/API is absent or fails to load.
+   * InteractiveBasemap falls back to Leaflet + OSM.
+   */
+  onEngineFail?: () => void;
+  /** Fired once when InteractiveBasemap soft-fails a vendor SDK to Leaflet. */
+  onBasemapSoftFail?: () => void;
 };
 
 export type PathLine = {

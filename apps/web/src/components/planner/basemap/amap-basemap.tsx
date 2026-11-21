@@ -7,6 +7,7 @@ import { loadScript } from "./load-script";
 import {
   collectFitPoints,
   collectPathLines,
+  markerHtml,
   strokeForMode,
 } from "./route-style";
 import { MapSkeleton } from "./map-skeleton";
@@ -48,6 +49,7 @@ export function AmapBasemap({
   showRoutes = true,
   showStops = true,
   fitNonce = 0,
+  onEngineFail,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<AMapInst | null>(null);
@@ -55,13 +57,19 @@ export function AmapBasemap({
   const markersRef = useRef<AMapMarker[]>([]);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
+  const onFailRef = useRef(onEngineFail);
+  onFailRef.current = onEngineFail;
   const fittedRef = useRef(false);
   const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const key = browserMapKeys().amap;
-    if (!key || !containerRef.current) return;
+    if (!key) {
+      onFailRef.current?.();
+      return;
+    }
+    if (!containerRef.current) return;
     let cancelled = false;
 
     (async () => {
@@ -69,14 +77,20 @@ export function AmapBasemap({
         `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(key)}`,
         "bp-amap-maps-js",
       );
-      if (cancelled || !containerRef.current || !window.AMap) return;
+      if (cancelled || !containerRef.current) return;
+      if (!window.AMap) {
+        onFailRef.current?.();
+        return;
+      }
       mapRef.current = new window.AMap.Map(containerRef.current, {
         zoom: 12,
         center: [135.7681, 35.0116],
         viewMode: "2D",
       });
       setReady(true);
-    })().catch(() => undefined);
+    })().catch(() => {
+      if (!cancelled) onFailRef.current?.();
+    });
 
     return () => {
       cancelled = true;
@@ -116,8 +130,12 @@ export function AmapBasemap({
           const selected = stop.id === selectedStopId;
           const marker = new AMap.Marker({
             position: [stop.place.lng, stop.place.lat],
-            content: pinContent(index, selected),
-            offset: new AMap.Pixel(selected ? -14 : -11, selected ? -14 : -11),
+            content: markerHtml(index, selected, {
+              centerWithTransform: true,
+              pop: selected,
+            }),
+            // Anchor at pin center (active footprint ~30px).
+            offset: new AMap.Pixel(selected ? -15 : -11, selected ? -15 : -11),
           });
           marker.on("click", () => onSelectRef.current(stop.id));
           map.add(marker);
@@ -153,9 +171,3 @@ export function AmapBasemap({
   );
 }
 
-function pinContent(index: number, selected: boolean): string {
-  const size = selected ? 28 : 22;
-  const bg = selected ? "#2F6BFF" : "#FFFFFF";
-  const fg = selected ? "#FFFFFF" : "#0F172A";
-  return `<div style="width:${size}px;height:${size}px;border-radius:999px;border:2.5px solid #2F6BFF;background:${bg};color:${fg};display:grid;place-items:center;font:700 11px/1 sans-serif;box-shadow:0 2px 8px rgba(15,23,42,.16)">${index + 1}</div>`;
-}

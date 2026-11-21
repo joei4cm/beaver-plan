@@ -8,6 +8,10 @@ import {
 
 export type { PathLine };
 
+/** Leaflet DivIcon footprint — room for active scale + halo without clipping. */
+export const MARKER_ICON_SIZE = 40;
+export const MARKER_ICON_ANCHOR = MARKER_ICON_SIZE / 2;
+
 export function strokeForMode(mode: string) {
   return strokeForModeCore(mode);
 }
@@ -20,23 +24,34 @@ export function collectFitPoints(stops: Stop[], lines: PathLine[]): LatLng[] {
   return collectFitPointsCore(stops, lines);
 }
 
+export type MarkerHtmlOpts = {
+  /** Center via translate(-50%,-50%) for absolute vendor overlays. */
+  centerWithTransform?: boolean;
+  /**
+   * Play tip-011 overshoot pop (select / first paint).
+   * Prefer true only for the newly selected pin so siblings stay calm.
+   */
+  pop?: boolean;
+};
+
+/**
+ * Numbered Lumen stop pin HTML shared by Leaflet (and Amap content).
+ * Active state is class-driven so CSS can own tip-011 overshoot scale.
+ */
 export function markerHtml(
   index: number,
   selected: boolean,
-  opts?: { centerWithTransform?: boolean },
+  opts?: MarkerHtmlOpts,
 ): string {
-  const size = selected ? 28 : 22;
-  const bg = selected ? "#2F6BFF" : "#FFFFFF";
-  const fg = selected ? "#FFFFFF" : "#0F172A";
-  const ring = selected
-    ? "box-shadow:0 0 0 3px rgba(47,107,255,0.35),0 4px 14px rgba(15,23,42,0.18);"
-    : "box-shadow:0 2px 8px rgba(15,23,42,0.16);";
+  const classes = [
+    "bp-map-marker",
+    selected ? "bp-map-marker--active" : "",
+    opts?.pop ? "animate-marker-pop" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const center = opts?.centerWithTransform
     ? "transform:translate(-50%,-50%);"
     : "";
-  return `<button type="button" aria-label="Stop ${index + 1}" style="
-    width:${size}px;height:${size}px;border-radius:999px;border:2.5px solid #2F6BFF;
-    background:${bg};color:${fg};font:700 11px/1 'Plus Jakarta Sans',system-ui,sans-serif;
-    display:grid;place-items:center;cursor:pointer;padding:0;${ring}${center}
-  ">${index + 1}</button>`;
+  return `<button type="button" class="${classes}" aria-label="Stop ${index + 1}" aria-pressed="${selected ? "true" : "false"}" style="${center}">${index + 1}</button>`;
 }

@@ -44,6 +44,7 @@ export function GoogleBasemap({
   showRoutes = true,
   showStops = true,
   fitNonce = 0,
+  onEngineFail,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GMap | null>(null);
@@ -51,13 +52,19 @@ export function GoogleBasemap({
   const markersRef = useRef<GMarker[]>([]);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
+  const onFailRef = useRef(onEngineFail);
+  onFailRef.current = onEngineFail;
   const fittedRef = useRef(false);
   const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const key = browserMapKeys().google;
-    if (!key || !containerRef.current) return;
+    if (!key) {
+      onFailRef.current?.();
+      return;
+    }
+    if (!containerRef.current) return;
     let cancelled = false;
 
     (async () => {
@@ -65,7 +72,11 @@ export function GoogleBasemap({
         `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}`,
         "bp-google-maps-js",
       );
-      if (cancelled || !containerRef.current || !window.google?.maps) return;
+      if (cancelled || !containerRef.current) return;
+      if (!window.google?.maps) {
+        onFailRef.current?.();
+        return;
+      }
       mapRef.current = new window.google.maps.Map(containerRef.current, {
         center: { lat: 35.0116, lng: 135.7681 },
         zoom: 12,
@@ -76,7 +87,9 @@ export function GoogleBasemap({
         styles: softGoogleStyles,
       });
       setReady(true);
-    })().catch(() => undefined);
+    })().catch(() => {
+      if (!cancelled) onFailRef.current?.();
+    });
 
     return () => {
       cancelled = true;
@@ -135,12 +148,13 @@ export function GoogleBasemap({
             },
             icon: {
               path: g.SymbolPath.CIRCLE,
-              scale: selected ? 12 : 10,
+              scale: selected ? 14 : 10,
               fillColor: selected ? "#2F6BFF" : "#FFFFFF",
               fillOpacity: 1,
               strokeColor: "#2F6BFF",
-              strokeWeight: 2.5,
+              strokeWeight: selected ? 3 : 2.5,
             },
+            zIndex: selected ? 1000 : index,
           });
           marker.addListener("click", () => onSelectRef.current(stop.id));
           return marker;

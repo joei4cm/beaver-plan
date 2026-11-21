@@ -50,18 +50,25 @@ export function BaiduBasemap({
   showRoutes = true,
   showStops = true,
   fitNonce = 0,
+  onEngineFail,
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<BMapInst | null>(null);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
+  const onFailRef = useRef(onEngineFail);
+  onFailRef.current = onEngineFail;
   const fittedRef = useRef(false);
   const lastFitNonceRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const key = browserMapKeys().baidu;
-    if (!key || !containerRef.current) return;
+    if (!key) {
+      onFailRef.current?.();
+      return;
+    }
+    if (!containerRef.current) return;
     let cancelled = false;
 
     (async () => {
@@ -69,13 +76,19 @@ export function BaiduBasemap({
         `https://api.map.baidu.com/api?v=3.0&ak=${encodeURIComponent(key)}`,
         "bp-baidu-maps-js",
       );
-      if (cancelled || !containerRef.current || !window.BMap) return;
+      if (cancelled || !containerRef.current) return;
+      if (!window.BMap) {
+        onFailRef.current?.();
+        return;
+      }
       const map = new window.BMap.Map(containerRef.current);
       map.centerAndZoom(new window.BMap.Point(135.7681, 35.0116), 12);
       map.enableScrollWheelZoom(true);
       mapRef.current = map;
       setReady(true);
-    })().catch(() => undefined);
+    })().catch(() => {
+      if (!cancelled) onFailRef.current?.();
+    });
 
     return () => {
       cancelled = true;
@@ -115,14 +128,17 @@ export function BaiduBasemap({
         label.setStyle({
           border: "2.5px solid #2F6BFF",
           borderRadius: "999px",
-          width: selected ? "28px" : "22px",
-          height: selected ? "28px" : "22px",
-          lineHeight: selected ? "23px" : "17px",
+          width: selected ? "30px" : "22px",
+          height: selected ? "30px" : "22px",
+          lineHeight: selected ? "25px" : "17px",
           textAlign: "center",
           background: selected ? "#2F6BFF" : "#FFFFFF",
           color: selected ? "#FFFFFF" : "#0F172A",
           fontWeight: "700",
-          fontSize: "11px",
+          fontSize: selected ? "12px" : "11px",
+          boxShadow: selected
+            ? "0 0 0 4px rgba(47,107,255,0.28),0 6px 16px rgba(15,23,42,0.2)"
+            : "0 2px 8px rgba(15,23,42,0.16)",
         });
         marker.setLabel(label);
         marker.addEventListener("click", () => onSelectRef.current(stop.id));
