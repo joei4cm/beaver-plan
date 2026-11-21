@@ -1,5 +1,7 @@
 import type {
   Day,
+  DayFillInterest,
+  DayFillProposal,
   JournalEntry,
   Leg,
   MapEngineId,
@@ -128,6 +130,46 @@ export function isApiSoftFail(err: unknown): boolean {
   return /_503$|_502$|_504$|_404$|_500$|Failed to fetch|Network request failed|ECONNREFUSED|load_failed|TypeError/i.test(
     msg,
   );
+}
+
+export type DayFillStatus = {
+  mode: "live" | "demo";
+  provider: string;
+  keys?: { openai?: boolean };
+};
+
+export async function fetchDayFillStatus(): Promise<DayFillStatus> {
+  return apiGet<DayFillStatus>("/v1/day-fill/status");
+}
+
+export async function proposeDayFill(input: {
+  tripId: string;
+  interests: DayFillInterest[];
+  maxWalkMinutesPerDay: number;
+  dayCount: number;
+  locale?: string;
+}): Promise<{ proposal: DayFillProposal }> {
+  return apiSend<{ proposal: DayFillProposal }>(
+    `/v1/trips/${input.tripId}/day-fill/propose`,
+    "POST",
+    {
+      interests: input.interests,
+      maxWalkMinutesPerDay: input.maxWalkMinutesPerDay,
+      dayCount: input.dayCount,
+      locale: input.locale,
+    },
+  );
+}
+
+export async function applyDayFill(input: {
+  tripId: string;
+  proposal: DayFillProposal;
+  expectedVersion: number;
+}): Promise<void> {
+  await apiSend(`/v1/trips/${input.tripId}/day-fill/apply`, "POST", {
+    proposal: input.proposal,
+    expectedVersion: input.expectedVersion,
+  });
 }
 
 export type EngineResolve = {

@@ -42,9 +42,11 @@ import {
   fetchJournal,
   fetchMembers,
   fetchTrip,
+  isApiSoftFail,
   routeTripDay,
   searchPlaces,
 } from "../../src/api";
+import { DayFillPanel } from "../../src/components/day-fill-panel";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { TripMap } from "../../src/components/trip-map";
 import {
@@ -1088,6 +1090,46 @@ export default function TripDetailScreen() {
               )}
             </View>
 
+            <View style={styles.dayFillWrap}>
+              <DayFillPanel
+                tripId={tripId}
+                locale={locale}
+                trip={trip}
+                days={days}
+                stops={stops}
+                dayCountHint={days.length || 3}
+                onApplied={async () => {
+                  await load();
+                }}
+                onLocalApplied={({
+                  trip: nextTrip,
+                  days: nextDays,
+                  stops: nextStops,
+                }) => {
+                  setTrip(nextTrip);
+                  setDays(nextDays);
+                  setStops(nextStops);
+                  setLegs([]);
+                  setDayId(nextDays[0]?.id ?? null);
+                  setSelectedStopId(null);
+                  setSoftNotice(t(locale, "planner.dayFill.appliedLocal"));
+                  setError(null);
+                }}
+                onError={(message) => {
+                  if (!message) {
+                    setError(null);
+                    return;
+                  }
+                  if (isApiSoftFail(new Error(message))) {
+                    setSoftNotice(t(locale, "planner.demoLocal"));
+                    setError(null);
+                    return;
+                  }
+                  setError(message);
+                }}
+              />
+            </View>
+
             <View style={styles.secondaryBlock}>
               <Pressable
                 style={StyleSheet.flatten([
@@ -1872,6 +1914,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.river,
     fontWeight: "600",
+  },
+  dayFillWrap: {
+    marginTop: 16,
+    marginBottom: 8,
   },
   secondaryBlock: {
     marginTop: 4,
