@@ -158,34 +158,34 @@ export default function TranslateScreen() {
   const camDenied = Boolean(camPermission && !camPermission.granted);
 
   /**
-   * Expo Talk empty SoftFailNotice chrome (BEA-229 after #171 planner empty):
-   * empty history owns compact SoftFail under azure history rail ·
-   * SheetPresence body · tip-011 (#46) · StyleSheet.flatten.
-   * Talk SoftFail yields while empty owns soft-fail (no double depth).
-   * Soft copy never timber / Failed to fetch.
+   * Expo Talk empty SoftFailNotice depth (BEA-351 after #178 / BEA-229):
+   * foam history rail · azure head · Soft empty badge · softSupport ·
+   * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
+   * SheetPresence empty body · StyleSheet.flatten. Soft-fail never timber /
+   * Failed to fetch. Talk SoftFail (#249) yields while empty owns (no double
+   * depth). SoftFail copy always emptySoftFail / permission / softOffline
+   * (never inherit softNotice timber).
    */
   const historyEmpty = turns.length === 0;
   const emptyOwnsSoft = tab === "conversation" && historyEmpty;
-  const emptySoftOpen =
-    emptyOwnsSoft && (isDemo || micDenied || Boolean(error) || softNotice);
-  const emptySoftCopy = micDenied
-    ? t(uiLocale, "translate.permissionMic")
-    : softNotice && !online
-      ? t(uiLocale, "translate.softOffline")
-      : isDemo || (error && isNoiseError(new Error(error)))
-        ? t(uiLocale, "translate.emptySoftFail")
-        : error
-          ? t(uiLocale, "translate.error")
-          : t(uiLocale, "translate.emptySoftFail");
+  const emptySoftOpen = emptyOwnsSoft;
+  /** SoftFail copy owned by empty chrome — never inherit softNotice / timber. */
+  const emptySoftCopy = softNotice && !online
+    ? t(uiLocale, "translate.softOffline")
+    : micDenied
+      ? t(uiLocale, "translate.permissionMic")
+      : t(uiLocale, "translate.emptySoftFail");
+  const emptySoftSupport = t(uiLocale, "translate.emptySoftSupport");
 
   /**
    * Expo Talk SoftFailNotice depth (BEA-326 after #199 / BEA-266):
    * foam talk rail · azure head · Soft talk badge · softSupport ·
    * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
    * SheetPresence compose/mic · StyleSheet.flatten. Soft-fail never timber /
-   * Failed to fetch. Yields while empty owns soft-fail; yields to Lens
-   * SoftFail (#237) on camera tab (no double depth). SoftFail copy always
-   * talkSoftFail / permission / softOffline (never inherit softNotice timber).
+   * Failed to fetch. Yields while empty SoftFail depth (#178 / BEA-351) owns;
+   * yields to Lens SoftFail (#237) on camera tab (no double depth). SoftFail
+   * copy always talkSoftFail / permission / softOffline (never inherit
+   * softNotice timber).
    */
   const talkSoftOpen =
     tab === "conversation" &&
@@ -893,23 +893,31 @@ export default function TranslateScreen() {
             ) : null}
 
             {/*
-              Empty SoftFail chrome (BEA-229 after #171):
-              azure history rail · Open badge · compact SoftFailNotice ·
-              SheetPresence empty body · tip-011 rise — never timber.
+              Empty SoftFail depth (BEA-351 after #178):
+              Soft empty · softSupport · mist SoftFail band · tip-011 mist-wash
+              empty body — never timber / Failed to fetch. Talk SoftFail (#249)
+              yields while empty owns.
             */}
             <Animated.View
               style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
               accessibilityLabel={t(uiLocale, "translate.history")}
             >
-              <View style={styles.historyHead}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.historyHead,
+                  emptySoftOpen ? styles.historyHeadSoft : null,
+                ])}
+              >
                 <View style={styles.historyHeadCopy}>
                   <Text style={styles.historyEyebrow}>
                     {t(uiLocale, "translate.history")}
                   </Text>
                   <Text style={styles.historyHint}>
-                    {historyEmpty
-                      ? t(uiLocale, "translate.emptySupport")
-                      : t(uiLocale, "translate.historyHint")}
+                    {emptySoftOpen
+                      ? emptySoftSupport
+                      : historyEmpty
+                        ? t(uiLocale, "translate.emptySupport")
+                        : t(uiLocale, "translate.historyHint")}
                   </Text>
                 </View>
                 {historyEmpty ? (
@@ -929,7 +937,9 @@ export default function TranslateScreen() {
                           : styles.historyEmptyBadgeTextLive,
                       ])}
                     >
-                      {t(uiLocale, "translate.emptyBadge")}
+                      {emptySoftOpen
+                        ? t(uiLocale, "translate.emptySoftBadge")
+                        : t(uiLocale, "translate.emptyBadge")}
                     </Text>
                   </View>
                 ) : (
@@ -944,7 +954,7 @@ export default function TranslateScreen() {
                 )}
               </View>
 
-              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+              {/* Compact SoftFail mist band under azure history rail — never timber. */}
               <SoftFailNotice
                 open={emptySoftOpen}
                 compact
@@ -960,51 +970,61 @@ export default function TranslateScreen() {
                   open
                   delayMs={40}
                   rise={12}
-                  style={styles.historyEmpty}
+                  style={StyleSheet.flatten([
+                    styles.historyEmpty,
+                    emptySoftOpen ? styles.historyEmptySoft : null,
+                  ])}
                   accessibilityLabel={t(uiLocale, "translate.empty")}
                 >
-                  <SheetPresence open delayMs={40} rise={8}>
-                    <Text style={styles.historyEmptyEyebrow}>
-                      {t(uiLocale, "translate.history")}
-                    </Text>
-                  </SheetPresence>
-                  <SheetPresence open delayMs={70} rise={8}>
-                    <Text style={styles.historyEmptyTitle}>
-                      {t(uiLocale, "translate.empty")}
-                    </Text>
-                  </SheetPresence>
-                  <SheetPresence open delayMs={100} rise={6}>
-                    <Text style={styles.historyEmptyHint}>
-                      {t(uiLocale, "translate.emptyHint")}
-                    </Text>
-                  </SheetPresence>
-                  <SheetPresence open delayMs={130} rise={6}>
-                    <View style={styles.historyEmptyCtas}>
-                      <Pressable
-                        style={StyleSheet.flatten([styles.emptyCtaPrimary])}
-                        onPress={() => focusComposer("mic")}
-                        accessibilityRole="button"
-                      >
-                        <Text style={styles.emptyCtaPrimaryLabel}>
-                          {t(uiLocale, "translate.emptyCta")}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        style={StyleSheet.flatten([
-                          styles.emptyCtaSecondary,
-                          busy ? styles.disabled : null,
-                        ])}
-                        onPress={() => void runTurn({})}
-                        disabled={busy}
-                        accessibilityRole="button"
-                        accessibilityState={{ disabled: busy }}
-                      >
-                        <Text style={styles.emptyCtaSecondaryLabel}>
-                          {t(uiLocale, "translate.nextDemo")}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </SheetPresence>
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.historyEmptyStage,
+                      emptySoftOpen ? styles.historyEmptyStageSoft : null,
+                    ])}
+                  >
+                    <SheetPresence open delayMs={40} rise={8}>
+                      <Text style={styles.historyEmptyEyebrow}>
+                        {t(uiLocale, "translate.history")}
+                      </Text>
+                    </SheetPresence>
+                    <SheetPresence open delayMs={70} rise={8}>
+                      <Text style={styles.historyEmptyTitle}>
+                        {t(uiLocale, "translate.empty")}
+                      </Text>
+                    </SheetPresence>
+                    <SheetPresence open delayMs={100} rise={6}>
+                      <Text style={styles.historyEmptyHint}>
+                        {t(uiLocale, "translate.emptyHint")}
+                      </Text>
+                    </SheetPresence>
+                    <SheetPresence open delayMs={130} rise={6}>
+                      <View style={styles.historyEmptyCtas}>
+                        <Pressable
+                          style={StyleSheet.flatten([styles.emptyCtaPrimary])}
+                          onPress={() => focusComposer("mic")}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.emptyCtaPrimaryLabel}>
+                            {t(uiLocale, "translate.emptyCta")}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          style={StyleSheet.flatten([
+                            styles.emptyCtaSecondary,
+                            busy ? styles.disabled : null,
+                          ])}
+                          onPress={() => void runTurn({})}
+                          disabled={busy}
+                          accessibilityRole="button"
+                          accessibilityState={{ disabled: busy }}
+                        >
+                          <Text style={styles.emptyCtaSecondaryLabel}>
+                            {t(uiLocale, "translate.nextDemo")}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </SheetPresence>
+                  </View>
                 </SheetPresence>
               ) : (
                 <View>
@@ -1094,8 +1114,8 @@ export default function TranslateScreen() {
               {/*
                 Talk SoftFail depth (BEA-326 after #199):
                 Soft talk · softSupport · mist SoftFail band · tip-011 mist-wash
-                compose/mic — never timber / Failed to fetch. Yields to empty /
-                Lens SoftFail (#237).
+                compose/mic — never timber / Failed to fetch. Yields to empty
+                SoftFail depth (BEA-351) / Lens SoftFail (#237).
               */}
               <View
                 style={StyleSheet.flatten([
@@ -1913,6 +1933,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  /** Soft azure history rail wash when SoftFail owns depth (BEA-351). */
+  historyHeadSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   historyHeadCopy: { flex: 1, minWidth: 160, gap: 4 },
   historyEyebrow: {
     ...type.body,
@@ -1966,14 +1990,34 @@ const styles = StyleSheet.create({
   historyEmptyBadgeTextLive: {
     color: colors.riverDeep,
   },
+  /** Mist SoftFail strip under azure history rail — border-b before mist body. */
   historySoftFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
   },
   historyEmpty: {
     paddingHorizontal: 16,
     paddingVertical: 28,
     gap: 10,
     maxWidth: 420,
+  },
+  /** Mist-wash empty body when SoftFail open (BEA-351 tip-011). */
+  historyEmptySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
+  },
+  historyEmptyStage: {
+    gap: 10,
+  },
+  /** Mist-wash empty stage inset when SoftFail open (Talk talkStageSoft parity). */
+  historyEmptyStageSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   historyEmptyEyebrow: {
     ...type.body,
