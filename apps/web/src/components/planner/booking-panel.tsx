@@ -294,7 +294,7 @@ export function BookingPanel({
       : t(locale, "planner.booking.demoBadge");
 
   return (
-    <div className="overflow-hidden rounded-md border border-[color:var(--bp-line)] bg-foam/55">
+    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -306,7 +306,7 @@ export function BookingPanel({
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
-            <span className="rounded-md bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+            <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
               {badge}
             </span>
           </div>
@@ -335,7 +335,7 @@ export function BookingPanel({
           className="animate-fade space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-          {(softDemo || status?.mode === "demo") && (
+{(softDemo || status?.mode === "demo") && (
             <SoftFailNotice>
               {t(locale, "planner.booking.demoNotice")}
             </SoftFailNotice>
@@ -364,7 +364,7 @@ export function BookingPanel({
                     key={id}
                     type="button"
                     onClick={() => setKindFilter(id)}
-                    className={`rounded-md px-3 py-1.5 text-sm transition ${
+                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition ${
                       on
                         ? "bg-river text-foam"
                         : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
@@ -385,7 +385,7 @@ export function BookingPanel({
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder={t(locale, "planner.booking.cityPlaceholder")}
-                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
                 />
               </label>
               <label className="block">
@@ -396,7 +396,7 @@ export function BookingPanel({
                   type="date"
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
                 />
               </label>
               <label className="block">
@@ -407,7 +407,7 @@ export function BookingPanel({
                   type="date"
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
                 />
               </label>
             </div>
@@ -441,7 +441,7 @@ export function BookingPanel({
                   {suggestions.map((s, i) => (
                     <li
                       key={s.id}
-                      className="animate-preview-in rounded-md border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+                      className="animate-preview-in rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
                       style={{ animationDelay: `${60 + i * 40}ms` }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -477,7 +477,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => applySuggestion(s)}
-                              className="rounded-md border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition hover:bg-river/10"
+                              className="rounded-bp-sm border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition hover:bg-river/10"
                             >
                               {t(locale, "planner.booking.useLink")}
                             </button>
@@ -529,7 +529,7 @@ export function BookingPanel({
                         locale,
                         "planner.booking.providerPlaceholder",
                       )}
-                      className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                      className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
                     />
                     <input
                       value={row.url}
@@ -537,7 +537,7 @@ export function BookingPanel({
                         updateDraft(row.kind, { url: e.target.value })
                       }
                       placeholder={t(locale, "planner.booking.urlPlaceholder")}
-                      className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                      className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
                     />
                   </div>
                 ))}
@@ -583,7 +583,7 @@ export function BookingLinkChips({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 rounded-md border border-river/25 bg-river/5 px-2 py-0.5 text-[11px] font-medium text-river transition hover:border-river/50 hover:bg-river/10"
+          className="inline-flex items-center gap-1 rounded-bp-xs border border-river/25 bg-river/5 px-2 py-0.5 text-[11px] font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/50 hover:bg-river/10"
         >
           <span>{kindLabel(locale, link.kind)}</span>
           {link.providerLabel ? (

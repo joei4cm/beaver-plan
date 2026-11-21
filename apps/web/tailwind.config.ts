@@ -20,8 +20,11 @@ const config: Config = {
         body: ["var(--bp-font-body)"],
       },
       borderRadius: {
+        "bp-xs": "var(--bp-radius-xs)",
+        "bp-sm": "var(--bp-radius-sm)",
         bp: "var(--bp-radius-md)",
         "bp-lg": "var(--bp-radius-lg)",
+        "bp-xl": "var(--bp-radius-xl)",
       },
       boxShadow: {
         bp: "0 18px 40px -24px var(--bp-shadow-deep)",
@@ -30,10 +33,15 @@ const config: Config = {
       transitionTimingFunction: {
         bp: "var(--bp-ease)",
         "bp-out": "var(--bp-ease-out)",
+        "bp-out-strong": "var(--bp-ease-out-strong)",
+        "bp-in": "var(--bp-ease-in)",
+        "bp-in-out": "var(--bp-ease-in-out)",
+        "bp-overshoot": "var(--bp-ease-overshoot)",
       },
       transitionDuration: {
         bp: "var(--bp-duration)",
         "bp-fast": "var(--bp-duration-fast)",
+        "bp-slow": "var(--bp-duration-slow)",
       },
     },
   },

@@ -44,18 +44,30 @@ export const space = {
   8: "4.5rem",
 } as const;
 
+/** 4px-grid radii — nested: inner ≈ outer − padding (floor 4). */
 export const radius = {
-  sm: 6,
+  xs: 4,
+  sm: 8,
   md: 12,
   lg: 20,
+  xl: 24,
 } as const;
 
+/** Role-based easing (Vibe tip 011). */
 export const motion = {
+  easeOut: "cubic-bezier(0, 0, 0.58, 1)",
+  easeOutStrong: "cubic-bezier(0.22, 1, 0.36, 1)",
+  easeIn: "cubic-bezier(0.42, 0, 1, 1)",
+  easeInOut: "cubic-bezier(0.42, 0, 0.58, 1)",
+  easeOvershoot: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+  /** @deprecated alias of easeOutStrong */
   ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-  easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
-  durationFastMs: 180,
-  durationMs: 380,
-  durationSlowMs: 600,
+  durationSmMs: 200,
+  durationMdMs: 320,
+  durationLgMs: 420,
+  durationFastMs: 200,
+  durationMs: 320,
+  durationSlowMs: 420,
 } as const;
 
 export const tokens = { brand, colors, fonts, space, radius, motion } as const;

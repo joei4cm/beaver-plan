@@ -15,6 +15,7 @@ import {
   templateCardsFromSeed,
   type TemplateCard,
 } from "@/lib/local-trips";
+import { TripsListSkeleton } from "@/components/ui/skeleton";
 
 type Props = {
   locale: Locale;
@@ -200,7 +201,7 @@ export function TripsHome({ locale }: Props) {
         </header>
 
         {pending && !hydrated ? (
-          <p className="text-ink-soft">{t(locale, "trips.loading")}</p>
+          <TripsListSkeleton />
         ) : showEmptyInvite ? (
           <div className="animate-fade border border-dashed border-river/30 px-6 py-16 text-center">
             <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
@@ -273,7 +274,12 @@ export function TripsHome({ locale }: Props) {
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0">
-                        <span className="font-display text-xl font-semibold text-ink transition group-hover:text-river md:text-2xl">
+                        <span
+                          className="bp-vt-trip-title font-display text-xl font-semibold text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl"
+                          style={{
+                            viewTransitionName: `bp-trip-${trip.id}`,
+                          }}
+                        >
                           {trip.title}
                         </span>
                         <span className="mt-1 block text-sm text-ink-soft">

@@ -47,10 +47,16 @@ export function PlaceIntel({
   if (loading && !details) {
     return (
       <div
-        className="animate-fade mt-3 rounded-bp border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2.5 shadow-bp-soft"
-        aria-busy
+        className="animate-fade mt-3 space-y-2 rounded-bp border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2.5 shadow-bp-soft"
+        aria-busy="true"
+        aria-label={t(locale, "planner.place.loading")}
       >
-        <p className="text-xs text-ink-soft">{t(locale, "planner.place.loading")}</p>
+        <div className="bp-skeleton h-3.5 w-24" />
+        <div className="bp-skeleton h-3 w-40 max-w-full" />
+        <div className="flex gap-1.5 pt-0.5">
+          <div className="bp-skeleton h-5 w-14 rounded-bp-xs" />
+          <div className="bp-skeleton h-5 w-16 rounded-bp-xs" />
+        </div>
       </div>
     );
   }

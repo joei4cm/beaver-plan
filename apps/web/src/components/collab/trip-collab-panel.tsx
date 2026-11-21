@@ -358,10 +358,10 @@ export function TripCollabPanel({
                   onChange={(e) => setBody(e.target.value)}
                   rows={4}
                   placeholder={t(locale, "collab.panel.placeholder")}
-                  className="w-full resize-y rounded-md border border-[color:var(--bp-line)] bg-paper/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 focus:border-river focus:ring-2 focus:ring-focus/40"
+                  className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 focus:border-river focus:ring-2 focus:ring-focus/40"
                 />
                 {mentionOpen && mentionCandidates.length > 0 ? (
-                  <ul className="absolute left-0 z-10 min-w-[12rem] overflow-hidden rounded-md border border-[color:var(--bp-line)] bg-foam shadow-sm lg:left-6">
+                  <ul className="absolute left-0 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-sm lg:left-6">
                     {mentionCandidates.map((name) => (
                       <li key={name}>
                         <button
@@ -399,7 +399,7 @@ export function TripCollabPanel({
                     type="button"
                     disabled={sending || !body.trim()}
                     onClick={() => void submitComment()}
-                    className="rounded-md bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {sending
                       ? t(locale, "collab.panel.posting")

@@ -262,7 +262,7 @@ export function DayFillPanel({
       : t(locale, "planner.dayFill.demoBadge");
 
   return (
-    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/70">
+<div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -322,7 +322,7 @@ export function DayFillPanel({
                     key={id}
                     type="button"
                     onClick={() => toggleInterest(id)}
-                    className={`rounded-md px-3 py-1.5 text-sm transition duration-bp-fast ease-bp ${
+className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp ${
                       on
                         ? "bg-river text-foam"
                         : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
@@ -370,7 +370,7 @@ export function DayFillPanel({
                     Math.max(1, Math.min(7, Number(e.target.value) || 1)),
                   )
                 }
-                className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
+                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
               />
             </label>
           </div>
@@ -387,17 +387,30 @@ export function DayFillPanel({
                 : t(locale, "planner.dayFill.generate")}
             </button>
             {proposal && (
-              <button
-                type="button"
-                onClick={() => {
-                  setProposal(null);
-                  setLocalOnly(false);
-                  setNotice(null);
-                }}
-                className="rounded-md border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
-              >
-                {t(locale, "planner.dayFill.discard")}
-              </button>
+              <>
+                <span
+                  className={`rounded-bp-xs px-2.5 py-1 text-xs ${
+                    proposal.mode === "live"
+                      ? "bg-river/15 text-river-deep"
+                      : "bg-mist/80 text-ink-soft"
+                  }`}
+                >
+                  {proposal.mode === "live"
+                    ? t(locale, "planner.dayFill.liveBadge")
+                    : t(locale, "planner.dayFill.demoBadge")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProposal(null);
+                    setLocalOnly(false);
+                    setNotice(null);
+                  }}
+                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river"
+                >
+                  {t(locale, "planner.dayFill.discard")}
+                </button>
+              </>
             )}
           </div>
 
@@ -445,7 +458,7 @@ export function DayFillPanel({
                   type="button"
                   disabled={applying}
                   onClick={() => void apply()}
-                  className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-40"
+className="rounded-bp-sm bg-river px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:opacity-40"
                 >
                   {applying
                     ? t(locale, "planner.dayFill.applying")
@@ -457,7 +470,7 @@ export function DayFillPanel({
                 {proposal.days.map((day) => (
                   <li
                     key={day.dayIndex}
-                    className="animate-fade rounded-md border border-[color:var(--bp-line)]/80 bg-paper/55 px-3 py-3"
+className="animate-fade rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
                     style={{ animationDelay: `${day.dayIndex * 40}ms` }}
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">

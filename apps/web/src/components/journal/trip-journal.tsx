@@ -15,6 +15,7 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { JournalSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { fileToBase64, resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
 import {
@@ -425,28 +426,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   }
 
   if (!trip && pending) {
-    return (
-      <div className="relative mx-auto max-w-5xl overflow-hidden px-4 py-20 md:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-10 h-56 opacity-80"
-          style={{
-            backgroundImage: `
-              radial-gradient(ellipse 70% 55% at 78% 18%, rgba(47, 107, 255, 0.16), transparent 58%),
-              linear-gradient(180deg, #dbe8ff 0%, transparent 78%)
-            `,
-          }}
-        />
-        <div className="animate-rise space-y-4">
-          <div className="h-3 w-40 rounded bg-mist" />
-          <div className="h-10 w-72 max-w-full rounded bg-mist/80" />
-          <div className="h-4 w-full max-w-md rounded bg-mist/60" />
-          <p className="pt-6 text-sm text-ink-soft">
-            {t(locale, "journal.loading")}
-          </p>
-        </div>
-      </div>
-    );
+    return <JournalSkeleton />;
   }
 
   if (!trip) {
@@ -502,11 +482,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
           {demoSeeded ? (
-            <span className="rounded-md bg-river/12 px-2.5 py-1 font-semibold text-river-deep">
+            <span className="rounded-bp-xs bg-river/12 px-2.5 py-1 font-semibold text-river-deep">
               {t(locale, "journal.demoBadge")}
             </span>
           ) : null}
-          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-ink-soft">
+          <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
             {online
               ? t(locale, "offline.online")
               : t(locale, "offline.offline")}
@@ -612,7 +592,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    className="aspect-[3/4] rounded-md bg-gradient-to-br from-river/15 via-mist to-sky-100/80"
+                    className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/15 via-mist to-sky-100/80"
                     aria-hidden
                   />
                 ))}
@@ -658,7 +638,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                         src={resolveMediaUrl(url)}
                         alt=""
                         label={t(locale, "journal.mediaPlaceholder")}
-                        className="aspect-[3/4] w-full rounded-md object-cover ring-1 ring-[color:var(--bp-line)]"
+                        className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
                       />
                     ))}
                   </div>
@@ -667,7 +647,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     {[0, 1].map((i) => (
                       <div
                         key={i}
-                        className="aspect-[3/4] rounded-md border border-dashed border-river/25 bg-mist/40"
+                        className="aspect-[3/4] rounded-bp-sm border border-dashed border-river/25 bg-mist/40"
                         aria-label={t(locale, "journal.mediaPlaceholder")}
                       />
                     ))}
@@ -691,7 +671,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             <select
               value={stopId}
               onChange={(e) => setStopId(e.target.value)}
-              className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-sm text-ink focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+              className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-sm text-ink focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
             >
               <option value="">{t(locale, "journal.dayOnly")}</option>
               {dayStops.map((s) => (
@@ -707,10 +687,10 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             onChange={(e) => setBody(e.target.value)}
             rows={4}
             placeholder={t(locale, "journal.placeholder")}
-            className="mt-4 w-full resize-none rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+            className="mt-4 w-full resize-none rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
           />
 
-          <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-md border border-dashed border-river/35 bg-mist/30 px-4 py-5 transition hover:border-river/60 hover:bg-river/[0.04]">
+          <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/30 px-4 py-5 transition hover:border-river/60 hover:bg-river/[0.04]">
             <span className="text-sm font-semibold text-river">
               {t(locale, "journal.addPhotos")}
             </span>
@@ -737,13 +717,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   src={item.src}
                   alt=""
                   label={t(locale, "journal.mediaPlaceholder")}
-                  className="h-20 w-14 rounded-md object-cover ring-1 ring-[color:var(--bp-line)]"
+                  className="h-20 w-14 rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
                 />
               ))}
               {Array.from({ length: emptySlots }).map((_, i) => (
                 <div
                   key={`slot-${i}`}
-                  className="flex h-20 w-14 items-center justify-center rounded-md border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
+                  className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
                   aria-hidden
                 >
                   +
