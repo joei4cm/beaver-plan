@@ -85,10 +85,11 @@ function Segmented<T extends string>({
 }
 
 /**
- * Expo settings SoftFailNotice chrome (BEA-221 after web #162):
- * azure prefs sheet · SoftFailNotice section-scoped under Maps · tip-011
- * SheetPresence rise · StyleSheet.flatten · Lumen tokens. Never timber /
- * Failed to fetch — prefs still save locally.
+ * Expo settings SoftFailNotice depth (BEA-306 after #167 / web #209):
+ * azure Device rail · Soft maps badge · softSupport · compact SoftFailNotice
+ * mist band under rail (`border-b`) · mist-wash Maps section · tip-011
+ * SheetPresence stagger · StyleSheet.flatten. SoftFail copy always softFail
+ * (never timber / Failed to fetch) — prefs still save locally.
  */
 export default function SettingsScreen() {
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_USER_PREFS);
@@ -114,8 +115,8 @@ export default function SettingsScreen() {
         setSoftNotice(null);
       } catch {
         setResolve(null);
-        // Soft inline notice for any resolve miss — prefs still persist locally.
-        setSoftNotice(t(locale, "settings.softOffline"));
+        // SoftFail under Device rail — prefs still persist locally; never timber.
+        setSoftNotice(t(locale, "settings.softFail"));
       } finally {
         setPending(false);
       }
@@ -167,8 +168,13 @@ export default function SettingsScreen() {
     ],
   };
 
-  // SoftFailNotice under Maps only — hide while resolving; drop plain demo line.
-  const showSoftFail = Boolean(softNotice) && !pending;
+  /**
+   * Device rail owns SoftFail under azure prefs chrome. SoftFail copy always
+   * softFail (never inherit noise / timber). Hide while resolving.
+   */
+  const sectionOwnsSoft = Boolean(softNotice);
+  const sectionSoftOpen = sectionOwnsSoft && !pending;
+  const softCopy = softNotice ?? t(locale, "settings.softFail");
   const statusCopy = pending
     ? t(locale, "settings.resolving")
     : resolve
@@ -205,47 +211,72 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
-        {/* Prefs sheet — azure rail · SoftFail under Maps · tip-011 hierarchy */}
+        {/*
+          SoftFail depth (BEA-306 after #167 / web #209):
+          azure Device rail · Soft maps · softSupport · SoftFailNotice ·
+          tip-011 — never timber / Failed to fetch.
+        */}
         <View
           style={styles.prefsSheet}
-          accessibilityLabel={t(locale, "settings.title")}
+          accessibilityLabel={t(locale, "settings.sheetEyebrow")}
         >
-          <View style={styles.sheetRail}>
+          <View
+            style={StyleSheet.flatten([
+              styles.sheetRail,
+              sectionSoftOpen ? styles.sheetRailSoft : null,
+            ])}
+          >
             <View style={styles.sheetRailCopy}>
               <Text style={styles.sheetEyebrow}>
                 {t(locale, "settings.sheetEyebrow")}
               </Text>
               <Text style={styles.sheetSupport}>
-                {t(locale, "settings.sheetSupport")}
+                {sectionSoftOpen
+                  ? t(locale, "settings.softSupport")
+                  : t(locale, "settings.sheetSupport")}
               </Text>
             </View>
             <View
               style={StyleSheet.flatten([
                 styles.statusBadge,
-                showSoftFail ? styles.statusBadgeDemo : styles.statusBadgeLocal,
+                sectionSoftOpen
+                  ? styles.statusBadgeSoft
+                  : styles.statusBadgeLocal,
               ])}
             >
               <Text
                 style={StyleSheet.flatten([
                   styles.statusBadgeText,
-                  showSoftFail
-                    ? styles.statusBadgeTextDemo
+                  sectionSoftOpen
+                    ? styles.statusBadgeTextSoft
                     : styles.statusBadgeTextLocal,
                 ])}
               >
-                {showSoftFail
-                  ? t(locale, "settings.demoBadge")
+                {sectionSoftOpen
+                  ? t(locale, "settings.softBadge")
                   : t(locale, "settings.localBadge")}
               </Text>
             </View>
           </View>
+
+          {/* Compact SoftFail mist band under azure Device rail — never timber. */}
+          <SoftFailNotice
+            open={sectionSoftOpen}
+            compact
+            style={styles.sheetSoftFail}
+          >
+            {softCopy}
+          </SoftFailNotice>
 
           {/* Language */}
           <SheetPresence
             open={hydrated}
             delayMs={60}
             rise={10}
-            style={styles.section}
+            style={StyleSheet.flatten([
+              styles.section,
+              sectionSoftOpen ? styles.sectionWash : null,
+            ])}
             accessibilityLabel={t(locale, "settings.locale")}
           >
             <View
@@ -277,12 +308,16 @@ export default function SettingsScreen() {
             </View>
           </SheetPresence>
 
-          {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
+          {/* Map engine — soft-fail owned by Device rail above (mist-wash body). */}
           <SheetPresence
             open={hydrated}
             delayMs={90}
             rise={10}
-            style={StyleSheet.flatten([styles.section, styles.sectionBordered])}
+            style={StyleSheet.flatten([
+              styles.section,
+              styles.sectionBordered,
+              sectionSoftOpen ? styles.sectionWashMaps : null,
+            ])}
             accessibilityLabel={t(locale, "settings.mapEngine")}
           >
             <View accessibilityLabelledBy="settings-map-heading">
@@ -300,10 +335,6 @@ export default function SettingsScreen() {
                   {t(locale, "settings.mapEngineSupport")}
                 </Text>
               </View>
-
-              <SoftFailNotice open={showSoftFail} style={styles.mapSoftNotice}>
-                {softNotice ?? t(locale, "settings.resolvedDemo")}
-              </SoftFailNotice>
 
               <Segmented
                 value={prefs.mapEngine}
@@ -557,13 +588,22 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: "rgba(100, 116, 139, 0.85)",
   },
+  sheetRailSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
+  /** Mist SoftFail strip under azure Device rail — border-b before mist body. */
+  sheetSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
   statusBadge: {
     borderRadius: radius.xs,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  statusBadgeDemo: {
-    backgroundColor: "rgba(230, 236, 245, 0.9)",
+  statusBadgeSoft: {
+    backgroundColor: colors.mist,
   },
   statusBadgeLocal: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
@@ -575,7 +615,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
   },
-  statusBadgeTextDemo: {
+  statusBadgeTextSoft: {
     color: colors.inkSoft,
   },
   statusBadgeTextLocal: {
@@ -591,6 +631,15 @@ const styles = StyleSheet.create({
   },
   sectionLast: {
     paddingBottom: 20,
+  },
+  /** Mist wash on tip-011 sections while SoftFail owns the rail. */
+  sectionWash: {
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  sectionWashMaps: {
+    backgroundColor: "rgba(230, 236, 245, 0.28)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   sectionHeader: {
     marginBottom: 24,
@@ -618,9 +667,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.inkSoft,
     maxWidth: 400,
-  },
-  mapSoftNotice: {
-    marginBottom: 24,
   },
   track: {
     flexDirection: "row",
