@@ -25,6 +25,7 @@ import { t } from "@beaver/i18n";
 import { JournalDayScrub } from "@/components/journal/journal-day-scrub";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { JournalSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { fileToBase64, resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
@@ -590,6 +591,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   ];
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
+  /**
+   * Compose SoftFailNotice chrome (BEA-205): compact under azure rail ·
+   * SheetPresence body · tip-011 (#46). Compose owns soft-fail so list yields
+   * (no double depth). Soft copy never timber / Failed to fetch.
+   */
+  const showComposeSoftFail = composeSoftFail;
+  const showListSoftFail = (demoSeeded || softNotice) && !composeSoftFail;
+  const hardComposeError =
+    error && !isPlannerNoiseError(new Error(error)) ? error : null;
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-8 md:pt-8">
@@ -778,8 +788,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </header>
 
+            {/* List SoftFail yields while compose owns soft-fail — no double depth. */}
             <SoftFailNotice
-              open={demoSeeded || softNotice}
+              open={showListSoftFail}
               compact
               className="mb-1"
             >
@@ -988,36 +999,47 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </section>
 
           <aside
-            key={`compose-${dayId ?? "all"}`}
-            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
-            style={{ animationDelay: "80ms" }}
+            className="flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
             aria-label={t(locale, "journal.compose")}
           >
-            {/* Azure hierarchy rail — eyebrow · title · hint (#46) */}
+            {/* Azure hierarchy — eyebrow · title · soft badge · hint (#46) */}
             <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-                  {t(locale, "journal.composeEyebrow")}
-                </p>
-                <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-                  {t(locale, "journal.compose")}
-                </h2>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                    {t(locale, "journal.composeEyebrow")}
+                  </p>
+                  <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
+                    {t(locale, "journal.compose")}
+                  </h2>
+                </div>
+                {showComposeSoftFail ? (
+                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    {t(locale, "journal.composeSoftBadge")}
+                  </span>
+                ) : null}
               </div>
               <p className="mt-1 text-sm leading-relaxed text-ink-soft">
                 {t(locale, "journal.composeHint")}
               </p>
             </header>
 
-            <div className="flex flex-col p-5 md:p-6">
-              {/* Compose-scoped SoftFail — media/API only; demo seed lives under entry list */}
-              <SoftFailNotice
-                open={composeSoftFail && !demoSeeded && !softNotice}
-                className="mb-5"
-              >
-                {t(locale, "journal.composeSoftFail")}
-              </SoftFailNotice>
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            <SoftFailNotice open={showComposeSoftFail} compact>
+              {t(locale, "journal.composeSoftFail")}
+            </SoftFailNotice>
 
-              <label className="block text-xs font-medium uppercase tracking-wider text-ink-soft">
+            <SheetPresence
+              key={`compose-body-${dayId ?? "all"}`}
+              open
+              className="flex flex-col p-5 md:p-6"
+              style={{ animationDelay: "80ms" }}
+              aria-label={t(locale, "journal.compose")}
+            >
+              <label
+                className="animate-rise block text-xs font-medium uppercase tracking-wider text-ink-soft"
+                style={{ animationDelay: "40ms" }}
+              >
                 {t(locale, "journal.bindStop")}
                 <select
                   value={stopId}
@@ -1040,12 +1062,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 placeholder={t(locale, "journal.placeholder")}
-                className={`mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
+                className={`animate-rise mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
+                style={{ animationDelay: "70ms" }}
               />
 
               {/* Media rail chrome — drop + strip hierarchy; SoftFailNotice above (#46). */}
               <section
-                className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
+                className="animate-rise mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
+                style={{ animationDelay: "100ms" }}
                 aria-label={t(locale, "journal.photoSlots")}
               >
                 <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/65 px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
@@ -1106,11 +1130,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   {info}
                 </p>
               )}
-              {error && !isPlannerNoiseError(new Error(error)) && (
+              {hardComposeError ? (
                 <p className="mt-3 text-sm text-timber" role="alert">
-                  {error}
+                  {hardComposeError}
                 </p>
-              )}
+              ) : null}
 
               <button
                 type="button"
@@ -1127,7 +1151,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   ? t(locale, "journal.saving")
                   : t(locale, "journal.save")}
               </button>
-            </div>
+            </SheetPresence>
           </aside>
         </div>
       </div>

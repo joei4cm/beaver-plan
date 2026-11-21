@@ -208,14 +208,18 @@ export function JournalSkeleton() {
             ))}
           </div>
           <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 lg:block">
-            <div className="space-y-2 border-b border-[color:var(--bp-line)] px-5 py-4 md:px-6">
-              <Skeleton className="h-3 w-20" />
+            {/* Compose azure rail · SoftFailNotice slot · SheetPresence body */}
+            <div className="space-y-2 border-b border-[color:var(--bp-line)] px-5 py-4 md:px-6 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-4 w-14 rounded-bp-xs" />
+              </div>
               <Skeleton className="h-7 w-36" />
               <Skeleton className="h-3.5 w-full" />
             </div>
+            <Skeleton className="h-9 w-full rounded-none" />
             <div className="p-5 md:p-6">
-              <Skeleton className="h-12 w-full rounded-bp-sm" />
-              <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
+              <Skeleton className="h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
               {/* Compose media rail — header · drop · photo strip */}
               <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]">

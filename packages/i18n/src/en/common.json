@@ -408,6 +408,7 @@
   "journal.demoNotice": "Sample Kyoto entries are seeded — soft fallback while Neon/R2 are unset.",
   "journal.softOffline": "Reading the local sample journal while the API is unreachable.",
   "journal.composeSoftFail": "Media / journal API offline or keys absent — captions and photo frames stay local until Neon/R2 are live. Never a Failed to fetch crash.",
+  "journal.composeSoftBadge": "Soft media",
   "journal.demoBadge": "Sample journal",
   "journal.daySection": "Day {n}",
   "journal.listEyebrow": "Entries",
