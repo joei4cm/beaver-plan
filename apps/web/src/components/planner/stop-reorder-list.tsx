@@ -10,13 +10,13 @@ import {
 } from "react";
 import type { Stop } from "@beaver/core";
 
-/** Tip 005 — card ripple base offset */
+/** Tip 005 — card ripple base offset · tip-011 overshoot settle */
 const RIPPLE_A = 8;
 const RIPPLE_DECAY = 0.7;
 const RIPPLE_DELAY_MS = 24;
 const DRAG_THRESHOLD_PX = 4;
-const LIFT_SCALE = 0.9;
-const LIFT_X = 14;
+const LIFT_SCALE = 0.94;
+const LIFT_X = 10;
 const SPRING_MS = 250;
 
 export type StopReorderRenderCtx = {
@@ -70,8 +70,9 @@ function applyReorder(ids: string[], from: number, to: number): string[] {
 }
 
 /**
- * Tip 005 drag-ripple reorder for the planner stop list.
- * Transform-only motion; keyboard reorder stays on the parent ↑↓ controls.
+ * Tip 005 drag-ripple reorder for the planner stop list (BEA-204 chrome).
+ * Mist grip · azure lift shell · river drop line · tip-011 settle.
+ * SoftFailNotice stays on the stops rail; keyboard ↑↓ on the parent.
  */
 export function StopReorderList({
   items,
@@ -276,9 +277,9 @@ export function StopReorderList({
 
     const { from, to, height } = drag;
     if (index === from) {
+      /* Mist dashed slot stays; row content fades via CSS ::after chrome. */
       return {
         transform: "none",
-        opacity: 0,
         transition: "none",
         pointerEvents: "none",
       };
@@ -401,7 +402,7 @@ export function StopReorderList({
             transformOrigin: "left center",
           }}
         >
-          <div className="overflow-hidden rounded-bp border border-river/30 bg-foam shadow-bp ring-1 ring-river/15">
+          <div className="bp-stop-lift__shell">
             {renderItem(floating, {
               index: floatingIndex,
               isDragging: true,
@@ -409,7 +410,7 @@ export function StopReorderList({
               dragHandleProps: {
                 onPointerDown: () => undefined,
                 className:
-                  "bp-stop-drag-handle bp-stop-drag-handle--active touch-none",
+                  "bp-stop-drag-handle bp-stop-drag-handle--active touch-none select-none",
                 "aria-label": dragHandleLabel,
                 title: dragHandleLabel,
               },
