@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Linking,
   Pressable,
   ScrollView,
@@ -30,7 +32,7 @@ import {
   type Trip,
   type TripComment,
 } from "@beaver/core";
-import { colors, radius } from "@beaver/ui-tokens";
+import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import type { JournalEntry, TripMember, TripRole } from "@beaver/core";
 import type { OfflinePinStatus } from "@beaver/offline";
@@ -52,6 +54,7 @@ import {
   readCachedTrip,
   unpinTripOffline,
 } from "../../src/offline/trip-offline";
+import { type } from "../../src/theme";
 
 const locale = "zh-CN" as const;
 const SEARCH_DEBOUNCE_MS = 220;
@@ -102,6 +105,9 @@ export default function TripDetailScreen() {
   const [routing, setRouting] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
+  const rise = useRef(new Animated.Value(0)).current;
+  const sheet = useRef(new Animated.Value(0)).current;
+  const stopPop = useRef(new Animated.Value(1)).current;
 
   const refreshPin = useCallback(async () => {
     try {
@@ -211,6 +217,11 @@ export default function TripDetailScreen() {
       const inv = await createInvite(tripId, "editor");
       setInviteCode(inv.code);
     } catch (e) {
+      if (isNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+        return;
+      }
       setError(e instanceof Error ? e.message : "invite_failed");
     }
   }
@@ -232,7 +243,12 @@ export default function TripDetailScreen() {
       }
       await refreshPin();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "pin_failed");
+      if (isNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.demoLocal"));
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : "pin_failed");
+      }
     } finally {
       setPinBusy(false);
     }
@@ -247,6 +263,42 @@ export default function TripDetailScreen() {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (loading || !trip) {
+      rise.setValue(0);
+      sheet.setValue(0);
+      return;
+    }
+    rise.setValue(0);
+    sheet.setValue(0);
+    Animated.parallel([
+      Animated.timing(rise, {
+        toValue: 1,
+        duration: motion.durationMdMs,
+        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheet, {
+        toValue: 1,
+        duration: motion.durationLgMs,
+        delay: 80,
+        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [loading, trip, rise, sheet]);
+
+  useEffect(() => {
+    if (!selectedStopId) return;
+    stopPop.setValue(0.86);
+    Animated.timing(stopPop, {
+      toValue: 1,
+      duration: motion.durationSmMs,
+      easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [selectedStopId, stopPop]);
 
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
@@ -393,22 +445,58 @@ export default function TripDetailScreen() {
       setResults([]);
       setSearchOpen(false);
       setSelectedStopId(stop.id);
-      if (isNoiseError(e)) {
-        setSoftNotice(t(locale, "planner.demoLocal"));
-        setError(null);
-      } else {
-        setSoftNotice(t(locale, "planner.demoLocal"));
-      }
+      setSoftNotice(t(locale, "planner.demoLocal"));
+      setError(null);
+      void e;
       await routeDayStops(dayId, stopsForDay(nextStops, dayId));
     }
+  }
+
+  function selectStop(id: string) {
+    setSelectedStopId(id);
+  }
+
+  function selectDay(nextDayId: string) {
+    setDayId(nextDayId);
+    setSelectedStopId(null);
   }
 
   const googleKey =
     process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || null;
 
+  const riseStyle = {
+    opacity: rise,
+    transform: [
+      {
+        translateY: rise.interpolate({
+          inputRange: [0, 1],
+          outputRange: [16, 0],
+        }),
+      },
+    ],
+  };
+
+  const sheetStyle = {
+    opacity: sheet,
+    transform: [
+      {
+        translateY: sheet.interpolate({
+          inputRange: [0, 1],
+          outputRange: [22, 0],
+        }),
+      },
+    ],
+  };
+
   return (
     <View style={styles.root}>
-      <Stack.Screen options={{ title: trip?.title ?? t(locale, "planner.trip") }} />
+      <Stack.Screen
+        options={{
+          title: trip?.title ?? t(locale, "planner.trip"),
+          headerStyle: { backgroundColor: colors.foam },
+          headerTintColor: colors.ink,
+        }}
+      />
       {loading && (
         <View style={styles.center}>
           <ActivityIndicator color={colors.river} />
@@ -427,298 +515,350 @@ export default function TripDetailScreen() {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.brandLine}>Beaver Plan · 海狸旅行</Text>
-          <Text style={styles.eyebrow}>
-            {trip.destination ?? "Beaver Plan"}
-            {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
-          </Text>
-          <Text style={styles.title}>{trip.title}</Text>
-          <Pressable
-            style={[
-              styles.pinBtn,
-              pinStatus?.pinned ? styles.pinBtnActive : null,
-            ]}
-            disabled={pinBusy}
-            onPress={() => void onTogglePin()}
-          >
-            <Text
-              style={[
-                styles.pinLabel,
-                pinStatus?.pinned ? styles.pinLabelActive : null,
-              ]}
-            >
-              {pinBusy
-                ? t(locale, "offline.working")
-                : pinStatus?.pinned
-                  ? t(locale, "offline.pinned")
-                  : t(locale, "offline.pin")}
-            </Text>
-            <Text style={styles.pinMeta}>
-              {(pinStatus?.online ?? isDeviceOnline())
-                ? t(locale, "offline.online")
-                : t(locale, "offline.offline")}
-              {(pinStatus?.pendingMutations ?? 0) > 0
-                ? ` · ${t(locale, "offline.pending").replace(
-                    "{n}",
-                    String(pinStatus?.pendingMutations ?? 0),
-                  )}`
-                : ""}
-            </Text>
-          </Pressable>
-          <Text style={styles.pinHint}>{t(locale, "offline.statusHint")}</Text>
-          <View style={styles.actionRow}>
-            <Pressable
-              style={styles.actionBtn}
-              onPress={() => router.push(`/trips/${tripId}/journal`)}
-            >
-              <Text style={styles.actionLabel}>{t(locale, "mobile.journal")}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.actionBtn, styles.actionPrimary]}
-              onPress={() => router.push(`/trips/${tripId}/share`)}
-            >
-              <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
-                {t(locale, "mobile.share")}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.actionBtn, styles.actionTranslate]}
-              onPress={() => router.push("/translate")}
-            >
-              <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
-                {t(locale, "mobile.translate")}
-              </Text>
-            </Pressable>
-          </View>
+          <View style={styles.skyWash} pointerEvents="none" />
 
-          <View style={styles.collabBox}>
-            <Text style={styles.collabEyebrow}>
-              {t(locale, "collab.panel.eyebrow")}
+          <Animated.View style={[styles.header, riseStyle]}>
+            <Text style={styles.brandLine}>
+              Beaver Plan · {trip.destination ?? t(locale, "planner.trip")}
+              {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
             </Text>
-            <Text style={styles.collabHeading}>
-              {t(locale, "collab.panel.title")}
-            </Text>
-            <Text style={styles.collabTitle}>{t(locale, "collab.members")}</Text>
-            <Text style={styles.collabMeta}>
-              {members
-                .map((m) => m.displayName ?? m.userId)
-                .slice(0, 4)
-                .join(" · ") || "—"}
-              {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
-              {collabSeeded ? ` · ${t(locale, "collab.demoBadge")}` : ""}
-            </Text>
-            {collabSeeded ? (
-              <Text style={styles.collabNotice}>
-                {softNotice
-                  ? t(locale, "collab.panel.softOffline")
-                  : t(locale, "collab.panel.demoNotice")}
-              </Text>
-            ) : null}
-            {(yourRole === "owner" || yourRole === "editor") && (
-              <Pressable style={styles.inviteBtn} onPress={() => void onInvite()}>
-                <Text style={styles.inviteLabel}>{t(locale, "collab.invite")}</Text>
+            <Text style={styles.title}>{trip.title}</Text>
+            <View style={styles.actionRow}>
+              <Pressable
+                style={[styles.actionBtn, styles.actionPrimary]}
+                onPress={() => router.push(`/trips/${tripId}/share`)}
+              >
+                <Text style={[styles.actionLabel, styles.actionPrimaryLabel]}>
+                  {t(locale, "mobile.share")}
+                </Text>
               </Pressable>
-            )}
-            {inviteCode ? (
-              <Text style={styles.inviteCode}>
-                {t(locale, "collab.shareHint")} {inviteCode}
-              </Text>
-            ) : null}
-            {comments.length > 0 ? (
-              <View style={styles.collabThread}>
-                <Text style={styles.collabSectionLabel}>
-                  {t(locale, "collab.panel.tab.comments")}
+              <Pressable
+                style={styles.actionBtn}
+                onPress={() => router.push(`/trips/${tripId}/journal`)}
+              >
+                <Text style={styles.actionLabel}>
+                  {t(locale, "mobile.journal")}
                 </Text>
-                {comments.slice(0, 3).map((c) => (
-                  <View key={c.id} style={styles.commentRail}>
-                    <Text style={styles.commentAuthor}>
-                      {c.authorDisplayName ?? c.authorUserId}
-                    </Text>
-                    <Text style={styles.commentBody}>{c.body}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-            {activity.length > 0 ? (
-              <View style={styles.collabThread}>
-                <Text style={styles.collabSectionLabel}>
-                  {t(locale, "collab.panel.tab.activity")}
+              </Pressable>
+              <Pressable
+                style={[styles.actionBtn, styles.actionSecondary]}
+                onPress={() => router.push("/translate")}
+              >
+                <Text style={[styles.actionLabel, styles.actionSecondaryLabel]}>
+                  {t(locale, "mobile.translate")}
                 </Text>
-                {activity.slice(0, 4).map((ev) => (
-                  <View key={ev.id} style={styles.activityRail}>
-                    <Text style={styles.activityType}>
-                      {t(locale, `collab.activity.${ev.type}`)}
-                    </Text>
-                    <Text style={styles.activitySummary}>{ev.summary}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </View>
-
-          <View style={styles.searchWrap}>
-            <TextInput
-              value={query}
-              onChangeText={scheduleSearch}
-              onFocus={() => setSearchOpen(true)}
-              placeholder={t(locale, "planner.searchPlaceholder")}
-              placeholderTextColor={colors.inkSoft}
-              style={styles.searchInput}
-              autoCorrect={false}
-              autoCapitalize="none"
-              clearButtonMode="while-editing"
-            />
-            {searching || routing ? (
-              <ActivityIndicator
-                style={styles.searchSpinner}
-                color={colors.river}
-                size="small"
-              />
-            ) : null}
-            {searchOpen && results.length > 0 ? (
-              <View style={styles.searchSheet}>
-                {results.map((place) => (
-                  <Pressable
-                    key={place.enginePlaceId}
-                    style={styles.searchHit}
-                    onPress={() => void addPlace(place)}
-                  >
-                    <Text style={styles.searchHitName}>{place.name}</Text>
-                    {place.address ? (
-                      <Text style={styles.searchHitAddr}>{place.address}</Text>
-                    ) : null}
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-          </View>
+              </Pressable>
+            </View>
+          </Animated.View>
 
           {softNotice ? (
-            <Text style={styles.softNotice}>{softNotice}</Text>
+            <Animated.View style={[styles.softBanner, riseStyle]}>
+              <Text style={styles.softText}>{softNotice}</Text>
+            </Animated.View>
           ) : null}
 
-          <TripMap
-            stops={dayStops}
-            legs={dayLegs}
-            selectedStopId={selectedStopId}
-            onSelectStop={setSelectedStopId}
-            googleMapsKey={googleKey}
-          />
+          <Animated.View style={sheetStyle}>
+            <TripMap
+              stops={dayStops}
+              legs={dayLegs}
+              selectedStopId={selectedStopId}
+              onSelectStop={selectStop}
+              googleMapsKey={googleKey}
+            />
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.dayRow}
-            contentContainerStyle={styles.dayRowContent}
-          >
-            {days.map((day, i) => (
-              <Pressable
-                key={day.id}
-                onPress={() => setDayId(day.id)}
-                style={[
-                  styles.dayChip,
-                  dayId === day.id && styles.dayChipActive,
-                ]}
+            <View style={styles.sheet}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.dayRow}
+                contentContainerStyle={styles.dayRowContent}
               >
-                <Text
-                  style={[
-                    styles.dayChipLabel,
-                    dayId === day.id && styles.dayChipLabelActive,
-                  ]}
-                >
-                  {t(locale, "planner.day")} {i + 1}
-                </Text>
-                <Text
-                  style={[
-                    styles.dayChipDate,
-                    dayId === day.id && styles.dayChipLabelActive,
-                  ]}
-                >
-                  {day.date}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                {days.map((day, i) => {
+                  const active = dayId === day.id;
+                  return (
+                    <Pressable
+                      key={day.id}
+                      onPress={() => selectDay(day.id)}
+                      style={[styles.dayChip, active && styles.dayChipActive]}
+                    >
+                      <Text
+                        style={[
+                          styles.dayChipLabel,
+                          active && styles.dayChipLabelActive,
+                        ]}
+                      >
+                        {t(locale, "planner.day")} {i + 1}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dayChipDate,
+                          active && styles.dayChipLabelActive,
+                        ]}
+                      >
+                        {day.date}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
 
-          {dayStops.map((stop, index) => {
-            const leg = dayLegs.find((l) => l.fromStopId === stop.id);
-            const selected = stop.id === selectedStopId;
-            return (
-              <Pressable
-                key={stop.id}
-                style={[styles.stopRow, selected && styles.stopRowSelected]}
-                onPress={() => setSelectedStopId(stop.id)}
-              >
-                <View style={[styles.stopIndex, selected && styles.stopIndexSelected]}>
-                  <Text style={styles.stopIndexText}>{index + 1}</Text>
-                </View>
-                <View style={styles.stopBody}>
-                  <Text style={styles.stopName}>{stop.place.name}</Text>
-                  {stop.place.address ? (
-                    <Text style={styles.stopAddr}>{stop.place.address}</Text>
-                  ) : null}
-                  {leg ? (
-                    <View style={styles.legBlock}>
-                      <Text style={styles.leg}>→ {summarizeTransfer(leg)}</Text>
-                      {leg.transitSteps.length > 1 ? (
-                        <View style={styles.stepList}>
-                          {leg.transitSteps.map((step, si) => {
-                            const kind = normalizeStepMode(step.mode);
-                            const label =
-                              kind === "transit" && step.lineName
-                                ? step.lineName
-                                : kind === "walk"
-                                  ? t(locale, "planner.transfer.walk")
-                                  : kind === "transfer"
-                                    ? t(locale, "planner.transfer.change")
-                                    : step.instruction || step.mode;
-                            return (
-                              <Text key={`${leg.id}-m-${si}`} style={styles.stepLine}>
-                                {label}
-                                {step.durationSec
-                                  ? ` · ${formatDuration(step.durationSec)}`
+              <View style={styles.searchWrap}>
+                <TextInput
+                  value={query}
+                  onChangeText={scheduleSearch}
+                  onFocus={() => setSearchOpen(true)}
+                  placeholder={t(locale, "planner.searchPlaceholder")}
+                  placeholderTextColor={colors.inkSoft}
+                  style={styles.searchInput}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  clearButtonMode="while-editing"
+                />
+                {searching || routing ? (
+                  <ActivityIndicator
+                    style={styles.searchSpinner}
+                    color={colors.river}
+                    size="small"
+                  />
+                ) : null}
+                {searchOpen && results.length > 0 ? (
+                  <View style={styles.searchSheet}>
+                    {results.map((place) => (
+                      <Pressable
+                        key={place.enginePlaceId}
+                        style={styles.searchHit}
+                        onPress={() => void addPlace(place)}
+                      >
+                        <Text style={styles.searchHitName}>{place.name}</Text>
+                        {place.address ? (
+                          <Text style={styles.searchHitAddr}>
+                            {place.address}
+                          </Text>
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+
+              {dayStops.map((stop, index) => {
+                const leg = dayLegs.find((l) => l.fromStopId === stop.id);
+                const selected = stop.id === selectedStopId;
+                return (
+                  <Pressable
+                    key={stop.id}
+                    style={[styles.stopRow, selected && styles.stopRowSelected]}
+                    onPress={() => selectStop(stop.id)}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.stopIndex,
+                        selected && styles.stopIndexSelected,
+                        selected
+                          ? { transform: [{ scale: stopPop }] }
+                          : undefined,
+                      ]}
+                    >
+                      <Text style={styles.stopIndexText}>{index + 1}</Text>
+                    </Animated.View>
+                    <View style={styles.stopBody}>
+                      <Text style={styles.stopName}>{stop.place.name}</Text>
+                      {stop.place.address ? (
+                        <Text style={styles.stopAddr}>
+                          {stop.place.address}
+                        </Text>
+                      ) : null}
+                      {leg ? (
+                        <View style={styles.legBlock}>
+                          <Text style={styles.leg}>
+                            → {summarizeTransfer(leg)}
+                          </Text>
+                          {leg.transitSteps.length > 1 ? (
+                            <View style={styles.stepList}>
+                              {leg.transitSteps.map((step, si) => {
+                                const kind = normalizeStepMode(step.mode);
+                                const label =
+                                  kind === "transit" && step.lineName
+                                    ? step.lineName
+                                    : kind === "walk"
+                                      ? t(locale, "planner.transfer.walk")
+                                      : kind === "transfer"
+                                        ? t(locale, "planner.transfer.change")
+                                        : step.instruction || step.mode;
+                                return (
+                                  <Text
+                                    key={`${leg.id}-m-${si}`}
+                                    style={styles.stepLine}
+                                  >
+                                    {label}
+                                    {step.durationSec
+                                      ? ` · ${formatDuration(step.durationSec)}`
+                                      : ""}
+                                  </Text>
+                                );
+                              })}
+                            </View>
+                          ) : null}
+                        </View>
+                      ) : null}
+                      {(stop.bookingLinks ?? []).length > 0 ? (
+                        <View style={styles.bookingBlock}>
+                          <Text style={styles.bookingTitle}>
+                            {t(locale, "mobile.booking")}
+                          </Text>
+                          {(stop.bookingLinks ?? []).map((link) => (
+                            <Pressable
+                              key={`${link.kind}-${link.url}`}
+                              style={styles.bookingChip}
+                              onPress={() => void Linking.openURL(link.url)}
+                            >
+                              <Text style={styles.bookingChipText}>
+                                {t(
+                                  locale,
+                                  `planner.booking.kind.${link.kind as BookingLinkKind}`,
+                                )}
+                                {link.providerLabel
+                                  ? ` · ${link.providerLabel}`
                                   : ""}
+                                {" · "}
+                                {t(locale, "mobile.bookingOpen")}
                               </Text>
-                            );
-                          })}
+                            </Pressable>
+                          ))}
                         </View>
                       ) : null}
                     </View>
-                  ) : null}
-                  {(stop.bookingLinks ?? []).length > 0 ? (
-                    <View style={styles.bookingBlock}>
-                      <Text style={styles.bookingTitle}>
-                        {t(locale, "mobile.booking")}
-                      </Text>
-                      {(stop.bookingLinks ?? []).map((link) => (
-                        <Pressable
-                          key={`${link.kind}-${link.url}`}
-                          style={styles.bookingChip}
-                          onPress={() => void Linking.openURL(link.url)}
-                        >
-                          <Text style={styles.bookingChipText}>
-                            {t(
-                              locale,
-                              `planner.booking.kind.${link.kind as BookingLinkKind}`,
-                            )}
-                            {link.providerLabel
-                              ? ` · ${link.providerLabel}`
-                              : ""}
-                            {" · "}
-                            {t(locale, "mobile.bookingOpen")}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
+                  </Pressable>
+                );
+              })}
+              {dayStops.length === 0 && (
+                <Text style={styles.hint}>
+                  {t(locale, "planner.emptyDayHint")}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.secondaryBlock}>
+              <Pressable
+                style={[
+                  styles.pinBtn,
+                  pinStatus?.pinned ? styles.pinBtnActive : null,
+                ]}
+                disabled={pinBusy}
+                onPress={() => void onTogglePin()}
+              >
+                <Text
+                  style={[
+                    styles.pinLabel,
+                    pinStatus?.pinned ? styles.pinLabelActive : null,
+                  ]}
+                >
+                  {pinBusy
+                    ? t(locale, "offline.working")
+                    : pinStatus?.pinned
+                      ? t(locale, "offline.pinned")
+                      : t(locale, "offline.pin")}
+                </Text>
+                <Text
+                  style={[
+                    styles.pinMeta,
+                    pinStatus?.pinned ? styles.pinMetaActive : null,
+                  ]}
+                >
+                  {(pinStatus?.online ?? isDeviceOnline())
+                    ? t(locale, "offline.online")
+                    : t(locale, "offline.offline")}
+                  {(pinStatus?.pendingMutations ?? 0) > 0
+                    ? ` · ${t(locale, "offline.pending").replace(
+                        "{n}",
+                        String(pinStatus?.pendingMutations ?? 0),
+                      )}`
+                    : ""}
+                </Text>
               </Pressable>
-            );
-          })}
-          {dayStops.length === 0 && (
-            <Text style={styles.hint}>{t(locale, "planner.emptyDayHint")}</Text>
-          )}
+              <Text style={styles.pinHint}>
+                {t(locale, "offline.statusHint")}
+              </Text>
+
+              <View style={styles.collabBox}>
+                <Text style={styles.collabEyebrow}>
+                  {t(locale, "collab.panel.eyebrow")}
+                </Text>
+                <Text style={styles.collabHeading}>
+                  {t(locale, "collab.panel.title")}
+                </Text>
+                <Text style={styles.collabTitle}>
+                  {t(locale, "collab.members")}
+                </Text>
+                <Text style={styles.collabMeta}>
+                  {members
+                    .map((m) => m.displayName ?? m.userId)
+                    .slice(0, 4)
+                    .join(" · ") || "—"}
+                  {yourRole
+                    ? ` · ${t(locale, `collab.role.${yourRole}`)}`
+                    : ""}
+                  {collabSeeded
+                    ? ` · ${t(locale, "collab.demoBadge")}`
+                    : ""}
+                </Text>
+                {collabSeeded ? (
+                  <Text style={styles.collabNotice}>
+                    {softNotice
+                      ? t(locale, "collab.panel.softOffline")
+                      : t(locale, "collab.panel.demoNotice")}
+                  </Text>
+                ) : null}
+                {(yourRole === "owner" || yourRole === "editor") && (
+                  <Pressable
+                    style={styles.inviteBtn}
+                    onPress={() => void onInvite()}
+                  >
+                    <Text style={styles.inviteLabel}>
+                      {t(locale, "collab.invite")}
+                    </Text>
+                  </Pressable>
+                )}
+                {inviteCode ? (
+                  <Text style={styles.inviteCode}>
+                    {t(locale, "collab.shareHint")} {inviteCode}
+                  </Text>
+                ) : null}
+                {comments.length > 0 ? (
+                  <View style={styles.collabThread}>
+                    <Text style={styles.collabSectionLabel}>
+                      {t(locale, "collab.panel.tab.comments")}
+                    </Text>
+                    {comments.slice(0, 3).map((c) => (
+                      <View key={c.id} style={styles.commentRail}>
+                        <Text style={styles.commentAuthor}>
+                          {c.authorDisplayName ?? c.authorUserId}
+                        </Text>
+                        <Text style={styles.commentBody}>{c.body}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                {activity.length > 0 ? (
+                  <View style={styles.collabThread}>
+                    <Text style={styles.collabSectionLabel}>
+                      {t(locale, "collab.panel.tab.activity")}
+                    </Text>
+                    {activity.slice(0, 4).map((ev) => (
+                      <View key={ev.id} style={styles.activityRail}>
+                        <Text style={styles.activityType}>
+                          {t(locale, `collab.activity.${ev.type}`)}
+                        </Text>
+                        <Text style={styles.activitySummary}>{ev.summary}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </Animated.View>
         </ScrollView>
       )}
     </View>
@@ -734,66 +874,46 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 12,
   },
-  content: { padding: 20, paddingBottom: 48 },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 48,
+  },
+  skyWash: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    borderBottomWidth: 100,
+    borderBottomColor: "rgba(219, 232, 255, 0.65)",
+  },
+  header: {
+    marginBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    paddingBottom: 16,
+  },
   brandLine: {
+    ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.4,
+    letterSpacing: 2.2,
     textTransform: "uppercase",
     color: colors.river,
-    marginBottom: 10,
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   title: {
+    ...type.display,
     fontSize: 32,
     fontWeight: "800",
-    letterSpacing: -0.8,
+    letterSpacing: -0.9,
     color: colors.ink,
     marginBottom: 14,
   },
-  pinBtn: {
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: colors.foam,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  pinBtnActive: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
-  },
-  pinLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.inkSoft,
-  },
-  pinLabelActive: {
-    color: colors.foam,
-  },
-  pinMeta: {
-    marginTop: 4,
-    fontSize: 12,
-    color: colors.inkSoft,
-  },
-  pinHint: {
-    marginBottom: 14,
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.inkSoft,
-  },
   actionRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 16,
+    gap: 8,
   },
   actionBtn: {
     flex: 1,
@@ -805,127 +925,92 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionPrimary: {
-    backgroundColor: colors.timber,
-    borderColor: colors.timber,
+    backgroundColor: colors.river,
+    borderColor: colors.river,
   },
-  actionTranslate: {
+  actionSecondary: {
     backgroundColor: colors.ink,
     borderColor: colors.ink,
   },
   actionLabel: {
-    color: colors.inkSoft,
+    ...type.body,
+    color: colors.ink,
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 13,
   },
   actionPrimaryLabel: {
     color: colors.foam,
-  },
-  collabBox: {
-    marginBottom: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: "transparent",
-    gap: 6,
-  },
-  collabEyebrow: {
-    fontSize: 10,
-    letterSpacing: 2.4,
-    textTransform: "uppercase",
     fontWeight: "700",
-    color: colors.river,
   },
-  collabHeading: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    color: colors.ink,
-    marginBottom: 4,
+  actionSecondaryLabel: {
+    color: colors.foam,
   },
-  collabTitle: {
-    fontSize: 11,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    color: colors.river,
-  },
-  collabMeta: { fontSize: 14, color: colors.inkSoft },
-  collabNotice: {
-    marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.2)",
-    backgroundColor: "rgba(47,107,255,0.06)",
-    color: colors.riverDeep,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  collabThread: {
-    marginTop: 10,
-    gap: 8,
-  },
-  collabSectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: colors.river,
-  },
-  commentRail: {
+  softBanner: {
+    marginBottom: 14,
     borderLeftWidth: 2,
-    borderLeftColor: "rgba(47,107,255,0.4)",
-    paddingLeft: 10,
-    gap: 2,
+    borderLeftColor: "rgba(47, 107, 255, 0.35)",
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    borderRadius: radius.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  commentAuthor: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.ink,
-  },
-  commentBody: {
+  softText: {
+    ...type.body,
     fontSize: 13,
     lineHeight: 19,
     color: colors.inkSoft,
   },
-  activityRail: {
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(47,107,255,0.28)",
-    paddingLeft: 10,
-    gap: 2,
-  },
-  activityType: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    color: colors.river,
-  },
-  activitySummary: {
-    fontSize: 13,
-    color: colors.ink,
-  },
-  inviteBtn: {
-    marginTop: 6,
-    alignSelf: "flex-start",
-    backgroundColor: colors.river,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  inviteLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
-  inviteCode: { marginTop: 4, fontSize: 12, color: colors.ink, fontFamily: "monospace" },
-  searchWrap: {
-    marginBottom: 10,
-    zIndex: 5,
-  },
-  searchInput: {
-    borderRadius: radius.md,
+  sheet: {
+    marginTop: 2,
+    marginBottom: 20,
+    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
+    overflow: "hidden",
+  },
+  dayRow: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+  },
+  dayRowContent: { gap: 0, paddingHorizontal: 4 },
+  dayChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "transparent",
+  },
+  dayChipActive: {
+    backgroundColor: colors.river,
+  },
+  dayChipLabel: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.inkSoft,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  dayChipDate: {
+    ...type.body,
+    marginTop: 2,
+    fontSize: 13,
+    color: colors.ink,
+    fontWeight: "600",
+  },
+  dayChipLabelActive: { color: colors.foam },
+  searchWrap: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
+    zIndex: 5,
+  },
+  searchInput: {
+    ...type.body,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -934,8 +1019,8 @@ const styles = StyleSheet.create({
   },
   searchSpinner: {
     position: "absolute",
-    right: 14,
-    top: 14,
+    right: 26,
+    top: 26,
   },
   searchSheet: {
     marginTop: 6,
@@ -952,52 +1037,21 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
   },
   searchHitName: {
+    ...type.body,
     fontSize: 15,
     fontWeight: "700",
     color: colors.ink,
   },
   searchHitAddr: {
+    ...type.body,
     marginTop: 2,
     fontSize: 12,
     color: colors.inkSoft,
   },
-  softNotice: {
-    marginBottom: 10,
-    fontSize: 12,
-    color: colors.inkSoft,
-    lineHeight: 18,
-  },
-  dayRow: { marginBottom: 8 },
-  dayRowContent: { gap: 0, paddingVertical: 0 },
-  dayChip: {
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: "transparent",
-    marginRight: 4,
-  },
-  dayChipActive: {
-    backgroundColor: colors.river,
-    borderBottomColor: colors.riverDeep,
-  },
-  dayChipLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.inkSoft,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-  },
-  dayChipDate: {
-    marginTop: 2,
-    fontSize: 13,
-    color: colors.ink,
-    fontWeight: "600",
-  },
-  dayChipLabelActive: { color: colors.foam },
   stopRow: {
     flexDirection: "row",
     gap: 12,
+    paddingHorizontal: 14,
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
@@ -1008,7 +1062,7 @@ const styles = StyleSheet.create({
   stopIndex: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     backgroundColor: colors.river,
     alignItems: "center",
     justifyContent: "center",
@@ -1016,12 +1070,33 @@ const styles = StyleSheet.create({
   stopIndexSelected: {
     backgroundColor: colors.riverDeep,
   },
-  stopIndexText: { fontWeight: "800", color: colors.foam, fontSize: 12 },
+  stopIndexText: {
+    ...type.body,
+    fontWeight: "800",
+    color: colors.foam,
+    fontSize: 12,
+  },
   stopBody: { flex: 1 },
-  stopName: { fontSize: 16, fontWeight: "700", color: colors.ink },
-  stopAddr: { marginTop: 3, fontSize: 12, color: colors.inkSoft },
+  stopName: {
+    ...type.display,
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink,
+    letterSpacing: -0.2,
+  },
+  stopAddr: {
+    ...type.body,
+    marginTop: 3,
+    fontSize: 12,
+    color: colors.inkSoft,
+  },
   legBlock: { marginTop: 8, gap: 6 },
-  leg: { fontSize: 12, fontWeight: "600", color: colors.river },
+  leg: {
+    ...type.body,
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.river,
+  },
   stepList: {
     marginTop: 4,
     paddingVertical: 8,
@@ -1035,6 +1110,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stepLine: {
+    ...type.body,
     fontSize: 12,
     color: colors.ink,
     lineHeight: 17,
@@ -1042,6 +1118,7 @@ const styles = StyleSheet.create({
   },
   bookingBlock: { marginTop: 8, gap: 6 },
   bookingTitle: {
+    ...type.body,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -1057,15 +1134,195 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  bookingChipText: { fontSize: 12, color: colors.river, fontWeight: "600" },
-  hint: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
-  error: { color: colors.timber, fontSize: 14 },
+  bookingChipText: {
+    ...type.body,
+    fontSize: 12,
+    color: colors.river,
+    fontWeight: "600",
+  },
+  secondaryBlock: {
+    marginTop: 4,
+  },
+  pinBtn: {
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  pinBtnActive: {
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
+  },
+  pinLabel: {
+    ...type.body,
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.inkSoft,
+  },
+  pinLabelActive: {
+    color: colors.foam,
+  },
+  pinMeta: {
+    ...type.body,
+    marginTop: 4,
+    fontSize: 12,
+    color: colors.inkSoft,
+  },
+  pinMetaActive: {
+    color: "rgba(255,255,255,0.72)",
+  },
+  pinHint: {
+    ...type.body,
+    marginBottom: 18,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.inkSoft,
+  },
+  collabBox: {
+    paddingVertical: 14,
+    paddingHorizontal: 2,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    gap: 6,
+  },
+  collabEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2.4,
+    textTransform: "uppercase",
+    fontWeight: "700",
+    color: colors.river,
+  },
+  collabHeading: {
+    ...type.display,
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: colors.ink,
+    marginBottom: 4,
+  },
+  collabTitle: {
+    ...type.body,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  collabMeta: {
+    ...type.body,
+    fontSize: 14,
+    color: colors.inkSoft,
+  },
+  collabNotice: {
+    ...type.body,
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47,107,255,0.2)",
+    backgroundColor: "rgba(47,107,255,0.06)",
+    color: colors.riverDeep,
+    fontSize: 12,
+    lineHeight: 18,
+    overflow: "hidden",
+  },
+  collabThread: {
+    marginTop: 10,
+    gap: 8,
+  },
+  collabSectionLabel: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  commentRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.4)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  commentAuthor: {
+    ...type.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  commentBody: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
+  },
+  activityRail: {
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(47,107,255,0.28)",
+    paddingLeft: 10,
+    gap: 2,
+  },
+  activityType: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  activitySummary: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.ink,
+  },
+  inviteBtn: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    backgroundColor: colors.river,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  inviteLabel: {
+    ...type.body,
+    color: colors.foam,
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  inviteCode: {
+    ...type.body,
+    marginTop: 4,
+    fontSize: 12,
+    color: colors.ink,
+    fontFamily: "monospace",
+  },
+  hint: {
+    ...type.body,
+    color: colors.inkSoft,
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 18,
+  },
+  error: {
+    ...type.body,
+    color: colors.timber,
+    fontSize: 14,
+  },
   retry: {
     marginTop: 8,
-    backgroundColor: colors.timber,
+    backgroundColor: colors.river,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: radius.md,
   },
-  retryLabel: { color: colors.foam, fontWeight: "600" },
+  retryLabel: {
+    ...type.body,
+    color: colors.foam,
+    fontWeight: "700",
+  },
 });
