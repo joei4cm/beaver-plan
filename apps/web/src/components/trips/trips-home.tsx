@@ -361,7 +361,7 @@ export function TripsHome({ locale }: Props) {
       </section>
 
       <section className="mt-20" aria-labelledby="trips-templates-heading">
-        <header className="animate-rise mb-8">
+        <header className="animate-rise mb-6">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
             {t(locale, "trips.templatesEyebrow")}
           </p>
@@ -369,90 +369,120 @@ export function TripsHome({ locale }: Props) {
             id="trips-templates-heading"
             className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
           >
-            {t(locale, "trips.templates")}
+            {showTemplatesEmpty && !loading
+              ? t(locale, "trips.templatesEmpty")
+              : t(locale, "trips.templates")}
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-            {t(locale, "trips.templatesSupport")}
+            {showTemplatesEmpty && !loading
+              ? t(locale, "trips.templatesEmptyCta")
+              : t(locale, "trips.templatesSupport")}
           </p>
         </header>
-
-        <SoftFailNotice open={templatesSoft && !loading} className="mb-6">
-          {t(locale, "trips.templatesSoftOffline")}
-        </SoftFailNotice>
 
         {loading ? (
           <TemplatesListSkeleton />
         ) : showTemplatesEmpty ? (
-          <div className="animate-fade max-w-lg py-2">
-            <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-              {t(locale, "trips.templatesEmpty")}
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              {t(locale, "trips.templatesEmptyCta")}
-            </p>
+          <div className="animate-fade">
+            <SoftFailNotice open={templatesSoft} className="mb-6">
+              {t(locale, "trips.templatesSoftOffline")}
+            </SoftFailNotice>
             <Link
               href="/trips/new"
-              className="mt-7 inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              className="inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "trips.new")}
             </Link>
           </div>
         ) : (
-          <ul
-            className="space-y-0"
-            role="list"
-            aria-label={t(locale, "trips.templates")}
-          >
-            {templates.map((tpl, index) => {
-              const title = tpl.title[locale] ?? tpl.title["zh-CN"];
-              const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
-              const busy = creatingId === tpl.id;
-              return (
-                <li
-                  key={tpl.id}
-                  className="animate-rise group grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] py-7 last:border-b sm:grid-cols-[auto_1fr_auto] sm:gap-8"
-                  style={{ animationDelay: `${index * 55 + 40}ms` }}
-                >
-                  <IndexMark n={index + 1} />
-                  <div className="min-w-0">
-                    <span className="font-display text-xl font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl">
-                      {title}
-                    </span>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
-                      {desc}
-                    </p>
-                    <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
-                      {tpl.destination} · {tpl.dayCount}{" "}
-                      {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
-                      {t(locale, "trips.stopUnit")}
-                    </p>
-                  </div>
-                  <div
-                    className="col-span-2 flex shrink-0 flex-col gap-2 sm:col-span-1 sm:flex-row sm:items-center"
-                    role="group"
-                    aria-label={title}
+          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+            {/* Playbooks chrome — azure rail · count · SoftFailNotice · #46 */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "trips.templatesRail")}
+                </span>
+                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                  {t(locale, "trips.templatesCount").replace(
+                    "{n}",
+                    String(templates.length),
+                  )}
+                </span>
+              </div>
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  templatesSoft
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {templatesSoft
+                  ? t(locale, "trips.templatesSeeded")
+                  : t(locale, "trips.templatesCatalog")}
+              </span>
+            </header>
+
+            <SoftFailNotice open={templatesSoft} compact>
+              {t(locale, "trips.templatesSoftOffline")}
+            </SoftFailNotice>
+
+            <ul
+              className="space-y-0"
+              role="list"
+              aria-label={t(locale, "trips.templates")}
+            >
+              {templates.map((tpl, index) => {
+                const title = tpl.title[locale] ?? tpl.title["zh-CN"];
+                const desc =
+                  tpl.description[locale] ?? tpl.description["zh-CN"];
+                const busy = creatingId === tpl.id;
+                return (
+                  <li
+                    key={tpl.id}
+                    className="animate-rise group grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] px-4 py-6 bp-transition first:border-t-0 hover:bg-mist/25 sm:grid-cols-[auto_1fr_auto] sm:gap-8 sm:px-5 sm:py-7"
+                    style={{ animationDelay: `${index * 55 + 40}ms` }}
                   >
-                    <button
-                      type="button"
-                      disabled={busy || Boolean(creatingId)}
-                      onClick={() => void createFromTemplate(tpl.id)}
-                      className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                    <IndexMark n={index + 1} />
+                    <div className="min-w-0">
+                      <span className="font-display text-xl font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl">
+                        {title}
+                      </span>
+                      <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                        {desc}
+                      </p>
+                      <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
+                        {tpl.destination} · {tpl.dayCount}{" "}
+                        {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
+                        {t(locale, "trips.stopUnit")}
+                      </p>
+                    </div>
+                    <div
+                      className="col-span-2 flex shrink-0 flex-col gap-2 sm:col-span-1 sm:flex-row sm:items-center"
+                      role="group"
+                      aria-label={title}
                     >
-                      {busy
-                        ? t(locale, "trips.creating")
-                        : t(locale, "trips.useTemplate")}
-                    </button>
-                    <Link
-                      href={`/trips/new?template=${tpl.id}`}
-                      className="rounded-bp border border-river/40 px-3 py-2.5 text-center text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-                    >
-                      {t(locale, "trips.customize")}
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                      <button
+                        type="button"
+                        disabled={busy || Boolean(creatingId)}
+                        onClick={() => void createFromTemplate(tpl.id)}
+                        className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                      >
+                        {busy
+                          ? t(locale, "trips.creating")
+                          : t(locale, "trips.useTemplate")}
+                      </button>
+                      <Link
+                        href={`/trips/new?template=${tpl.id}`}
+                        className="rounded-bp border border-river/35 px-3 py-2.5 text-center text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                      >
+                        {t(locale, "trips.customize")}
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
     </div>
