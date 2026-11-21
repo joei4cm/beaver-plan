@@ -394,10 +394,11 @@ export default function JournalScreen() {
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
   /**
-   * Compose SoftFailNotice chrome (BEA-273 after web #110/#156 / Expo #113):
-   * azure rail · soft badge · compact SoftFail under rail · tip-011 SheetPresence ·
-   * StyleSheet.flatten. Compose owns soft-fail so list yields (no double depth).
-   * Soft copy never timber / Failed to fetch.
+   * Compose SoftFailNotice depth (BEA-322 after #204 / BEA-273):
+   * azure Compose rail · Soft media badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
+   * Compose owns soft-fail so list yields (no double depth with nested SoftFail).
+   * SoftFail copy always composeSoftFail — never timber / Failed to fetch.
    */
   const composeOwnsSoft = composeSoftFail;
   const showComposeSoftFail = composeOwnsSoft;
@@ -407,6 +408,8 @@ export default function JournalScreen() {
     softNotice && !isDeviceOnline()
       ? t(locale, "journal.softOffline")
       : t(locale, "journal.demoNotice");
+  /** Compose SoftFail copy owned by azure rail — never inherit noise / timber. */
+  const composeSoftCopy = t(locale, "journal.composeSoftFail");
   const hardComposeError =
     error && !isNoiseError(new Error(error)) ? error : null;
 
@@ -693,15 +696,21 @@ export default function JournalScreen() {
             </View>
 
             {/*
-              Compose SoftFail chrome (BEA-273 after web #110/#156 / Expo #113):
-              foam compose · azure head · soft badge · compact SoftFail under rail ·
-              tip-011 SheetPresence — never timber / Failed to fetch.
+              Compose SoftFail depth (BEA-322 after #204 / BEA-273):
+              foam compose · azure head · Soft media badge · softSupport ·
+              compact SoftFail mist band · tip-011 mist-wash body —
+              never timber / Failed to fetch. List SoftFail yields while compose owns.
             */}
             <View
               style={styles.compose}
               accessibilityLabel={t(locale, "journal.compose")}
             >
-              <View style={styles.composeHeader}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.composeHeader,
+                  showComposeSoftFail ? styles.composeHeaderSoft : null,
+                ])}
+              >
                 <View style={styles.composeHeaderTop}>
                   <View style={styles.composeHeaderTitleRow}>
                     <Text style={styles.composeEyebrow}>
@@ -720,13 +729,19 @@ export default function JournalScreen() {
                   ) : null}
                 </View>
                 <Text style={styles.composeHint}>
-                  {t(locale, "journal.composeHint")}
+                  {showComposeSoftFail
+                    ? t(locale, "journal.composeSoftSupport")
+                    : t(locale, "journal.composeHint")}
                 </Text>
               </View>
 
-              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-              <SoftFailNotice open={showComposeSoftFail} compact>
-                {t(locale, "journal.composeSoftFail")}
+              {/* Compact SoftFail mist band under azure Compose rail — never timber. */}
+              <SoftFailNotice
+                open={showComposeSoftFail}
+                compact
+                style={styles.composeSoftFail}
+              >
+                {composeSoftCopy}
               </SoftFailNotice>
 
               <SheetPresence
@@ -734,7 +749,10 @@ export default function JournalScreen() {
                 key={`compose-body-${dayId ?? "all"}`}
                 rise={10}
                 delayMs={80}
-                style={styles.composeBody}
+                style={StyleSheet.flatten([
+                  styles.composeBody,
+                  showComposeSoftFail ? styles.composeBodyWash : null,
+                ])}
                 accessibilityLabel={t(locale, "journal.compose")}
               >
                 <Text style={styles.bindLabel}>
@@ -1259,6 +1277,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
+  /** Softer azure rail wash while SoftFail owns Compose. */
+  composeHeaderSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   composeHeaderTop: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1308,11 +1330,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: colors.inkSoft,
+    flexShrink: 1,
+  },
+  /** Mist SoftFail strip under azure Compose rail — border-b before tip-011 body. */
+  composeSoftFail: {
+    marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
   },
   composeBody: {
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 18,
+  },
+  /** Mist wash on tip-011 compose body while SoftFail owns the Compose rail. */
+  composeBodyWash: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   bindLabel: {
     ...type.body,

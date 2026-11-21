@@ -528,6 +528,7 @@
   "journal.softOffline": "Reading the local sample journal while the API is unreachable.",
   "journal.composeSoftFail": "Media / journal API offline or keys absent — captions and photo frames stay local until Neon/R2 are live. Never a Failed to fetch crash.",
   "journal.composeSoftBadge": "Soft media",
+  "journal.composeSoftSupport": "Soft compose — SoftFail while media / journal API or keys are unset.",
   "journal.demoBadge": "Sample journal",
   "journal.daySection": "Day {n}",
   "journal.listEyebrow": "Entries",
