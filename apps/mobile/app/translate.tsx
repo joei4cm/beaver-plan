@@ -204,27 +204,28 @@ export default function TranslateScreen() {
   const talkSoftSupport = t(uiLocale, "translate.talkSupport");
 
   /**
-   * Expo Lens SoftFailNotice depth (BEA-308 after #180 / Dual SoftFail #202):
-   * foam dual rail · azure head · Soft lens badge · softSupport ·
+   * Expo translate dual SoftFailNotice depth (BEA-335 after #202 / copy #219):
+   * foam dual rail · azure head · Soft dual badge · softSupport ·
    * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
    * SheetPresence stage · StyleSheet.flatten. Soft-fail never timber /
-   * Failed to fetch. Hero SoftFail yields while Lens owns soft-fail
-   * (no double depth). SoftFail copy always lensSoftFail / permission /
-   * softOffline (never inherit softNotice timber).
+   * Failed to fetch. Yields to Talk SoftFail (#249) on conversation tab;
+   * Lens SoftFail (#237) SoftFailNotice display yields while Dual SoftFail
+   * owns dual SoftFail chrome (no double depth). SoftFail copy always
+   * dualSoftFail / permission / softOffline (never inherit softNotice timber).
    */
-  const lensSoftOpen =
+  const dualSoftOpen =
     tab === "camera" && (isDemo || camDenied || Boolean(error) || softNotice);
-  /** SoftFail copy owned by Lens chrome — never inherit softNotice / timber. */
-  const lensSoftCopy = softNotice && !online
+  /** SoftFail copy owned by Dual chrome — never inherit softNotice / timber. */
+  const dualSoftCopy = softNotice && !online
     ? t(uiLocale, "translate.softOffline")
     : isDemo || (error && isNoiseError(new Error(error)))
-      ? t(uiLocale, "translate.lensSoftFail")
+      ? t(uiLocale, "translate.dualSoftFail")
       : camDenied
         ? t(uiLocale, "translate.permissionCamera")
         : error
           ? t(uiLocale, "translate.error")
-          : t(uiLocale, "translate.lensSoftFail");
-  const lensSoftSupport = t(uiLocale, "translate.lensSupport");
+          : t(uiLocale, "translate.dualSoftFail");
+  const dualSoftSupport = t(uiLocale, "translate.dualSupport");
 
   useEffect(() => {
     let alive = true;
@@ -793,9 +794,9 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {/* Hero SoftFail yields while empty / Talk / Lens (#237) own soft-fail — no double depth. */}
+          {/* Hero SoftFail yields while empty / Talk / Dual (#335) own soft-fail — no double depth. */}
           <SoftFailNotice
-            open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !lensSoftOpen}
+            open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !dualSoftOpen}
             style={styles.heroSoftNotice}
           >
             {softNotice && !online
@@ -1282,14 +1283,15 @@ export default function TranslateScreen() {
             accessibilityLabel={t(uiLocale, "translate.mode.camera")}
           >
             {/*
-              Lens SoftFail depth (BEA-308 after #180):
-              Soft lens · softSupport · mist SoftFail band · tip-011 mist-wash
-              stage — never timber / Failed to fetch.
+              Dual SoftFail depth (BEA-335 after #202 / #219):
+              Soft dual · softSupport · mist SoftFail band · tip-011 mist-wash
+              stage — never timber / Failed to fetch. Yields to Talk SoftFail
+              (#249); Lens SoftFail (#237) SoftFailNotice yields while Dual owns.
             */}
             <View
               style={StyleSheet.flatten([
                 styles.dualHead,
-                lensSoftOpen ? styles.dualHeadSoft : null,
+                dualSoftOpen ? styles.dualHeadSoft : null,
               ])}
             >
               <View style={styles.dualHeadTitles}>
@@ -1297,8 +1299,8 @@ export default function TranslateScreen() {
                   {t(uiLocale, "translate.mode.camera")}
                 </Text>
                 <Text style={styles.dualHint}>
-                  {lensSoftOpen
-                    ? lensSoftSupport
+                  {dualSoftOpen
+                    ? dualSoftSupport
                     : t(uiLocale, "translate.dualHint")}
                 </Text>
               </View>
@@ -1306,7 +1308,7 @@ export default function TranslateScreen() {
                 <View
                   style={StyleSheet.flatten([
                     styles.dualSoftBadgeWrap,
-                    lensSoftOpen
+                    dualSoftOpen
                       ? styles.dualSoftBadgeSoft
                       : styles.dualSoftBadgeLive,
                   ])}
@@ -1314,26 +1316,26 @@ export default function TranslateScreen() {
                   <Text
                     style={StyleSheet.flatten([
                       styles.dualSoftBadgeText,
-                      lensSoftOpen
+                      dualSoftOpen
                         ? styles.dualSoftBadgeTextSoft
                         : styles.dualSoftBadgeTextLive,
                     ])}
                   >
-                    {lensSoftOpen
-                      ? t(uiLocale, "translate.lensSoftBadge")
-                      : t(uiLocale, "translate.lensLiveBadge")}
+                    {dualSoftOpen
+                      ? t(uiLocale, "translate.dualSoftBadge")
+                      : t(uiLocale, "translate.dualLiveBadge")}
                   </Text>
                 </View>
               </View>
             </View>
 
-            {/* Compact SoftFail mist band under azure Lens rail — never timber. */}
+            {/* Compact SoftFail mist band under azure dual rail — never timber. */}
             <SoftFailNotice
-              open={lensSoftOpen && Boolean(lensSoftCopy)}
+              open={dualSoftOpen && Boolean(dualSoftCopy)}
               compact
               style={styles.dualSoftFail}
             >
-              {lensSoftCopy ?? ""}
+              {dualSoftCopy ?? ""}
             </SoftFailNotice>
 
             <SheetPresence
@@ -1342,14 +1344,14 @@ export default function TranslateScreen() {
               rise={12}
               style={StyleSheet.flatten([
                 styles.dualBody,
-                lensSoftOpen ? styles.dualBodySoft : null,
+                dualSoftOpen ? styles.dualBodySoft : null,
               ])}
               accessibilityLabel={t(uiLocale, "translate.dualHint")}
             >
               <View
                 style={StyleSheet.flatten([
                   styles.dualFrame,
-                  lensSoftOpen ? styles.dualFrameSoft : null,
+                  dualSoftOpen ? styles.dualFrameSoft : null,
                 ])}
               >
                 <View style={styles.dualStage}>
@@ -2349,7 +2351,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  /** Soft azure Lens rail wash when SoftFail owns depth (BEA-308). */
+  /** Soft azure dual rail wash when SoftFail owns depth (BEA-335). */
   dualHeadSoft: {
     backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
@@ -2398,7 +2400,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  /** Mist SoftFail strip under azure Lens rail — border-b before mist body. */
+  /** Mist SoftFail strip under azure dual rail — border-b before mist body. */
   dualSoftFail: {
     marginBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -2409,7 +2411,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
-  /** Mist-wash Lens stage body when SoftFail open (BEA-308 tip-011). */
+  /** Mist-wash dual stage body when SoftFail open (BEA-335 tip-011). */
   dualBodySoft: {
     backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
