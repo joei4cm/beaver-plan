@@ -397,3 +397,29 @@ export function TranslateStatusSkeleton() {
     </div>
   );
 }
+
+/** Tip 017 — conversation history rows while a turn is in flight. */
+export function TranslateHistorySkeleton({ rows = 2 }: { rows?: number }) {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="divide-y divide-[color:var(--bp-line)]"
+    >
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="grid gap-3 px-5 py-5 md:grid-cols-2 md:px-6">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-14 rounded-bp-xs" />
+            <Skeleton className="h-4 w-full max-w-[90%]" />
+            <Skeleton className="h-4 w-40 max-w-[70%]" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-16 rounded-bp-xs" />
+            <Skeleton className="h-6 w-full max-w-[85%]" />
+            <Skeleton className="h-6 w-48 max-w-[55%]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
