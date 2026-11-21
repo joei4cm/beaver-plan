@@ -24,7 +24,14 @@ type Props = {
   locale: Locale;
 };
 
-function formatTripMeta(trip: Trip, locale: Locale): string {
+function tripBadge(trip: Trip): "sample" | "local" | null {
+  if (trip.id === "sample-kyoto") return "sample";
+  if (getLocalTrip(trip.id)) return "local";
+  return null;
+}
+
+/** Destination · dates only — badge chips carry sample/local. */
+function formatTripMeta(trip: Trip): string {
   const parts: string[] = [];
   if (trip.destination) parts.push(trip.destination);
   if (trip.startDate) {
@@ -34,14 +41,10 @@ function formatTripMeta(trip: Trip, locale: Locale): string {
         : trip.startDate;
     parts.push(range);
   }
-  if (trip.id === "sample-kyoto") {
-    parts.push(t(locale, "trips.sampleBadge"));
-  } else if (getLocalTrip(trip.id)) {
-    parts.push(t(locale, "trips.localBadge"));
-  }
   return parts.join(" · ") || "—";
 }
 
+/** Playbooks editorial index. */
 function IndexMark({ n }: { n: number }) {
   return (
     <span
@@ -53,14 +56,48 @@ function IndexMark({ n }: { n: number }) {
   );
 }
 
+/** Trips list density — quieter mark, title leads hierarchy. */
+function DenseIndexMark({ n }: { n: number }) {
+  return (
+    <span
+      aria-hidden
+      className="w-8 shrink-0 self-start pt-0.5 font-display text-xl font-bold tabular-nums leading-none text-mist md:w-10 md:text-2xl"
+    >
+      {String(n).padStart(2, "0")}
+    </span>
+  );
+}
+
 /** Tip 015 — shared title node for trips → planner continuity. */
 function TripTitle({ tripId, title }: { tripId: string; title: string }) {
   return (
     <span
-      className="bp-vt-trip-title font-display text-xl font-semibold text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl"
+      className="bp-vt-trip-title font-display text-lg font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-xl"
       style={{ viewTransitionName: `bp-trip-${tripId}` }}
     >
       {title}
+    </span>
+  );
+}
+
+function TripBadgeChip({
+  kind,
+  locale,
+}: {
+  kind: "sample" | "local";
+  locale: Locale;
+}) {
+  return (
+    <span
+      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+        kind === "sample"
+          ? "bg-river/10 text-river"
+          : "bg-mist text-ink-soft"
+      }`}
+    >
+      {kind === "sample"
+        ? t(locale, "trips.sampleBadge")
+        : t(locale, "trips.localBadge")}
     </span>
   );
 }
@@ -181,6 +218,7 @@ export function TripsHome({ locale }: Props) {
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const showTemplatesEmpty = hydrated && templates.length === 0;
   const loading = pending && !hydrated;
+  const listSoft = Boolean(softNotice);
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -246,12 +284,15 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        <SoftFailNotice
-          open={!error && Boolean(softNotice) && !loading}
-          className="mb-6"
-        >
-          {softNotice ?? ""}
-        </SoftFailNotice>
+        {/* Empty path: SoftFailNotice under section header (no list sheet yet). */}
+        {showEmptyInvite || loading ? (
+          <SoftFailNotice
+            open={!error && Boolean(softNotice) && !loading}
+            className="mb-6"
+          >
+            {softNotice ?? ""}
+          </SoftFailNotice>
+        ) : null}
 
         {loading ? (
           <TripsListSkeleton />
@@ -273,90 +314,139 @@ export function TripsHome({ locale }: Props) {
             </div>
 
             {sampleTrips.length > 0 ? (
-              <div className="mt-12">
-                <p className="mb-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80">
+              <div className="mt-10">
+                <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80">
                   {t(locale, "trips.sampleEyebrow")}
                 </p>
-                <ul>
-                  {sampleTrips.map((trip, index) => (
-                    <li
-                      key={trip.id}
-                      className="animate-rise group border-t border-[color:var(--bp-line)] last:border-b"
-                      style={{ animationDelay: `${index * 50 + 40}ms` }}
-                    >
-                      <Link
-                        href={`/trips/${trip.id}`}
-                        className="flex items-baseline gap-4 py-6 bp-transition sm:gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                <ul className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+                  {sampleTrips.map((trip, index) => {
+                    const badge = tripBadge(trip);
+                    return (
+                      <li
+                        key={trip.id}
+                        className="animate-rise group border-t border-[color:var(--bp-line)] first:border-t-0"
+                        style={{ animationDelay: `${index * 50 + 40}ms` }}
                       >
-                        <IndexMark n={index + 1} />
-                        <div className="min-w-0">
-                          <TripTitle tripId={trip.id} title={trip.title} />
-                          <span className="mt-1 block text-sm text-ink-soft">
-                            {formatTripMeta(trip, locale)}
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
+                        <Link
+                          href={`/trips/${trip.id}`}
+                          className="flex items-start gap-3 px-4 py-4 bp-transition hover:bg-mist/25 sm:gap-5 sm:px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
+                        >
+                          <DenseIndexMark n={index + 1} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <TripTitle tripId={trip.id} title={trip.title} />
+                              {badge ? (
+                                <TripBadgeChip kind={badge} locale={locale} />
+                              ) : null}
+                            </div>
+                            <span className="mt-0.5 block text-xs leading-snug text-ink-soft/90">
+                              {formatTripMeta(trip)}
+                            </span>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ) : null}
           </div>
         ) : (
-          <ul>
-            {trips.map((trip, index) => {
-              const busy = dupBusyId === trip.id;
-              const journalOn = Boolean(copyJournalIds[trip.id]);
-              return (
-                <li
-                  key={trip.id}
-                  className="animate-rise group border-t border-[color:var(--bp-line)] last:border-b"
-                  style={{ animationDelay: `${index * 50 + 40}ms` }}
-                >
-                  <div className="flex flex-wrap items-center gap-4 py-6 sm:flex-nowrap sm:gap-6">
-                    <Link
-                      href={`/trips/${trip.id}`}
-                      className="flex min-w-0 flex-1 items-baseline gap-4 bp-transition sm:gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-                    >
-                      <IndexMark n={index + 1} />
-                      <div className="min-w-0">
-                        <TripTitle tripId={trip.id} title={trip.title} />
-                        <span className="mt-1 block text-sm text-ink-soft">
-                          {formatTripMeta(trip, locale)}
-                        </span>
-                      </div>
-                    </Link>
-                    <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                      <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-soft">
-                        <input
-                          type="checkbox"
-                          checked={journalOn}
-                          onChange={(e) =>
-                            setCopyJournalIds((prev) => ({
-                              ...prev,
-                              [trip.id]: e.target.checked,
-                            }))
-                          }
-                          className="accent-[color:var(--bp-river)]"
-                        />
-                        {t(locale, "trips.copyJournal")}
-                      </label>
-                      <button
-                        type="button"
-                        disabled={busy || Boolean(dupBusyId)}
-                        onClick={() => void duplicateTrip(trip.id)}
-                        className="rounded-bp border border-river/40 px-3 py-1.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+            {/* Trips list chrome — azure rail · count · SoftFailNotice · #46 density */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "trips.listRail")}
+                </span>
+                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                  {t(locale, "trips.listCount").replace(
+                    "{n}",
+                    String(trips.length),
+                  )}
+                </span>
+              </div>
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  listSoft
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {listSoft
+                  ? t(locale, "trips.listDemo")
+                  : t(locale, "trips.listLive")}
+              </span>
+            </header>
+
+            <SoftFailNotice
+              open={!error && Boolean(softNotice)}
+              compact
+            >
+              {softNotice ?? ""}
+            </SoftFailNotice>
+
+            <ul role="list" aria-label={t(locale, "trips.yours")}>
+              {trips.map((trip, index) => {
+                const busy = dupBusyId === trip.id;
+                const journalOn = Boolean(copyJournalIds[trip.id]);
+                const badge = tripBadge(trip);
+                return (
+                  <li
+                    key={trip.id}
+                    className="animate-rise group border-t border-[color:var(--bp-line)] first:border-t-0 bp-transition hover:bg-mist/25"
+                    style={{ animationDelay: `${index * 50 + 40}ms` }}
+                  >
+                    <div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap sm:gap-5 sm:px-5 sm:py-[1.125rem]">
+                      <Link
+                        href={`/trips/${trip.id}`}
+                        className="flex min-w-0 flex-1 items-start gap-3 bp-transition sm:gap-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                       >
-                        {busy
-                          ? t(locale, "trips.duplicating")
-                          : t(locale, "trips.duplicate")}
-                      </button>
+                        <DenseIndexMark n={index + 1} />
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <TripTitle tripId={trip.id} title={trip.title} />
+                            {badge ? (
+                              <TripBadgeChip kind={badge} locale={locale} />
+                            ) : null}
+                          </div>
+                          <span className="mt-0.5 block text-xs leading-snug text-ink-soft/90">
+                            {formatTripMeta(trip)}
+                          </span>
+                        </div>
+                      </Link>
+                      <div className="ml-auto flex shrink-0 flex-row flex-wrap items-center gap-x-3 gap-y-1.5 sm:ml-0 sm:flex-col sm:items-end sm:gap-1.5">
+                        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-ink-soft/80">
+                          <input
+                            type="checkbox"
+                            checked={journalOn}
+                            onChange={(e) =>
+                              setCopyJournalIds((prev) => ({
+                                ...prev,
+                                [trip.id]: e.target.checked,
+                              }))
+                            }
+                            className="size-3.5 accent-[color:var(--bp-river)]"
+                          />
+                          {t(locale, "trips.copyJournal")}
+                        </label>
+                        <button
+                          type="button"
+                          disabled={busy || Boolean(dupBusyId)}
+                          onClick={() => void duplicateTrip(trip.id)}
+                          className="rounded-bp-xs border border-river/30 px-2.5 py-1 text-xs font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        >
+                          {busy
+                            ? t(locale, "trips.duplicating")
+                            : t(locale, "trips.duplicate")}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
 
