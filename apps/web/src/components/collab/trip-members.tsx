@@ -321,48 +321,66 @@ export function TripMembersBar({
 
       <SheetPresence
         open={open}
-        className="mt-4 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
+        className="mt-4 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "collab.invite")}
       >
-        {/* Azure invite chrome — SoftFailNotice under header rail */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "collab.inviteEyebrow")}
-            </span>
-            <span className="text-[11px] font-medium text-ink-soft/80">
-              {t(locale, "collab.invite")}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {softOpen ? (
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
-                {t(locale, "collab.demoBadge")}
+        {/* Invite depth (BEA-232) — azure rail · SoftFail · mist-track code · tip-011 */}
+        <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "collab.inviteEyebrow")}
               </span>
-            ) : null}
-            {lastInvite ? (
-              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
-                {t(locale, `collab.role.${lastInvite.invite.role}`)}
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "collab.inviteSupport")}
               </span>
-            ) : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  softOpen
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {softOpen
+                  ? t(locale, "collab.demoBadge")
+                  : t(locale, "collab.inviteLiveBadge")}
+              </span>
+              {lastInvite ? (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                  {t(locale, `collab.role.${lastInvite.invite.role}`)}
+                </span>
+              ) : null}
+            </div>
           </div>
-        </div>
+        </header>
 
         <SoftFailNotice open={softOpen} compact>
           {inviteSoftCopy}
         </SoftFailNotice>
 
-        <div className="space-y-4 px-4 py-4">
+        <div className="space-y-4 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 py-4">
           {lastInvite ? (
-            <div className="space-y-3">
-              <div>
-                <p className="font-display text-base tracking-tight text-ink">
-                  {t(locale, "collab.shareHint")}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <code className="rounded-bp-sm bg-river/10 px-3 py-2 font-mono text-sm tracking-wider text-river-deep">
+            <div
+              className="animate-rise overflow-hidden rounded-bp-sm bg-gradient-to-br from-mist/45 via-mist/20 to-transparent p-3.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-4"
+              style={{ animationDelay: "40ms" }}
+            >
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+                {t(locale, "collab.inviteCodeEyebrow")}
+              </p>
+              <p
+                className="animate-rise mt-2 font-display text-base tracking-tight text-ink"
+                style={{ animationDelay: "80ms" }}
+              >
+                {t(locale, "collab.shareHint")}
+              </p>
+              <div
+                className="animate-rise mt-3 flex flex-wrap items-center gap-2.5"
+                style={{ animationDelay: "120ms" }}
+              >
+                <code className="rounded-bp-sm bg-river/10 px-3 py-2 font-mono text-sm tracking-wider text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {lastInvite.code}
                 </code>
                 <button
@@ -375,12 +393,17 @@ export function TripMembersBar({
                     : t(locale, "collab.copyLink")}
                 </button>
               </div>
-              <p className="break-all text-xs leading-relaxed text-ink-soft/80">
+              <p
+                className="animate-fade mt-2.5 break-all text-xs leading-relaxed text-ink-soft/80"
+                style={{ animationDelay: "160ms" }}
+              >
                 {lastInvite.inviteUrl}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-ink-soft">{t(locale, "collab.shareHint")}</p>
+            <p className="animate-fade text-sm text-ink-soft">
+              {t(locale, "collab.shareHint")}
+            </p>
           )}
         </div>
 

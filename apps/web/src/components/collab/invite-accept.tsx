@@ -35,8 +35,9 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Lumen invite accept sheet — azure header · SoftFailNotice · Join CTA,
- * SheetPresence (#69) + tip-011 settle (#46). Soft-fail never timber.
+ * Lumen invite accept depth (BEA-232): azure sheet rail · SoftFailNotice ·
+ * mist-track trip preview · tip-011 rise stagger · never timber for
+ * transport / demo soft-fail.
  */
 export function InviteAccept({
   code,
@@ -109,17 +110,18 @@ export function InviteAccept({
     (error && isPlannerNoiseError(new Error(error))
       ? t(locale, "invite.softOffline")
       : null);
+  const softOpen = Boolean(softCopy);
 
   return (
     <section className="relative mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-3xl flex-col justify-center px-6 py-16 md:px-10">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-90"
+        className="animate-drift pointer-events-none absolute inset-0 -z-10 opacity-90"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 70% 55% at 12% 0%, rgba(47,107,255,0.14), transparent 58%),
-            radial-gradient(ellipse 50% 40% at 88% 8%, rgba(96,165,250,0.12), transparent 52%),
-            linear-gradient(180deg, #dbe8ff 0%, transparent 70%)
+            radial-gradient(ellipse 72% 55% at 12% 0%, rgba(47,107,255,0.16), transparent 58%),
+            radial-gradient(ellipse 48% 38% at 90% 8%, rgba(96,165,250,0.14), transparent 52%),
+            linear-gradient(180deg, #dbe8ff 0%, transparent 68%)
           `,
         }}
       />
@@ -145,39 +147,47 @@ export function InviteAccept({
 
       <SheetPresence
         open={sheetOpen}
-        className="mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp"
-        style={{ animationDelay: "120ms" }}
+        className="mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+        style={{ animationDelay: "100ms" }}
         aria-label={t(locale, "invite.title")}
       >
-        {/* Azure hierarchy — eyebrow · title · soft/role badge · SoftFailNotice */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "invite.sheetEyebrow")}
-            </span>
-            <span className="text-[11px] font-medium text-ink-soft/80">
-              {t(locale, "invite.title")}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {softCopy ? (
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
-                {t(locale, "invite.softBadge")}
+        {/* Azure invite depth — eyebrow · support · Demo/Live · SoftFailNotice */}
+        <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "invite.sheetEyebrow")}
               </span>
-            ) : null}
-            {preview ? (
-              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
-                {t(locale, `collab.role.${preview.role}`)}
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "invite.sheetSupport")}
               </span>
-            ) : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  softOpen
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {softOpen
+                  ? t(locale, "invite.softBadge")
+                  : t(locale, "invite.liveBadge")}
+              </span>
+              {preview ? (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                  {t(locale, `collab.role.${preview.role}`)}
+                </span>
+              ) : null}
+            </div>
           </div>
-        </div>
+        </header>
 
-        <SoftFailNotice open={Boolean(softCopy)} compact>
+        <SoftFailNotice open={softOpen} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div className="space-y-5 px-5 py-5">
+        <div className="space-y-5 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-5 py-5">
           {hardError ? (
             <p className="text-sm text-timber" role="alert">
               {hardError}
@@ -186,26 +196,44 @@ export function InviteAccept({
 
           {preview ? (
             <>
-              <div className="space-y-1.5">
-                <p className="text-sm text-ink-soft">
+              <div
+                className="animate-rise overflow-hidden rounded-bp-sm bg-gradient-to-br from-mist/45 via-mist/20 to-transparent p-4 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-5"
+                style={{ animationDelay: "40ms" }}
+              >
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+                  {t(locale, "invite.previewEyebrow")}
+                </p>
+                <p
+                  className="animate-rise mt-3 text-sm text-ink-soft"
+                  style={{ animationDelay: "80ms" }}
+                >
                   {preview.trip.destination ?? t(locale, "planner.trip")}
                 </p>
-                <p className="font-display text-3xl tracking-tight text-ink">
+                <p
+                  className="animate-rise mt-1 font-display text-3xl tracking-tight text-ink"
+                  style={{ animationDelay: "120ms" }}
+                >
                   {preview.trip.title}
                 </p>
-                <p className="pt-1 text-sm text-ink-soft">
+                <p
+                  className="animate-rise pt-2 text-sm text-ink-soft"
+                  style={{ animationDelay: "160ms" }}
+                >
                   {t(locale, "invite.asRole")}{" "}
                   <span className="font-semibold text-river">
                     {t(locale, `collab.role.${preview.role}`)}
                   </span>
                   {" · "}
-                  <code className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 font-mono tracking-wider text-river-deep">
+                  <code className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 font-mono tracking-wider text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                     {preview.code}
                   </code>
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div
+                className="animate-rise flex flex-wrap items-center gap-3"
+                style={{ animationDelay: "200ms" }}
+              >
                 <button
                   type="button"
                   disabled={joining}
@@ -225,7 +253,10 @@ export function InviteAccept({
                   </Link>
                 )}
               </div>
-              <p className="text-xs leading-relaxed text-ink-soft/80">
+              <p
+                className="animate-fade text-xs leading-relaxed text-ink-soft/80"
+                style={{ animationDelay: "240ms" }}
+              >
                 {t(locale, "invite.demoNote")}
               </p>
             </>
