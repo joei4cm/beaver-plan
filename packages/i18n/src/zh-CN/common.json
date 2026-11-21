@@ -266,6 +266,8 @@
   "share.loading": "准备模板…",
   "share.rendering": "渲染中…",
   "share.pickTemplate": "选择模板",
+  "share.pickTemplateSupport": "五款光途卡片 — 竖图适合朋友圈，方图适合小红书。选中的模板会记为默认。",
+  "share.selected": "已选",
   "share.lightEdit": "轻量编辑",
   "share.coverTitle": "封面标题",
   "share.coverSubtitle": "副标题",

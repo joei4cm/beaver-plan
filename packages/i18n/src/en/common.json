@@ -266,6 +266,8 @@
   "share.loading": "Preparing templates…",
   "share.rendering": "Rendering…",
   "share.pickTemplate": "Choose template",
+  "share.pickTemplateSupport": "Five Lumen Route cards — portrait for Moments, square for Xiaohongshu. Your pick becomes the default.",
+  "share.selected": "Selected",
   "share.lightEdit": "Light edit",
   "share.coverTitle": "Cover title",
   "share.coverSubtitle": "Subtitle",
