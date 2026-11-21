@@ -145,11 +145,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       (error && isPlannerNoiseError(new Error(error))) ||
       (demoShell && (dayEmpty || dayLegs.length > 0 || dayStops.length > 0)),
   );
-  const listSoftCopy =
-    softNotice ??
-    (dayEmpty
-      ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.transfer.demoNotice"));
+  /** Empty day prefers emptySoftFail over generic demo/transit soft copy. */
+  const listSoftCopy = dayEmpty
+    ? softNotice &&
+      softNotice !== t(locale, "planner.demoLocal") &&
+      softNotice !== t(locale, "planner.transfer.demoNotice")
+      ? softNotice
+      : t(locale, "planner.emptySoftFail")
+    : (softNotice ?? t(locale, "planner.transfer.demoNotice"));
 
   useEffect(() => {
     if (!dayId) {
