@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { colors, radius } from "@beaver/ui-tokens";
 import { type } from "../theme";
 
@@ -17,6 +23,7 @@ type Props = {
 /**
  * One muted Lumen Route notice for demo / keys-missing / API-absent soft-fail.
  * Mist wash + ink-soft copy — parity with web SoftFailNotice (#55 / #72 / #88).
+ * StyleSheet.flatten keeps RN Web Pressable/Link parents from choking on style arrays (#76).
  */
 export function SoftFailNotice({
   children,

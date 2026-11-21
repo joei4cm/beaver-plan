@@ -46,6 +46,7 @@ import {
   routeTripDay,
   searchPlaces,
 } from "../../src/api";
+import { BookingPanel } from "../../src/components/booking-panel";
 import { DayFillPanel } from "../../src/components/day-fill-panel";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { TripMap } from "../../src/components/trip-map";
@@ -753,17 +754,14 @@ export default function TripDetailScreen() {
             </View>
           </Animated.View>
 
-          {softNotice ? (
-            <Animated.View style={[styles.softBanner, riseStyle]}>
-              <Pressable
-                onPress={() => setSoftNotice(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss"
-              >
-                <Text style={styles.softText}>{softNotice}</Text>
-              </Pressable>
-            </Animated.View>
-          ) : null}
+          <Animated.View style={riseStyle}>
+            <SoftFailNotice
+              open={Boolean(softNotice)}
+              style={styles.softBanner}
+            >
+              {softNotice ?? ""}
+            </SoftFailNotice>
+          </Animated.View>
 
           <Animated.View style={sheetStyle}>
             <TripMap
@@ -1088,6 +1086,33 @@ export default function TripDetailScreen() {
                   </Pressable>
                 </View>
               )}
+
+              <View style={styles.bookingPanelWrap}>
+                <BookingPanel
+                  tripId={tripId}
+                  locale={locale}
+                  trip={trip}
+                  stop={
+                    selectedStopId
+                      ? (dayStops.find((s) => s.id === selectedStopId) ??
+                        dayStops[0] ??
+                        null)
+                      : (dayStops[0] ?? null)
+                  }
+                  destinationHint={trip.destination}
+                  defaultOpen
+                  onSaved={(nextStop) => {
+                    setStops((prev) =>
+                      prev.map((s) => (s.id === nextStop.id ? nextStop : s)),
+                    );
+                    setTrip((prev) =>
+                      prev
+                        ? { ...prev, version: prev.version + 1 }
+                        : prev,
+                    );
+                  }}
+                />
+              </View>
             </View>
 
             <View style={styles.dayFillWrap}>
@@ -1569,18 +1594,10 @@ const styles = StyleSheet.create({
   },
   softBanner: {
     marginBottom: 14,
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(47, 107, 255, 0.35)",
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
   },
-  softText: {
-    ...type.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.inkSoft,
+  bookingPanelWrap: {
+    paddingHorizontal: 12,
+    paddingBottom: 14,
   },
   errorBanner: {
     borderRadius: radius.sm,
