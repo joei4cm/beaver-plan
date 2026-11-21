@@ -7,29 +7,32 @@ export function Skeleton({ className = "" }: SkeletonProps) {
   return <div aria-hidden className={`bp-skeleton ${className}`} />;
 }
 
-/** Layout-matched trips index rows (number · title · meta · azure action). */
+/** Layout-matched trips index (soft-notice slot + number · title · meta · azure action). */
 export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <ul aria-busy="true" aria-live="polite" className="space-y-0">
-      {Array.from({ length: rows }).map((_, i) => (
-        <li
-          key={i}
-          className="border-t border-[color:var(--bp-line)] py-6 last:border-b"
-        >
-          <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap sm:gap-6">
-            <Skeleton className="h-8 w-10 shrink-0 md:h-9" />
-            <div className="min-w-0 flex-1 space-y-2.5">
-              <Skeleton className="h-6 w-48 max-w-[70%]" />
-              <Skeleton className="h-3.5 w-64 max-w-[90%]" />
+    <div aria-busy="true" aria-live="polite">
+      <Skeleton className="mb-6 h-12 w-full rounded-bp-sm" />
+      <ul className="space-y-0">
+        {Array.from({ length: rows }).map((_, i) => (
+          <li
+            key={i}
+            className="border-t border-[color:var(--bp-line)] py-6 last:border-b"
+          >
+            <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap sm:gap-6">
+              <Skeleton className="h-8 w-10 shrink-0 md:h-9" />
+              <div className="min-w-0 flex-1 space-y-2.5">
+                <Skeleton className="h-6 w-48 max-w-[70%]" />
+                <Skeleton className="h-3.5 w-64 max-w-[90%]" />
+              </div>
+              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-8 w-24 rounded-bp" />
+              </div>
             </div>
-            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-              <Skeleton className="h-3.5 w-40" />
-              <Skeleton className="h-8 w-24 rounded-bp" />
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
