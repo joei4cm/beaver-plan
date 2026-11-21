@@ -37,7 +37,59 @@ type Props = {
   progressLabel: string;
   focusLabel: string;
   liveBadge: string;
+  sheetEyebrow: string;
+  sheetSupport: string;
+  offlineBadge: string;
+  softLiveBadge: string;
 };
+
+/** SoftFail chrome strip — azure rail · Offline/Live · compact SoftFailNotice. */
+function ScrollSoftFailChrome({
+  softOpen,
+  sheetEyebrow,
+  sheetSupport,
+  offlineBadge,
+  softLiveBadge,
+  offlineNotice,
+  className,
+}: {
+  softOpen: boolean;
+  sheetEyebrow: string;
+  sheetSupport: string;
+  offlineBadge: string;
+  softLiveBadge: string;
+  offlineNotice: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft ${className ?? ""}`}
+      aria-label={sheetEyebrow}
+    >
+      <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            {sheetEyebrow}
+          </span>
+          <span className="text-[11px] leading-snug text-ink-soft/80">
+            {sheetSupport}
+          </span>
+        </div>
+        <span
+          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+            softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
+          }`}
+        >
+          {softOpen ? offlineBadge : softLiveBadge}
+        </span>
+      </header>
+      {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+      <SoftFailNotice open={softOpen} compact>
+        {offlineNotice}
+      </SoftFailNotice>
+    </div>
+  );
+}
 
 const ROUTE_PATHS = [
   "M36 148 C 90 100, 130 130, 180 88 S 270 40, 330 62",
@@ -190,8 +242,13 @@ function PlainHow({
   offlineNotice,
   stepEyebrow,
   focusLabel,
+  sheetEyebrow,
+  sheetSupport,
+  offlineBadge,
+  softLiveBadge,
 }: Omit<Props, "progressLabel" | "liveBadge">) {
   const online = useBrowserOnline();
+  const softOpen = !online;
   const reduced = usePrefersReducedMotion();
   const [focus, setFocus] = useState(0);
 
@@ -221,8 +278,16 @@ function PlainHow({
           </p>
         </header>
 
-        <div className="mt-8">
-          <SoftFailNotice open={!online}>{offlineNotice}</SoftFailNotice>
+        {/* SoftFail chrome strip — azure rail · Offline/Live · tip-011 (no floating notice) */}
+        <div className={reduced ? "mt-8" : "mt-8 animate-rise"}>
+          <ScrollSoftFailChrome
+            softOpen={softOpen}
+            sheetEyebrow={sheetEyebrow}
+            sheetSupport={sheetSupport}
+            offlineBadge={offlineBadge}
+            softLiveBadge={softLiveBadge}
+            offlineNotice={offlineNotice}
+          />
         </div>
 
         {/* Step focus rail — mist-track · azure select (depth craft) */}
@@ -316,9 +381,10 @@ function PlainHow({
 }
 
 /**
- * Tip 019 how-it-works deck — sticky throw cards.
- * Depth craft (BEA-231): mist-track step rail · sheet chrome · SoftFail · tip-011.
- * Throw math stays Tip 019 Standard; tip-011 reserved for chrome settles.
+ * Landing scroll SoftFailNotice chrome (BEA-270 after #163/#197):
+ * azure how-it-works SoftFail rail · Offline/Live badge · compact SoftFailNotice
+ * under rail · tip-019 throw deck unchanged · tip-011 chrome settles — SoftFail
+ * owned by the strip (no floating notice). Never timber / Failed to fetch.
  */
 export function LandingScrollDeck({
   title,
@@ -331,10 +397,15 @@ export function LandingScrollDeck({
   progressLabel,
   focusLabel,
   liveBadge,
+  sheetEyebrow,
+  sheetSupport,
+  offlineBadge,
+  softLiveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
   const pin = usePinEnabled(reduced);
   const online = useBrowserOnline();
+  const softOpen = !online;
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const [sectionHeight, setSectionHeight] = useState("220svh");
@@ -467,6 +538,10 @@ export function LandingScrollDeck({
         offlineNotice={offlineNotice}
         stepEyebrow={stepEyebrow}
         focusLabel={focusLabel}
+        sheetEyebrow={sheetEyebrow}
+        sheetSupport={sheetSupport}
+        offlineBadge={offlineBadge}
+        softLiveBadge={softLiveBadge}
       />
     );
   }
@@ -527,13 +602,23 @@ export function LandingScrollDeck({
           </p>
         </header>
 
+        {/*
+          Scroll SoftFail chrome (BEA-270 after #163/#197):
+          azure how-it-works rail · Offline/Live badge · compact SoftFailNotice —
+          tip-019 throw cards stay outside the strip; never timber.
+        */}
         <div
           className={`mb-4 w-full max-w-xl ${revealClass}`}
           style={reveal(50)}
         >
-          <SoftFailNotice open={!online} compact>
-            {offlineNotice}
-          </SoftFailNotice>
+          <ScrollSoftFailChrome
+            softOpen={softOpen}
+            sheetEyebrow={sheetEyebrow}
+            sheetSupport={sheetSupport}
+            offlineBadge={offlineBadge}
+            softLiveBadge={softLiveBadge}
+            offlineNotice={offlineNotice}
+          />
         </div>
 
         {/* Step focus rail — mist-track · jumps throw progress (tip-011 settle) */}
