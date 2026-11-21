@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,7 +34,7 @@ import {
   type QueuedTranslation,
   type TranslationLocale,
 } from "@beaver/core";
-import { brand, colors, radius } from "@beaver/ui-tokens";
+import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t, type MessageKey } from "@beaver/i18n";
 import {
   fetchPhrasebook,
@@ -43,7 +45,12 @@ import {
   type LiveTurnResponse,
   type TranslationStatus,
 } from "../src/api";
+import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
+import { type } from "../src/theme";
+
+/** Tip 011 — shared #46 rise easing (match Expo settings / trips). */
+const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
 const uiLocale = "zh-CN" as const;
 
@@ -108,6 +115,7 @@ export default function TranslateScreen() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [micDenied, setMicDenied] = useState(false);
   const [demoIndex, setDemoIndex] = useState(2);
   const [facing, setFacing] = useState<Facing>("back");
   const [ttsEnabled, setTtsEnabled] = useState(true);
@@ -118,6 +126,9 @@ export default function TranslateScreen() {
   const [camPermission, requestCamPermission] = useCameraPermissions();
   const recordingRef = useRef<Audio.Recording | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const draftRef = useRef<TextInput>(null);
+  const micRef = useRef<View>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const queueStore = useMemo(() => createMobileOfflineQueueStore(), []);
   const [partialText, setPartialText] = useState("");
   const [phrases, setPhrases] = useState<PhrasebookLookup[]>([]);
@@ -127,8 +138,39 @@ export default function TranslateScreen() {
   const partialTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sequenceRef = useRef(0);
   const seededPairRef = useRef("zh-CN|en");
+  const historyRise = useRef(new Animated.Value(0)).current;
 
   const isDemo = !status || status.mode === "demo" || softNotice;
+
+  useEffect(() => {
+    historyRise.setValue(0);
+    Animated.timing(historyRise, {
+      toValue: 1,
+      duration: motion.durationMdMs,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [historyRise, tab, sourceLocale, targetLocale]);
+
+  const historyRiseStyle = {
+    opacity: historyRise,
+    transform: [
+      {
+        translateY: historyRise.interpolate({
+          inputRange: [0, 1],
+          outputRange: [14, 0],
+        }),
+      },
+    ],
+  };
+
+  function focusComposer(mode: "mic" | "draft" = "mic") {
+    if (mode === "draft") {
+      draftRef.current?.focus();
+      return;
+    }
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }
 
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
@@ -328,12 +370,14 @@ export default function TranslateScreen() {
 
   async function startListening() {
     setError(null);
+    setMicDenied(false);
     setPartialText("");
     sequenceRef.current = 0;
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
-        setError(t(uiLocale, "translate.permissionMic"));
+        setMicDenied(true);
+        setSoftNotice(true);
         await localDemoTurn({});
         return;
       }
@@ -348,6 +392,7 @@ export default function TranslateScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
       setListening(true);
+      setMicDenied(false);
       if (partialTimerRef.current) clearInterval(partialTimerRef.current);
       partialTimerRef.current = setInterval(() => {
         const seq = sequenceRef.current++;
@@ -369,7 +414,8 @@ export default function TranslateScreen() {
           });
       }, 900);
     } catch {
-      setError(t(uiLocale, "translate.permissionMic"));
+      setMicDenied(true);
+      setSoftNotice(true);
       await localDemoTurn({});
     }
   }
@@ -526,6 +572,7 @@ export default function TranslateScreen() {
       <Stack.Screen options={{ title: t(uiLocale, "translate.title") }} />
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -577,11 +624,9 @@ export default function TranslateScreen() {
             )}
           </View>
           {isDemo ? (
-            <View style={styles.notice}>
-              <Text style={styles.noticeText}>
-                {t(uiLocale, "translate.demoNotice")}
-              </Text>
-            </View>
+            <SoftFailNotice style={styles.heroSoftNotice}>
+              {t(uiLocale, "translate.demoNotice")}
+            </SoftFailNotice>
           ) : null}
         </View>
 
@@ -635,8 +680,6 @@ export default function TranslateScreen() {
           />
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
         {tab === "conversation" ? (
           <View style={styles.panel}>
             {(listening || partialText) ? (
@@ -645,37 +688,85 @@ export default function TranslateScreen() {
               </Text>
             ) : null}
 
-            <View style={styles.transcript}>
-              {turns.length === 0 ? (
-                <Text style={styles.empty}>
-                  {t(uiLocale, "translate.empty")}
-                </Text>
-              ) : (
-                turns.map((row) => (
-                  <View key={row.id} style={styles.turnRow}>
-                    <View style={styles.turnCol}>
-                      <Text style={styles.turnMeta}>
-                        {t(uiLocale, "translate.source")}
-                      </Text>
-                      <Text style={styles.bubbleSource}>{row.sourceText}</Text>
-                    </View>
-                    <View style={styles.turnCol}>
-                      <Text style={styles.turnMetaTarget}>
-                        {t(uiLocale, "translate.target")}
-                      </Text>
-                      <Text style={styles.bubbleTarget}>
-                        {row.translatedText}
-                      </Text>
-                    </View>
-                    {row.mode === "offline" ? (
-                      <Text style={styles.offlineTag}>
-                        {t(uiLocale, "translate.offlineBadge")}
-                      </Text>
-                    ) : null}
+            {micDenied || error ? (
+              <SoftFailNotice style={styles.historySoftFail}>
+                {micDenied
+                  ? t(uiLocale, "translate.permissionMic")
+                  : (error ?? t(uiLocale, "translate.error"))}
+              </SoftFailNotice>
+            ) : null}
+
+            <Animated.View
+              style={[styles.historyStage, historyRiseStyle]}
+              accessibilityLabel={t(uiLocale, "translate.history")}
+            >
+              <View style={styles.historyHead}>
+                <View style={styles.historyHeadCopy}>
+                  <Text style={styles.historyEyebrow}>
+                    {t(uiLocale, "translate.history")}
+                  </Text>
+                  <Text style={styles.historyHint}>
+                    {t(uiLocale, "translate.historyHint")}
+                  </Text>
+                </View>
+                {turns.length > 0 ? (
+                  <View style={styles.historyCountChip}>
+                    <Text style={styles.historyCountText}>
+                      {t(uiLocale, "translate.historyCount").replace(
+                        "{n}",
+                        String(turns.length),
+                      )}
+                    </Text>
                   </View>
-                ))
+                ) : null}
+              </View>
+
+              {busy && turns.length === 0 ? (
+                <HistorySkeleton rows={2} />
+              ) : turns.length === 0 ? (
+                <View style={styles.historyEmpty}>
+                  <Text style={styles.historyEmptyTitle}>
+                    {t(uiLocale, "translate.empty")}
+                  </Text>
+                  <Text style={styles.historyEmptyHint}>
+                    {t(uiLocale, "translate.emptyHint")}
+                  </Text>
+                  <View style={styles.historyEmptyCtas}>
+                    <Pressable
+                      style={styles.emptyCtaPrimary}
+                      onPress={() => focusComposer("mic")}
+                    >
+                      <Text style={styles.emptyCtaPrimaryLabel}>
+                        {t(uiLocale, "translate.emptyCta")}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.emptyCtaSecondary, busy && styles.disabled]}
+                      onPress={() => void runTurn({})}
+                      disabled={busy}
+                    >
+                      <Text style={styles.emptyCtaSecondaryLabel}>
+                        {t(uiLocale, "translate.nextDemo")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View>
+                  {busy ? <HistorySkeleton rows={1} /> : null}
+                  {turns.map((row, idx) => (
+                    <HistoryTurn
+                      key={row.id}
+                      row={row}
+                      index={idx}
+                      onSpeak={() =>
+                        void speakTranslation(row.translatedText, targetLocale)
+                      }
+                    />
+                  ))}
+                </View>
               )}
-            </View>
+            </Animated.View>
 
             <View style={styles.phraseHead}>
               <Text style={styles.phraseTitle}>
@@ -763,6 +854,7 @@ export default function TranslateScreen() {
 
             <View style={styles.compose}>
               <TextInput
+                ref={draftRef}
                 value={draft}
                 onChangeText={setDraft}
                 placeholder={t(uiLocale, "translate.typeHint")}
@@ -785,6 +877,7 @@ export default function TranslateScreen() {
 
             <View style={styles.micRow}>
               <Pressable
+                ref={micRef}
                 onPressIn={() => void startListening()}
                 onPressOut={() => void stopListening()}
                 style={[
@@ -970,6 +1063,120 @@ export default function TranslateScreen() {
   );
 }
 
+function HistorySkeleton({ rows = 2 }: { rows?: number }) {
+  return (
+    <View accessibilityRole="progressbar" style={styles.historySkeleton}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <View key={i} style={styles.historySkeletonRow}>
+          <View style={styles.historySkeletonCol}>
+            <View style={styles.skeletonBarSm} />
+            <View style={styles.skeletonBarMd} />
+            <View style={styles.skeletonBarSmWide} />
+          </View>
+          <View style={styles.historySkeletonCol}>
+            <View style={styles.skeletonBarSm} />
+            <View style={styles.skeletonBarLg} />
+            <View style={styles.skeletonBarMd} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function HistoryTurn({
+  row,
+  index,
+  onSpeak,
+}: {
+  row: TurnRow;
+  index: number;
+  onSpeak: () => void;
+}) {
+  const enter = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enter.setValue(0);
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: motion.durationSmMs,
+      delay: Math.min(index, 4) * 40,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [enter, index, row.id]);
+
+  const enterStyle = {
+    opacity: enter,
+    transform: [
+      {
+        translateY: enter.interpolate({
+          inputRange: [0, 1],
+          outputRange: [10, 0],
+        }),
+      },
+    ],
+  };
+
+  const modeLabel =
+    row.mode === "live"
+      ? t(uiLocale, "translate.liveBadge")
+      : row.mode === "offline"
+        ? t(uiLocale, "translate.offlineBadge")
+        : t(uiLocale, "translate.demoBadge");
+
+  return (
+    <Animated.View style={[styles.turnRow, enterStyle]}>
+      <View style={styles.turnMetaRow}>
+        <View
+          style={[
+            styles.modeBadge,
+            row.mode === "live"
+              ? styles.modeBadgeLive
+              : row.mode === "offline"
+                ? styles.modeBadgeOffline
+                : styles.modeBadgeDemo,
+          ]}
+        >
+          <Text
+            style={[
+              styles.modeBadgeText,
+              row.mode === "live"
+                ? styles.modeBadgeTextLive
+                : row.mode === "offline"
+                  ? styles.modeBadgeTextOffline
+                  : styles.modeBadgeTextDemo,
+            ]}
+          >
+            {modeLabel}
+          </Text>
+        </View>
+        {row.translatedText ? (
+          <Pressable onPress={onSpeak} hitSlop={8}>
+            <Text style={styles.speakAction}>
+              {t(uiLocale, "translate.speak")}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+      <View style={styles.turnCols}>
+        <View style={styles.turnCol}>
+          <Text style={styles.turnMeta}>
+            {t(uiLocale, "translate.source")}
+          </Text>
+          <Text style={styles.bubbleSource}>{row.sourceText}</Text>
+        </View>
+        <View style={styles.turnCol}>
+          <Text style={styles.turnMetaTarget}>
+            {t(uiLocale, "translate.target")}
+          </Text>
+          <Text style={styles.bubbleTarget}>{row.translatedText}</Text>
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
 function LocalePicker({
   label,
   value,
@@ -1095,19 +1302,8 @@ const styles = StyleSheet.create({
     height: 22,
     backgroundColor: colors.mist,
   },
-  notice: {
+  heroSoftNotice: {
     marginTop: 12,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.22)",
-    backgroundColor: "rgba(47, 107, 255, 0.07)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  noticeText: {
-    color: colors.riverDeep,
-    fontSize: 13,
-    lineHeight: 18,
   },
   tabs: {
     flexDirection: "row",
@@ -1187,26 +1383,192 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   swapLabel: { fontSize: 16, color: colors.foam, fontWeight: "700" },
-  error: {
-    marginHorizontal: 20,
-    marginTop: 8,
-    color: colors.timber,
-    fontSize: 13,
-  },
   panel: { marginTop: 8 },
-  transcript: { paddingHorizontal: 16, paddingBottom: 8, gap: 0 },
-  empty: {
-    marginTop: 24,
+  historySoftFail: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  historyStage: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    overflow: "hidden",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  historyHead: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.6)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  historyHeadCopy: { flex: 1, minWidth: 160, gap: 4 },
+  historyEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
+  },
+  historyHint: {
+    ...type.body,
+    color: colors.inkSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  historyCountChip: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  historyCountText: {
+    ...type.body,
+    color: colors.riverDeep,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  historyEmpty: {
+    paddingHorizontal: 16,
+    paddingVertical: 28,
+    gap: 10,
+    maxWidth: 420,
+  },
+  historyEmptyTitle: {
+    ...type.display,
+    color: colors.ink,
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+  },
+  historyEmptyHint: {
+    ...type.body,
     color: colors.inkSoft,
     fontSize: 14,
     lineHeight: 20,
   },
+  historyEmptyCtas: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  emptyCtaPrimary: {
+    borderRadius: radius.md,
+    backgroundColor: colors.river,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  emptyCtaPrimaryLabel: {
+    color: colors.foam,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  emptyCtaSecondary: {
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  emptyCtaSecondaryLabel: {
+    color: colors.river,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  historySkeleton: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  historySkeletonRow: {
+    flexDirection: "row",
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  historySkeletonCol: { flex: 1, gap: 8 },
+  skeletonBarSm: {
+    height: 10,
+    width: 56,
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+  },
+  skeletonBarSmWide: {
+    height: 12,
+    width: "55%",
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+  },
+  skeletonBarMd: {
+    height: 12,
+    width: "88%",
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+  },
+  skeletonBarLg: {
+    height: 18,
+    width: "78%",
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+  },
   turnRow: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  turnMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     gap: 8,
   },
+  modeBadge: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  modeBadgeLive: { backgroundColor: colors.river },
+  modeBadgeOffline: { backgroundColor: colors.mist },
+  modeBadgeDemo: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
+  modeBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  modeBadgeTextLive: { color: colors.foam },
+  modeBadgeTextOffline: { color: colors.inkSoft },
+  modeBadgeTextDemo: { color: colors.riverDeep },
+  speakAction: {
+    marginLeft: "auto",
+    color: colors.river,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  turnCols: { gap: 12 },
   turnCol: { gap: 4 },
   turnMeta: {
     fontSize: 10,
@@ -1222,19 +1584,19 @@ const styles = StyleSheet.create({
     color: colors.river,
     fontWeight: "700",
   },
-  bubbleSource: { color: colors.inkSoft, fontSize: 13, lineHeight: 18 },
+  bubbleSource: {
+    ...type.body,
+    color: colors.inkSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   bubbleTarget: {
+    ...type.display,
     color: colors.ink,
     fontSize: 18,
     fontWeight: "600",
     lineHeight: 24,
     letterSpacing: -0.2,
-  },
-  offlineTag: {
-    color: colors.timber,
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: "uppercase",
   },
   compose: {
     flexDirection: "row",
