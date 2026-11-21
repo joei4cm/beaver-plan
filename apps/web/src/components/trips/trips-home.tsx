@@ -209,21 +209,25 @@ export function TripsHome({ locale }: Props) {
   const loading = pending && !hydrated;
   const listSoft = Boolean(softNotice);
   /**
-   * Empty SoftFailNotice depth (BEA-291 after #175/#201):
-   * empty owns compact SoftFail under azure Start rail · Soft empty badge ·
-   * emptySupport · emptySoftFail copy (never inherit list softNotice) ·
-   * SheetPresence CTAs · tip-011 (#46). List SoftFail yields while empty
-   * owns (no double depth). Soft copy never timber / Failed to fetch.
+   * Seed CTA SoftFailNotice depth (BEA-334 after #201):
+   * seed sheet owns compact SoftFail under azure Start rail · Soft seed
+   * badge · softSupport · SoftFail mist band (`border-b`) · tip-011
+   * mist-wash CTAs while soft. Trips empty SoftFail (#224) SoftFailNotice
+   * yields on Start (no double depth). Playbooks SoftFail (#245) stays on
+   * Playbooks rail. Soft copy never timber / Failed to fetch.
    */
-  const emptyOwnsSoft = showEmptyInvite;
-  const emptySoftOpen = emptyOwnsSoft;
-  const emptySoftCopy = t(locale, "trips.emptySoftFail");
+  const seedOwnsSoft = showEmptyInvite;
+  const seedSoftOpen = seedOwnsSoft;
+  const seedSoftCopy = t(locale, "trips.seedSoftFail");
+  const seedSupportCopy = seedSoftOpen
+    ? t(locale, "trips.seedSoftSupport")
+    : t(locale, "trips.seedSupport");
   /**
    * Playbooks SoftFailNotice depth (BEA-324 after #208):
    * playbooks sheet owns compact SoftFail under azure rail · Soft playbooks
    * badge · softSupport · SoftFail mist band (`border-b`) · tip-011 mist-wash
    * body while soft · Empty + catalog share the same SoftFail strip.
-   * Trips empty SoftFail (#224) stays on Start rail (no overlap / yield).
+   * Seed SoftFail (#201/#334) stays on Start rail (no overlap / yield).
    * Soft copy never timber / Failed to fetch.
    */
   const playbooksSoftOpen = templatesSoft;
@@ -296,10 +300,10 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        {/* Loading SoftFail yields while empty owns soft-fail (no double depth). */}
+        {/* Loading SoftFail yields while seed owns soft-fail (no double depth). */}
         {loading ? (
           <SoftFailNotice
-            open={!error && Boolean(softNotice) && !emptyOwnsSoft}
+            open={!error && Boolean(softNotice) && !seedOwnsSoft}
             className="mb-6"
           >
             {softNotice ?? ""}
@@ -314,10 +318,11 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.seedRail")}
           >
             {/*
-              Empty SoftFail depth (BEA-291 after #175/#201):
-              azure Start rail · Soft empty badge · emptySupport ·
-              compact SoftFailNotice · SheetPresence CTAs · tip-011 rise —
-              never timber / Failed to fetch.
+              Seed CTA SoftFail depth (BEA-334 after #201):
+              azure Start rail · Soft seed badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash CTAs — never timber.
+              Empty SoftFail (#224) SoftFailNotice yields on Start;
+              playbooks SoftFail (#245) stays on Playbooks (no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -325,35 +330,39 @@ export function TripsHome({ locale }: Props) {
                   {t(locale, "trips.seedRail")}
                 </span>
                 <span className="text-[11px] leading-snug text-ink-soft/80">
-                  {t(locale, "trips.emptySupport")}
+                  {seedSupportCopy}
                 </span>
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  emptySoftOpen
+                  seedSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {emptySoftOpen
-                  ? t(locale, "trips.emptySoftBadge")
+                {seedSoftOpen
+                  ? t(locale, "trips.seedSoftBadge")
                   : t(locale, "trips.seedReady")}
               </span>
             </header>
 
-            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; never timber / Failed to fetch. */}
+            {/* Compact SoftFail mist band under azure rail — seed owns seedSoftFail; empty SoftFail (#224) yields. */}
             <SoftFailNotice
-              open={!error && emptySoftOpen}
+              open={!error && seedSoftOpen}
               compact
               className="border-b border-[color:var(--bp-line)]"
             >
-              {emptySoftCopy}
+              {seedSoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
               open
               role="group"
-              className="flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5"
+              className={`flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5 ${
+                seedSoftOpen
+                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  : ""
+              }`}
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "trips.seedActions")}
             >
@@ -456,9 +465,9 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
-            {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
+            {/* List SoftFail yields while seed owns soft-fail (no double depth). */}
             <SoftFailNotice
-              open={!error && Boolean(softNotice) && !emptyOwnsSoft}
+              open={!error && Boolean(softNotice) && !seedOwnsSoft}
               compact
             >
               {softNotice ?? ""}
@@ -559,7 +568,7 @@ export function TripsHome({ locale }: Props) {
               Empty playbooks SoftFail depth (BEA-324 after #208):
               azure rail · Soft playbooks badge · softSupport · compact
               SoftFail mist band · tip-011 mist-wash CTA · never timber.
-              Trips empty SoftFail (#224) stays on Start (yield / no overlap).
+              Seed SoftFail (#201/#334) stays on Start (yield / no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -622,7 +631,7 @@ export function TripsHome({ locale }: Props) {
               azure rail · Soft playbooks badge · softSupport · compact
               SoftFail mist band · tip-011 mist-wash body · denser marks ·
               Use/Customize — never timber / Failed to fetch.
-              Trips empty SoftFail (#224) stays on Start (yield / no overlap).
+              Seed SoftFail (#201/#334) stays on Start (yield / no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
