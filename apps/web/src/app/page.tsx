@@ -180,7 +180,7 @@ export default async function HomePage() {
         softLiveBadge={t(locale, "landing.how.softLiveBadge")}
       />
 
-      {/* Below fold — FAQ SoftFail sheet (azure rail · Offline/Live · tip-011) */}
+      {/* Below fold — FAQ SoftFail depth (BEA-293 · azure rail · mist SoftFail band · tip-011) */}
       <LandingFaq
         title={t(locale, "landing.faq.title")}
         support={t(locale, "landing.faq.support")}
