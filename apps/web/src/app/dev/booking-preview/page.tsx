@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import type { Stop, Trip } from "@beaver/core";
 import { BookingPanel } from "@/components/planner/booking-panel";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 
 const trip: Trip = {
   id: "preview",
@@ -84,20 +85,13 @@ export default function BookingPreviewPage() {
               setSoftNotice(null);
               return;
             }
-            if (/Failed to fetch|ECONNREFUSED|NetworkError|Load failed/i.test(message)) {
-              setSoftNotice("演示壳层 — API 不可用时使用本地目录。");
-              setError(null);
-              return;
-            }
             setError(message);
             setSoftNotice(null);
           }}
         />
       </div>
       {softNotice && (
-        <p className="mt-4 text-sm text-river" role="status">
-          {softNotice}
-        </p>
+        <SoftFailNotice className="mt-4">{softNotice}</SoftFailNotice>
       )}
       {error && (
         <p className="mt-4 text-sm text-timber" role="alert">

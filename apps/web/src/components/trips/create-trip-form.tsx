@@ -12,6 +12,7 @@ import type { Trip } from "@beaver/core";
 import { todayIsoDate } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   createBlankLocalTrip,
@@ -243,12 +244,7 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
           </p>
         )}
         {!error && softNotice && (
-          <p
-            className="border-l-2 border-river/40 bg-mist/50 px-4 py-3 text-sm text-ink-soft"
-            role="status"
-          >
-            {softNotice}
-          </p>
+          <SoftFailNotice>{softNotice}</SoftFailNotice>
         )}
 
         <div className="flex flex-wrap items-center gap-4 pt-2">

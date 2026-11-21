@@ -10,6 +10,7 @@ import type {
 } from "@beaver/core";
 import { parseMentions, sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Tab = "comments" | "activity";
@@ -287,11 +288,11 @@ export function TripCollabPanel({
       </header>
 
       {demoSeeded ? (
-        <p className="animate-sheet-in mb-4 rounded-md border border-river/15 bg-river/[0.06] px-4 py-3 text-sm leading-relaxed text-river-deep">
+        <SoftFailNotice className="mb-4">
           {softOffline
             ? t(locale, "collab.panel.softOffline")
             : t(locale, "collab.panel.demoNotice")}
-        </p>
+        </SoftFailNotice>
       ) : null}
 
       {error ? (

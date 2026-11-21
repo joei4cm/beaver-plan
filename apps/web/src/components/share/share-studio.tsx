@@ -22,7 +22,8 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { apiBase, apiGet, apiSend } from "@/lib/api";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
 import { resolveMediaUrl } from "@/lib/media-url";
 
@@ -71,6 +72,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [editSeeded, setEditSeeded] = useState(false);
   const [preview, setPreview] = useState<RenderResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [softDemo, setSoftDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -196,10 +198,15 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         },
       );
       setPreview(res);
-    } catch {
+      setSoftDemo(false);
+    } catch (e) {
       const local = buildLocalPreview();
       if (local) {
         setPreview(local);
+        setError(null);
+        setSoftDemo(true);
+      } else if (isPlannerNoiseError(e)) {
+        setSoftDemo(true);
         setError(null);
       } else {
         setError("render_failed");
@@ -522,7 +529,17 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </label>
           </section>
 
-          {error && <p className="text-sm text-timber">{error}</p>}
+          {error && !isPlannerNoiseError(new Error(error)) && (
+            <p className="text-sm text-timber" role="alert">
+              {error}
+            </p>
+          )}
+
+          {softDemo && !error && (
+            <SoftFailNotice>
+              {t(locale, "share.demoNotice")}
+            </SoftFailNotice>
+          )}
 
           <div className="flex flex-col gap-2 pt-2">
             <button
@@ -551,9 +568,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </button>
           </div>
 
-          <p className="text-xs leading-relaxed text-ink-soft/80">
-            {t(locale, "share.demoHint")}
-          </p>
+          {!softDemo && (
+            <p className="text-xs leading-relaxed text-ink-soft/80">
+              {t(locale, "share.demoHint")}
+            </p>
+          )}
 
           {entries[0]?.media[0] ? (
             <div className="flex gap-2 overflow-x-auto pt-2">

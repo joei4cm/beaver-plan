@@ -39,6 +39,7 @@ import { getLocalTrip, saveLocalTrip } from "@/lib/local-trips";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
@@ -997,14 +998,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
-          {(softNotice ||
+{(softNotice ||
             (error && isPlannerNoiseError(new Error(error)))) && (
-            <p
-              className="border-t border-[color:var(--bp-line)] bg-mist/45 px-4 py-2.5 text-xs leading-relaxed text-ink-soft"
-              role="status"
-            >
+            <SoftFailNotice compact>
               {softNotice ?? t(locale, "planner.transfer.demoNotice")}
-            </p>
+            </SoftFailNotice>
           )}
           <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
             {t(locale, "planner.hint")}
