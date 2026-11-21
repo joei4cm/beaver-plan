@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { usePrefersReducedMotion } from "./scroll-motion";
 
 export type FeatureItem = {
@@ -12,6 +13,9 @@ type Props = {
   title: string;
   support: string;
   items: FeatureItem[];
+  offlineNotice: string;
+  focusLabel: string;
+  leadEyebrow: string;
 };
 
 function useSectionReveal(reduced: boolean) {
@@ -33,7 +37,7 @@ function useSectionReveal(reduced: boolean) {
           io.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+      { threshold: 0.14, rootMargin: "0px 0px -4% 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -47,8 +51,30 @@ function revealClass(visible: boolean, reduced: boolean): string {
   return visible ? "animate-rise" : "opacity-0 translate-y-4";
 }
 
-/** Azure route plane for the lead feature — wash + path, not a bordered card. */
-function LeadRouteArt() {
+/** SSR-safe online gate — assume online until mount to avoid hydration mismatch. */
+function useBrowserOnline(): boolean {
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
+
+  return online;
+}
+
+/**
+ * Azure route plane for the lead feature — wash + path, not a bordered card.
+ * Draw/markers only fire when the section is in view (tip-011 settle).
+ */
+function LeadRouteArt({ active }: { active: boolean }) {
+  const uid = useId().replace(/:/g, "");
   return (
     <svg
       aria-hidden
@@ -57,13 +83,13 @@ function LeadRouteArt() {
       preserveAspectRatio="xMidYMid slice"
     >
       <defs>
-        <linearGradient id="bp-feat-sky" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={`bp-feat-sky-${uid}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#DBE8FF" stopOpacity="0.9" />
           <stop offset="55%" stopColor="#EEF3FB" stopOpacity="0.55" />
           <stop offset="100%" stopColor="#F4F6FA" stopOpacity="0.2" />
         </linearGradient>
       </defs>
-      <rect width="520" height="320" fill="url(#bp-feat-sky)" />
+      <rect width="520" height="320" fill={`url(#bp-feat-sky-${uid})`} />
       <path
         d="M36 248 C 110 190, 150 220, 210 160 S 320 70, 390 96 S 460 150, 500 120"
         fill="none"
@@ -73,25 +99,35 @@ function LeadRouteArt() {
         opacity="0.1"
       />
       <path
-        className="animate-route-draw"
+        className={active ? "animate-route-draw" : undefined}
         d="M36 248 C 110 190, 150 220, 210 160 S 320 70, 390 96 S 460 150, 500 120"
         fill="none"
         stroke="#2F6BFF"
         strokeWidth="2.75"
         strokeLinecap="round"
         strokeDasharray="1"
-        strokeDashoffset="1"
+        strokeDashoffset={active ? "1" : "0"}
         pathLength={1}
+        opacity={active ? undefined : 0.85}
       />
-      <g className="animate-marker-pop" style={{ animationDelay: "420ms" }}>
+      <g
+        className={active ? "animate-marker-pop" : undefined}
+        style={active ? { animationDelay: "420ms" } : undefined}
+      >
         <circle cx="210" cy="160" r="9" fill="#FFFFFF" />
         <circle cx="210" cy="160" r="5.5" fill="#2F6BFF" />
       </g>
-      <g className="animate-marker-pop" style={{ animationDelay: "560ms" }}>
+      <g
+        className={active ? "animate-marker-pop" : undefined}
+        style={active ? { animationDelay: "560ms" } : undefined}
+      >
         <circle cx="390" cy="96" r="9" fill="#FFFFFF" />
         <circle cx="390" cy="96" r="5.5" fill="#2F6BFF" />
       </g>
-      <g className="animate-marker-pop" style={{ animationDelay: "700ms" }}>
+      <g
+        className={active ? "animate-marker-pop" : undefined}
+        style={active ? { animationDelay: "700ms" } : undefined}
+      >
         <circle cx="500" cy="120" r="11" fill="#FFFFFF" />
         <circle cx="500" cy="120" r="6.5" fill="#0F172A" />
       </g>
@@ -100,15 +136,27 @@ function LeadRouteArt() {
 }
 
 /**
- * Mid-page features — Lumen Route editorial hierarchy.
- * Lead map feature + numbered rows; azure accents; stagger enter; no card soup.
+ * Mid-page features — Lumen Route depth craft (BEA-203).
+ * Lead map plane + mist-track focus · azure inset rows · SoftFail offline · tip-011.
+ * No card soup.
  */
-export function LandingFeatures({ title, support, items }: Props) {
+export function LandingFeatures({
+  title,
+  support,
+  items,
+  offlineNotice,
+  focusLabel,
+  leadEyebrow,
+}: Props) {
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
+  const online = useBrowserOnline();
+  const [focus, setFocus] = useState(0);
 
-  const [lead, ...rest] = items;
+  const lead = items[focus] ?? items[0];
   if (!lead) return null;
+
+  const focusKey = `${focus}-${lead.title}`;
 
   return (
     <section
@@ -138,29 +186,76 @@ export function LandingFeatures({ title, support, items }: Props) {
               aria-hidden
               className="mb-5 block h-1 w-10 rounded-full bg-river"
             />
-            <h2 className="font-display text-[clamp(2rem,5vw,2.85rem)] font-bold tracking-[-0.03em] text-ink">
+            <h2 className="font-display text-[clamp(1.85rem,4.5vw,2.65rem)] font-bold tracking-[-0.03em] text-ink">
               {title}
             </h2>
           </div>
           <p
             className={`mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base ${revealClass(visible, reduced)}`}
-            style={reduced ? undefined : { animationDelay: "70ms" }}
+            style={reduced ? undefined : { animationDelay: "60ms" }}
           >
             {support}
           </p>
         </header>
 
+        <div
+          className={`mt-8 ${revealClass(visible, reduced)}`}
+          style={reduced ? undefined : { animationDelay: "100ms" }}
+        >
+          <SoftFailNotice open={!online}>{offlineNotice}</SoftFailNotice>
+        </div>
+
+        {/* Pillar focus rail — mist-track · azure select (#46 / tip-011) */}
+        <div
+          className={`mt-10 ${revealClass(visible, reduced)}`}
+          style={reduced ? undefined : { animationDelay: "130ms" }}
+        >
+          <div
+            className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+            role="group"
+            aria-label={focusLabel}
+          >
+            {items.map((item, index) => {
+              const on = focus === index;
+              return (
+                <button
+                  key={item.title}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setFocus(index)}
+                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                    on
+                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                      : "text-ink-soft hover:text-river"
+                  }`}
+                >
+                  {item.title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Lead feature — one composition, azure route plane */}
         <div
-          className={`mt-14 grid items-center gap-10 md:mt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-14 ${revealClass(visible, reduced)}`}
-          style={reduced ? undefined : { animationDelay: "140ms" }}
+          key={focusKey}
+          className={`mt-12 grid items-center gap-10 md:mt-14 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-14 ${revealClass(visible, reduced)}`}
+          style={reduced ? undefined : { animationDelay: "160ms" }}
         >
-          <div>
+          <div
+            className={`relative pl-4 shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp ease-bp-out-strong md:pl-5 ${
+              reduced ? "" : "animate-rise"
+            }`}
+            style={reduced ? undefined : { animationDelay: "40ms" }}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river">
+              {leadEyebrow} · {String(focus + 1).padStart(2, "0")}
+            </p>
             <p
               aria-hidden
-              className="font-display text-4xl font-extrabold leading-none tracking-[-0.05em] text-river/30 md:text-5xl"
+              className="mt-3 font-display text-4xl font-extrabold leading-none tracking-[-0.05em] text-river/30 md:text-5xl"
             >
-              01
+              {String(focus + 1).padStart(2, "0")}
             </p>
             <h3 className="mt-4 font-display text-[clamp(1.65rem,3.5vw,2.35rem)] font-bold tracking-[-0.03em] text-ink">
               {lead.title}
@@ -171,36 +266,55 @@ export function LandingFeatures({ title, support, items }: Props) {
           </div>
           <div
             aria-hidden
-            className="relative aspect-[13/8] overflow-hidden rounded-bp-lg bg-mist/60 md:aspect-auto md:min-h-[16rem]"
+            className={`relative aspect-[13/8] overflow-hidden rounded-bp-lg bg-mist/60 ring-1 ring-river/15 shadow-bp-soft md:aspect-auto md:min-h-[16rem] ${
+              reduced ? "" : "animate-rise"
+            }`}
+            style={reduced ? undefined : { animationDelay: "90ms" }}
           >
-            <LeadRouteArt />
+            <LeadRouteArt active={visible && !reduced} />
           </div>
         </div>
 
-        {/* Secondary pillars — editorial rows, hairlines only */}
-        {rest.length > 0 ? (
+        {/* Secondary pillars — editorial rows with azure focus rail */}
+        {items.length > 1 ? (
           <ul className="mt-16 border-t border-ink/8 md:mt-20">
-            {rest.map((item, index) => {
-              const n = index + 2;
-              const delay = 200 + index * 70;
+            {items.map((item, index) => {
+              const n = index + 1;
+              const delay = 200 + index * 55;
+              const on = focus === index;
               return (
                 <li
                   key={item.title}
-                  className={`grid gap-2 border-b border-ink/8 py-7 md:grid-cols-[4.5rem_minmax(10rem,15rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${revealClass(visible, reduced)}`}
-                  style={reduced ? undefined : { animationDelay: `${delay}ms` }}
+                  className={`border-b border-ink/8 ${revealClass(visible, reduced)}`}
+                  style={
+                    reduced ? undefined : { animationDelay: `${delay}ms` }
+                  }
                 >
-                  <span
-                    aria-hidden
-                    className="font-display text-lg font-bold tabular-nums tracking-[-0.03em] text-river md:text-xl"
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setFocus(index)}
+                    className={`group grid w-full gap-2 py-7 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,15rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${
+                      on
+                        ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                        : "hover:bg-mist/30"
+                    }`}
                   >
-                    {String(n).padStart(2, "0")}
-                  </span>
-                  <span className="font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
-                    {item.title}
-                  </span>
-                  <span className="text-sm leading-relaxed text-ink-soft md:text-base">
-                    {item.body}
-                  </span>
+                    <span
+                      aria-hidden
+                      className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
+                        on ? "text-river" : "text-river/70 group-hover:text-river"
+                      }`}
+                    >
+                      {String(n).padStart(2, "0")}
+                    </span>
+                    <span className="font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                      {item.title}
+                    </span>
+                    <span className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
+                      {item.body}
+                    </span>
+                  </button>
                 </li>
               );
             })}
