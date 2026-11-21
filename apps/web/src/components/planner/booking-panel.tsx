@@ -140,6 +140,8 @@ export function BookingPanel({
   const [suggestions, setSuggestions] = useState<BookingSuggestion[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [softDemo, setSoftDemo] = useState(false);
+  /** Save soft-fail stays under the Confirm rail — never timber Failed to fetch. */
+  const [confirmSoftFail, setConfirmSoftFail] = useState(false);
   const [searched, setSearched] = useState(false);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [city, setCity] = useState(destinationHint ?? "");
@@ -204,10 +206,28 @@ export function BookingPanel({
     [stop],
   );
 
+  const pendingCount = useMemo(
+    () => drafts.filter((d) => d.url.trim()).length,
+    [drafts],
+  );
+
+  const isDirty = useMemo(() => {
+    const baseline = draftsFromStop(stop);
+    return BOOKING_LINK_KINDS.some((kind) => {
+      const draft = drafts.find((d) => d.kind === kind)!;
+      const saved = baseline.find((d) => d.kind === kind)!;
+      return (
+        draft.url.trim() !== saved.url.trim() ||
+        draft.providerLabel.trim() !== saved.providerLabel.trim()
+      );
+    });
+  }, [drafts, stop]);
+
   function updateDraft(
     kind: BookingLinkKind,
     patch: Partial<Omit<DraftRow, "kind">>,
   ) {
+    setConfirmSoftFail(false);
     setDrafts((prev) =>
       prev.map((row) => (row.kind === kind ? { ...row, ...patch } : row)),
     );
@@ -233,12 +253,12 @@ export function BookingPanel({
           expectedVersion: trip.version,
         },
       );
-      setSoftDemo(false);
+      setConfirmSoftFail(false);
       await onSaved();
     } catch (e) {
       if (isPlannerNoiseError(e)) {
-        // Soft demo banner only — never surface timber "Failed to fetch".
-        setSoftDemo(true);
+        // Confirm-rail SoftFailNotice only — never surface timber "Failed to fetch".
+        setConfirmSoftFail(true);
         onError("");
         await onSaved();
       } else {
@@ -310,9 +330,10 @@ export function BookingPanel({
     : t(locale, "planner.booking.demoBadge");
 
   /**
-   * Deeper Lumen sheet hierarchy after #57/#78:
-   * azure header rail · SoftFailNotice · Search · Results · Pinned,
-   * SheetPresence (#69) + tip-011 motion (#46).
+   * Booking confirm chrome after #57/#78/#95:
+   * azure header · SoftFailNotice · Search · Results · Confirm rail,
+   * SheetPresence (#69) + tip-011 motion (#46). Save soft-fail stays
+   * section-scoped under the Confirm azure header.
    */
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
@@ -577,78 +598,128 @@ export function BookingPanel({
             )}
           </section>
 
-          {/* Pinned deep links — river left rail */}
+          {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
           <section
-            className="animate-fade space-y-3 bg-paper/40 px-4 py-4 shadow-[inset_3px_0_0_var(--bp-river)]"
+            className="animate-fade px-4 py-4"
             style={{ animationDelay: "90ms" }}
-            aria-label={t(locale, "planner.booking.linksEyebrow")}
+            aria-label={t(locale, "planner.booking.confirmEyebrow")}
           >
-            <div>
-              <SectionEyebrow>
-                {t(locale, "planner.booking.linksEyebrow")}
-              </SectionEyebrow>
-              <h3 className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-                {t(locale, "planner.booking.linksTitle")}
-              </h3>
-            </div>
-            {!stop ? (
-              <p className="text-sm text-ink-soft">
-                {t(locale, "planner.booking.selectStop")}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {drafts.map((row) => (
-                  <div
-                    key={row.kind}
-                    className="space-y-1.5 rounded-bp-sm border border-[color:var(--bp-line)]/70 bg-foam/80 px-3 py-3 transition duration-bp-fast ease-bp-out hover:border-river/25"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-                        {kindLabel(locale, row.kind)}
-                      </label>
-                      {row.url.trim() && (
-                        <button
-                          type="button"
-                          onClick={() => openExternal(row.url.trim())}
-                          className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10"
-                        >
-                          {t(locale, "planner.booking.open")}
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      value={row.providerLabel}
-                      onChange={(e) =>
-                        updateDraft(row.kind, { providerLabel: e.target.value })
-                      }
-                      placeholder={t(
-                        locale,
-                        "planner.booking.providerPlaceholder",
-                      )}
-                      className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
-                    />
-                    <input
-                      value={row.url}
-                      onChange={(e) =>
-                        updateDraft(row.kind, { url: e.target.value })
-                      }
-                      placeholder={t(locale, "planner.booking.urlPlaceholder")}
-                      className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
-                    />
+            <div className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+              <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <SectionEyebrow>
+                      {t(locale, "planner.booking.confirmEyebrow")}
+                    </SectionEyebrow>
+                    {pendingCount > 0 ? (
+                      <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                        {t(locale, "planner.booking.confirmPending").replace(
+                          "{n}",
+                          String(pendingCount),
+                        )}
+                      </span>
+                    ) : null}
+                    {isDirty ? (
+                      <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                        {t(locale, "planner.booking.confirmDirty")}
+                      </span>
+                    ) : null}
                   </div>
-                ))}
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => void save()}
-                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:opacity-40"
-                >
-                  {saving
-                    ? t(locale, "planner.booking.saving")
-                    : t(locale, "planner.booking.save")}
-                </button>
+                  <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                    {t(locale, "planner.booking.confirmTitle")}
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                    {t(locale, "planner.booking.confirmSupport")}
+                  </p>
+                </div>
+                {stop ? (
+                  <button
+                    type="button"
+                    disabled={saving || !isDirty}
+                    onClick={() => void save()}
+                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {saving
+                      ? t(locale, "planner.booking.saving")
+                      : t(locale, "planner.booking.save")}
+                  </button>
+                ) : null}
               </div>
-            )}
+
+              <SoftFailNotice
+                open={confirmSoftFail}
+                compact
+                className="border-b border-[color:var(--bp-line)]"
+              >
+                {t(locale, "planner.booking.confirmSoftFail")}
+              </SoftFailNotice>
+
+              <div className="space-y-3 px-3 py-3">
+                {!stop ? (
+                  <p className="text-sm leading-relaxed text-ink-soft">
+                    {t(locale, "planner.booking.selectStop")}
+                  </p>
+                ) : (
+                  drafts.map((row, i) => {
+                    const filled = Boolean(row.url.trim());
+                    return (
+                      <div
+                        key={row.kind}
+                        className={`space-y-1.5 rounded-bp-sm border px-3 py-3 transition duration-bp-fast ease-bp-out ${
+                          filled
+                            ? "animate-stop-select border-river/30 bg-river/[0.04] shadow-[inset_3px_0_0_var(--bp-river)]"
+                            : "border-[color:var(--bp-line)]/70 bg-paper/50 hover:border-river/25"
+                        }`}
+                        style={
+                          filled
+                            ? { animationDelay: `${40 + i * 35}ms` }
+                            : undefined
+                        }
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                            {kindLabel(locale, row.kind)}
+                          </label>
+                          {filled ? (
+                            <button
+                              type="button"
+                              onClick={() => openExternal(row.url.trim())}
+                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10"
+                            >
+                              {t(locale, "planner.booking.open")}
+                            </button>
+                          ) : null}
+                        </div>
+                        <input
+                          value={row.providerLabel}
+                          onChange={(e) =>
+                            updateDraft(row.kind, {
+                              providerLabel: e.target.value,
+                            })
+                          }
+                          placeholder={t(
+                            locale,
+                            "planner.booking.providerPlaceholder",
+                          )}
+                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                        />
+                        <input
+                          value={row.url}
+                          onChange={(e) =>
+                            updateDraft(row.kind, { url: e.target.value })
+                          }
+                          placeholder={t(
+                            locale,
+                            "planner.booking.urlPlaceholder",
+                          )}
+                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </section>
         </div>
 
