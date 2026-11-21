@@ -396,6 +396,8 @@
   "planner.mode.support": "步行 · 公交 · 驾车，用于生成路线。",
   "planner.mode.filterLabel": "出行方式",
   "planner.mode.selected": "已选",
+  "planner.mode.softBadge": "柔和出行",
+  "planner.mode.softFail": "柔和出行筛选 — Directions 离线或密钥未配置。步行 · 公交 · 驾车芯片与柔和京都路线先留在本地；绝不是 Failed to fetch 崩溃。",
   "planner.mode.walk": "步行",
   "planner.mode.transit": "公交",
   "planner.mode.drive": "驾车",

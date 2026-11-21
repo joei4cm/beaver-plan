@@ -396,6 +396,8 @@
   "planner.mode.support": "Walk · transit · drive filters for route generation.",
   "planner.mode.filterLabel": "Travel mode",
   "planner.mode.selected": "Selected",
+  "planner.mode.softBadge": "Soft mode",
+  "planner.mode.softFail": "Soft mode filters — Directions offline or keys absent. Walk · transit · drive chips stay local with soft Kyoto routes; never a Failed to fetch crash.",
   "planner.mode.walk": "Walk",
   "planner.mode.transit": "Transit",
   "planner.mode.drive": "Drive",

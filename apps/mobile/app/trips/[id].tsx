@@ -942,9 +942,12 @@ export default function TripDetailScreen() {
     : undefined;
 
   /**
-   * Expo transit SoftFailNotice (BEA-242): TransferSteps SoftFail owns when
-   * the selected stop shows leg / empty soft chrome. Mode SoftFail yields —
-   * no double depth. Soft copy never timber / Failed to fetch.
+   * Expo transit filters SoftFailNotice (BEA-289 after #139 / #182):
+   * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
+   * own selected-stop soft chrome. Soft mode badge · filters-scoped copy ·
+   * tip-011 SheetPresence · StyleSheet.flatten. SoftFail yields while
+   * TransferSteps owns (no double depth). Soft copy never timber /
+   * Failed to fetch.
    */
   const selectedStopIndex = selectedStopId
     ? dayStops.findIndex((s) => s.id === selectedStopId)
@@ -959,6 +962,7 @@ export default function TripDetailScreen() {
       (!routing && selectedStopIndex < dayStops.length - 1));
   const modeSoftOpen =
     routingDemo && dayLegs.length > 0 && !transitSoftOwns;
+  const modeSoftCopy = t(locale, "planner.mode.softFail");
 
   return (
     <View style={styles.root}>
@@ -1227,9 +1231,10 @@ export default function TripDetailScreen() {
               </SheetPresence>
 
               {/*
-                Transit SoftFail chrome (BEA-242 after #139 filters):
-                mist-track · azure select · compact SoftFail under mode rail ·
-                tip-011 · StyleSheet.flatten. Yields while TransferSteps owns.
+                Transit filters SoftFail chrome (BEA-289 after #139 / #182):
+                azure mode rail · Soft mode badge · compact SoftFail under rail ·
+                mist-track · azure select · tip-011 SheetPresence ·
+                StyleSheet.flatten. Yields while TransferSteps owns.
               */}
               <View style={styles.modeFilter}>
                 <View style={styles.modeFilterHead}>
@@ -1245,93 +1250,99 @@ export default function TripDetailScreen() {
                       {t(locale, "planner.mode.selected")}
                     </Text>
                   </View>
-                </View>
-
-                <View style={styles.modeFilterBody}>
-                  <View
-                    style={styles.modeMistTrack}
-                    accessibilityRole="tablist"
-                    accessibilityLabel={t(locale, "planner.mode.filterLabel")}
-                  >
-                    {TRAVEL_MODES.map((m) => {
-                      const on = travelMode === m;
-                      return (
-                        <Pressable
-                          key={m}
-                          onPress={() => selectTravelMode(m)}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected: on }}
-                          style={StyleSheet.flatten([
-                            styles.modeChip,
-                            on ? styles.modeChipOn : null,
-                          ])}
-                        >
-                          <Animated.Text
-                            style={StyleSheet.flatten([
-                              styles.modeChipLabel,
-                              on ? styles.modeChipLabelOn : null,
-                              on
-                                ? { transform: [{ scale: modeChipPop }] }
-                                : null,
-                            ])}
-                          >
-                            {t(locale, `planner.mode.${m}`)}
-                          </Animated.Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  <Pressable
-                    disabled={routing || dayStops.length < 2}
-                    onPress={generateRoutes}
-                    accessibilityRole="button"
-                    accessibilityState={{
-                      disabled: routing || dayStops.length < 2,
-                      busy: routing,
-                    }}
-                    style={StyleSheet.flatten([
-                      styles.modeGenerate,
-                      routing || dayStops.length < 2
-                        ? styles.modeGenerateDisabled
-                        : null,
-                    ])}
-                  >
-                    <Text style={styles.modeGenerateLabel}>
-                      {routing
-                        ? t(locale, "planner.routing")
-                        : t(locale, "planner.generateRoutes")}
-                    </Text>
-                  </Pressable>
-
-                  {dayLegs.length > 0 ? (
-                    <Text style={styles.modeLegSummary}>
-                      {dayLegs
-                        .map(
-                          (l) =>
-                            `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
-                        )
-                        .join("  →  ")}
-                    </Text>
-                  ) : null}
-
                   {modeSoftOpen ? (
-                    <View style={styles.modeDemoBadge}>
-                      <Text style={styles.modeDemoBadgeText}>
-                        {t(locale, "planner.transfer.demoBadge")}
+                    <View style={styles.modeSoftBadge}>
+                      <Text style={styles.modeSoftBadgeText}>
+                        {t(locale, "planner.mode.softBadge")}
                       </Text>
                     </View>
                   ) : null}
                 </View>
 
-                {/* Compact SoftFail under azure mode rail — yields to TransferSteps. */}
+                {/* Compact SoftFail under azure mode rail — never timber / Failed to fetch. */}
                 <SoftFailNotice
                   open={modeSoftOpen}
                   compact
                   style={styles.modeSoftFail}
                 >
-                  {t(locale, "planner.transfer.demoNotice")}
+                  {modeSoftCopy}
                 </SoftFailNotice>
+
+                <SheetPresence
+                  open
+                  rise={8}
+                  delayMs={40}
+                  accessibilityLabel={t(locale, "planner.mode.filterLabel")}
+                >
+                  <View style={styles.modeFilterBody}>
+                    <View
+                      style={styles.modeMistTrack}
+                      accessibilityRole="tablist"
+                      accessibilityLabel={t(locale, "planner.mode.filterLabel")}
+                    >
+                      {TRAVEL_MODES.map((m) => {
+                        const on = travelMode === m;
+                        return (
+                          <Pressable
+                            key={m}
+                            onPress={() => selectTravelMode(m)}
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected: on }}
+                            style={StyleSheet.flatten([
+                              styles.modeChip,
+                              on ? styles.modeChipOn : null,
+                            ])}
+                          >
+                            <Animated.Text
+                              style={StyleSheet.flatten([
+                                styles.modeChipLabel,
+                                on ? styles.modeChipLabelOn : null,
+                                on
+                                  ? { transform: [{ scale: modeChipPop }] }
+                                  : null,
+                              ])}
+                            >
+                              {t(locale, `planner.mode.${m}`)}
+                            </Animated.Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+
+                    <Pressable
+                      disabled={routing || dayStops.length < 2}
+                      onPress={generateRoutes}
+                      accessibilityRole="button"
+                      accessibilityState={{
+                        disabled: routing || dayStops.length < 2,
+                        busy: routing,
+                      }}
+                      style={StyleSheet.flatten([
+                        styles.modeGenerate,
+                        routing || dayStops.length < 2
+                          ? styles.modeGenerateDisabled
+                          : null,
+                      ])}
+                    >
+                      <Text style={styles.modeGenerateLabel}>
+                        {routing
+                          ? t(locale, "planner.routing")
+                          : t(locale, "planner.generateRoutes")}
+                      </Text>
+                    </Pressable>
+
+                    {dayLegs.length > 0 ? (
+                      <Text style={styles.modeLegSummary}>
+                        {dayLegs
+                          .map(
+                            (l) =>
+                              `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                          )
+                          .join("  →  ")}
+                      </Text>
+                    ) : null}
+                  </View>
+                </SheetPresence>
               </View>
 
               <View style={styles.searchWrap}>
@@ -2630,13 +2641,14 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     paddingVertical: 2,
   },
-  modeDemoBadge: {
+  /** Soft mode badge on azure rail when SoftFail owns (BEA-289). */
+  modeSoftBadge: {
     borderRadius: radius.xs,
     backgroundColor: colors.mist,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  modeDemoBadgeText: {
+  modeSoftBadgeText: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
@@ -2644,8 +2656,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
+  /** Mist SoftFail strip under azure mode rail — border-b before chips. */
   modeSoftFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
   },
   searchWrap: {
     paddingHorizontal: 12,
