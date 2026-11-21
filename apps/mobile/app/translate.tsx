@@ -46,6 +46,7 @@ import {
   type TranslationStatus,
 } from "../src/api";
 import { SoftFailNotice } from "../src/components/soft-fail-notice";
+import { isDeviceOnline } from "../src/offline/trip-offline";
 import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
 import { type } from "../src/theme";
 
@@ -108,6 +109,7 @@ export default function TranslateScreen() {
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [status, setStatus] = useState<TranslationStatus | null>(null);
   const [softNotice, setSoftNotice] = useState(true);
+  const [online, setOnline] = useState(isDeviceOnline);
   const [turns, setTurns] = useState<TurnRow[]>(() =>
     seedTurns("zh-CN", "en"),
   );
@@ -175,6 +177,18 @@ export default function TranslateScreen() {
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
   }, [queueStore]);
+
+  useEffect(() => {
+    const syncOnline = () => setOnline(isDeviceOnline());
+    syncOnline();
+    if (typeof window === "undefined") return;
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
 
   useEffect(() => {
     void fetchTranslationStatus()
@@ -623,11 +637,11 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {isDemo ? (
-            <SoftFailNotice style={styles.heroSoftNotice}>
-              {t(uiLocale, "translate.demoNotice")}
-            </SoftFailNotice>
-          ) : null}
+          <SoftFailNotice open={isDemo} style={styles.heroSoftNotice}>
+            {softNotice && !online
+              ? t(uiLocale, "translate.softOffline")
+              : t(uiLocale, "translate.demoNotice")}
+          </SoftFailNotice>
         </View>
 
         <View style={styles.tabs}>
@@ -688,13 +702,14 @@ export default function TranslateScreen() {
               </Text>
             ) : null}
 
-            {micDenied || error ? (
-              <SoftFailNotice style={styles.historySoftFail}>
-                {micDenied
-                  ? t(uiLocale, "translate.permissionMic")
-                  : (error ?? t(uiLocale, "translate.error"))}
-              </SoftFailNotice>
-            ) : null}
+            <SoftFailNotice
+              open={Boolean(micDenied || error)}
+              style={styles.historySoftFail}
+            >
+              {micDenied
+                ? t(uiLocale, "translate.permissionMic")
+                : (error ?? t(uiLocale, "translate.error"))}
+            </SoftFailNotice>
 
             <Animated.View
               style={[styles.historyStage, historyRiseStyle]}
