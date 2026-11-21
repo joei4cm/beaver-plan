@@ -328,31 +328,35 @@ export function BookingPanel({
   const badge = isConfigured
     ? t(locale, "planner.booking.configuredBadge")
     : t(locale, "planner.booking.demoBadge");
+  const offerCountLabel = t(locale, "planner.booking.offerCount").replace(
+    "{n}",
+    String(suggestions.length),
+  );
 
   /**
-   * Booking confirm chrome after #57/#78/#95:
-   * azure header · SoftFailNotice · Search · Results · Confirm rail,
-   * SheetPresence (#69) + tip-011 motion (#46). Save soft-fail stays
-   * section-scoped under the Confirm azure header.
+   * Booking OTA sheet (BEA-206 after #128/#151):
+   * azure sheet eyebrow · Search · Results · Confirm · compact SoftFailNotice
+   * footer, SheetPresence + tip-011 rise. Save soft-fail stays section-scoped
+   * under Confirm — never timber / Failed to fetch.
    */
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out hover:bg-mist/35"
+        className="relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
         aria-expanded={open}
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "planner.booking.suggestEyebrow")}
+              {t(locale, "planner.booking.sheetEyebrow")}
             </span>
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
             <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
                 isConfigured
                   ? "bg-river/12 text-river-deep"
                   : "bg-mist text-ink-soft"
@@ -360,6 +364,18 @@ export function BookingPanel({
             >
               {badge}
             </span>
+            {suggestions.length > 0 ? (
+              <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                {offerCountLabel}
+              </span>
+            ) : savedCount > 0 ? (
+              <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                {t(locale, "planner.booking.savedCount").replace(
+                  "{n}",
+                  String(savedCount),
+                )}
+              </span>
+            ) : null}
           </div>
           <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
             {stop
@@ -368,9 +384,6 @@ export function BookingPanel({
                   stop.place.name,
                 )
               : t(locale, "planner.booking.support")}
-            {savedCount > 0
-              ? ` · ${t(locale, "planner.booking.savedCount").replace("{n}", String(savedCount))}`
-              : ""}
           </p>
         </div>
         <span
@@ -386,14 +399,10 @@ export function BookingPanel({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "planner.booking.title")}
       >
-        <SoftFailNotice open={Boolean(softCopy)} className="mx-4 mt-4">
-          {softCopy ?? ""}
-        </SoftFailNotice>
-
         <div className="divide-y divide-[color:var(--bp-line)]">
-          {/* Search — city / dates / kind filters + azure CTA */}
+          {/* Search — mist-track filters · city / dates · azure CTA */}
           <section
-            className="animate-fade space-y-3 px-4 py-4"
+            className="animate-rise space-y-3 px-4 py-4"
             style={{ animationDelay: "50ms" }}
             aria-label={t(locale, "planner.booking.searchEyebrow")}
           >
@@ -409,28 +418,34 @@ export function BookingPanel({
               </p>
             </div>
 
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label={t(locale, "planner.booking.filterLabel")}
-            >
-              {KIND_FILTERS.map((id) => {
-                const on = kindFilter === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setKindFilter(id)}
-                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
-                      on
-                        ? "bg-river text-foam shadow-bp-soft"
-                        : "border border-river/20 bg-river/5 text-ink-soft hover:border-river/40 hover:bg-river/10 hover:text-river"
-                    }`}
-                  >
-                    {filterLabel(locale, id)}
-                  </button>
-                );
-              })}
+            <div>
+              <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+                {t(locale, "planner.booking.filterLabel")}
+              </div>
+              <div
+                className="flex flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                role="group"
+                aria-label={t(locale, "planner.booking.filterLabel")}
+              >
+                {KIND_FILTERS.map((id) => {
+                  const on = kindFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setKindFilter(id)}
+                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        on
+                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                          : "text-ink-soft hover:bg-foam/70 hover:text-river"
+                      }`}
+                    >
+                      {filterLabel(locale, id)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3">
@@ -442,7 +457,7 @@ export function BookingPanel({
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder={t(locale, "planner.booking.cityPlaceholder")}
-                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2 focus-visible:ring-focus/40"
                 />
               </label>
               <label className="block">
@@ -453,7 +468,7 @@ export function BookingPanel({
                   type="date"
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2 focus-visible:ring-focus/40"
                 />
               </label>
               <label className="block">
@@ -464,7 +479,7 @@ export function BookingPanel({
                   type="date"
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2 focus-visible:ring-focus/40"
                 />
               </label>
             </div>
@@ -473,7 +488,7 @@ export function BookingPanel({
               type="button"
               disabled={searching}
               onClick={() => void runSearch()}
-              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
             >
               {searching
                 ? t(locale, "planner.booking.searching")
@@ -483,19 +498,35 @@ export function BookingPanel({
 
           {/* Results — ranked offers with azure deep-link out */}
           <section
-            className="animate-fade space-y-3 px-4 py-4"
+            className="animate-rise space-y-3 px-4 py-4"
             style={{ animationDelay: "70ms" }}
             aria-label={t(locale, "planner.booking.resultsEyebrow")}
           >
-            <SectionEyebrow>
-              {t(locale, "planner.booking.resultsEyebrow")}
-            </SectionEyebrow>
+            <div>
+              <SectionEyebrow>
+                {t(locale, "planner.booking.resultsEyebrow")}
+              </SectionEyebrow>
+              {suggestions.length > 0 && !searching ? (
+                <>
+                  <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                    {t(locale, "planner.booking.resultsTitle").replace(
+                      "{n}",
+                      String(suggestions.length),
+                    )}
+                  </h3>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
+                    {t(locale, "planner.booking.resultsSupport")}
+                  </p>
+                </>
+              ) : null}
+            </div>
 
             {searching && (
               <div
-                className="animate-fade space-y-2"
+                className="animate-rise space-y-2"
                 role="status"
                 aria-live="polite"
+                style={{ animationDelay: "60ms" }}
               >
                 <BookingOffersSkeleton />
                 <p className="text-xs text-ink-soft">
@@ -505,102 +536,114 @@ export function BookingPanel({
             )}
 
             {!searching && searched && suggestions.length === 0 && (
-              <div className="animate-fade max-w-sm px-0.5 py-2">
-                <p className="font-display text-base font-semibold tracking-tight text-ink">
+              <div
+                className="animate-rise max-w-sm space-y-1.5 px-0.5 py-2"
+                style={{ animationDelay: "70ms" }}
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                  {t(locale, "planner.booking.emptyEyebrow")}
+                </p>
+                <p className="font-display text-lg font-semibold tracking-tight text-ink">
                   {t(locale, "planner.booking.emptyResults")}
+                </p>
+                <p className="text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "planner.booking.emptyHint")}
                 </p>
               </div>
             )}
 
             {!searching && suggestions.length > 0 && (
-              <div className="animate-rise space-y-2.5">
-                <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-                  {t(locale, "planner.booking.resultsTitle").replace(
-                    "{n}",
-                    String(suggestions.length),
-                  )}
-                </div>
-                <ul className="space-y-2">
-                  {suggestions.map((s, i) => (
-                    <li
-                      key={s.id}
-                      className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35 hover:shadow-bp"
-                      style={{ animationDelay: `${80 + i * 40}ms` }}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <span className="inline-flex rounded-bp-xs border border-river/20 bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
-                            {suggestionKindLabel(locale, s.kind)}
-                          </span>
-                          <div className="font-display text-[0.95rem] font-semibold leading-snug tracking-tight text-ink">
-                            {s.title}
-                          </div>
-                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            {s.priceHint ? (
-                              <span className="inline-flex items-baseline gap-1 rounded-bp-xs bg-river/10 px-2 py-0.5 font-display text-base font-bold tracking-tight text-river shadow-[inset_2px_0_0_var(--bp-river)]">
-                                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-river/75">
-                                  {t(locale, "planner.booking.priceLabel")}
-                                </span>
-                                <span>{s.priceHint}</span>
-                              </span>
-                            ) : null}
-                            {typeof s.ratingHint === "number" ? (
-                              <span className="inline-flex items-baseline gap-1 text-xs font-medium text-ink">
-                                <span
-                                  aria-hidden
-                                  className="text-[0.7rem] font-bold text-river/80"
-                                >
-                                  ★
-                                </span>
-                                <span>{s.ratingHint.toFixed(1)}</span>
-                                <span className="sr-only">
-                                  {t(locale, "planner.booking.rating").replace(
-                                    "{n}",
-                                    s.ratingHint.toFixed(1),
-                                  )}
-                                </span>
-                              </span>
-                            ) : null}
-                            <span className="text-xs text-ink-soft">
-                              {s.providerLabel}
-                            </span>
-                          </div>
+              <ul className="animate-rise space-y-2">
+                {suggestions.map((s, i) => (
+                  <li
+                    key={s.id}
+                    className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35 hover:shadow-bp"
+                    style={{ animationDelay: `${80 + i * 40}ms` }}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <span className="inline-flex rounded-bp-xs border border-river/20 bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+                          {suggestionKindLabel(locale, s.kind)}
+                        </span>
+                        <div className="font-display text-[0.95rem] font-semibold leading-snug tracking-tight text-ink">
+                          {s.title}
                         </div>
-                        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-[7.5rem]">
-                          <button
-                            type="button"
-                            onClick={() => openExternal(s.url)}
-                            className="rounded-bp bg-river px-3.5 py-2 text-xs font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep"
-                          >
-                            {t(locale, "planner.booking.openExternal")}
-                          </button>
-                          {stop && (
-                            <button
-                              type="button"
-                              onClick={() => applySuggestion(s)}
-                              className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10"
-                            >
-                              {t(locale, "planner.booking.useLink")}
-                            </button>
-                          )}
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          {s.priceHint ? (
+                            <span className="inline-flex items-baseline gap-1 rounded-bp-xs bg-river/10 px-2 py-0.5 font-display text-base font-bold tracking-tight text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-river/75">
+                                {t(locale, "planner.booking.priceLabel")}
+                              </span>
+                              <span>{s.priceHint}</span>
+                            </span>
+                          ) : null}
+                          {typeof s.ratingHint === "number" ? (
+                            <span className="inline-flex items-baseline gap-1 text-xs font-medium text-ink">
+                              <span
+                                aria-hidden
+                                className="text-[0.7rem] font-bold text-river/80"
+                              >
+                                ★
+                              </span>
+                              <span>{s.ratingHint.toFixed(1)}</span>
+                              <span className="sr-only">
+                                {t(locale, "planner.booking.rating").replace(
+                                  "{n}",
+                                  s.ratingHint.toFixed(1),
+                                )}
+                              </span>
+                            </span>
+                          ) : null}
+                          <span className="text-xs text-ink-soft">
+                            {s.providerLabel}
+                          </span>
                         </div>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-[7.5rem]">
+                        <button
+                          type="button"
+                          onClick={() => openExternal(s.url)}
+                          className="rounded-bp bg-river px-3.5 py-2 text-xs font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
+                        >
+                          {t(locale, "planner.booking.openExternal")}
+                        </button>
+                        {stop && (
+                          <button
+                            type="button"
+                            onClick={() => applySuggestion(s)}
+                            className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                          >
+                            {t(locale, "planner.booking.useLink")}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
 
             {!searching && !searched && (
-              <p className="text-xs leading-relaxed text-ink-soft">
-                {t(locale, "planner.booking.suggestSupport")}
-              </p>
+              <div
+                className="animate-rise max-w-sm space-y-1.5 px-0.5 py-2"
+                style={{ animationDelay: "70ms" }}
+                role="status"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                  {t(locale, "planner.booking.emptyEyebrow")}
+                </p>
+                <p className="text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "planner.booking.suggestSupport")}
+                </p>
+              </div>
             )}
           </section>
 
           {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
           <section
-            className="animate-fade px-4 py-4"
+            className="animate-rise px-4 py-4"
             style={{ animationDelay: "90ms" }}
             aria-label={t(locale, "planner.booking.confirmEyebrow")}
           >
@@ -684,7 +727,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => openExternal(row.url.trim())}
-                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10"
+                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                             >
                               {t(locale, "planner.booking.open")}
                             </button>
@@ -701,7 +744,7 @@ export function BookingPanel({
                             locale,
                             "planner.booking.providerPlaceholder",
                           )}
-                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2 focus-visible:ring-focus/40"
                         />
                         <input
                           value={row.url}
@@ -712,7 +755,7 @@ export function BookingPanel({
                             locale,
                             "planner.booking.urlPlaceholder",
                           )}
-                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2"
+                          className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river/40 focus:ring-2 focus-visible:ring-focus/40"
                         />
                       </div>
                     );
@@ -723,9 +766,14 @@ export function BookingPanel({
           </section>
         </div>
 
-        <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-[11px] leading-relaxed text-ink-soft/80">
+        <p className="border-t border-[color:var(--bp-line)] px-4 py-2.5 text-[11px] leading-relaxed text-ink-soft/80">
           {t(locale, "planner.booking.hint")}
         </p>
+
+        {/* SoftFailNotice owned by booking sheet footer — never timber / Failed to fetch. */}
+        <SoftFailNotice open={Boolean(softCopy)} compact>
+          {softCopy ?? ""}
+        </SoftFailNotice>
       </SheetPresence>
     </div>
   );
