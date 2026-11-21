@@ -791,22 +791,6 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               ? t(locale, "planner.duplicating")
               : t(locale, "planner.duplicate")}
           </button>
-          <div className="ml-1 flex overflow-hidden rounded-bp border border-[color:var(--bp-line)]">
-            {(["auto", "google", "amap", "baidu"] as const).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => void setEnginePreference(opt)}
-                className={`px-2.5 py-1.5 text-xs font-semibold transition duration-bp-fast ease-bp ${
-                  preference === opt
-                    ? "bg-river text-foam"
-                    : "bg-foam/40 text-ink-soft hover:text-river"
-                }`}
-              >
-                {t(locale, `planner.pref.${opt}`)}
-              </button>
-            ))}
-          </div>
         </div>
       </header>
 
@@ -838,6 +822,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               engineId={engineInfo?.engineId}
               mode={engineInfo?.mode ?? "demo"}
               locale={locale}
+              preference={preference}
+              onPreferenceChange={(next) => void setEnginePreference(next)}
               query={query}
               results={results}
               searching={searching}

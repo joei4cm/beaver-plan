@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { Leg, MapEngineId, PlaceSummary, Stop } from "@beaver/core";
+import type { Leg, MapEngineId, PlaceSummary, Stop, Trip } from "@beaver/core";
 import { legPathSegments } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import {
@@ -37,6 +37,8 @@ type Props = {
   engineId?: MapEngineId;
   mode?: "live" | "demo";
   locale?: Locale;
+  preference: Trip["mapEngine"];
+  onPreferenceChange: (next: Trip["mapEngine"]) => void;
   query: string;
   results: PlaceSummary[];
   searching: boolean;
@@ -55,6 +57,8 @@ export function MapStage({
   engineId,
   mode = "demo",
   locale = "zh-CN",
+  preference,
+  onPreferenceChange,
   query,
   results,
   searching,
@@ -95,6 +99,8 @@ export function MapStage({
         engineLabel={engineLabel}
         modeLabel={modeLabel}
         tileLabel={tileLabel}
+        preference={preference}
+        onPreferenceChange={onPreferenceChange}
         softFail={softFail}
         softFailMessage={locateNotice}
         searchDemo={mode !== "live"}
