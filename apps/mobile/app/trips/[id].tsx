@@ -51,6 +51,7 @@ import {
 import { BookingPanel } from "../../src/components/booking-panel";
 import { DayFillPanel } from "../../src/components/day-fill-panel";
 import { PlaceIntel } from "../../src/components/place-intel";
+import { SheetPresence } from "../../src/components/sheet-presence";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { TransferSteps } from "../../src/components/transfer-steps";
 import { TripMap } from "../../src/components/trip-map";
@@ -157,7 +158,6 @@ export default function TripDetailScreen() {
   const rise = useRef(new Animated.Value(0)).current;
   const sheet = useRef(new Animated.Value(0)).current;
   const stopPop = useRef(new Animated.Value(1)).current;
-  const inviteSheet = useRef(new Animated.Value(0)).current;
   const presencePulse = useRef(new Animated.Value(0)).current;
   /** Tip 015 stretch + tip-011 settle — underline select (web #117). */
   const dayTabLayouts = useRef(new Map<string, { x: number; width: number }>());
@@ -573,20 +573,6 @@ export default function TripDetailScreen() {
   }, [selectedStopId, stops, trip?.mapEngine, trip?.timezone]);
 
   useEffect(() => {
-    if (!inviteOpen) {
-      inviteSheet.setValue(0);
-      return;
-    }
-    inviteSheet.setValue(0);
-    Animated.timing(inviteSheet, {
-      toValue: 1,
-      duration: motion.durationMdMs,
-      easing: easeRise,
-      useNativeDriver: true,
-    }).start();
-  }, [inviteOpen, inviteSheet]);
-
-  useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(presencePulse, {
@@ -857,6 +843,12 @@ export default function TripDetailScreen() {
       },
     ],
   };
+
+  /** Invite SoftFailNotice chrome — invite-scoped copy after web #130. */
+  const inviteSoftOpen = collabSeeded || collabSoftOffline;
+  const inviteSoftCopy = collabSoftOffline
+    ? t(locale, "collab.inviteSoftFail")
+    : t(locale, "collab.inviteDemoNotice");
 
   return (
     <View style={styles.root}>
@@ -1527,13 +1519,12 @@ export default function TripDetailScreen() {
                   ) : null}
                 </View>
 
+                {/* Closed-bar SoftFailNotice — invite-scoped copy; rise in/out (#46) */}
                 <SoftFailNotice
-                  open={(collabSeeded || collabSoftOffline) && !inviteOpen}
+                  open={inviteSoftOpen && !inviteOpen}
                   style={styles.collabSoftFail}
                 >
-                  {collabSoftOffline
-                    ? t(locale, "collab.panel.softOffline")
-                    : t(locale, "collab.panel.demoNotice")}
+                  {inviteSoftCopy}
                 </SoftFailNotice>
 
                 {(yourRole === "owner" || yourRole === "editor") && (
@@ -1561,127 +1552,124 @@ export default function TripDetailScreen() {
                   </View>
                 )}
 
-                {inviteOpen ? (
-                  <Animated.View
-                    style={StyleSheet.flatten([
-                      styles.inviteSheet,
-                      {
-                        opacity: inviteSheet,
-                        transform: [
-                          {
-                            translateY: inviteSheet.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [14, 0],
-                            }),
-                          },
-                        ],
-                      },
-                    ])}
-                    accessibilityLabel={t(locale, "collab.invite")}
-                  >
-                    <View style={styles.inviteSheetHeader}>
+                <SheetPresence
+                  open={inviteOpen}
+                  delayMs={40}
+                  rise={14}
+                  style={styles.inviteSheet}
+                  accessibilityLabel={t(locale, "collab.invite")}
+                >
+                  {/* Azure invite chrome — SoftFailNotice under header rail */}
+                  <View style={styles.inviteSheetHeader}>
+                    <View style={styles.inviteSheetTitles}>
                       <Text style={styles.inviteSheetEyebrow}>
+                        {t(locale, "collab.inviteEyebrow")}
+                      </Text>
+                      <Text style={styles.inviteSheetTitle}>
                         {t(locale, "collab.invite")}
                       </Text>
-                      <Text style={styles.inviteRoleChip}>
-                        {t(locale, "collab.role.editor")}
-                      </Text>
                     </View>
-                    <View style={styles.inviteSheetBody}>
-                      <SoftFailNotice
-                        open={collabSeeded || collabSoftOffline}
-                      >
-                        {collabSoftOffline
-                          ? t(locale, "collab.panel.softOffline")
-                          : t(locale, "collab.panel.demoNotice")}
-                      </SoftFailNotice>
+                    <View style={styles.inviteSheetBadges}>
+                      {inviteSoftOpen ? (
+                        <Text style={styles.inviteSoftBadge}>
+                          {t(locale, "collab.demoBadge")}
+                        </Text>
+                      ) : null}
                       {inviteCode ? (
-                        <View style={styles.inviteShareBlock}>
-                          <Text style={styles.inviteShareHint}>
-                            {t(locale, "collab.shareHint")}
-                          </Text>
-                          <View style={styles.inviteCodeRow}>
-                            <Text style={styles.inviteCodeChip}>
-                              {inviteCode}
-                            </Text>
-                            <Pressable
-                              style={styles.copyBtn}
-                              onPress={() => void onCopyInvite()}
-                              accessibilityRole="button"
-                            >
-                              <Text style={styles.copyBtnLabel}>
-                                {inviteCopied
-                                  ? t(locale, "collab.copied")
-                                  : t(locale, "collab.copyLink")}
-                              </Text>
-                            </Pressable>
-                          </View>
-                          {inviteUrl ? (
-                            <Text style={styles.inviteUrl}>{inviteUrl}</Text>
-                          ) : null}
-                        </View>
-                      ) : (
+                        <Text style={styles.inviteRoleChip}>
+                          {t(locale, "collab.role.editor")}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                  <SoftFailNotice open={inviteSoftOpen} compact>
+                    {inviteSoftCopy}
+                  </SoftFailNotice>
+                  <View style={styles.inviteSheetBody}>
+                    {inviteCode ? (
+                      <View style={styles.inviteShareBlock}>
                         <Text style={styles.inviteShareHint}>
                           {t(locale, "collab.shareHint")}
                         </Text>
-                      )}
-                      <View style={styles.inviteMemberList}>
-                        {members.map((m) => {
-                          const presence = presenceFor(m.role);
-                          return (
-                            <View key={m.id} style={styles.inviteMemberRow}>
-                              <View style={styles.inviteMemberLeft}>
-                                <View
-                                  style={StyleSheet.flatten([
-                                    styles.presenceAvatar,
-                                    styles.presenceAvatarMd,
-                                    m.role === "viewer"
-                                      ? styles.presenceAvatarMuted
-                                      : null,
-                                  ])}
-                                >
-                                  <Text style={styles.presenceInitialsMd}>
-                                    {memberInitials(
-                                      m.displayName ?? m.userId,
-                                    )}
-                                  </Text>
-                                  <View
-                                    style={StyleSheet.flatten([
-                                      styles.presenceDot,
-                                      presence === "active"
-                                        ? styles.presenceDotActive
-                                        : presence === "idle"
-                                          ? styles.presenceDotIdle
-                                          : styles.presenceDotAway,
-                                    ])}
-                                  />
-                                </View>
-                                <Text
-                                  style={styles.inviteMemberName}
-                                  numberOfLines={1}
-                                >
-                                  {m.displayName ?? m.userId}
-                                </Text>
-                              </View>
-                              <Text
+                        <View style={styles.inviteCodeRow}>
+                          <Text style={styles.inviteCodeChip}>
+                            {inviteCode}
+                          </Text>
+                          <Pressable
+                            style={styles.copyBtn}
+                            onPress={() => void onCopyInvite()}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.copyBtnLabel}>
+                              {inviteCopied
+                                ? t(locale, "collab.copied")
+                                : t(locale, "collab.copyLink")}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        {inviteUrl ? (
+                          <Text style={styles.inviteUrl}>{inviteUrl}</Text>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <Text style={styles.inviteShareHint}>
+                        {t(locale, "collab.shareHint")}
+                      </Text>
+                    )}
+                    <View style={styles.inviteMemberList}>
+                      {members.map((m) => {
+                        const presence = presenceFor(m.role);
+                        return (
+                          <View key={m.id} style={styles.inviteMemberRow}>
+                            <View style={styles.inviteMemberLeft}>
+                              <View
                                 style={StyleSheet.flatten([
-                                  styles.presenceRole,
-                                  m.role === "owner"
-                                    ? styles.presenceRoleOwner
-                                    : m.role === "editor"
-                                      ? styles.presenceRoleEditor
-                                      : styles.presenceRoleViewer,
+                                  styles.presenceAvatar,
+                                  styles.presenceAvatarMd,
+                                  m.role === "viewer"
+                                    ? styles.presenceAvatarMuted
+                                    : null,
                                 ])}
                               >
-                                {t(locale, `collab.role.${m.role}`)}
+                                <Text style={styles.presenceInitialsMd}>
+                                  {memberInitials(m.displayName ?? m.userId)}
+                                </Text>
+                                <View
+                                  style={StyleSheet.flatten([
+                                    styles.presenceDot,
+                                    presence === "active"
+                                      ? styles.presenceDotActive
+                                      : presence === "idle"
+                                        ? styles.presenceDotIdle
+                                        : styles.presenceDotAway,
+                                  ])}
+                                />
+                              </View>
+                              <Text
+                                style={styles.inviteMemberName}
+                                numberOfLines={1}
+                              >
+                                {m.displayName ?? m.userId}
                               </Text>
                             </View>
-                          );
-                        })}
-                      </View>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.presenceRole,
+                                m.role === "owner"
+                                  ? styles.presenceRoleOwner
+                                  : m.role === "editor"
+                                    ? styles.presenceRoleEditor
+                                    : styles.presenceRoleViewer,
+                              ])}
+                            >
+                              {t(locale, `collab.role.${m.role}`)}
+                            </Text>
+                          </View>
+                        );
+                      })}
                     </View>
-                  </Animated.View>
-                ) : null}
+                  </View>
+                </SheetPresence>
 
                 {comments.length > 0 ? (
                   <View style={styles.collabThread}>
@@ -2482,6 +2470,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
   },
   inviteSheetHeader: {
     flexDirection: "row",
@@ -2494,6 +2486,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 246, 250, 0.7)",
     paddingHorizontal: 14,
     paddingVertical: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  inviteSheetTitles: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
   },
   inviteSheetEyebrow: {
     ...type.body,
@@ -2501,7 +2503,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.6,
     textTransform: "uppercase",
+    color: colors.river,
+  },
+  inviteSheetTitle: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    color: "rgba(71, 85, 105, 0.8)",
+  },
+  inviteSheetBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  inviteSoftBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
     color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    overflow: "hidden",
   },
   inviteRoleChip: {
     ...type.body,
