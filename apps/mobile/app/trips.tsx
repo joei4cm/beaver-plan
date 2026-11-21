@@ -151,7 +151,7 @@ function TripRow({
   );
 }
 
-/** Azure inset seed rail — SoftFail chrome for empty invite (web trips-home). */
+/** Azure inset seed rail — Soft seed badge when SoftFail owns (web #201). */
 function SeedRail({ soft }: { soft: boolean }) {
   return (
     <View style={styles.listRail}>
@@ -176,7 +176,7 @@ function SeedRail({ soft }: { soft: boolean }) {
           ])}
         >
           {soft
-            ? t(locale, "trips.seedDemo")
+            ? t(locale, "trips.seedSoftBadge")
             : t(locale, "trips.seedReady")}
         </Text>
       </View>
@@ -184,7 +184,7 @@ function SeedRail({ soft }: { soft: boolean }) {
   );
 }
 
-/** Azure inset list rail — count + Demo/Live chip (web #136). */
+/** Azure inset trip-cards rail — Soft cards / Live chip (BEA-281). */
 function TripsListRail({
   count,
   soft,
@@ -215,7 +215,7 @@ function TripsListRail({
           ])}
         >
           {soft
-            ? t(locale, "trips.listDemo")
+            ? t(locale, "trips.cardsSoftBadge")
             : t(locale, "trips.listLive")}
         </Text>
       </View>
@@ -246,9 +246,11 @@ function TripsListSkeleton() {
 }
 
 /**
- * Expo home SoftFailNotice chrome (BEA-234 after web trips-home seed sheet):
- * azure seed / list rail · compact SoftFailNotice · tip-011 SheetPresence ·
- * StyleSheet.flatten · Lumen tokens. Never timber / Failed to fetch.
+ * Expo home trip cards SoftFailNotice chrome (BEA-281 after #176/#193/#201):
+ * azure seed / cards rail · Soft seed / Soft cards badge · compact SoftFail
+ * under rail · tip-011 SheetPresence · StyleSheet.flatten · Lumen tokens.
+ * SoftFail never timber / Failed to fetch. Seed SoftFail yields while cards
+ * own (no double depth).
  */
 export default function TripsScreen() {
   const router = useRouter();
@@ -287,6 +289,7 @@ export default function TripsScreen() {
       remoteTrips = tripRes.trips;
     } catch (e) {
       remoteFailed = true;
+      // Soft-fail transport — SoftFailNotice owns copy; never timber Failed to fetch.
       if (!isApiSoftFail(e)) {
         setError(e instanceof Error ? e.message : "load_failed");
       }
@@ -359,7 +362,24 @@ export default function TripsScreen() {
   );
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
-  const listSoft = Boolean(softNotice);
+  /**
+   * Trip cards SoftFail ownership (BEA-281 after web #201 seed / #176 Expo):
+   * seed sheet owns SoftFail while empty invite; cards sheet owns SoftFail when
+   * trips exist. SoftFail yields across sheets (no double depth). Soft copy
+   * never timber / Failed to fetch.
+   */
+  const seedOwnsSoft = showEmptyInvite;
+  const cardsOwnsSoft = hydrated && !showEmptyInvite;
+  const seedSoftOpen = seedOwnsSoft;
+  const cardsSoftOpen =
+    cardsOwnsSoft && !error && Boolean(softNotice);
+  const seedSoftCopy =
+    softNotice ?? t(locale, "trips.seedSoftFail");
+  const cardsSoftCopy =
+    softNotice ?? t(locale, "trips.softOffline");
+  /** Timber banner — scrub soft-fail transport noise (Failed to fetch). */
+  const hardError =
+    error && !isApiSoftFail(new Error(error)) ? error : null;
 
   const riseStyle = {
     opacity: rise,
@@ -434,9 +454,9 @@ export default function TripsScreen() {
           </View>
         </View>
 
-        {error ? (
+        {hardError ? (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>{hardError}</Text>
           </View>
         ) : null}
 
@@ -457,7 +477,7 @@ export default function TripsScreen() {
             </Text>
           </View>
 
-          {/* SoftFailNotice stays section-scoped — seed / list sheet, never page hero. */}
+          {/* SoftFailNotice stays sheet-scoped — seed / cards, never page hero. */}
           {!hydrated ? (
             <SheetPresence open rise={10} delayMs={40}>
               <TripsListSkeleton />
@@ -467,18 +487,27 @@ export default function TripsScreen() {
               open
               rise={10}
               delayMs={60}
-              accessibilityLabel={t(locale, "trips.seedActions")}
+              accessibilityLabel={t(locale, "trips.seedRail")}
             >
+              {/*
+                Seed SoftFail chrome (BEA-281 after #176/#201):
+                azure seed rail · Soft seed badge · compact SoftFailNotice ·
+                tip-011 SheetPresence CTAs / sample cards — never timber.
+              */}
               <View style={styles.listSheet}>
-                <SeedRail soft={listSoft} />
+                <SeedRail soft={seedSoftOpen} />
+                {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
                 <SoftFailNotice
-                  open={!error && Boolean(softNotice)}
+                  open={!hardError && seedSoftOpen}
                   compact
                   style={styles.listSoftFail}
                 >
-                  {softNotice ?? ""}
+                  {seedSoftCopy}
                 </SoftFailNotice>
-                <View
+                <SheetPresence
+                  open
+                  rise={8}
+                  delayMs={40}
                   style={styles.seedActions}
                   accessibilityLabel={t(locale, "trips.seedActions")}
                 >
@@ -510,22 +539,24 @@ export default function TripsScreen() {
                   <Text style={styles.seedPlaybooksHint}>
                     {t(locale, "trips.seedPlaybooks")}
                   </Text>
-                </View>
+                </SheetPresence>
                 {sampleTrips.length > 0 ? (
-                  <View style={styles.seedSampleBlock}>
-                    <Text style={styles.sampleEyebrow}>
-                      {t(locale, "trips.sampleEyebrow")}
-                    </Text>
-                    {sampleTrips.map((trip, index) => (
-                      <TripRow
-                        key={trip.id}
-                        trip={trip}
-                        index={index}
-                        showCta
-                        last={index === sampleTrips.length - 1}
-                      />
-                    ))}
-                  </View>
+                  <SheetPresence open rise={8} delayMs={80}>
+                    <View style={styles.seedSampleBlock}>
+                      <Text style={styles.sampleEyebrow}>
+                        {t(locale, "trips.sampleEyebrow")}
+                      </Text>
+                      {sampleTrips.map((trip, index) => (
+                        <TripRow
+                          key={trip.id}
+                          trip={trip}
+                          index={index}
+                          showCta
+                          last={index === sampleTrips.length - 1}
+                        />
+                      ))}
+                    </View>
+                  </SheetPresence>
                 ) : null}
               </View>
             </SheetPresence>
@@ -534,26 +565,40 @@ export default function TripsScreen() {
               open
               rise={10}
               delayMs={60}
-              accessibilityLabel={t(locale, "trips.yours")}
+              accessibilityLabel={t(locale, "trips.listRail")}
             >
+              {/*
+                Trip cards SoftFail chrome (BEA-281 after #176/#193):
+                azure cards rail · Soft cards badge · compact SoftFailNotice ·
+                tip-011 SheetPresence body — never timber / Failed to fetch.
+                Seed SoftFail yields while cards own (no double depth).
+              */}
               <View style={styles.listSheet}>
-                <TripsListRail count={trips.length} soft={listSoft} />
+                <TripsListRail count={trips.length} soft={cardsSoftOpen} />
+                {/* Compact SoftFail under azure cards rail — never timber / Failed to fetch. */}
                 <SoftFailNotice
-                  open={!error && Boolean(softNotice)}
+                  open={cardsSoftOpen}
                   compact
                   style={styles.listSoftFail}
                 >
-                  {softNotice ?? ""}
+                  {cardsSoftCopy}
                 </SoftFailNotice>
-                {trips.map((trip, index) => (
-                  <TripRow
-                    key={trip.id}
-                    trip={trip}
-                    index={index}
-                    showCta
-                    last={index === trips.length - 1}
-                  />
-                ))}
+                <SheetPresence
+                  open
+                  rise={8}
+                  delayMs={50}
+                  accessibilityLabel={t(locale, "trips.yours")}
+                >
+                  {trips.map((trip, index) => (
+                    <TripRow
+                      key={trip.id}
+                      trip={trip}
+                      index={index}
+                      showCta
+                      last={index === trips.length - 1}
+                    />
+                  ))}
+                </SheetPresence>
               </View>
             </SheetPresence>
           )}
@@ -846,8 +891,11 @@ const styles = StyleSheet.create({
   statusChipTextLive: {
     color: colors.river,
   },
+  /** Mist SoftFail strip under azure cards / seed rail — border-b before body. */
   listSoftFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
   },
   seedActions: {
     flexDirection: "row",
