@@ -30,7 +30,6 @@ import {
   routeAdjacentStops,
   searchDemoPlaces,
   stopsForDay,
-  summarizeTransfer,
   toPlaceRef,
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
@@ -1090,31 +1089,23 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         userNote={stop.userNote}
                       />
                     )}
-                    {leg && (
-                      <>
-                        <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
-                            {leg.mode === "transit"
-                              ? t(locale, "planner.mode.transit")
-                              : leg.mode === "walk"
-                                ? t(locale, "planner.mode.walk")
-                                : t(locale, "planner.mode.drive")}
-                          </span>
-                          <span className="text-xs font-medium text-ink">
-                            {summarizeTransfer(leg)}
-                          </span>
-                        </div>
-                        {(leg.mode === "transit" ||
-                          leg.transitSteps.length > 1) && (
-                          <TransferSteps
-                            leg={leg}
-                            locale={locale}
-                            variant="inline"
-                            demoMode={engineInfo?.mode !== "live"}
-                            showSoftFail={selected}
-                          />
-                        )}
-                      </>
+                    {(leg ||
+                      (selected &&
+                        !routing &&
+                        ctx.index < dayStops.length - 1)) && (
+                      <TransferSteps
+                        leg={leg ?? null}
+                        locale={locale}
+                        variant="inline"
+                        demoMode={engineInfo?.mode !== "live"}
+                        showSoftFail={selected && Boolean(leg)}
+                        showEmpty={
+                          selected &&
+                          !routing &&
+                          !leg &&
+                          ctx.index < dayStops.length - 1
+                        }
+                      />
                     )}
                     {routing &&
                       !leg &&

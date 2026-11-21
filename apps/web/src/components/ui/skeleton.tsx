@@ -321,7 +321,7 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-/** Tip 017 — transfer step rails while route-day soft-runs. */
+/** Tip 017 — transit leg card (summary · steps) while route-day soft-runs. */
 export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
   return (
     <div
@@ -329,27 +329,37 @@ export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
       aria-live="polite"
       className="animate-fade mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
+      <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
         <div className="flex items-center gap-2">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-5 w-14 rounded-bp-xs" />
         </div>
         <Skeleton className="h-3.5 w-28" />
       </div>
-      <ol className="space-y-3 px-3 py-3">
-        {Array.from({ length: steps }).map((_, i) => (
-          <li key={i} className="flex gap-3">
-            <Skeleton className="mt-0.5 h-6 w-6 shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-3 w-10" />
-                <Skeleton className="h-3.5 w-12" />
+      <div className="divide-y divide-[color:var(--bp-line)]">
+        <div className="space-y-2 px-3 py-3">
+          <Skeleton className="h-2.5 w-12" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-5 w-14 rounded-bp-xs" />
+            <Skeleton className="h-4 w-44 max-w-[70%]" />
+          </div>
+        </div>
+        <ol className="space-y-3 px-3 py-3">
+          <Skeleton className="h-2.5 w-10" />
+          {Array.from({ length: steps }).map((_, i) => (
+            <li key={i} className="flex gap-3">
+              <Skeleton className="mt-0.5 h-6 w-6 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3.5 w-12" />
+                </div>
+                <Skeleton className="h-4 w-40 max-w-[85%]" />
               </div>
-              <Skeleton className="h-4 w-40 max-w-[85%]" />
-            </div>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }
