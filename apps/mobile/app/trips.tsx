@@ -187,7 +187,10 @@ function EmptyRail({ soft }: { soft: boolean }) {
   );
 }
 
-/** Azure inset trip-cards rail — Soft cards / Live chip (BEA-281). */
+/**
+ * Azure inset trip-cards rail — Soft cards badge + softSupport when SoftFail
+ * owns (BEA-316 after #211 / BEA-281).
+ */
 function TripsListRail({
   count,
   soft,
@@ -196,13 +199,20 @@ function TripsListRail({
   soft: boolean;
 }) {
   return (
-    <View style={styles.listRail}>
+    <View
+      style={StyleSheet.flatten([
+        styles.listRail,
+        soft ? styles.listRailSoft : null,
+      ])}
+    >
       <View style={styles.listRailCopy}>
         <Text style={styles.listRailLabel}>
           {t(locale, "trips.listRail")}
         </Text>
         <Text style={styles.listRailCount}>
-          {t(locale, "trips.listCount").replace("{n}", String(count))}
+          {soft
+            ? t(locale, "trips.cardsSoftSupport")
+            : t(locale, "trips.listCount").replace("{n}", String(count))}
         </Text>
       </View>
       <View
@@ -249,11 +259,12 @@ function TripsListSkeleton() {
 }
 
 /**
- * Expo trips empty SoftFailNotice depth (BEA-307 after web #224 / Expo #96):
- * azure Start rail · Soft empty badge · emptySupport · emptySoftFail copy
- * (never inherit list softNotice) · tip-011 SheetPresence CTAs ·
+ * Expo home SoftFailNotice (BEA-307 empty + BEA-316 cards depth after #211):
+ * Empty: azure Start · Soft empty · emptySupport · emptySoftFail.
+ * Cards: azure Trips rail · Soft cards · softSupport · softOffline copy
+ * (never inherit softNotice) · mist SoftFail band · tip-011 mist-wash body ·
  * StyleSheet.flatten · Lumen tokens. SoftFail never timber / Failed to fetch.
- * Cards SoftFail yields while empty owns (no double depth).
+ * SoftFail yields across empty / cards sheets (no double depth).
  */
 export default function TripsScreen() {
   const router = useRouter();
@@ -366,11 +377,11 @@ export default function TripsScreen() {
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
   /**
-   * Empty SoftFail ownership (BEA-307 after web #224 / Expo #96 / #281):
+   * SoftFail ownership (BEA-307 empty / BEA-316 cards depth after #211):
    * empty sheet owns SoftFail while empty invite; cards sheet owns SoftFail
-   * when trips exist. SoftFail yields across sheets (no double depth). Empty
-   * SoftFail copy is always trips.emptySoftFail — never inherit list
-   * softNotice. Soft copy never timber / Failed to fetch.
+   * when trips exist. SoftFail yields across sheets (no double depth).
+   * Empty copy always emptySoftFail; cards copy always softOffline — never
+   * inherit softNotice / timber. Soft copy never Failed to fetch.
    */
   const emptyOwnsSoft = showEmptyInvite;
   const cardsOwnsSoft = hydrated && !showEmptyInvite;
@@ -378,8 +389,8 @@ export default function TripsScreen() {
   const cardsSoftOpen =
     cardsOwnsSoft && !error && Boolean(softNotice);
   const emptySoftCopy = t(locale, "trips.emptySoftFail");
-  const cardsSoftCopy =
-    softNotice ?? t(locale, "trips.softOffline");
+  /** Cards SoftFail copy owned by Trips rail — never inherit softNotice. */
+  const cardsSoftCopy = t(locale, "trips.softOffline");
   /** Timber banner — scrub soft-fail transport noise (Failed to fetch). */
   const hardError =
     error && !isApiSoftFail(new Error(error)) ? error : null;
@@ -572,14 +583,17 @@ export default function TripsScreen() {
               accessibilityLabel={t(locale, "trips.listRail")}
             >
               {/*
-                Trip cards SoftFail chrome (BEA-281 after #176/#193):
-                azure cards rail · Soft cards badge · compact SoftFailNotice ·
-                tip-011 SheetPresence body — never timber / Failed to fetch.
-                Empty SoftFail yields while cards own (no double depth).
+                Trip cards SoftFail depth (BEA-316 after #211 / BEA-281):
+                azure Trips rail · Soft cards badge · softSupport ·
+                compact SoftFail mist band · tip-011 mist-wash body —
+                never timber / Failed to fetch. Yields while empty owns.
               */}
               <View style={styles.listSheet}>
-                <TripsListRail count={trips.length} soft={cardsSoftOpen} />
-                {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
+                <TripsListRail
+                  count={trips.length}
+                  soft={cardsSoftOpen && !emptyOwnsSoft}
+                />
+                {/* Compact SoftFail under azure Trips rail — never timber. */}
                 <SoftFailNotice
                   open={cardsSoftOpen && !emptyOwnsSoft}
                   compact
@@ -591,6 +605,11 @@ export default function TripsScreen() {
                   open
                   rise={8}
                   delayMs={50}
+                  style={
+                    cardsSoftOpen && !emptyOwnsSoft
+                      ? styles.cardsBodyWash
+                      : undefined
+                  }
                   accessibilityLabel={t(locale, "trips.yours")}
                 >
                   {trips.map((trip, index) => (
@@ -848,6 +867,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  listRailSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   listRailCopy: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -870,6 +892,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
     color: "rgba(100, 116, 139, 0.85)",
+    flexShrink: 1,
   },
   statusChip: {
     borderRadius: radius.xs,
@@ -895,11 +918,16 @@ const styles = StyleSheet.create({
   statusChipTextLive: {
     color: colors.river,
   },
-  /** Mist SoftFail strip under azure cards / empty Start rail — border-b before body. */
+  /** Mist SoftFail strip under azure Trips / empty Start rail — border-b before body. */
   listSoftFail: {
     marginBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  /** Mist wash on tip-011 trip rows while SoftFail owns the Trips rail. */
+  cardsBodyWash: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   seedActions: {
     flexDirection: "row",

@@ -139,6 +139,7 @@
   "trips.listDemo": "演示",
   "trips.listLive": "在线",
   "trips.cardsSoftBadge": "柔和行程卡",
+  "trips.cardsSoftSupport": "柔和行程行 · SoftFail 于 API 暂不可达时。",
   "trips.duplicate": "复制行程",
   "trips.duplicating": "复制中…",
   "trips.copyJournal": "同时复制日记文字（不含照片）",
