@@ -267,20 +267,29 @@ export function ShareStudioSkeleton() {
           </div>
           <Skeleton className="mt-4 h-4 w-56" />
         </div>
-        <div className="space-y-3">
-          <Skeleton className="h-7 w-36" />
-          <Skeleton className="h-3.5 w-full max-w-xs" />
-          <div className="grid grid-cols-2 gap-2.5">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-[8.5rem] w-full rounded-bp" />
-            ))}
+        {/* Control sheet chrome — azure rail · SoftFailNotice slot · template grid */}
+        <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+          <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <Skeleton className="h-2.5 w-28" />
+            <Skeleton className="h-5 w-12 rounded-bp-xs" />
           </div>
-          <div className="mt-6 space-y-2.5 border-t border-[color:var(--bp-line)] pt-5">
-            <Skeleton className="h-7 w-24" />
+          <div className="space-y-3 px-4 py-4">
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-7 w-36" />
             <Skeleton className="h-3.5 w-full max-w-xs" />
-            <Skeleton className="mt-1 h-12 w-full rounded-bp" />
-            <Skeleton className="h-11 w-full rounded-bp" />
-            <Skeleton className="h-4 w-20" />
+            <div className="grid grid-cols-2 gap-2.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-[8.5rem] w-full rounded-bp" />
+              ))}
+            </div>
+            <div className="mt-2 space-y-2.5 border-t border-[color:var(--bp-line)] pt-5">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-7 w-24" />
+              <Skeleton className="h-3.5 w-full max-w-xs" />
+              <Skeleton className="mt-1 h-12 w-full rounded-bp" />
+              <Skeleton className="h-11 w-full rounded-bp" />
+              <Skeleton className="h-4 w-20" />
+            </div>
           </div>
         </div>
       </div>

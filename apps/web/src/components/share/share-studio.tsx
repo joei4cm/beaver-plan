@@ -30,6 +30,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { ShareStudioSkeleton } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
@@ -59,6 +60,15 @@ type Props = {
 };
 
 const DEFAULT_ACCENT = SHARE_ACCENT_PRESETS[0];
+
+/** Azure section eyebrow — matches booking / day-fill / place-intel depth. */
+function SectionEyebrow({ children }: { children: string }) {
+  return (
+    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+      {children}
+    </p>
+  );
+}
 
 function svgInnerMarkup(svg: string): string {
   const trimmed = svg.trim();
@@ -515,291 +525,351 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           </p>
         </section>
 
-        {/* Control sheet — template grid → light edit → SoftFailNotice + export */}
-        <aside
-          className="animate-sheet-in space-y-5"
+        {/* Control sheet — azure rail · SoftFailNotice · SheetPresence · tip-011 */}
+        <SheetPresence
+          open
+          className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
           style={{ animationDelay: "80ms" }}
+          aria-label={t(locale, "share.title")}
         >
-          <section className="space-y-3" aria-labelledby="share-template-heading">
-            <div>
-              <h2
-                id="share-template-heading"
-                className="font-display text-2xl tracking-tight text-ink"
-              >
-                {t(locale, "share.pickTemplate")}
-              </h2>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                {t(locale, "share.pickTemplateSupport")}
-              </p>
+          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "share.sheetEyebrow")}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "share.sheetSupport")}
+              </span>
             </div>
-
-            <div
-              className="grid grid-cols-2 gap-2.5"
-              role="listbox"
-              aria-label={t(locale, "share.pickTemplate")}
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                softDemo || exportSoftFail
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river"
+              }`}
             >
-              {templates.map((tpl) => {
-                const selected = templateId === tpl.id;
-                const portrait = tpl.aspect === "9:16";
-                return (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    role="option"
-                    aria-selected={selected}
-                    onClick={() => pickTemplate(tpl.id)}
-                    className={`group flex flex-col overflow-hidden rounded-bp border text-left will-change-transform ${
-                      selected
-                        ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
-                        : "border-[color:var(--bp-line)] bg-foam/80 transition duration-bp ease-bp-out hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
-                    }`}
-                  >
-                    {/* Aspect thumbnail — azure wash + thumb pop on select (#46) */}
-                    <div
-                      className={`relative flex items-end justify-center px-3 pt-3 transition duration-bp-fast ease-bp-out ${
+              {softDemo || exportSoftFail
+                ? t(locale, "share.demoBadge")
+                : t(locale, "share.liveBadge")}
+            </span>
+          </header>
+
+          <SoftFailNotice open={softDemo || exportSoftFail} compact>
+            {exportSoftFail
+              ? t(locale, "share.exportSoftFail")
+              : t(locale, "share.demoNotice")}
+          </SoftFailNotice>
+
+          <div className="space-y-5 px-4 py-4">
+            <section
+              className="animate-fade space-y-3"
+              style={{ animationDelay: "40ms" }}
+              aria-labelledby="share-template-heading"
+            >
+              <div>
+                <SectionEyebrow>
+                  {t(locale, "share.templatesEyebrow")}
+                </SectionEyebrow>
+                <h2
+                  id="share-template-heading"
+                  className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl"
+                >
+                  {t(locale, "share.pickTemplate")}
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "share.pickTemplateSupport")}
+                </p>
+              </div>
+
+              <div
+                className="grid grid-cols-2 gap-2.5"
+                role="listbox"
+                aria-label={t(locale, "share.pickTemplate")}
+              >
+                {templates.map((tpl) => {
+                  const selected = templateId === tpl.id;
+                  const portrait = tpl.aspect === "9:16";
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => pickTemplate(tpl.id)}
+                      className={`group flex flex-col overflow-hidden rounded-bp border text-left will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
                         selected
-                          ? "bg-river/[0.12]"
-                          : "bg-mist/55 group-hover:bg-mist/80"
+                          ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
+                          : "border-[color:var(--bp-line)] bg-foam/80 transition duration-bp ease-bp-out hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
                       }`}
-                      style={{ minHeight: portrait ? "5.75rem" : "4.25rem" }}
                     >
+                      {/* Aspect thumbnail — azure wash + thumb pop on select (#46) */}
                       <div
-                        className={`relative w-[42%] overflow-hidden rounded-bp-xs shadow-bp-soft transition duration-bp ease-bp-out ${
+                        className={`relative flex items-end justify-center px-3 pt-3 transition duration-bp-fast ease-bp-out ${
                           selected
-                            ? "animate-template-thumb bg-gradient-to-b from-river to-river-deep"
-                            : "bg-gradient-to-b from-river/55 to-ink/70 group-hover:from-river/75"
+                            ? "bg-river/[0.12]"
+                            : "bg-mist/55 group-hover:bg-mist/80"
                         }`}
                         style={{
-                          aspectRatio: `${tpl.width} / ${tpl.height}`,
-                          maxHeight: portrait ? "4.75rem" : "3.35rem",
+                          minHeight: portrait ? "5.75rem" : "4.25rem",
                         }}
-                        aria-hidden
                       >
-                        <div className="mt-[18%] mx-[12%] h-[6%] rounded-full bg-foam/55" />
-                        <div className="mt-[10%] mx-[12%] h-[4%] w-[55%] rounded-full bg-foam/30" />
-                        <div className="absolute inset-x-[14%] bottom-[14%] h-[3%] rounded-full bg-foam/25" />
-                      </div>
-                      <span
-                        className={`absolute right-2 top-2 rounded-bp-xs px-1.5 py-0.5 font-mono text-[10px] tracking-wide transition duration-bp-fast ease-bp-out ${
-                          selected
-                            ? "bg-river text-foam"
-                            : "bg-foam/90 text-ink-soft ring-1 ring-[color:var(--bp-line)] group-hover:text-river"
-                        }`}
-                      >
-                        {tpl.aspect}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-1.5">
+                        <div
+                          className={`relative w-[42%] overflow-hidden rounded-bp-xs shadow-bp-soft transition duration-bp ease-bp-out ${
+                            selected
+                              ? "animate-template-thumb bg-gradient-to-b from-river to-river-deep"
+                              : "bg-gradient-to-b from-river/55 to-ink/70 group-hover:from-river/75"
+                          }`}
+                          style={{
+                            aspectRatio: `${tpl.width} / ${tpl.height}`,
+                            maxHeight: portrait ? "4.75rem" : "3.35rem",
+                          }}
+                          aria-hidden
+                        >
+                          <div className="mt-[18%] mx-[12%] h-[6%] rounded-full bg-foam/55" />
+                          <div className="mt-[10%] mx-[12%] h-[4%] w-[55%] rounded-full bg-foam/30" />
+                          <div className="absolute inset-x-[14%] bottom-[14%] h-[3%] rounded-full bg-foam/25" />
+                        </div>
                         <span
-                          className={`font-display text-[0.95rem] font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
-                            selected ? "text-river" : "text-ink group-hover:text-river"
+                          className={`absolute right-2 top-2 rounded-bp-xs px-1.5 py-0.5 font-mono text-[10px] tracking-wide transition duration-bp-fast ease-bp-out ${
+                            selected
+                              ? "bg-river text-foam"
+                              : "bg-foam/90 text-ink-soft ring-1 ring-[color:var(--bp-line)] group-hover:text-river"
                           }`}
                         >
-                          {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
+                          {tpl.aspect}
                         </span>
-                        {selected ? (
-                          <span className="animate-rise inline-flex shrink-0 items-center gap-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
-                            <svg
-                              viewBox="0 0 12 12"
-                              className="h-3 w-3"
-                              aria-hidden
-                            >
-                              <path
-                                d="M2.2 6.2 4.8 8.7 9.8 3.4"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            {t(locale, "share.selected")}
-                          </span>
-                        ) : null}
                       </div>
-                      <p className="text-[11px] leading-snug text-ink-soft">
-                        {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
 
-          <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="font-display text-2xl tracking-tight text-ink">
-                {t(locale, "share.lightEdit")}
-              </h2>
-              <button
-                type="button"
-                onClick={resetEdits}
-                className="bp-transition text-xs text-ink-soft underline-offset-4 hover:text-river hover:underline"
-              >
-                {t(locale, "share.resetEdit")}
-              </button>
-            </div>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
-                {t(locale, "share.coverTitle")}
-              </span>
-              <input
-                type="text"
-                value={coverTitle}
-                maxLength={80}
-                onChange={(e) => setCoverTitle(e.target.value)}
-                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none bp-transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
-              />
-            </label>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
-                {t(locale, "share.coverSubtitle")}
-              </span>
-              <input
-                type="text"
-                value={coverSubtitle}
-                maxLength={100}
-                onChange={(e) => setCoverSubtitle(e.target.value)}
-                className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none bp-transition focus:border-river/50 focus:ring-2 focus:ring-focus/30"
-              />
-            </label>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
-                  {t(locale, "share.accentColor")}
-                </span>
-                <input
-                  type="color"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-8 w-10 cursor-pointer rounded-bp-xs border border-[color:var(--bp-line)] bg-transparent"
-                  aria-label={t(locale, "share.accentColor")}
-                />
+                      <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
+                        <div className="flex items-start justify-between gap-1.5">
+                          <span
+                            className={`font-display text-[0.95rem] font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
+                              selected
+                                ? "text-river"
+                                : "text-ink group-hover:text-river"
+                            }`}
+                          >
+                            {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
+                          </span>
+                          {selected ? (
+                            <span className="animate-rise inline-flex shrink-0 items-center gap-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                              <svg
+                                viewBox="0 0 12 12"
+                                className="h-3 w-3"
+                                aria-hidden
+                              >
+                                <path
+                                  d="M2.2 6.2 4.8 8.7 9.8 3.4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              {t(locale, "share.selected")}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="text-[11px] leading-snug text-ink-soft">
+                          {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex flex-wrap gap-2">
-                {SHARE_ACCENT_PRESETS.map((hex) => (
-                  <button
-                    key={hex}
-                    type="button"
-                    onClick={() => setAccentColor(hex)}
-                    className={`h-7 w-7 rounded-full border bp-transition ${
-                      accentColor.toLowerCase() === hex.toLowerCase()
-                        ? "border-ink ring-2 ring-river/40"
-                        : "border-[color:var(--bp-line)] hover:scale-105"
-                    }`}
-                    style={{ backgroundColor: hex }}
-                    aria-label={hex}
-                  />
-                ))}
-              </div>
-            </div>
+            </section>
 
-            <label className="block space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
-                  {t(locale, "share.titleScale")}
-                </span>
-                <span className="font-mono text-xs text-ink-soft">
-                  {titleScale.toFixed(2)}×
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0.8}
-                max={1.3}
-                step={0.05}
-                value={titleScale}
-                onChange={(e) => setTitleScale(Number(e.target.value))}
-                className="w-full accent-[color:var(--bp-river,#2F6BFF)]"
-              />
-            </label>
-          </section>
-
-          {error && !isPlannerNoiseError(new Error(error)) && (
-            <p className="text-sm text-timber" role="alert">
-              {error}
-            </p>
-          )}
-
-          {/* Export — SoftFailNotice above CTAs; river primary / ink secondary */}
-          <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
-            <div>
-              <h2 className="font-display text-2xl tracking-tight text-ink">
-                {t(locale, "share.export")}
-              </h2>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                {t(locale, "share.exportSupport")}
-              </p>
-            </div>
-
-            <SoftFailNotice open={softDemo || exportSoftFail}>
-              {exportSoftFail
-                ? t(locale, "share.exportSoftFail")
-                : t(locale, "share.demoNotice")}
-            </SoftFailNotice>
-
-            <div
-              className="flex flex-col gap-2.5"
-              role="group"
-              aria-label={t(locale, "share.export")}
+            <section
+              className="animate-fade space-y-3 border-t border-[color:var(--bp-line)] pt-5"
+              style={{ animationDelay: "70ms" }}
             >
-              <button
-                type="button"
-                disabled={busy || !preview}
-                onClick={() => void downloadPng()}
-                className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {t(locale, "share.downloadPng")}
-              </button>
-              <button
-                type="button"
-                disabled={busy || !preview}
-                onClick={() => void shareNative()}
-                className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {t(locale, "share.systemShare")}
-              </button>
-              <div className="flex items-center justify-between gap-3 pt-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <div>
+                  <SectionEyebrow>
+                    {t(locale, "share.editEyebrow")}
+                  </SectionEyebrow>
+                  <h2 className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl">
+                    {t(locale, "share.lightEdit")}
+                  </h2>
+                </div>
                 <button
                   type="button"
-                  disabled={busy}
-                  onClick={() => void render()}
-                  className="rounded-bp px-1 py-1.5 text-sm text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                  onClick={resetEdits}
+                  className="rounded-bp-xs px-1 py-1 text-xs text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 >
-                  {t(locale, "share.refresh")}
+                  {t(locale, "share.resetEdit")}
                 </button>
-                {!softDemo ? (
-                  <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
-                    {t(locale, "share.demoHint")}
-                  </p>
-                ) : null}
               </div>
-            </div>
-          </section>
 
-          {entries[0]?.media[0] ? (
-            <div className="flex gap-2 overflow-x-auto pt-1">
-              {entries
-                .flatMap((e) => e.media)
-                .slice(0, 5)
-                .map((url) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={url}
-                    src={resolveMediaUrl(url)}
-                    alt=""
-                    className="h-14 w-10 shrink-0 rounded-bp-xs object-cover ring-1 ring-[color:var(--bp-line)]"
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
+                  {t(locale, "share.coverTitle")}
+                </span>
+                <input
+                  type="text"
+                  value={coverTitle}
+                  maxLength={80}
+                  onChange={(e) => setCoverTitle(e.target.value)}
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none transition duration-bp-fast ease-bp-out focus:border-river/50 focus:ring-2 focus:ring-focus/30"
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
+                  {t(locale, "share.coverSubtitle")}
+                </span>
+                <input
+                  type="text"
+                  value={coverSubtitle}
+                  maxLength={100}
+                  onChange={(e) => setCoverSubtitle(e.target.value)}
+                  className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 text-sm text-ink outline-none transition duration-bp-fast ease-bp-out focus:border-river/50 focus:ring-2 focus:ring-focus/30"
+                />
+              </label>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
+                    {t(locale, "share.accentColor")}
+                  </span>
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="h-8 w-10 cursor-pointer rounded-bp-xs border border-[color:var(--bp-line)] bg-transparent"
+                    aria-label={t(locale, "share.accentColor")}
                   />
-                ))}
-            </div>
-          ) : null}
-        </aside>
+                </div>
+                <div
+                  className="flex flex-wrap gap-1.5 rounded-bp-sm bg-mist/50 p-1.5"
+                  role="group"
+                  aria-label={t(locale, "share.accentColor")}
+                >
+                  {SHARE_ACCENT_PRESETS.map((hex) => {
+                    const on =
+                      accentColor.toLowerCase() === hex.toLowerCase();
+                    return (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => setAccentColor(hex)}
+                        className={`h-7 w-7 rounded-full border transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+                          on
+                            ? "animate-stop-select border-ink ring-2 ring-river/40"
+                            : "border-[color:var(--bp-line)] hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: hex }}
+                        aria-label={hex}
+                        aria-pressed={on}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className="block space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-ink-soft">
+                    {t(locale, "share.titleScale")}
+                  </span>
+                  <span className="font-mono text-xs text-ink-soft">
+                    {titleScale.toFixed(2)}×
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.8}
+                  max={1.3}
+                  step={0.05}
+                  value={titleScale}
+                  onChange={(e) => setTitleScale(Number(e.target.value))}
+                  className="w-full accent-[color:var(--bp-river,#2F6BFF)]"
+                />
+              </label>
+            </section>
+
+            {error && !isPlannerNoiseError(new Error(error)) ? (
+              <p className="text-sm text-timber" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            {/* Export — river primary / ink secondary · tip-011 settle */}
+            <section
+              className="animate-fade space-y-3 border-t border-[color:var(--bp-line)] pt-5"
+              style={{ animationDelay: "100ms" }}
+            >
+              <div>
+                <SectionEyebrow>
+                  {t(locale, "share.exportEyebrow")}
+                </SectionEyebrow>
+                <h2 className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl">
+                  {t(locale, "share.export")}
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "share.exportSupport")}
+                </p>
+              </div>
+
+              <div
+                className="flex flex-col gap-2.5"
+                role="group"
+                aria-label={t(locale, "share.export")}
+              >
+                <button
+                  type="button"
+                  disabled={busy || !preview}
+                  onClick={() => void downloadPng()}
+                  className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {t(locale, "share.downloadPng")}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !preview}
+                  onClick={() => void shareNative()}
+                  className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {t(locale, "share.systemShare")}
+                </button>
+                <div className="flex items-center justify-between gap-3 pt-0.5">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void render()}
+                    className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                  >
+                    {t(locale, "share.refresh")}
+                  </button>
+                  {!softDemo && !exportSoftFail ? (
+                    <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
+                      {t(locale, "share.demoHint")}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+
+            {entries[0]?.media[0] ? (
+              <div className="flex gap-2 overflow-x-auto border-t border-[color:var(--bp-line)] pt-4">
+                {entries
+                  .flatMap((e) => e.media)
+                  .slice(0, 5)
+                  .map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={url}
+                      src={resolveMediaUrl(url)}
+                      alt=""
+                      className="h-14 w-10 shrink-0 rounded-bp-xs object-cover ring-1 ring-[color:var(--bp-line)]"
+                    />
+                  ))}
+              </div>
+            ) : null}
+          </div>
+        </SheetPresence>
       </div>
     </div>
   );
