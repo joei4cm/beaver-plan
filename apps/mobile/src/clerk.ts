@@ -2,7 +2,14 @@
 
 export function clerkPublishableKey(): string | undefined {
   const key = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
-  if (!key || key.includes("xxxxxxxx") || !key.startsWith("pk_")) {
+  if (
+    !key ||
+    key.includes("xxxxxxxx") ||
+    !key.startsWith("pk_") ||
+    // Placeholder / soft-demo keys — skip ClerkProvider (never crash Expo web).
+    key === "pk_test_demo" ||
+    /pk_test_demo/i.test(key)
+  ) {
     return undefined;
   }
   return key;
