@@ -218,6 +218,14 @@ export function TripsHome({ locale }: Props) {
   const seedSoftOpen = seedOwnsSoft;
   const seedSoftCopy =
     softNotice ?? t(locale, "trips.seedSoftFail");
+  /**
+   * Playbooks SoftFailNotice chrome (BEA-271 after #166/#201):
+   * playbooks sheet owns compact SoftFail under azure rail · Soft playbooks
+   * badge · SheetPresence body · tip-011 (#46). Soft copy never timber /
+   * Failed to fetch. Empty + catalog share the same SoftFail strip.
+   */
+  const playbooksSoftOpen = templatesSoft;
+  const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -537,9 +545,16 @@ export function TripsHome({ locale }: Props) {
         {loading ? (
           <TemplatesListSkeleton />
         ) : showTemplatesEmpty ? (
-          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
-            {/* Empty playbooks chrome — azure rail · SoftFailNotice · New (seed parity) */}
-            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div
+            className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+            aria-label={t(locale, "trips.templatesRail")}
+          >
+            {/*
+              Empty playbooks SoftFail chrome (BEA-271 after #166/#201):
+              azure rail · Soft playbooks badge · compact SoftFailNotice ·
+              SheetPresence New CTA · tip-011 rise — never timber.
+            */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "trips.templatesRail")}
@@ -548,13 +563,26 @@ export function TripsHome({ locale }: Props) {
                   {t(locale, "trips.templatesEmptySupport")}
                 </span>
               </div>
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                {t(locale, "trips.templatesEmptyBadge")}
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  playbooksSoftOpen
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {playbooksSoftOpen
+                  ? t(locale, "trips.playbooksSoftBadge")
+                  : t(locale, "trips.templatesEmptyBadge")}
               </span>
             </header>
 
-            <SoftFailNotice open={templatesSoft} compact>
-              {t(locale, "trips.templatesSoftOffline")}
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            <SoftFailNotice
+              open={playbooksSoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {playbooksSoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
@@ -573,13 +601,17 @@ export function TripsHome({ locale }: Props) {
             </SheetPresence>
           </div>
         ) : (
-          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+          <div
+            className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+            aria-label={t(locale, "trips.templatesRail")}
+          >
             {/*
-              Playbooks chrome (BEA-217 after #114/#136/#142):
-              azure rail · count · Seeded/Catalog · SoftFailNotice compact ·
-              SheetPresence body · tip-011 rise · denser marks · Use/Customize.
+              Playbooks SoftFail chrome (BEA-271 after #166/#201):
+              azure rail · count · Soft playbooks / Catalog badge · compact
+              SoftFailNotice · SheetPresence body · tip-011 rise · denser
+              marks · Use/Customize — never timber / Failed to fetch.
             */}
-            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "trips.templatesRail")}
@@ -592,21 +624,25 @@ export function TripsHome({ locale }: Props) {
                 </span>
               </div>
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                  templatesSoft
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  playbooksSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {templatesSoft
-                  ? t(locale, "trips.templatesSeeded")
+                {playbooksSoftOpen
+                  ? t(locale, "trips.playbooksSoftBadge")
                   : t(locale, "trips.templatesCatalog")}
               </span>
             </header>
 
             {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-            <SoftFailNotice open={templatesSoft} compact>
-              {t(locale, "trips.templatesSoftOffline")}
+            <SoftFailNotice
+              open={playbooksSoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {playbooksSoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
