@@ -66,8 +66,28 @@ async function authHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
+const FETCH_TIMEOUT_MS = 4500;
+
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(`Failed to fetch (${input})`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${apiBase()}${path}`, {
+  const res = await fetchWithTimeout(`${apiBase()}${path}`, {
     headers: await authHeaders(),
   });
   if (!res.ok) throw new Error(`${path}_${res.status}`);
@@ -79,7 +99,7 @@ async function apiSend<T>(
   method: "POST" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${apiBase()}${path}`, {
+  const res = await fetchWithTimeout(`${apiBase()}${path}`, {
     method,
     headers: {
       ...(await authHeaders()),

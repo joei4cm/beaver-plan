@@ -518,6 +518,7 @@ export function DayFillPanel({
                 disabled={generating || interests.length === 0}
                 onPress={() => void generate()}
                 accessibilityRole="button"
+                hitSlop={8}
                 style={StyleSheet.flatten([
                   styles.cta,
                   generating || interests.length === 0
@@ -870,6 +871,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+    // RN Web — ensure pointer cursor for SoftFail local-generate CTA.
+    cursor: "pointer" as unknown as undefined,
   },
   ctaDisabled: {
     opacity: 0.4,
