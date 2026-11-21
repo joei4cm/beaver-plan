@@ -753,7 +753,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 type="button"
                 disabled={busy || !preview}
                 onClick={() => void downloadPng()}
-                className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {t(locale, "share.downloadPng")}
               </button>
@@ -761,7 +761,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 type="button"
                 disabled={busy || !preview}
                 onClick={() => void shareNative()}
-                className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {t(locale, "share.systemShare")}
               </button>
@@ -770,7 +770,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   type="button"
                   disabled={busy}
                   onClick={() => void render()}
-                  className="rounded-bp px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline disabled:opacity-40"
+                  className="rounded-bp px-1 py-1.5 text-sm text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
                 >
                   {t(locale, "share.refresh")}
                 </button>

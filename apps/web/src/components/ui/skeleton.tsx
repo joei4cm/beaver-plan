@@ -80,9 +80,20 @@ export function PlannerSkeleton() {
       aria-live="polite"
       className="mx-auto max-w-[1480px] px-3 pb-16 pt-2 md:px-6 lg:px-8 lg:pt-4"
     >
-      <div className="mb-4 space-y-3 border-b border-[color:var(--bp-line)] pb-4">
-        <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-10 w-72 max-w-full" />
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
+        <div className="space-y-3">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-10 w-72 max-w-full" />
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Skeleton className="h-2.5 w-44" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-16 rounded-bp" />
+            <Skeleton className="h-8 w-20 rounded-bp" />
+            <Skeleton className="h-9 w-28 rounded-bp" />
+          </div>
+          <Skeleton className="h-8 w-56 rounded-bp-sm" />
+        </div>
       </div>
       <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
         <div className="relative min-h-[420px] bg-[#EAF0F8] lg:min-h-[640px]">
