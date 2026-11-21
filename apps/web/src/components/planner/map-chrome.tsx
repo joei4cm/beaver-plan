@@ -593,7 +593,7 @@ export function MapChrome({
         </div>
 
         <SheetPresence
-          open={legendOpen}
+          open={legendOpen && !searchOwnsSoftFail}
           variant="popover"
           aria-label={t(locale, "planner.map.legendTitle")}
           className="pointer-events-none overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
