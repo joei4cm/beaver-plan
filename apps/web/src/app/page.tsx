@@ -194,7 +194,7 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.faq.liveBadge")}
       />
 
-      {/* Finale — CTA + quiet site footer (after features / how / faq) */}
+      {/* Finale SoftFail depth (BEA-311 · azure rail · mist SoftFail band · tip-011) */}
       <LandingFooterCta
         brandPrimary={brandPrimary}
         brandSecondary={brandSecondary}
@@ -208,6 +208,12 @@ export default async function HomePage() {
         navTranslate={t(locale, "nav.translate")}
         navSettings={t(locale, "nav.settings")}
         meta={t(locale, "landing.finale.meta")}
+        offlineNotice={t(locale, "landing.finale.softOffline")}
+        sheetEyebrow={t(locale, "landing.finale.sheetEyebrow")}
+        sheetSupport={t(locale, "landing.finale.sheetSupport")}
+        offlineBadge={t(locale, "landing.finale.offlineBadge")}
+        liveBadge={t(locale, "landing.finale.liveBadge")}
+        bodyLabel={t(locale, "landing.finale.bodyLabel")}
       />
     </>
   );
