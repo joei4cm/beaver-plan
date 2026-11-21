@@ -148,7 +148,7 @@ export default async function HomePage() {
         signals={trustSignals}
       />
 
-      {/* Below fold — features depth (mist-track focus · SoftFail · tip-011) */}
+      {/* Below fold — features SoftFail sheet (azure rail · Offline/Live · tip-011) */}
       <LandingFeatures
         title={t(locale, "landing.pillars.title")}
         support={t(locale, "landing.pillars.support")}
@@ -156,6 +156,10 @@ export default async function HomePage() {
         offlineNotice={t(locale, "landing.pillars.softOffline")}
         focusLabel={t(locale, "landing.pillars.focusLabel")}
         leadEyebrow={t(locale, "landing.pillars.leadEyebrow")}
+        sheetEyebrow={t(locale, "landing.pillars.sheetEyebrow")}
+        sheetSupport={t(locale, "landing.pillars.sheetSupport")}
+        offlineBadge={t(locale, "landing.pillars.offlineBadge")}
+        liveBadge={t(locale, "landing.pillars.liveBadge")}
       />
 
       {/* Below fold — tip 019 how-it-works depth (mist-track · SoftFail · tip-011) */}
