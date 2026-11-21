@@ -87,6 +87,8 @@
   "trips.support": "地图上的行程空间——玩法骨架、示例，或你自己排好的日子。",
   "trips.empty": "行程从这里开始。",
   "trips.emptyCta": "新建一趟，借用城市玩法，或打开京都示例。",
+  "trips.emptySupport": "新建 · 京都 · 玩法先留本地，等 Neon/API",
+  "trips.emptySoftBadge": "柔和空态",
   "trips.emptySoftFail": "演示壳——还没有行程。新建、京都示例或城市玩法会先留在本地，等 Neon/API 就绪后再同步。绝不是 Failed to fetch 崩溃。",
   "trips.new": "新建行程",
   "trips.openSample": "打开京都示例",
