@@ -45,6 +45,7 @@ import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
 import { PlaceIntel } from "./place-intel";
+import { StopReorderList } from "./stop-reorder-list";
 import { TransferSteps } from "./transfer-steps";
 
 type PlaceDetailsResponse = {
@@ -547,6 +548,53 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     }
   }
 
+  async function commitStopOrder(orderedIds: string[]) {
+    if (!dayId || !trip) return;
+    const current = dayStops.map((s) => s.id);
+    if (
+      orderedIds.length !== current.length ||
+      orderedIds.every((id, i) => id === current[i])
+    ) {
+      return;
+    }
+
+    // Optimistic local reorder so the list settles immediately (tip 005 drop).
+    const nextStops = reorderStopsLocal(stops, dayId, orderedIds);
+    setStops(nextStops);
+    const nextTrip = trip
+      ? { ...trip, version: trip.version + 1 }
+      : trip;
+    if (nextTrip) {
+      setTrip(nextTrip);
+      if (getLocalTrip(tripId)) {
+        saveLocalTrip({
+          trip: nextTrip,
+          days,
+          stops: nextStops,
+          legs,
+          local: true,
+        });
+      }
+    }
+
+    try {
+      await apiSend(`/v1/trips/${tripId}/stops/reorder`, "PATCH", {
+        dayId,
+        orderedIds,
+        expectedVersion: trip.version,
+      });
+      const payload = await refresh();
+      await routeDayStops(
+        dayId,
+        stopsForDay(payload?.stops ?? nextStops, dayId),
+      );
+    } catch (e) {
+      // Soft-fail: keep optimistic order when API is down.
+      applySoftOrHard(e, "reorder_failed");
+      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
+    }
+  }
+
   async function moveStop(stopId: string, dir: -1 | 1) {
     if (!dayId || !trip) return;
     const ordered = dayStops.map((s) => s.id);
@@ -557,26 +605,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     const tmp = swapped[idx]!;
     swapped[idx] = swapped[next]!;
     swapped[next] = tmp;
-    try {
-      await apiSend(`/v1/trips/${tripId}/stops/reorder`, "PATCH", {
-        dayId,
-        orderedIds: swapped,
-        expectedVersion: trip.version,
-      });
-      const payload = await refresh();
-      await routeDayStops(
-        dayId,
-        stopsForDay(payload?.stops ?? stops, dayId),
-      );
-    } catch (e) {
-      const nextStops = reorderStopsLocal(stops, dayId, swapped);
-      setStops(nextStops);
-      setTrip((prev) =>
-        prev ? { ...prev, version: prev.version + 1 } : prev,
-      );
-      applySoftOrHard(e, "reorder_failed");
-      await routeDayStops(dayId, stopsForDay(nextStops, dayId));
-    }
+    await commitStopOrder(swapped);
   }
 
   async function setEnginePreference(next: Trip["mapEngine"]) {
@@ -904,9 +933,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             )}
           </div>
 
-          <ol className="flex-1 overflow-y-auto">
-            {dayStops.length === 0 && (
-              <li className="animate-fade px-5 py-12">
+          <StopReorderList
+            items={dayStops}
+            onReorder={(orderedIds) => {
+              void commitStopOrder(orderedIds);
+            }}
+            label={t(locale, "planner.stopsList")}
+            dragHandleLabel={t(locale, "planner.dragReorder")}
+            empty={
+              <li className="animate-fade list-none px-5 py-12">
                 <p className="font-display text-2xl font-semibold text-ink">
                   {t(locale, "planner.emptyDay")}
                 </p>
@@ -914,136 +949,156 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   {t(locale, "planner.emptyDayHint")}
                 </p>
               </li>
-            )}
-            {dayStops.map((stop, index) => {
+            }
+            renderItem={(stop, ctx) => {
               const selected = selectedStopId === stop.id;
               const leg = dayLegs.find((l) => l.fromStopId === stop.id);
               return (
-                <li key={stop.id} className="border-b border-[color:var(--bp-line)]">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedStopId(stop.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelectedStopId(stop.id);
-                      }
-                    }}
-                    className={`group flex gap-3 px-4 py-4 transition duration-bp-fast ease-bp-out ${
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    if (ctx.isDragging) return;
+                    setSelectedStopId(stop.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedStopId(stop.id);
+                    }
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      void moveStop(stop.id, -1);
+                    }
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      void moveStop(stop.id, 1);
+                    }
+                  }}
+                  className={`group flex gap-2 px-3 py-4 transition duration-bp-fast ease-bp-out sm:gap-3 sm:px-4 ${
+                    selected
+                      ? "animate-stop-select"
+                      : "hover:bg-mist/30"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    {...ctx.dragHandleProps}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span aria-hidden className="flex flex-col gap-[3px]">
+                      <span className="block h-0.5 w-3 rounded-full bg-current" />
+                      <span className="block h-0.5 w-3 rounded-full bg-current" />
+                      <span className="block h-0.5 w-3 rounded-full bg-current" />
+                    </span>
+                  </button>
+                  <span
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-bp text-xs font-bold ${
                       selected
-                        ? "animate-stop-select"
-                        : "hover:bg-mist/30"
+                        ? "bg-river text-foam"
+                        : "bg-ink text-foam"
                     }`}
                   >
-                    <span
-                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-bp text-xs font-bold ${
+                    {ctx.index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className={`truncate text-ink ${
                         selected
-                          ? "bg-river text-foam"
-                          : "bg-ink text-foam"
+                          ? "font-display text-base font-bold tracking-tight"
+                          : "font-semibold"
                       }`}
                     >
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div
-                        className={`truncate text-ink ${
-                          selected
-                            ? "font-display text-base font-bold tracking-tight"
-                            : "font-semibold"
-                        }`}
-                      >
-                        {stop.place.name}
+                      {stop.place.name}
+                    </div>
+                    {stop.place.address && (
+                      <div className="mt-0.5 truncate text-xs text-ink-soft">
+                        {stop.place.address}
                       </div>
-                      {stop.place.address && (
-                        <div className="mt-0.5 truncate text-xs text-ink-soft">
-                          {stop.place.address}
-                        </div>
-                      )}
-                      {selected && (
-                        <PlaceIntel
-                          details={
-                            placeDetails?.enginePlaceId ===
-                            stop.place.enginePlaceId
-                              ? placeDetails
-                              : null
-                          }
-                          loading={placeDetailsLoading}
-                          locale={locale}
-                          demoMode={placeDetailsMode === "demo"}
-                          userNote={stop.userNote}
-                        />
-                      )}
-                      {leg && (
-                        <>
-                          <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
-                              {leg.mode === "transit"
-                                ? t(locale, "planner.mode.transit")
-                                : leg.mode === "walk"
-                                  ? t(locale, "planner.mode.walk")
-                                  : t(locale, "planner.mode.drive")}
-                            </span>
-                            <span className="text-xs font-medium text-ink">
-                              {summarizeTransfer(leg)}
-                            </span>
-                          </div>
-                          {(leg.mode === "transit" ||
-                            leg.transitSteps.length > 1) && (
-                            <TransferSteps
-                              leg={leg}
-                              locale={locale}
-                              variant="inline"
-                              demoMode={engineInfo?.mode !== "live"}
-                            />
-                          )}
-                        </>
-                      )}
-                      <BookingLinkChips
-                        links={stop.bookingLinks}
+                    )}
+                    {selected && (
+                      <PlaceIntel
+                        details={
+                          placeDetails?.enginePlaceId ===
+                          stop.place.enginePlaceId
+                            ? placeDetails
+                            : null
+                        }
+                        loading={placeDetailsLoading}
                         locale={locale}
+                        demoMode={placeDetailsMode === "demo"}
+                        userNote={stop.userNote}
                       />
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-1 opacity-50 transition group-hover:opacity-100">
-                      <button
-                        type="button"
-                        aria-label="Move up"
-                        className="px-1 text-ink-soft hover:text-river"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void moveStop(stop.id, -1);
-                        }}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Move down"
-                        className="px-1 text-ink-soft hover:text-river"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void moveStop(stop.id, 1);
-                        }}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Remove"
-                        className="px-1 text-ink-soft hover:text-timber"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void removeStop(stop.id);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
+                    )}
+                    {leg && (
+                      <>
+                        <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                            {leg.mode === "transit"
+                              ? t(locale, "planner.mode.transit")
+                              : leg.mode === "walk"
+                                ? t(locale, "planner.mode.walk")
+                                : t(locale, "planner.mode.drive")}
+                          </span>
+                          <span className="text-xs font-medium text-ink">
+                            {summarizeTransfer(leg)}
+                          </span>
+                        </div>
+                        {(leg.mode === "transit" ||
+                          leg.transitSteps.length > 1) && (
+                          <TransferSteps
+                            leg={leg}
+                            locale={locale}
+                            variant="inline"
+                            demoMode={engineInfo?.mode !== "live"}
+                          />
+                        )}
+                      </>
+                    )}
+                    <BookingLinkChips
+                      links={stop.bookingLinks}
+                      locale={locale}
+                    />
                   </div>
-                </li>
+                  <div className="flex shrink-0 flex-col gap-1 opacity-50 transition group-hover:opacity-100">
+                    <button
+                      type="button"
+                      aria-label={t(locale, "planner.moveUp")}
+                      className="px-1 text-ink-soft hover:text-river"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void moveStop(stop.id, -1);
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t(locale, "planner.moveDown")}
+                      className="px-1 text-ink-soft hover:text-river"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void moveStop(stop.id, 1);
+                      }}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t(locale, "planner.removeStop")}
+                      className="px-1 text-ink-soft hover:text-timber"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void removeStop(stop.id);
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
               );
-            })}
-          </ol>
+            }}
+          />
 
           {error && !isPlannerNoiseError(new Error(error)) && (
             <p className="px-4 py-2 text-sm text-timber" role="alert">
