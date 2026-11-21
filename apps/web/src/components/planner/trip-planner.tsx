@@ -169,11 +169,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           plannerNoise ||
           (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
       );
-  const listSoftCopy =
-    softNotice ??
-    (dayEmpty
-      ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.stops.softFail"));
+  /**
+   * Stops SoftFail copy: stop-scoped when the day has map stops. Transfer demo
+   * softNotice stays on the mode SoftFail strip — do not mirror it here.
+   */
+  const transferDemoCopy = t(locale, "planner.transfer.demoNotice");
+  const listSoftCopy = dayEmpty
+    ? (softNotice ?? t(locale, "planner.emptySoftFail"))
+    : softNotice && softNotice !== transferDemoCopy
+      ? softNotice
+      : t(locale, "planner.stops.softFail");
   const shareSoftOpen =
     !emptyOwnsSoft && !stopsOwnsSoft && (demoShell || plannerNoise);
 
