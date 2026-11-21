@@ -32,9 +32,9 @@ const LOCALE_OPTS: Locale[] = ["zh-CN", "en"];
 const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
 const CHIP_FOCUS =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam";
 
-/** Mist-track segmented control — nested #46 radii, azure active, tip-020 chips. */
+/** Mist-track segmented control — nested #46 radii, azure active, tip-011 settle. */
 function Segmented<T extends string>({
   value,
   options,
@@ -62,10 +62,10 @@ function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(opt)}
-            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold bp-transition ${CHIP_FOCUS} ${
+            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold transition duration-bp ease-bp-out-strong ${CHIP_FOCUS} ${
               active
-                ? "bg-foam text-river shadow-bp-soft"
-                : "text-ink-soft hover:text-river"
+                ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                : "text-ink-soft hover:bg-foam/70 hover:text-river"
             }`}
           >
             {labelFor(opt)}
@@ -84,6 +84,10 @@ function SectionEyebrow({ children }: { children: string }) {
   );
 }
 
+/**
+ * Settings section chrome (BEA-214): page hero · azure prefs sheet · SoftFailNotice
+ * section-scoped under Maps · tip-011 (#46) chip/row settle · Lumen tokens.
+ */
 export function SettingsPanel({ locale: initialLocale }: Props) {
   const router = useRouter();
   const [prefs, setPrefs] = useState<UserPrefs>(() => ({
@@ -169,9 +173,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
           {t(locale, "settings.title")}
         </h1>
-        <p
-          className="mt-4 max-w-xl text-base leading-relaxed text-ink-soft"
-        >
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-soft">
           {t(locale, "settings.support")}
         </p>
         <p className="mt-2 text-sm text-ink-soft/80">
@@ -179,180 +181,213 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         </p>
       </header>
 
-      <div className="mt-14 space-y-0">
-        {/* Language */}
-        <section
-          className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "40ms" }}
-          aria-labelledby="settings-locale-heading"
-        >
-          <header className="mb-6">
-            <SectionEyebrow>
-              {t(locale, "settings.localeEyebrow")}
-            </SectionEyebrow>
-            <h2
-              id="settings-locale-heading"
-              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
-            >
-              {t(locale, "settings.locale")}
-            </h2>
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
-              {t(locale, "settings.localeSupport")}
-            </p>
-          </header>
-          <Segmented
-            value={prefs.locale}
-            options={LOCALE_OPTS}
-            ariaLabel={t(locale, "settings.locale")}
-            labelFor={(opt) =>
-              t(locale, `settings.locale.${opt}` as MessageKey)
-            }
-            onChange={(next) => applyPatch({ locale: next })}
-          />
-        </section>
+      {/* Prefs sheet — azure rail · SoftFail under Maps · tip-011 hierarchy */}
+      <div
+        className="animate-rise mt-12 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+        style={{ animationDelay: "40ms" }}
+        aria-label={t(locale, "settings.title")}
+      >
+        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              {t(locale, "settings.sheetEyebrow")}
+            </span>
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {t(locale, "settings.sheetSupport")}
+            </span>
+          </div>
+          <span
+            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+              showSoftFail
+                ? "bg-mist text-ink-soft"
+                : "bg-river/12 text-river"
+            }`}
+          >
+            {showSoftFail
+              ? t(locale, "settings.demoBadge")
+              : t(locale, "settings.localBadge")}
+          </span>
+        </header>
 
-        {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
-        <section
-          className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "80ms" }}
-          aria-labelledby="settings-map-heading"
-        >
-          <header className="mb-6">
-            <SectionEyebrow>{t(locale, "settings.mapEyebrow")}</SectionEyebrow>
-            <h2
-              id="settings-map-heading"
-              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
-            >
-              {t(locale, "settings.mapEngine")}
-            </h2>
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
-              {t(locale, "settings.mapEngineSupport")}
-            </p>
-          </header>
+        <div className="divide-y divide-[color:var(--bp-line)]">
+          {/* Language */}
+          <section
+            className="animate-rise px-4 py-8 sm:px-5"
+            style={{ animationDelay: "60ms" }}
+            aria-labelledby="settings-locale-heading"
+          >
+            <header className="mb-6">
+              <SectionEyebrow>
+                {t(locale, "settings.localeEyebrow")}
+              </SectionEyebrow>
+              <h2
+                id="settings-locale-heading"
+                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+              >
+                {t(locale, "settings.locale")}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+                {t(locale, "settings.localeSupport")}
+              </p>
+            </header>
+            <Segmented
+              value={prefs.locale}
+              options={LOCALE_OPTS}
+              ariaLabel={t(locale, "settings.locale")}
+              labelFor={(opt) =>
+                t(locale, `settings.locale.${opt}` as MessageKey)
+              }
+              onChange={(next) => applyPatch({ locale: next })}
+            />
+          </section>
 
-          <SoftFailNotice open={showSoftFail} className="mb-6">
-            {softNotice ?? t(locale, "settings.resolvedDemo")}
-          </SoftFailNotice>
+          {/* Map engine — SoftFailNotice section-scoped (rise in/out) */}
+          <section
+            className="animate-rise px-4 py-8 sm:px-5"
+            style={{ animationDelay: "90ms" }}
+            aria-labelledby="settings-map-heading"
+          >
+            <header className="mb-6">
+              <SectionEyebrow>
+                {t(locale, "settings.mapEyebrow")}
+              </SectionEyebrow>
+              <h2
+                id="settings-map-heading"
+                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+              >
+                {t(locale, "settings.mapEngine")}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+                {t(locale, "settings.mapEngineSupport")}
+              </p>
+            </header>
 
-          <Segmented
-            value={prefs.mapEngine}
-            options={MAP_OPTS}
-            ariaLabel={t(locale, "settings.mapEngine")}
-            labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
-            onChange={(next) => applyPatch({ mapEngine: next })}
-          />
+            <SoftFailNotice open={showSoftFail} className="mb-6">
+              {softNotice ?? t(locale, "settings.resolvedDemo")}
+            </SoftFailNotice>
 
-          {statusCopy ? (
-            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-              {statusCopy}
-            </p>
-          ) : null}
-        </section>
+            <Segmented
+              value={prefs.mapEngine}
+              options={MAP_OPTS}
+              ariaLabel={t(locale, "settings.mapEngine")}
+              labelFor={(opt) =>
+                t(locale, `planner.pref.${opt}` as MessageKey)
+              }
+              onChange={(next) => applyPatch({ mapEngine: next })}
+            />
 
-        {/* Distance */}
-        <section
-          className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "120ms" }}
-          aria-labelledby="settings-distance-heading"
-        >
-          <header className="mb-6">
-            <SectionEyebrow>
-              {t(locale, "settings.distanceEyebrow")}
-            </SectionEyebrow>
-            <h2
-              id="settings-distance-heading"
-              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
-            >
-              {t(locale, "settings.distance")}
-            </h2>
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
-              {t(locale, "settings.distanceSupport")}
-            </p>
-          </header>
-          <Segmented
-            value={prefs.distanceUnit}
-            options={DISTANCE_OPTS}
-            ariaLabel={t(locale, "settings.distance")}
-            labelFor={(opt) =>
-              t(locale, `settings.distance.${opt}` as MessageKey)
-            }
-            onChange={(next) => applyPatch({ distanceUnit: next })}
-          />
-        </section>
+            {statusCopy ? (
+              <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+                {statusCopy}
+              </p>
+            ) : null}
+          </section>
 
-        {/* Share template */}
-        <section
-          className="animate-rise border-t border-b border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "160ms" }}
-          aria-labelledby="settings-share-heading"
-        >
-          <header className="mb-6">
-            <SectionEyebrow>
-              {t(locale, "settings.shareEyebrow")}
-            </SectionEyebrow>
-            <h2
-              id="settings-share-heading"
-              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
-            >
-              {t(locale, "settings.shareTemplate")}
-            </h2>
-            <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
-              {t(locale, "settings.shareTemplateSupport")}
-            </p>
-          </header>
-          <ul className="space-y-0">
-            {SHARE_TEMPLATES.map((tpl, index) => {
-              const selected = prefs.shareImageTemplateId === tpl.id;
-              const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
-              const blurb = locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn;
-              return (
-                <li key={tpl.id}>
-                  <button
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() =>
-                      applyPatch({ shareImageTemplateId: tpl.id })
-                    }
-                    className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 text-left bp-transition last:border-b ${CHIP_FOCUS} ${
-                      selected
-                        ? "border-l-2 border-l-river pl-3 text-river"
-                        : "border-l-2 border-l-transparent pl-3 text-ink hover:border-l-river/35 hover:text-river"
-                    }`}
-                  >
-                    <span
-                      className={`font-display text-xl font-bold tabular-nums bp-transition ${
+          {/* Distance */}
+          <section
+            className="animate-rise px-4 py-8 sm:px-5"
+            style={{ animationDelay: "120ms" }}
+            aria-labelledby="settings-distance-heading"
+          >
+            <header className="mb-6">
+              <SectionEyebrow>
+                {t(locale, "settings.distanceEyebrow")}
+              </SectionEyebrow>
+              <h2
+                id="settings-distance-heading"
+                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+              >
+                {t(locale, "settings.distance")}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+                {t(locale, "settings.distanceSupport")}
+              </p>
+            </header>
+            <Segmented
+              value={prefs.distanceUnit}
+              options={DISTANCE_OPTS}
+              ariaLabel={t(locale, "settings.distance")}
+              labelFor={(opt) =>
+                t(locale, `settings.distance.${opt}` as MessageKey)
+              }
+              onChange={(next) => applyPatch({ distanceUnit: next })}
+            />
+          </section>
+
+          {/* Share template */}
+          <section
+            className="animate-rise px-4 py-8 sm:px-5"
+            style={{ animationDelay: "150ms" }}
+            aria-labelledby="settings-share-heading"
+          >
+            <header className="mb-6">
+              <SectionEyebrow>
+                {t(locale, "settings.shareEyebrow")}
+              </SectionEyebrow>
+              <h2
+                id="settings-share-heading"
+                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+              >
+                {t(locale, "settings.shareTemplate")}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
+                {t(locale, "settings.shareTemplateSupport")}
+              </p>
+            </header>
+            <ul className="space-y-0">
+              {SHARE_TEMPLATES.map((tpl, index) => {
+                const selected = prefs.shareImageTemplateId === tpl.id;
+                const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
+                const blurb = locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn;
+                return (
+                  <li key={tpl.id}>
+                    <button
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() =>
+                        applyPatch({ shareImageTemplateId: tpl.id })
+                      }
+                      className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 pl-3 text-left transition duration-bp ease-bp-out-strong ${CHIP_FOCUS} ${
                         selected
-                          ? "text-river"
-                          : "text-mist group-hover:text-river/50"
+                          ? "animate-stop-select bg-river/[0.04] text-river shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : "text-ink hover:bg-mist/20 hover:text-river hover:shadow-[inset_3px_0_0_rgba(47,107,255,0.35)]"
                       }`}
                     >
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-display text-lg font-semibold tracking-tight bp-transition md:text-xl">
-                        {name}
+                      <span
+                        className={`font-display text-xl font-bold tabular-nums transition duration-bp-fast ease-bp-out ${
+                          selected
+                            ? "text-river"
+                            : "text-mist group-hover:text-river/50"
+                        }`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
                       </span>
-                      <span className="mt-1 block text-sm text-ink-soft">
-                        {blurb}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-display text-lg font-semibold tracking-tight transition duration-bp-fast ease-bp-out md:text-xl">
+                          {name}
+                        </span>
+                        <span className="mt-1 block text-sm text-ink-soft">
+                          {blurb}
+                        </span>
                       </span>
-                    </span>
-                    {selected ? (
-                      <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
-                        {t(locale, "settings.selected")}
-                      </span>
-                    ) : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                      {selected ? (
+                        <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                          {t(locale, "settings.selected")}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        </div>
       </div>
 
       <p className="mt-10 text-sm text-ink-soft">
         <Link
           href="/trips"
-          className={`rounded-bp-xs font-semibold text-river bp-transition hover:text-river-deep ${CHIP_FOCUS}`}
+          className={`rounded-bp-xs font-semibold text-river transition duration-bp-fast ease-bp-out hover:text-river-deep ${CHIP_FOCUS.replace("focus-visible:ring-offset-foam", "focus-visible:ring-offset-paper")}`}
         >
           ← {t(locale, "nav.trips")}
         </Link>
