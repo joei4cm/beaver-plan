@@ -65,9 +65,9 @@ export default function BookingPreviewPage() {
         预订
       </h1>
       <p className="relative mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
-        Confirm SoftFailNotice under azure rail · soft badge · tip-011 rise.
-        Sheet footer SoftFail yields when Confirm owns soft-fail. No checkout
-        in Beaver Plan.
+        OTA SoftFailNotice under azure sheet rail · Soft OTA badge · tip-011
+        rise. Confirm SoftFail still owns save soft-fail (no double depth). No
+        checkout in Beaver Plan.
       </p>
       <div className="relative mt-8 animate-rise">
         <BookingPanel

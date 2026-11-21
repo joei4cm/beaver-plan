@@ -334,15 +334,20 @@ export function BookingPanel({
   );
 
   /**
-   * Confirm SoftFailNotice chrome (BEA-239 after #128/#160):
-   * azure Confirm rail · soft badge · compact SoftFailNotice · SheetPresence
-   * pin body · tip-011 (#46). Confirm owns soft-fail so sheet footer yields
+   * OTA SoftFailNotice chrome (BEA-264 after #160/#184):
+   * azure OTA sheet rail · soft badge · compact SoftFailNotice under rail ·
+   * tip-011 (#46). Confirm owns save soft-fail so OTA SoftFail yields
    * (no double depth). Soft copy never timber / Failed to fetch.
    */
   const showConfirmSoftFail = confirmSoftFail;
-  const showSheetSoftFail = Boolean(softCopy) && !confirmSoftFail;
+  const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+      {/*
+        OTA SoftFail chrome (BEA-264 after #160/#184):
+        azure sheet rail · Demo/Keys badge · soft OTA badge · tip-011 —
+        never timber / Failed to fetch.
+      */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -366,6 +371,11 @@ export function BookingPanel({
             >
               {badge}
             </span>
+            {showOtaSoftFail ? (
+              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                {t(locale, "planner.booking.otaSoftBadge")}
+              </span>
+            ) : null}
             {suggestions.length > 0 ? (
               <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
                 {offerCountLabel}
@@ -401,6 +411,15 @@ export function BookingPanel({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "planner.booking.title")}
       >
+        {/* Compact SoftFail under azure OTA rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={showOtaSoftFail}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
+          {softCopy ?? ""}
+        </SoftFailNotice>
+
         <div className="divide-y divide-[color:var(--bp-line)]">
           {/* Search — mist-track filters · city / dates · azure CTA */}
           <section
@@ -782,14 +801,12 @@ export function BookingPanel({
           </section>
         </div>
 
-        <p className="border-t border-[color:var(--bp-line)] px-4 py-2.5 text-[11px] leading-relaxed text-ink-soft/80">
+        <p
+          className="animate-rise border-t border-[color:var(--bp-line)] px-4 py-2.5 text-[11px] leading-relaxed text-ink-soft/80"
+          style={{ animationDelay: "110ms" }}
+        >
           {t(locale, "planner.booking.hint")}
         </p>
-
-        {/* Sheet SoftFail yields while Confirm owns soft-fail — no double depth. */}
-        <SoftFailNotice open={showSheetSoftFail} compact>
-          {softCopy ?? ""}
-        </SoftFailNotice>
       </SheetPresence>
     </div>
   );
