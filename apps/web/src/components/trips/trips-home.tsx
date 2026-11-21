@@ -209,12 +209,15 @@ export function TripsHome({ locale }: Props) {
   const loading = pending && !hydrated;
   const listSoft = Boolean(softNotice);
   /**
-   * Empty SoftFailNotice chrome (BEA-230 after #94/#142/#171): empty owns
-   * compact SoftFail under azure seed rail · SheetPresence body · tip-011
-   * (#46). Soft copy never timber / Failed to fetch.
+   * Seed CTA SoftFailNotice chrome (BEA-262 after #142/#175/#196):
+   * seed sheet owns compact SoftFail under azure rail · Soft seed badge ·
+   * SheetPresence CTAs · tip-011 (#46). List SoftFail yields while seed
+   * owns (no double depth). Soft copy never timber / Failed to fetch.
    */
-  const emptySoftOpen = showEmptyInvite;
-  const emptySoftCopy = softNotice ?? t(locale, "trips.emptySoftFail");
+  const seedOwnsSoft = showEmptyInvite;
+  const seedSoftOpen = seedOwnsSoft;
+  const seedSoftCopy =
+    softNotice ?? t(locale, "trips.seedSoftFail");
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -280,10 +283,10 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        {/* Loading: SoftFailNotice above list skeleton. Empty seed: notice lives in sheet. */}
+        {/* Loading SoftFail yields while seed owns soft-fail (no double depth). */}
         {loading ? (
           <SoftFailNotice
-            open={!error && Boolean(softNotice)}
+            open={!error && Boolean(softNotice) && !seedOwnsSoft}
             className="mb-6"
           >
             {softNotice ?? ""}
@@ -293,13 +296,16 @@ export function TripsHome({ locale }: Props) {
         {loading ? (
           <TripsListSkeleton />
         ) : showEmptyInvite ? (
-          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+          <div
+            className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+            aria-label={t(locale, "trips.seedRail")}
+          >
             {/*
-              Empty SoftFail chrome (BEA-230 after #94/#142/#171):
-              azure seed rail · Seeded badge · compact SoftFailNotice ·
-              SheetPresence body · tip-011 rise — never timber.
+              Seed CTA SoftFail chrome (BEA-262 after #142/#175/#196):
+              azure seed rail · Soft seed badge · compact SoftFailNotice ·
+              SheetPresence CTAs · tip-011 rise — never timber.
             */}
-            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "trips.seedRail")}
@@ -309,21 +315,25 @@ export function TripsHome({ locale }: Props) {
                 </span>
               </div>
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                  emptySoftOpen
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  seedSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {emptySoftOpen
-                  ? t(locale, "trips.seedDemo")
+                {seedSoftOpen
+                  ? t(locale, "trips.seedSoftBadge")
                   : t(locale, "trips.seedReady")}
               </span>
             </header>
 
             {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-            <SoftFailNotice open={!error && emptySoftOpen} compact>
-              {emptySoftCopy}
+            <SoftFailNotice
+              open={!error && seedSoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {seedSoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
@@ -342,14 +352,14 @@ export function TripsHome({ locale }: Props) {
               </Link>
               <Link
                 href="/trips/sample-kyoto"
-                className="animate-rise rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river transition duration-bp ease-bp-out-strong hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 style={{ animationDelay: "85ms" }}
               >
                 {t(locale, "trips.openSample")}
               </Link>
               <a
                 href="#trips-templates-heading"
-                className="animate-rise rounded-bp-xs px-2.5 py-2 text-sm font-medium text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                className="animate-rise rounded-bp-xs px-2.5 py-2 text-sm font-medium text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
                 style={{ animationDelay: "115ms" }}
               >
                 {t(locale, "trips.seedPlaybooks")}
@@ -432,8 +442,9 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
+            {/* List SoftFail yields while seed owns soft-fail (no double depth). */}
             <SoftFailNotice
-              open={!error && Boolean(softNotice)}
+              open={!error && Boolean(softNotice) && !seedOwnsSoft}
               compact
             >
               {softNotice ?? ""}
