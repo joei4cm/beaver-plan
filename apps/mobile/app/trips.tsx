@@ -53,6 +53,7 @@ function sampleTripStub(): Trip {
   return sampleKyotoFixture().trip;
 }
 
+/** Destination · dates only — sample badge is a chip (web #136 parity). */
 function formatTripMeta(trip: Trip): string {
   const parts: string[] = [];
   if (trip.destination) parts.push(trip.destination);
@@ -63,17 +64,38 @@ function formatTripMeta(trip: Trip): string {
         : trip.startDate;
     parts.push(range);
   }
-  if (trip.id === "sample-kyoto") {
-    parts.push(t(locale, "trips.sampleBadge"));
-  }
   return parts.join(" · ") || "—";
 }
 
+function tripBadge(trip: Trip): "sample" | null {
+  return trip.id === "sample-kyoto" ? "sample" : null;
+}
+
+/** Playbooks editorial index. */
 function IndexMark({ n }: { n: number }) {
   return (
     <Text style={styles.index} accessibilityElementsHidden>
       {String(n).padStart(2, "0")}
     </Text>
+  );
+}
+
+/** Trips list density — quieter mark, title leads hierarchy (web DenseIndexMark). */
+function DenseIndexMark({ n }: { n: number }) {
+  return (
+    <Text style={styles.denseIndex} accessibilityElementsHidden>
+      {String(n).padStart(2, "0")}
+    </Text>
+  );
+}
+
+function TripBadgeChip({ kind }: { kind: "sample" }) {
+  return (
+    <View style={styles.badgeChip} accessibilityElementsHidden>
+      <Text style={styles.badgeChipText}>
+        {t(locale, "trips.sampleBadge")}
+      </Text>
+    </View>
   );
 }
 
@@ -88,23 +110,35 @@ function TripRow({
   showCta?: boolean;
   last?: boolean;
 }) {
-  // Single style object — Link asChild + style arrays crash RN Web
-  // (CSSStyleDeclaration indexed setter).
-  const rowStyle = last
-    ? StyleSheet.flatten([styles.row, styles.rowLast])
-    : styles.row;
+  const badge = tripBadge(trip);
+  const meta = formatTripMeta(trip);
 
+  // Single style object — Link asChild + style arrays crash RN Web
+  // (CSSStyleDeclaration indexed setter). Prefer StyleSheet.flatten (#76).
   return (
     <Link href={`/trips/${trip.id}`} asChild>
       <Pressable
-        style={rowStyle}
+        style={({ pressed }) =>
+          StyleSheet.flatten([
+            styles.tripRow,
+            last ? styles.tripRowLast : null,
+            pressed ? styles.tripRowPressed : null,
+          ])
+        }
         accessibilityRole="link"
-        accessibilityLabel={`${trip.title}. ${formatTripMeta(trip)}`}
+        accessibilityLabel={`${trip.title}. ${meta}${
+          badge ? ` · ${t(locale, "trips.sampleBadge")}` : ""
+        }`}
       >
-        <IndexMark n={index + 1} />
+        <DenseIndexMark n={index + 1} />
         <View style={styles.rowBody}>
-          <Text style={styles.rowTitle}>{trip.title}</Text>
-          <Text style={styles.rowMeta}>{formatTripMeta(trip)}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.tripTitle} numberOfLines={2}>
+              {trip.title}
+            </Text>
+            {badge ? <TripBadgeChip kind={badge} /> : null}
+          </View>
+          <Text style={styles.tripMeta}>{meta}</Text>
           {showCta ? (
             <Text style={styles.rowCta}>
               {t(locale, "mobile.viewMap")} →
@@ -116,13 +150,58 @@ function TripRow({
   );
 }
 
-/** Tip 017 — soft-notice slot + rows while hydrating (web TripsListSkeleton parity). */
+/** Azure inset list rail — count + Demo/Live chip (web #136). */
+function TripsListRail({
+  count,
+  soft,
+}: {
+  count: number;
+  soft: boolean;
+}) {
+  return (
+    <View style={styles.listRail}>
+      <View style={styles.listRailCopy}>
+        <Text style={styles.listRailLabel}>
+          {t(locale, "trips.listRail")}
+        </Text>
+        <Text style={styles.listRailCount}>
+          {t(locale, "trips.listCount").replace("{n}", String(count))}
+        </Text>
+      </View>
+      <View
+        style={StyleSheet.flatten([
+          styles.statusChip,
+          soft ? styles.statusChipDemo : styles.statusChipLive,
+        ])}
+      >
+        <Text
+          style={StyleSheet.flatten([
+            styles.statusChipText,
+            soft ? styles.statusChipTextDemo : styles.statusChipTextLive,
+          ])}
+        >
+          {soft
+            ? t(locale, "trips.listDemo")
+            : t(locale, "trips.listLive")}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/** Tip 017 — soft-notice slot + dense rows while hydrating (web TripsListSkeleton). */
 function TripsListSkeleton() {
   return (
-    <View accessibilityState={{ busy: true }}>
+    <View style={styles.listSheet} accessibilityState={{ busy: true }}>
+      <View style={styles.listRail}>
+        <View style={styles.skeletonRailLabel} />
+        <View style={styles.skeletonChip} />
+      </View>
       <View style={styles.skeletonNotice} />
-      <View style={StyleSheet.flatten([styles.row, styles.rowLast])}>
-        <View style={styles.skeletonIndex} />
+      <View
+        style={StyleSheet.flatten([styles.tripRow, styles.tripRowLast])}
+      >
+        <View style={styles.skeletonDenseIndex} />
         <View style={styles.rowBody}>
           <View style={styles.skeletonTitle} />
           <View style={styles.skeletonMeta} />
@@ -241,6 +320,7 @@ export default function TripsScreen() {
   );
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
+  const listSoft = Boolean(softNotice);
 
   const riseStyle = {
     opacity: rise,
@@ -338,8 +418,15 @@ export default function TripsScreen() {
             </Text>
           </View>
 
+          {/* Empty / loading: SoftFailNotice under section header.
+              Populated list: compact SoftFailNotice lives under the azure rail. */}
           <SoftFailNotice
-            open={!error && Boolean(softNotice) && hydrated}
+            open={
+              !error &&
+              Boolean(softNotice) &&
+              hydrated &&
+              showEmptyInvite
+            }
             style={styles.sectionSoftFail}
           >
             {softNotice ?? ""}
@@ -378,7 +465,7 @@ export default function TripsScreen() {
               </View>
 
               {sampleTrips.length > 0 ? (
-                <View style={styles.sampleBlock}>
+                <View style={styles.sampleSheet}>
                   <Text style={styles.sampleEyebrow}>
                     {t(locale, "trips.sampleEyebrow")}
                   </Text>
@@ -395,15 +482,25 @@ export default function TripsScreen() {
               ) : null}
             </View>
           ) : (
-            trips.map((trip, index) => (
-              <TripRow
-                key={trip.id}
-                trip={trip}
-                index={index}
-                showCta
-                last={index === trips.length - 1}
-              />
-            ))
+            <View style={styles.listSheet}>
+              <TripsListRail count={trips.length} soft={listSoft} />
+              <SoftFailNotice
+                open={!error && Boolean(softNotice)}
+                compact
+                style={styles.listSoftFail}
+              >
+                {softNotice ?? ""}
+              </SoftFailNotice>
+              {trips.map((trip, index) => (
+                <TripRow
+                  key={trip.id}
+                  trip={trip}
+                  index={index}
+                  showCta
+                  last={index === trips.length - 1}
+                />
+              ))}
+            </View>
           )}
         </View>
 
@@ -626,8 +723,90 @@ const styles = StyleSheet.create({
   sectionSoftFail: {
     marginBottom: 16,
   },
-  sampleBlock: {
-    marginTop: 28,
+  listSheet: {
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    // Soft Lumen lift — paper sheet over Mist topo
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  listRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  listRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  listRailLabel: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  listRailCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  statusChip: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusChipDemo: {
+    backgroundColor: colors.mist,
+  },
+  statusChipLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  statusChipText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  statusChipTextDemo: {
+    color: colors.inkSoft,
+  },
+  statusChipTextLive: {
+    color: colors.river,
+  },
+  listSoftFail: {
+    marginBottom: 0,
+  },
+  sampleSheet: {
+    marginTop: 24,
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
   },
   sampleEyebrow: {
     ...type.body,
@@ -636,45 +815,62 @@ const styles = StyleSheet.create({
     letterSpacing: 2.2,
     textTransform: "uppercase",
     color: "rgba(47, 107, 255, 0.8)",
-    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 4,
   },
   skeletonNotice: {
-    height: 48,
+    height: 40,
     width: "100%",
-    borderRadius: radius.sm,
-    backgroundColor: "rgba(230, 236, 245, 0.7)",
-    marginBottom: 16,
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
   },
-  skeletonIndex: {
-    width: 40,
-    height: 28,
+  skeletonRailLabel: {
+    height: 12,
+    width: 88,
     borderRadius: radius.xs,
     backgroundColor: "rgba(230, 236, 245, 0.9)",
   },
-  skeletonTitle: {
+  skeletonChip: {
+    height: 18,
+    width: 44,
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(230, 236, 245, 0.9)",
+  },
+  skeletonDenseIndex: {
+    width: 28,
     height: 20,
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(230, 236, 245, 0.9)",
+    marginTop: 2,
+  },
+  skeletonTitle: {
+    height: 18,
     width: "55%",
     borderRadius: radius.xs,
     backgroundColor: "rgba(230, 236, 245, 0.9)",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   skeletonMeta: {
-    height: 14,
-    width: "75%",
+    height: 12,
+    width: "72%",
     borderRadius: radius.xs,
     backgroundColor: "rgba(230, 236, 245, 0.7)",
   },
-  row: {
+  tripRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    paddingVertical: 22,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
     width: "100%",
   },
-  rowLast: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  tripRowLast: {
+    borderBottomWidth: 0,
+  },
+  tripRowPressed: {
+    backgroundColor: "rgba(230, 236, 245, 0.35)",
   },
   templateRow: {
     flexDirection: "row",
@@ -683,6 +879,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     paddingVertical: 22,
+  },
+  rowLast: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   index: {
     ...type.display,
@@ -693,16 +892,48 @@ const styles = StyleSheet.create({
     minWidth: 40,
     lineHeight: 32,
   },
+  denseIndex: {
+    ...type.display,
+    fontSize: 20,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    color: colors.mist,
+    letterSpacing: -0.4,
+    minWidth: 32,
+    lineHeight: 24,
+    marginTop: 2,
+  },
   rowBody: {
     flex: 1,
     minWidth: 0,
   },
-  rowTitle: {
+  titleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  tripTitle: {
     ...type.display,
-    fontSize: 20,
+    fontSize: 18,
     color: colors.ink,
-    fontWeight: "700",
+    fontWeight: "600",
     letterSpacing: -0.3,
+    flexShrink: 1,
+  },
+  badgeChip: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  badgeChipText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
   },
   templateTitle: {
     ...type.display,
@@ -710,6 +941,13 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontWeight: "700",
     letterSpacing: -0.3,
+  },
+  tripMeta: {
+    ...type.body,
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "rgba(100, 116, 139, 0.92)",
   },
   rowMeta: {
     ...type.body,
@@ -729,8 +967,8 @@ const styles = StyleSheet.create({
   },
   rowCta: {
     ...type.body,
-    marginTop: 14,
-    fontSize: 14,
+    marginTop: 10,
+    fontSize: 13,
     color: colors.river,
     fontWeight: "700",
   },
