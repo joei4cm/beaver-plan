@@ -154,32 +154,42 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * Drag SoftFailNotice chrome (BEA-255 after #157/#189):
-   * Stops rail owns compact SoftFail when the day has stops · soft reorder
-   * badge · tip-011 (#46). Empty day still owns SoftFail (BEA-222). Title
-   * SoftFail yields while Stops owns soft-fail (no double depth). Soft copy
-   * never timber / Failed to fetch.
+   * Stop drawer SoftFailNotice chrome (BEA-288 after #177/#189/#195):
+   * Itinerary rail owns compact SoftFail when the day has stops · Soft drawer
+   * badge · tip-011 (#46). Empty day still owns SoftFail under Stops
+   * (BEA-222). Drag SoftFail under Stops only when softNotice is the drag
+   * SoftFail string (BEA-255) — demoLocal / transfer softNotice must not open
+   * Stops SoftFail (drawer owns demo soft-fail; no double depth). Title
+   * SoftFail yields while drawer / empty owns. Soft copy never timber /
+   * Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
-  const dragOwnsSoft = !dayEmpty;
+  const drawerOwnsSoft = !dayEmpty;
+  const dragSoftFailCopy = t(locale, "planner.stops.dragSoftFail");
+  const dragOwnsSoft = !dayEmpty && softNotice === dragSoftFailCopy;
+  const drawerSoftOpen =
+    drawerOwnsSoft &&
+    Boolean(
+      plannerNoise ||
+        (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
+    );
+  const drawerSoftCopy = t(locale, "planner.drawer.softFail");
   const listSoftOpen = emptyOwnsSoft
     ? Boolean(softNotice || plannerNoise || demoShell)
-    : Boolean(
-        softNotice ||
-          plannerNoise ||
-          (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
-      );
+    : dragOwnsSoft;
   /**
    * SoftFailNotice copy ownership:
-   * - Empty day → empty SoftFail (BEA-222); never borrow transfer / drag softNotice.
-   * - Day with stops → always drag SoftFail (BEA-255). Transfer soft-fail stays
-   *   on the transit SoftFailNotice — softNotice must not pollute this slot.
+   * - Empty day → empty SoftFail (BEA-222); never borrow transfer / drawer softNotice.
+   * - Day with stops → SoftFail under Itinerary (BEA-288); Stops SoftFail only
+   *   for drag softNotice (BEA-255). Transfer soft-fail stays on transit.
    */
   const listSoftCopy = emptyOwnsSoft
     ? t(locale, "planner.emptySoftFail")
-    : t(locale, "planner.stops.dragSoftFail");
+    : dragSoftFailCopy;
   const shareSoftOpen =
-    !emptyOwnsSoft && !dragOwnsSoft && (demoShell || plannerNoise);
+    !emptyOwnsSoft &&
+    !drawerOwnsSoft &&
+    (demoShell || plannerNoise);
 
   useEffect(() => {
     if (!dayId) {
@@ -867,7 +877,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </Link>
             </div>
           </div>
-          {/* Title SoftFail yields while Stops rail owns soft-fail. */}
+          {/* Title SoftFail yields while drawer / empty SoftFail owns. */}
           <SoftFailNotice
             open={shareSoftOpen}
             compact
@@ -1001,8 +1011,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         </section>
 
         {/*
-          Stop drawer chrome (BEA-233): azure Itinerary rail · Demo/Live ·
-          SoftFailNotice under Stops · tip-011 sheet-in / rise — never timber.
+          Stop drawer SoftFail chrome (BEA-288 after #177/#189/#195):
+          azure Itinerary rail · Soft drawer badge · compact SoftFailNotice ·
+          tip-011 sheet-in / rise — never timber / Failed to fetch.
         */}
         <aside
           className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
@@ -1018,18 +1029,34 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 {t(locale, "planner.drawer.support")}
               </span>
             </div>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                demoShell
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river"
-              }`}
-            >
-              {demoShell
-                ? t(locale, "planner.drawer.demoBadge")
-                : t(locale, "planner.drawer.liveBadge")}
-            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                  drawerSoftOpen || demoShell
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {demoShell
+                  ? t(locale, "planner.drawer.demoBadge")
+                  : t(locale, "planner.drawer.liveBadge")}
+              </span>
+              {drawerSoftOpen ? (
+                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  {t(locale, "planner.drawer.softBadge")}
+                </span>
+              ) : null}
+            </div>
           </header>
+
+          {/* Compact SoftFail under azure Itinerary rail — never timber / Failed to fetch. */}
+          <SoftFailNotice
+            open={drawerSoftOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {drawerSoftCopy}
+          </SoftFailNotice>
           {/*
             Day tabs chrome (BEA-247 after #117): azure Days rail · mist
             underline select · tip-011 settle — SoftFail stays under Stops.
@@ -1138,9 +1165,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Drag SoftFail chrome (BEA-255 after #157/#189):
-              azure Stops rail · soft reorder badge · compact SoftFailNotice ·
-              tip-011 Reorder rise — never timber / Failed to fetch.
+              Stops SoftFail chrome (BEA-222 empty / BEA-255 drag softNotice):
+              azure Stops rail · empty/drag badge · compact SoftFailNotice ·
+              tip-011 rise. Demo soft-fail yields to Itinerary SoftFail
+              (BEA-288) — never timber / Failed to fetch.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
@@ -1240,7 +1268,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </div>
               ) : null}
 
-              {/* Compact SoftFail under azure Stops rail — drag soft-fail; never timber. */}
+              {/* Compact SoftFail under Stops — empty / drag softNotice only; never timber. */}
               <SoftFailNotice open={listSoftOpen} compact>
                 {listSoftCopy}
               </SoftFailNotice>
@@ -1420,9 +1448,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                                   {t(locale, "planner.drawer.detailSupport")}
                                 </span>
                               </div>
-                              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
-                                {t(locale, "planner.stops.selected")}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {drawerSoftOpen ? (
+                                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft bp-transition">
+                                    {t(locale, "planner.drawer.softBadge")}
+                                  </span>
+                                ) : null}
+                                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                                  {t(locale, "planner.stops.selected")}
+                                </span>
+                              </div>
                             </header>
                             <div
                               className="animate-rise space-y-0 px-2.5 pb-2.5 pt-0.5 [&>*]:!mt-2 [&>*:first-child]:!mt-1.5"
