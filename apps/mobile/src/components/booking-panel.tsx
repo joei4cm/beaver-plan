@@ -377,13 +377,20 @@ export function BookingPanel({
   };
 
   /**
-   * OTA SoftFailNotice chrome (BEA-290 after web #198 / Expo #165):
-   * azure OTA sheet rail · soft badge · compact SoftFailNotice under rail ·
-   * tip-011 (#46). Confirm owns save soft-fail so OTA SoftFail yields
-   * (no double depth). Soft copy never timber / Failed to fetch.
+   * Confirm SoftFailNotice depth (BEA-340 after #185 / persistence #218):
+   * azure Confirm rail · Soft save badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
+   * Confirm owns save soft-fail so OTA SoftFail (#220) yields (no double depth).
+   * SoftFail copy always confirmSoftFail — never timber / Failed to fetch.
+   * Web booking confirm SoftFail stays out of scope.
    */
   const showConfirmSoftFail = confirmSoftFail;
   const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
+  /** Confirm SoftFail copy owned by azure Confirm rail — never inherit timber. */
+  const confirmSoftCopy = t(locale, "planner.booking.confirmSoftFail");
+  const confirmSupportCopy = showConfirmSoftFail
+    ? t(locale, "planner.booking.confirmSoftSupport")
+    : t(locale, "planner.booking.confirmSupport");
 
   return (
     <View
@@ -721,9 +728,10 @@ export function BookingPanel({
           </SheetPresence>
 
           {/*
-            Confirm SoftFail chrome (BEA-245 after web #184 / Expo #165):
-            azure Confirm rail · soft badge · compact SoftFailNotice ·
-            SheetPresence pin body · tip-011 rise — never timber.
+            Confirm SoftFail depth (BEA-340 after #185 / #218):
+            azure Confirm rail · Soft save badge · softSupport · compact SoftFail
+            mist band · tip-011 mist-wash pin body — never timber / Failed to fetch.
+            OTA SoftFail (#220) yields while Confirm owns soft-fail.
           */}
           <SheetPresence
             open={open}
@@ -733,7 +741,12 @@ export function BookingPanel({
             accessibilityLabel={t(locale, "planner.booking.confirmEyebrow")}
           >
             <View style={styles.confirmRail}>
-              <View style={styles.confirmHeader}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.confirmHeader,
+                  showConfirmSoftFail ? styles.confirmHeaderSoft : null,
+                ])}
+              >
                 <View style={styles.confirmHeaderText}>
                   <View style={styles.confirmChipRow}>
                     <Text style={styles.sectionEyebrow}>
@@ -767,9 +780,7 @@ export function BookingPanel({
                   <Text style={styles.confirmTitle}>
                     {t(locale, "planner.booking.confirmTitle")}
                   </Text>
-                  <Text style={styles.confirmSupport}>
-                    {t(locale, "planner.booking.confirmSupport")}
-                  </Text>
+                  <Text style={styles.confirmSupport}>{confirmSupportCopy}</Text>
                 </View>
                 {stop ? (
                   <Pressable
@@ -790,20 +801,23 @@ export function BookingPanel({
                 ) : null}
               </View>
 
-              {/* Compact SoftFail under azure Confirm rail — never timber / Failed to fetch. */}
+              {/* Compact SoftFail mist band under azure Confirm rail — never timber. */}
               <SoftFailNotice
                 open={showConfirmSoftFail}
                 compact
                 style={styles.confirmSoftFail}
               >
-                {t(locale, "planner.booking.confirmSoftFail")}
+                {confirmSoftCopy}
               </SoftFailNotice>
 
               <SheetPresence
                 open={open}
                 delayMs={40}
                 rise={8}
-                style={styles.draftList}
+                style={StyleSheet.flatten([
+                  styles.draftList,
+                  showConfirmSoftFail ? styles.draftListSoft : null,
+                ])}
                 accessibilityLabel={t(locale, "planner.booking.confirmTitle")}
               >
                 {!stop ? (
@@ -1293,6 +1307,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
+  /** Soft azure Confirm rail wash when SoftFail owns depth (BEA-340). */
+  confirmHeaderSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   confirmHeaderText: {
     flex: 1,
     minWidth: 160,
@@ -1360,8 +1378,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: colors.inkSoft,
+    flexShrink: 1,
   },
+  /** Mist SoftFail strip under azure Confirm rail — border-b before tip-011 body. */
   confirmSoftFail: {
+    marginBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
     borderTopWidth: 0,
@@ -1370,6 +1391,10 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
+  },
+  /** Mist-wash tip-011 pin body when SoftFail owns the Confirm rail (BEA-340). */
+  draftListSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   draftCard: {
     borderRadius: radius.sm,
