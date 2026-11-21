@@ -374,6 +374,8 @@
   "planner.booking.demoBadge": "演示搜索",
   "planner.booking.configuredBadge": "密钥就绪",
   "planner.booking.demoNotice": "演示目录 — API 离线或密钥未配置。可打开外部链接；此处不扣款。",
+  "planner.booking.loadingHint": "正在拉取演示目录…",
+  "planner.booking.priceLabel": "起",
   "planner.booking.hint": "海狸旅行不做站内结账——链接跳转外部渠道。收款与库存同步不在本切片范围。",
   "mobile.booking": "预订",
   "mobile.bookingEmpty": "还没有预订链接",

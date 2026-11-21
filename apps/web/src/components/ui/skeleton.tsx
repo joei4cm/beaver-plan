@@ -253,6 +253,40 @@ export function PlaceIntelSkeleton() {
   );
 }
 
+/** Tip 017 — OTA offer rows while booking search soft-fetches. */
+export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <ul
+      aria-busy="true"
+      aria-live="polite"
+      className="space-y-2"
+    >
+      {Array.from({ length: rows }).map((_, i) => (
+        <li
+          key={i}
+          className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-3 w-14 rounded-bp-xs" />
+              <Skeleton className="h-5 w-48 max-w-[85%]" />
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-3.5 w-16" />
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+              <Skeleton className="h-8 w-24 rounded-bp" />
+              <Skeleton className="h-8 w-20 rounded-bp-sm" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Tip 017 — status chip placeholders while translation BFF warms. */
 export function TranslateStatusSkeleton() {
   return (

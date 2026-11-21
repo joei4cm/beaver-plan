@@ -15,6 +15,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { BookingOffersSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Props = {
@@ -288,25 +289,32 @@ export function BookingPanel({
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  const badge =
-    status?.mode === "configured"
-      ? t(locale, "planner.booking.configuredBadge")
-      : t(locale, "planner.booking.demoBadge");
+  const isConfigured = status?.mode === "configured" && !softDemo;
+  const showSoftFail = softDemo || status?.mode === "demo";
+  const badge = isConfigured
+    ? t(locale, "planner.booking.configuredBadge")
+    : t(locale, "planner.booking.demoBadge");
 
   return (
-    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
+    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55 shadow-bp-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35"
         aria-expanded={open}
       >
-        <div>
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
-            <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                isConfigured
+                  ? "bg-river/12 text-river-deep"
+                  : "bg-mist text-ink-soft"
+              }`}
+            >
               {badge}
             </span>
           </div>
@@ -323,7 +331,7 @@ export function BookingPanel({
           </p>
         </div>
         <span
-          className={`text-river transition duration-bp ease-bp ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-river transition duration-bp ease-bp ${open ? "rotate-180" : ""}`}
           aria-hidden
         >
           ▾
@@ -335,13 +343,13 @@ export function BookingPanel({
           className="animate-sheet-in space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-          {(softDemo || status?.mode === "demo") && (
+          {showSoftFail && (
             <SoftFailNotice>
               {t(locale, "planner.booking.demoNotice")}
             </SoftFailNotice>
           )}
 
-          {/* Primary flow: search → results → deep-link out */}
+          {/* Primary flow: search → ranked offers → azure deep-link out */}
           <section className="space-y-3">
             <div>
               <h3 className="font-display text-base tracking-tight text-ink">
@@ -366,7 +374,7 @@ export function BookingPanel({
                     onClick={() => setKindFilter(id)}
                     className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
                       on
-                        ? "bg-river text-foam"
+                        ? "bg-river text-foam shadow-bp-soft"
                         : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
                     }`}
                   >
@@ -378,7 +386,7 @@ export function BookingPanel({
 
             <div className="grid gap-2 sm:grid-cols-3">
               <label className="block sm:col-span-1">
-                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                   {t(locale, "planner.booking.cityPlaceholder")}
                 </span>
                 <input
@@ -389,7 +397,7 @@ export function BookingPanel({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                   {t(locale, "planner.booking.checkIn")}
                 </span>
                 <input
@@ -400,7 +408,7 @@ export function BookingPanel({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                   {t(locale, "planner.booking.checkOut")}
                 </span>
                 <input
@@ -416,22 +424,33 @@ export function BookingPanel({
               type="button"
               disabled={searching}
               onClick={() => void runSearch()}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {searching
                 ? t(locale, "planner.booking.searching")
                 : t(locale, "planner.booking.search")}
             </button>
 
-            {searched && suggestions.length === 0 && (
-              <p className="text-sm text-ink-soft">
-                {t(locale, "planner.booking.emptyResults")}
-              </p>
+            {searching && (
+              <div className="animate-fade space-y-2">
+                <BookingOffersSkeleton />
+                <p className="text-xs text-ink-soft">
+                  {t(locale, "planner.booking.loadingHint")}
+                </p>
+              </div>
             )}
 
-            {suggestions.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+            {!searching && searched && suggestions.length === 0 && (
+              <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
+                <p className="text-sm text-ink">
+                  {t(locale, "planner.booking.emptyResults")}
+                </p>
+              </div>
+            )}
+
+            {!searching && suggestions.length > 0 && (
+              <div className="animate-rise space-y-2.5">
+                <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                   {t(locale, "planner.booking.resultsTitle").replace(
                     "{n}",
                     String(suggestions.length),
@@ -441,35 +460,53 @@ export function BookingPanel({
                   {suggestions.map((s, i) => (
                     <li
                       key={s.id}
-                      className="animate-preview-in rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+                      className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35"
                       style={{ animationDelay: `${60 + i * 40}ms` }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-ink">
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <span className="inline-flex rounded-bp-xs bg-mist/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+                            {suggestionKindLabel(locale, s.kind)}
+                          </span>
+                          <div className="font-display text-[0.95rem] font-semibold leading-snug tracking-tight text-ink">
                             {s.title}
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-soft">
-                            <span className="rounded bg-mist/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
-                              {suggestionKindLabel(locale, s.kind)}
-                            </span>
-                            <span>{s.providerLabel}</span>
-                            {s.priceHint ? <span>· {s.priceHint}</span> : null}
-                            {typeof s.ratingHint === "number" ? (
-                              <span>
-                                · {t(locale, "planner.booking.rating").replace(
-                                  "{n}",
-                                  s.ratingHint.toFixed(1),
-                                )}
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            {s.priceHint ? (
+                              <span className="inline-flex items-baseline gap-1 font-display text-base font-bold tracking-tight text-river">
+                                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-river/75">
+                                  {t(locale, "planner.booking.priceLabel")}
+                                </span>
+                                <span>{s.priceHint}</span>
                               </span>
                             ) : null}
+                            {typeof s.ratingHint === "number" ? (
+                              <span className="inline-flex items-baseline gap-1 text-xs font-medium text-ink">
+                                <span
+                                  aria-hidden
+                                  className="text-[0.7rem] font-bold text-river/80"
+                                >
+                                  ★
+                                </span>
+                                <span>{s.ratingHint.toFixed(1)}</span>
+                                <span className="sr-only">
+                                  {t(locale, "planner.booking.rating").replace(
+                                    "{n}",
+                                    s.ratingHint.toFixed(1),
+                                  )}
+                                </span>
+                              </span>
+                            ) : null}
+                            <span className="text-xs text-ink-soft">
+                              {s.providerLabel}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                           <button
                             type="button"
                             onClick={() => openExternal(s.url)}
-                            className="rounded-bp bg-river px-3 py-1.5 text-xs font-semibold text-foam transition duration-bp-fast ease-bp-out hover:bg-river-deep"
+                            className="rounded-bp bg-river px-3.5 py-2 text-xs font-semibold text-foam shadow-bp-soft transition duration-bp-fast ease-bp-out hover:bg-river-deep"
                           >
                             {t(locale, "planner.booking.openExternal")}
                           </button>
@@ -477,7 +514,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => applySuggestion(s)}
-                              className="rounded-bp-sm border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:bg-river/10"
+                              className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10"
                             >
                               {t(locale, "planner.booking.useLink")}
                             </button>
@@ -493,11 +530,9 @@ export function BookingPanel({
 
           {/* Secondary: persist deep links on the selected stop */}
           <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-4">
-            <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-                {t(locale, "planner.booking.linksTitle")}
-              </h3>
-            </div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+              {t(locale, "planner.booking.linksTitle")}
+            </h3>
             {!stop ? (
               <p className="text-sm text-ink-soft">
                 {t(locale, "planner.booking.selectStop")}
@@ -505,16 +540,19 @@ export function BookingPanel({
             ) : (
               <div className="space-y-3">
                 {drafts.map((row) => (
-                  <div key={row.kind} className="space-y-1.5">
+                  <div
+                    key={row.kind}
+                    className="space-y-1.5 rounded-bp-sm border border-[color:var(--bp-line)]/70 bg-paper/40 px-3 py-3"
+                  >
                     <div className="flex items-center justify-between gap-2">
-                      <label className="text-xs font-medium uppercase tracking-[0.12em] text-ink-soft">
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
                         {kindLabel(locale, row.kind)}
                       </label>
                       {row.url.trim() && (
                         <button
                           type="button"
                           onClick={() => openExternal(row.url.trim())}
-                          className="text-xs font-medium text-river hover:underline"
+                          className="text-xs font-semibold text-river transition duration-bp-fast ease-bp-out hover:text-river-deep hover:underline"
                         >
                           {t(locale, "planner.booking.open")}
                         </button>
@@ -529,7 +567,7 @@ export function BookingPanel({
                         locale,
                         "planner.booking.providerPlaceholder",
                       )}
-                      className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                      className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
                     />
                     <input
                       value={row.url}
@@ -537,7 +575,7 @@ export function BookingPanel({
                         updateDraft(row.kind, { url: e.target.value })
                       }
                       placeholder={t(locale, "planner.booking.urlPlaceholder")}
-                      className="w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                      className="w-full rounded-bp-xs border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
                     />
                   </div>
                 ))}
@@ -545,7 +583,7 @@ export function BookingPanel({
                   type="button"
                   disabled={saving}
                   onClick={() => void save()}
-                  className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
+                  className="rounded-bp bg-ink px-4 py-2.5 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:opacity-40"
                 >
                   {saving
                     ? t(locale, "planner.booking.saving")
