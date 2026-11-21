@@ -941,7 +941,15 @@ export default function TripDetailScreen() {
     !online || fromCache
       ? (softNotice ?? t(locale, "planner.demoLocal"))
       : (softNotice ?? "");
-  /** SoftFail stays under Stops — Days chrome never owns SoftFail (BEA-258). */
+  /**
+   * Expo day tabs SoftFailNotice depth (BEA-299 after #196 / BEA-258):
+   * Days rail owns compact SoftFail under azure Days chrome · Soft days badge ·
+   * softSupport · tip-011 SheetPresence mist tabs · StyleSheet.flatten.
+   * SoftFail yields while invite sheet open (no double depth). Soft copy never
+   * timber / Failed to fetch. Stops SoftFail stays under Stops (sibling rail).
+   */
+  const daysSoftOpen = detailSoftNoise && !inviteOpen;
+  const daysSoftCopy = t(locale, "planner.days.softFail");
   const selectedDayIndex = dayId
     ? Math.max(1, days.findIndex((d) => d.id === dayId) + 1)
     : 0;
@@ -1112,15 +1120,13 @@ export default function TripDetailScreen() {
 
             <View style={styles.sheet}>
               {/*
-                Day tabs SoftFail chrome (BEA-258 after web #188 / Expo #127):
-                azure Days rail · mist underline select · tip-011 settle ·
-                per-day stop meta · SoftFailNotice stays under Stops ·
-                StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
+                Day tabs SoftFail depth (BEA-299 after #196 / BEA-258):
+                azure Days rail · Soft days badge · compact SoftFail under rail
+                (mist band · border-b) · tip-011 SheetPresence mist tabs ·
+                per-day stop meta · StyleSheet.flatten. SoftFail yields while
+                invite open. Never timber / Failed to fetch.
               */}
-              <SheetPresence
-                open
-                delayMs={40}
-                rise={8}
+              <View
                 style={styles.daysChrome}
                 accessibilityLabel={t(locale, "planner.days.eyebrow")}
               >
@@ -1136,10 +1142,18 @@ export default function TripDetailScreen() {
                       )}
                     </Text>
                     <Text style={styles.daysSupport} numberOfLines={1}>
-                      {t(locale, "planner.days.support")}
+                      {daysSoftOpen
+                        ? t(locale, "planner.days.softSupport")
+                        : t(locale, "planner.days.support")}
                     </Text>
                   </View>
-                  {dayId ? (
+                  {daysSoftOpen ? (
+                    <View style={styles.daysSoftBadge}>
+                      <Text style={styles.daysSoftBadgeText}>
+                        {t(locale, "planner.days.softBadge")}
+                      </Text>
+                    </View>
+                  ) : dayId ? (
                     <View style={styles.daysSelectedBadge}>
                       <Text style={styles.daysSelectedBadgeText}>
                         {t(locale, "planner.day")} {selectedDayIndex} ·{" "}
@@ -1153,90 +1167,109 @@ export default function TripDetailScreen() {
                   )}
                 </View>
 
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.dayRow}
-                  contentContainerStyle={styles.dayRowContent}
-                  accessibilityRole="tablist"
+                {/* Compact SoftFail under azure Days rail — never timber. */}
+                <SoftFailNotice
+                  open={daysSoftOpen}
+                  compact
+                  style={styles.daysSoftFail}
+                >
+                  {daysSoftCopy}
+                </SoftFailNotice>
+
+                <SheetPresence
+                  open
+                  delayMs={40}
+                  rise={8}
                   accessibilityLabel={t(locale, "planner.days.eyebrow")}
                 >
-                  <View style={styles.dayRailInner}>
-                    {dayUnderlineVisible ? (
-                      <Animated.View
-                        pointerEvents="none"
-                        accessibilityElementsHidden
-                        importantForAccessibility="no"
-                        style={StyleSheet.flatten([
-                          styles.dayUnderline,
-                          {
-                            left: dayUnderlineLeft,
-                            width: dayUnderlineWidth,
-                            opacity: dayUnderlineOpacity,
-                            transform: [{ scaleY: dayUnderlineSettle }],
-                          },
-                        ])}
-                      />
-                    ) : null}
-                    {days.map((day, i) => {
-                      const active = dayId === day.id;
-                      const stopCount = dayStopCounts.get(day.id) ?? 0;
-                      return (
-                        <Pressable
-                          key={day.id}
-                          onPress={() => selectDay(day.id)}
-                          onLayout={(e) => {
-                            const { x, width } = e.nativeEvent.layout;
-                            dayTabLayouts.current.set(day.id, { x, width });
-                            if (day.id === dayId) {
-                              applyDayUnderline(
-                                day.id,
-                                dayUnderlineReady.current,
-                              );
-                            }
-                          }}
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={StyleSheet.flatten([
+                      styles.dayRow,
+                      daysSoftOpen ? styles.dayRowSoft : null,
+                    ])}
+                    contentContainerStyle={styles.dayRowContent}
+                    accessibilityRole="tablist"
+                    accessibilityLabel={t(locale, "planner.days.eyebrow")}
+                  >
+                    <View style={styles.dayRailInner}>
+                      {dayUnderlineVisible ? (
+                        <Animated.View
+                          pointerEvents="none"
+                          accessibilityElementsHidden
+                          importantForAccessibility="no"
                           style={StyleSheet.flatten([
-                            styles.dayChip,
-                            active ? styles.dayChipActive : null,
+                            styles.dayUnderline,
+                            {
+                              left: dayUnderlineLeft,
+                              width: dayUnderlineWidth,
+                              opacity: dayUnderlineOpacity,
+                              transform: [{ scaleY: dayUnderlineSettle }],
+                            },
                           ])}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected: active }}
-                        >
-                          <Text
+                        />
+                      ) : null}
+                      {days.map((day, i) => {
+                        const active = dayId === day.id;
+                        const stopCount = dayStopCounts.get(day.id) ?? 0;
+                        return (
+                          <Pressable
+                            key={day.id}
+                            onPress={() => selectDay(day.id)}
+                            onLayout={(e) => {
+                              const { x, width } = e.nativeEvent.layout;
+                              dayTabLayouts.current.set(day.id, { x, width });
+                              if (day.id === dayId) {
+                                applyDayUnderline(
+                                  day.id,
+                                  dayUnderlineReady.current,
+                                );
+                              }
+                            }}
                             style={StyleSheet.flatten([
-                              styles.dayChipEyebrow,
-                              active ? styles.dayChipEyebrowActive : null,
+                              styles.dayChip,
+                              active ? styles.dayChipActive : null,
                             ])}
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected: active }}
                           >
-                            {t(locale, "planner.day")} {i + 1}
-                          </Text>
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.dayChipDate,
-                              active ? styles.dayChipDateActive : null,
-                            ])}
-                          >
-                            {day.date}
-                          </Text>
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.dayChipMeta,
-                              active ? styles.dayChipMetaActive : null,
-                            ])}
-                          >
-                            {stopCount > 0
-                              ? t(locale, "planner.days.stopsMeta").replace(
-                                  "{n}",
-                                  String(stopCount),
-                                )
-                              : t(locale, "planner.days.stopsMetaEmpty")}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-              </SheetPresence>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.dayChipEyebrow,
+                                active ? styles.dayChipEyebrowActive : null,
+                              ])}
+                            >
+                              {t(locale, "planner.day")} {i + 1}
+                            </Text>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.dayChipDate,
+                                active ? styles.dayChipDateActive : null,
+                              ])}
+                            >
+                              {day.date}
+                            </Text>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.dayChipMeta,
+                                active ? styles.dayChipMetaActive : null,
+                              ])}
+                            >
+                              {stopCount > 0
+                                ? t(locale, "planner.days.stopsMeta").replace(
+                                    "{n}",
+                                    String(stopCount),
+                                  )
+                                : t(locale, "planner.days.stopsMetaEmpty")}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                </SheetPresence>
+              </View>
 
               {/*
                 Transit filters SoftFail chrome (BEA-289 after #139 / #182):
@@ -1517,8 +1550,9 @@ export default function TripDetailScreen() {
               {/*
                 SoftFailNotice depth under azure Stops rail (BEA-298 after #194):
                 Soft/empty badge · softSupport · mist SoftFail band · tip-011
-                mist-wash chips. SoftFail stays under Stops — Days chrome never
-                owns SoftFail (BEA-258). Soft copy never timber / Failed to fetch.
+                mist-wash chips. Stops SoftFail stays under Stops; Days SoftFail
+                is sibling rail under Days chrome (BEA-299). Soft copy never
+                timber / Failed to fetch.
               */}
               <View style={styles.stopsChrome}>
                 <View
@@ -2502,6 +2536,27 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
+  /** Soft days badge on azure rail when SoftFail owns (BEA-299). */
+  daysSoftBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  daysSoftBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  /** Mist SoftFail strip under azure Days rail — border-b before tabs. */
+  daysSoftFail: {
+    marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
   daysListHint: {
     ...type.body,
     fontSize: 10,
@@ -2513,6 +2568,12 @@ const styles = StyleSheet.create({
   dayRow: {
     /* Mist wash rail — not full pill (web .bp-day-tab-rail--underline). */
     backgroundColor: "rgba(230, 236, 245, 0.62)",
+  },
+  /** Azure inset mist track when Days SoftFail open (depth craft). */
+  dayRowSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.78)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   dayRowContent: {
     paddingHorizontal: 6,
