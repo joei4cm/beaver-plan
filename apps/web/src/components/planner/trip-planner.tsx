@@ -169,11 +169,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           plannerNoise ||
           (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
       );
-  const listSoftCopy =
-    softNotice ??
-    (dayEmpty
-      ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.stops.dragSoftFail"));
+  /**
+   * Drag owns SoftFailNotice copy when the day has stops — transfer soft-fail
+   * stays on the transit SoftFailNotice (no double depth / wrong copy). Empty
+   * day still prefers softNotice then empty SoftFail (BEA-222).
+   */
+  const listSoftCopy = dayEmpty
+    ? (softNotice ?? t(locale, "planner.emptySoftFail"))
+    : t(locale, "planner.stops.dragSoftFail");
   const shareSoftOpen =
     !emptyOwnsSoft && !dragOwnsSoft && (demoShell || plannerNoise);
 
