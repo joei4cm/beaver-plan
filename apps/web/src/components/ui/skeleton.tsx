@@ -33,7 +33,7 @@ export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-/** Layout-matched city playbook rows. */
+/** Layout-matched city playbook rows (number · title · meta · azure Use / Customize). */
 export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <ul aria-busy="true" aria-live="polite" className="space-y-0">
@@ -42,15 +42,15 @@ export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
           key={i}
           className="grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] py-7 last:border-b sm:grid-cols-[auto_1fr_auto] sm:gap-8"
         >
-          <Skeleton className="h-10 w-12 shrink-0 md:h-12" />
+          <Skeleton className="h-8 w-10 shrink-0 md:h-9 md:w-12" />
           <div className="min-w-0 space-y-2.5">
-            <Skeleton className="h-6 w-44 max-w-[75%]" />
+            <Skeleton className="h-7 w-52 max-w-[80%]" />
             <Skeleton className="h-3.5 w-full max-w-md" />
-            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-3 w-36" />
           </div>
-          <div className="col-span-2 flex gap-2 sm:col-span-1 sm:flex-col sm:items-stretch md:flex-row">
-            <Skeleton className="h-9 w-24 rounded-bp" />
-            <Skeleton className="h-9 w-28 rounded-bp" />
+          <div className="col-span-2 flex flex-col gap-2 sm:col-span-1 sm:items-stretch md:flex-row md:items-center">
+            <Skeleton className="h-10 w-full rounded-bp sm:w-28" />
+            <Skeleton className="h-10 w-full rounded-bp sm:w-24" />
           </div>
         </li>
       ))}

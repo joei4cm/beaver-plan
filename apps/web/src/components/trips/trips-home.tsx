@@ -72,6 +72,7 @@ export function TripsHome({ locale }: Props) {
     templateCardsFromSeed(),
   );
   const [softNotice, setSoftNotice] = useState<string | null>(null);
+  const [templatesSoft, setTemplatesSoft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [creatingId, setCreatingId] = useState<string | null>(null);
@@ -87,9 +88,17 @@ export function TripsHome({ locale }: Props) {
 
     try {
       const tplRes = await apiGet<{ templates: TemplateCard[] }>("/v1/templates");
-      if (tplRes.templates?.length) setTemplates(tplRes.templates);
+      if (tplRes.templates?.length) {
+        setTemplates(tplRes.templates);
+        setTemplatesSoft(false);
+      } else {
+        // Empty remote catalog → seed + soft notice (never leave the section blank).
+        setTemplates(templateCardsFromSeed());
+        setTemplatesSoft(true);
+      }
     } catch {
       setTemplates(templateCardsFromSeed());
+      setTemplatesSoft(true);
     }
 
     try {
@@ -170,6 +179,7 @@ export function TripsHome({ locale }: Props) {
   const ownTrips = trips.filter((x) => x.id !== "sample-kyoto");
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
   const showEmptyInvite = hydrated && ownTrips.length === 0;
+  const showTemplatesEmpty = hydrated && templates.length === 0;
   const loading = pending && !hydrated;
 
   return (
@@ -344,21 +354,49 @@ export function TripsHome({ locale }: Props) {
 
       <section className="mt-20" aria-labelledby="trips-templates-heading">
         <header className="animate-rise mb-8">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+            {t(locale, "trips.templatesEyebrow")}
+          </p>
           <h2
             id="trips-templates-heading"
-            className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+            className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
           >
             {t(locale, "trips.templates")}
           </h2>
-          <p className="mt-2 max-w-xl text-sm text-ink-soft">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
             {t(locale, "trips.templatesSupport")}
           </p>
         </header>
 
+        {templatesSoft && !loading ? (
+          <SoftFailNotice className="mb-6">
+            {t(locale, "trips.templatesSoftOffline")}
+          </SoftFailNotice>
+        ) : null}
+
         {loading ? (
           <TemplatesListSkeleton />
+        ) : showTemplatesEmpty ? (
+          <div className="animate-fade max-w-lg py-4">
+            <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+              {t(locale, "trips.templatesEmpty")}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              {t(locale, "trips.templatesEmptyCta")}
+            </p>
+            <Link
+              href="/trips/new"
+              className="mt-7 inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+            >
+              {t(locale, "trips.new")}
+            </Link>
+          </div>
         ) : (
-          <ul className="space-y-0">
+          <ul
+            className="space-y-0"
+            role="list"
+            aria-label={t(locale, "trips.templates")}
+          >
             {templates.map((tpl, index) => {
               const title = tpl.title[locale] ?? tpl.title["zh-CN"];
               const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
@@ -371,15 +409,9 @@ export function TripsHome({ locale }: Props) {
                 >
                   <IndexMark n={index + 1} />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`hidden h-1.5 w-8 shrink-0 bg-gradient-to-r ${tpl.accent} sm:block`}
-                        aria-hidden
-                      />
-                      <span className="font-display text-xl font-semibold text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl">
-                        {title}
-                      </span>
-                    </div>
+                    <span className="font-display text-xl font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl">
+                      {title}
+                    </span>
                     <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
                       {desc}
                     </p>
@@ -389,23 +421,27 @@ export function TripsHome({ locale }: Props) {
                       {t(locale, "trips.stopUnit")}
                     </p>
                   </div>
-                  <div className="col-span-2 flex shrink-0 flex-col gap-2 sm:col-span-1 sm:flex-row">
-                    <Link
-                      href={`/trips/new?template=${tpl.id}`}
-                      className="rounded-bp border border-ink/12 px-3 py-2 text-center text-sm font-semibold text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river hover:text-river"
-                    >
-                      {t(locale, "trips.customize")}
-                    </Link>
+                  <div
+                    className="col-span-2 flex shrink-0 flex-col gap-2 sm:col-span-1 sm:flex-row sm:items-center"
+                    role="group"
+                    aria-label={title}
+                  >
                     <button
                       type="button"
                       disabled={busy || Boolean(creatingId)}
                       onClick={() => void createFromTemplate(tpl.id)}
-                      className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {busy
                         ? t(locale, "trips.creating")
                         : t(locale, "trips.useTemplate")}
                     </button>
+                    <Link
+                      href={`/trips/new?template=${tpl.id}`}
+                      className="rounded-bp border border-river/40 px-3 py-2.5 text-center text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-river hover:text-foam"
+                    >
+                      {t(locale, "trips.customize")}
+                    </Link>
                   </div>
                 </li>
               );
