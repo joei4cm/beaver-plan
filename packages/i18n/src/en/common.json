@@ -237,6 +237,7 @@
   "journal.emptyHint": "One line from the road, then drop photos into the frames.",
   "journal.emptyCta": "Write a note",
   "journal.compose": "Write a note",
+  "journal.composeEyebrow": "Compose",
   "journal.composeHint": "Caption + photo frames, bound to today or a stop. Works offline.",
   "journal.bindStop": "Link stop",
   "journal.dayOnly": "Day only (no stop)",

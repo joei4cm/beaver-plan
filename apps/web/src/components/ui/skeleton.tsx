@@ -143,9 +143,12 @@ export function JournalSkeleton() {
             ))}
           </div>
           <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 p-5 lg:block">
-            <Skeleton className="h-7 w-36" />
-            <Skeleton className="mt-3 h-3.5 w-full" />
-            <Skeleton className="mt-6 h-24 w-full rounded-bp-sm" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="mt-2 h-7 w-36" />
+            <Skeleton className="mt-2 h-3.5 w-full" />
+            <Skeleton className="mt-4 h-12 w-full rounded-bp-sm" />
+            <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
+            <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
             <Skeleton className="mt-4 h-11 w-full rounded-bp" />
           </div>
         </div>

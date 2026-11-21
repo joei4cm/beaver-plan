@@ -34,6 +34,10 @@ import {
   readCachedTrip,
 } from "@/lib/offline/trip-offline";
 
+/** Shared focus craft for compose controls (#46 focus + bp-transition). */
+const COMPOSE_CONTROL =
+  "bp-transition border border-[color:var(--bp-line)] bg-foam outline-none focus:border-river focus:ring-2 focus:ring-focus/45";
+
 type TripPayload = {
   trip: Trip;
   days: Day[];
@@ -113,6 +117,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
+  const composeMountedRef = useRef(false);
 
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
@@ -127,6 +132,19 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       window.removeEventListener("offline", sync);
     };
   }, []);
+
+  // Day-tab compose remount → sheet-in, then land focus in the body.
+  useEffect(() => {
+    if (!dayId) return;
+    if (!composeMountedRef.current) {
+      composeMountedRef.current = true;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      composeRef.current?.focus({ preventScroll: true });
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [dayId]);
 
   const applySampleSeed = useCallback(
     (opts?: { soft?: boolean }) => {
@@ -501,14 +519,6 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </span>
         </div>
 
-        {demoSeeded || softNotice ? (
-          <SoftFailNotice className="mt-4">
-            {softNotice && !online
-              ? t(locale, "journal.softOffline")
-              : t(locale, "journal.demoNotice")}
-          </SoftFailNotice>
-        ) : null}
-
         <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
           <OfflinePinControl
             tripId={tripId}
@@ -687,23 +697,35 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </section>
 
           <aside
-            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 p-5 md:p-6 lg:border-l lg:border-t-0"
-            style={{ animationDelay: "100ms" }}
+            key={`compose-${dayId ?? "all"}`}
+            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 p-5 md:p-6 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
+            style={{ animationDelay: "80ms" }}
             aria-label={t(locale, "journal.compose")}
           >
-            <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+              {t(locale, "journal.composeEyebrow")}
+            </p>
+            <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink">
               {t(locale, "journal.compose")}
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-ink-soft">
               {t(locale, "journal.composeHint")}
             </p>
 
+            {demoSeeded || softNotice ? (
+              <SoftFailNotice className="mt-4">
+                {softNotice && !online
+                  ? t(locale, "journal.softOffline")
+                  : t(locale, "journal.demoNotice")}
+              </SoftFailNotice>
+            ) : null}
+
             <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
               {t(locale, "journal.bindStop")}
               <select
                 value={stopId}
                 onChange={(e) => setStopId(e.target.value)}
-                className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink transition duration-bp-fast ease-bp-out focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+                className={`mt-2 w-full rounded-bp-sm px-3 py-2 text-sm text-ink ${COMPOSE_CONTROL}`}
               >
                 <option value="">{t(locale, "journal.dayOnly")}</option>
                 {dayStops.map((s) => (
@@ -719,12 +741,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               id="journal-compose-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={4}
+              rows={5}
               placeholder={t(locale, "journal.placeholder")}
-              className="mt-4 w-full resize-none rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+              className={`mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
             />
 
-            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-river/25 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/55 hover:bg-river/[0.04]">
+            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
               <span className="text-sm font-semibold text-river">
                 {t(locale, "journal.addPhotos")}
               </span>
@@ -757,7 +779,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 {Array.from({ length: emptySlots }).map((_, i) => (
                   <div
                     key={`slot-${i}`}
-                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70"
+                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70"
                     aria-hidden
                   >
                     +
@@ -782,7 +804,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   pendingLocalPhotos.length === 0)
               }
               onClick={() => void saveEntry()}
-              className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? t(locale, "journal.saving") : t(locale, "journal.save")}
             </button>
