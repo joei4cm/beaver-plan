@@ -121,10 +121,21 @@ export function PlannerSkeleton() {
             </div>
             <Skeleton className="h-5 w-12 rounded-bp-xs" />
           </div>
-          <div className="flex gap-0 border-b border-[color:var(--bp-line)] bg-paper/60 px-2 py-3">
-            <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
-            <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
-            <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
+          {/* Day tabs chrome — azure Days rail · mist underline (BEA-247) */}
+          <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
+              <div className="flex items-baseline gap-2">
+                <Skeleton className="h-2.5 w-10" />
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-2.5 w-40" />
+              </div>
+              <Skeleton className="h-5 w-16 rounded-bp-xs" />
+            </div>
+            <div className="flex gap-0 bg-mist/40 px-2 pb-3 pt-1">
+              <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
+              <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
+              <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
+            </div>
           </div>
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex items-center justify-between gap-2 px-4 py-2.5">
