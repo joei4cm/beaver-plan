@@ -398,6 +398,7 @@
   "planner.stops.dragEyebrow": "Reorder",
   "planner.stops.dragSupport": "Grip to drag · ↑↓ still works.",
   "planner.stops.dragSoftBadge": "Soft reorder",
+  "planner.stops.dragSoftSupport": "Soft reorder — SoftFail under Stops while Neon/API is offline; grip order stays local.",
   "planner.stops.dragSoftFail": "Soft reorder — Neon/API offline. Grip order stays local until sync is available. Never a Failed to fetch crash.",
   "planner.scrub.label": "Day timeline",
   "planner.scrub.value": "Stop {n} of {total}: {name}",

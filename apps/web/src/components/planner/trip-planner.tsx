@@ -113,6 +113,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const [routing, setRouting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [softNotice, setSoftNotice] = useState<string | null>(null);
+  /** Craft preview: /trips/…?dragSoftFail=1 — SoftFail depth under Stops without a reorder. */
+  const [dragSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("dragSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [pending, startTransition] = useTransition();
   const [duplicating, setDuplicating] = useState(false);
   const [copyJournal, setCopyJournal] = useState(false);
@@ -154,19 +165,21 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * Stop drawer SoftFailNotice depth (BEA-343 after #225):
-   * Itinerary rail owns compact SoftFail mist band when the day has stops ·
-   * Soft drawer badge · softSupport · tip-011 mist-wash body. Empty SoftFail
-   * (BEA-222) and day-fill SoftFail (#248) yield Itinerary ownership while
-   * drawer owns (no double depth). Empty day still owns SoftFail under Stops.
-   * Drag SoftFail under Stops only when softNotice is the drag SoftFail string
-   * (BEA-255). Title SoftFail yields while drawer / empty owns. Soft copy
-   * never timber / Failed to fetch.
+   * SoftFailNotice depth ownership (BEA-343 drawer / BEA-348 drag after #195/#214):
+   * Empty SoftFail (BEA-222) under Stops when the day is empty.
+   * Drag SoftFail under Stops when softNotice is the drag SoftFail string —
+   * Soft reorder badge · softSupport · tip-011 mist-wash · stop-drawer SoftFail
+   * (#257) and day-fill SoftFail (#248) yield (no double depth).
+   * Otherwise Itinerary owns SoftFail (BEA-343) when the day has stops.
+   * Title SoftFail yields while drawer / empty / drag owns. Soft copy never
+   * timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
-  const drawerOwnsSoft = !dayEmpty;
   const dragSoftFailCopy = t(locale, "planner.stops.dragSoftFail");
-  const dragOwnsSoft = !dayEmpty && softNotice === dragSoftFailCopy;
+  const dragOwnsSoft =
+    !dayEmpty &&
+    (dragSoftPreview || softNotice === dragSoftFailCopy);
+  const drawerOwnsSoft = !dayEmpty && !dragOwnsSoft;
   const drawerSoftOpen =
     drawerOwnsSoft &&
     Boolean(
@@ -181,12 +194,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const listSoftOpen = emptyOwnsSoft
     ? Boolean(softNotice || plannerNoise || demoShell)
     : dragOwnsSoft;
+  const stopsSupportCopy = emptyOwnsSoft
+    ? t(locale, "planner.emptySupport")
+    : dragOwnsSoft
+      ? t(locale, "planner.stops.dragSoftSupport")
+      : t(locale, "planner.stops.support");
   /**
    * SoftFailNotice copy ownership:
    * - Empty day → empty SoftFail (BEA-222); never borrow transfer / drawer softNotice.
-   * - Day with stops → SoftFail under Itinerary (BEA-343 depth); Stops SoftFail
-   *   only for drag softNotice (BEA-255). Day-fill SoftFail (#248) stays under
-   *   Day fill rail. Transfer soft-fail stays on transit.
+   * - Drag softNotice → Stops SoftFail depth (BEA-348); drawer / day-fill yield.
+   * - Else day with stops → SoftFail under Itinerary (BEA-343 depth).
+   *   Day-fill SoftFail (#248) stays under Day fill rail. Transfer soft-fail
+   *   stays on transit.
    */
   const listSoftCopy = emptyOwnsSoft
     ? t(locale, "planner.emptySoftFail")
@@ -1019,8 +1038,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           Stop drawer SoftFail depth (BEA-343 after #225):
           azure Itinerary rail · Soft drawer badge · softSupport · compact
           SoftFail mist band · tip-011 mist-wash body — empty SoftFail /
-          day-fill SoftFail (#248) yield Itinerary ownership — never timber /
-          Failed to fetch.
+          day-fill SoftFail (#248) / drag SoftFail (BEA-348) yield Itinerary
+          ownership — never timber / Failed to fetch.
         */}
         <aside
           className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
@@ -1056,7 +1075,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             </div>
           </header>
 
-          {/* Compact SoftFail mist band under azure Itinerary rail — empty SoftFail / day-fill SoftFail (#248) yield. */}
+          {/* Compact SoftFail mist band under azure Itinerary rail — empty SoftFail / day-fill SoftFail (#248) / drag SoftFail (BEA-348) yield. */}
           <SoftFailNotice
             open={drawerSoftOpen}
             compact
@@ -1179,11 +1198,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops SoftFail chrome (BEA-222 empty / BEA-255 drag softNotice):
-              azure Stops rail · empty/drag badge · compact SoftFailNotice ·
-              tip-011 rise. Empty SoftFail + demo soft-fail yield to Itinerary
-              SoftFail depth (BEA-343) — day-fill SoftFail (#248) stays under
-              Day fill — never timber / Failed to fetch.
+              Stops SoftFail depth (BEA-222 empty / BEA-348 drag after #195/#214):
+              azure Stops rail · empty/drag Soft badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash chips/list — stop-drawer
+              SoftFail (#257) / day-fill SoftFail (#248) yield while drag owns —
+              never timber / Failed to fetch.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
@@ -1199,15 +1218,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           String(dayStops.length),
                         )}
                   </span>
-                  {dayEmpty ? (
-                    <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "planner.emptySupport")}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "planner.stops.support")}
-                    </span>
-                  )}
+                  <span className="text-[11px] leading-snug text-ink-soft/80">
+                    {stopsSupportCopy}
+                  </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {dayEmpty ? (
@@ -1220,6 +1233,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     >
                       {t(locale, "planner.emptyBadge")}
                     </span>
+                  ) : dragOwnsSoft && listSoftOpen ? (
+                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                      {t(locale, "planner.stops.dragSoftBadge")}
+                    </span>
                   ) : selectedStopId ? (
                     <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
                       {dayStops.find((s) => s.id === selectedStopId)?.place
@@ -1231,17 +1248,25 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       {t(locale, "planner.stopsList")}
                     </span>
                   )}
-                  {dragOwnsSoft && listSoftOpen ? (
-                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                      {t(locale, "planner.stops.dragSoftBadge")}
-                    </span>
-                  ) : null}
                 </div>
               </header>
 
+              {/* Compact SoftFail mist band under azure Stops rail — drawer / day-fill SoftFail yield. */}
+              <SoftFailNotice
+                open={listSoftOpen}
+                compact
+                className="border-b border-[color:var(--bp-line)]"
+              >
+                {listSoftCopy}
+              </SoftFailNotice>
+
               {!dayEmpty ? (
                 <div
-                  className="animate-rise px-4 pb-2.5"
+                  className={`animate-rise px-4 pb-2.5 ${
+                    dragOwnsSoft
+                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                      : ""
+                  }`}
                   style={{ animationDelay: "40ms" }}
                 >
                   <div
@@ -1283,14 +1308,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </div>
               ) : null}
 
-              {/* Compact SoftFail under Stops — empty / drag softNotice only; never timber. */}
-              <SoftFailNotice open={listSoftOpen} compact>
-                {listSoftCopy}
-              </SoftFailNotice>
-
               {!dayEmpty ? (
                 <p
-                  className="animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80"
+                  className={`animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80 ${
+                    dragOwnsSoft
+                      ? "bg-gradient-to-b from-mist/10 to-transparent"
+                      : ""
+                  }`}
                   style={{ animationDelay: "55ms" }}
                 >
                   <span className="font-semibold uppercase tracking-[0.14em] text-river">
@@ -1304,7 +1328,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               ) : null}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div
+              className={`min-h-0 flex-1 overflow-y-auto ${
+                dragOwnsSoft
+                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  : ""
+              }`}
+            >
               <StopReorderList
                 items={dayStops}
                 onReorder={(orderedIds) => {
