@@ -116,6 +116,8 @@
   "trips.seedRail": "开始",
   "trips.seedSupport": "新建 · 京都示例 · 城市玩法",
   "trips.seedDemo": "内置",
+  "trips.seedSoftBadge": "柔和种子",
+  "trips.seedSoftFail": "开始操作留在本地——新建、京都示例与城市玩法不依赖 API。绝不是 Failed to fetch 崩溃。",
   "trips.seedReady": "就绪",
   "trips.seedActions": "开始一趟行程",
   "trips.seedPlaybooks": "浏览城市玩法",

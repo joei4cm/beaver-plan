@@ -116,6 +116,8 @@
   "trips.seedRail": "Start",
   "trips.seedSupport": "New · Kyoto sample · city playbooks",
   "trips.seedDemo": "Seeded",
+  "trips.seedSoftBadge": "Soft seed",
+  "trips.seedSoftFail": "Seed CTAs stay local — New, Kyoto sample, and city playbooks work without the API. Never a Failed to fetch crash.",
   "trips.seedReady": "Ready",
   "trips.seedActions": "Start a trip",
   "trips.seedPlaybooks": "Browse playbooks",
