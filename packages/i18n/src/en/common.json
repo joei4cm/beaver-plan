@@ -39,6 +39,8 @@
   "landing.how.support": "Three moves from blank map to a trip worth walking.",
   "landing.how.stepEyebrow": "Step",
   "landing.how.progressLabel": "How-it-works progress",
+  "landing.how.focusLabel": "How-it-works steps",
+  "landing.how.liveBadge": "Live",
   "landing.how.softOffline": "You are offline — how-it-works stays on this page; trips and live maps wait until you reconnect.",
   "landing.how.step1.title": "Drop places",
   "landing.how.step1.body": "Search a city, pin stops, and watch the route stage light up.",

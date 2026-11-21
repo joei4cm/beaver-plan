@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import {
   HEADER_OFFSET_PX,
@@ -35,6 +35,8 @@ type Props = {
   offlineNotice: string;
   stepEyebrow: string;
   progressLabel: string;
+  focusLabel: string;
+  liveBadge: string;
 };
 
 const ROUTE_PATHS = [
@@ -70,9 +72,11 @@ function DeckArt({
   accent: string;
   active: boolean;
 }) {
+  const uid = useId().replace(/:/g, "");
   const path = ROUTE_PATHS[index % ROUTE_PATHS.length] ?? ROUTE_PATHS[0];
   const end = index === 0 ? [330, 62] : index === 1 ? [338, 54] : [342, 48];
   const mid = index === 0 ? [180, 88] : index === 1 ? [200, 92] : [218, 96];
+  const finale = index === 2;
 
   return (
     <svg
@@ -83,7 +87,7 @@ function DeckArt({
     >
       <defs>
         <linearGradient
-          id={`bp-deck-sky-${index}`}
+          id={`bp-deck-sky-${uid}`}
           x1="0"
           y1="0"
           x2="1"
@@ -93,12 +97,36 @@ function DeckArt({
           <stop offset="55%" stopColor="#EEF3FB" stopOpacity="0.55" />
           <stop offset="100%" stopColor="#F4F6FA" stopOpacity="0.15" />
         </linearGradient>
+        <radialGradient
+          id={`bp-deck-glow-${uid}`}
+          cx="72%"
+          cy="28%"
+          r="48%"
+        >
+          <stop offset="0%" stopColor={accent} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={accent} stopOpacity="0" />
+        </radialGradient>
       </defs>
-      {index < 2 ? (
-        <rect width="360" height="200" fill={`url(#bp-deck-sky-${index})`} />
-      ) : (
+      {finale ? (
         <rect width="360" height="200" fill="transparent" />
+      ) : (
+        <rect width="360" height="200" fill={`url(#bp-deck-sky-${uid})`} />
       )}
+      <rect
+        width="360"
+        height="200"
+        fill={`url(#bp-deck-glow-${uid})`}
+        opacity={active ? 1 : 0.45}
+      />
+      {/* Soft depth wash under the route — hierarchy without card soup */}
+      <ellipse
+        cx="180"
+        cy="168"
+        rx="140"
+        ry="28"
+        fill={finale ? "#0F172A" : accent}
+        opacity={finale ? 0.35 : 0.06}
+      />
       <path
         d={path}
         fill="none"
@@ -135,7 +163,7 @@ function DeckArt({
           cx={end[0]}
           cy={end[1]}
           r="5.5"
-          fill={index === 2 ? "#F4F6FA" : "#0F172A"}
+          fill={finale ? "#F4F6FA" : "#0F172A"}
         />
       </g>
       <text
@@ -161,9 +189,11 @@ function PlainHow({
   ctaHref,
   offlineNotice,
   stepEyebrow,
-}: Omit<Props, "progressLabel">) {
+  focusLabel,
+}: Omit<Props, "progressLabel" | "liveBadge">) {
   const online = useBrowserOnline();
   const reduced = usePrefersReducedMotion();
+  const [focus, setFocus] = useState(0);
 
   return (
     <section className="relative overflow-hidden border-t border-ink/8 bg-paper">
@@ -183,7 +213,7 @@ function PlainHow({
             aria-hidden
             className="mb-5 block h-1 w-10 rounded-full bg-river"
           />
-          <h2 className="font-display text-[clamp(2rem,5vw,2.85rem)] font-bold tracking-[-0.03em] text-ink">
+          <h2 className="font-display text-[clamp(1.85rem,4.5vw,2.65rem)] font-bold tracking-[-0.03em] text-ink">
             {title}
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base">
@@ -195,38 +225,82 @@ function PlainHow({
           <SoftFailNotice open={!online}>{offlineNotice}</SoftFailNotice>
         </div>
 
-        <ol className="mt-14 space-y-0 border-t border-ink/8">
-          {cards.map((step, index) => (
-            <li
-              key={step.title}
-              className={`grid gap-2 border-b border-ink/8 py-7 md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${
-                index === 0
-                  ? "shadow-[inset_3px_0_0_var(--bp-river)]"
-                  : ""
-              } ${reduced ? "" : "animate-rise"}`}
-              style={
-                reduced ? undefined : { animationDelay: `${120 + index * 55}ms` }
-              }
-            >
-              <span
-                aria-hidden
-                className="pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] text-river md:pl-2 md:text-xl"
-              >
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river/80">
-                  {stepEyebrow}
-                </p>
-                <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+        {/* Step focus rail — mist-track · azure select (depth craft) */}
+        <div className="mt-10">
+          <div
+            className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+            role="group"
+            aria-label={focusLabel}
+          >
+            {cards.map((step, index) => {
+              const on = focus === index;
+              return (
+                <button
+                  key={step.title}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setFocus(index)}
+                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                    on
+                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                      : "text-ink-soft hover:text-river"
+                  }`}
+                >
                   {step.title}
-                </h3>
-              </div>
-              <p className="text-sm leading-relaxed text-ink-soft md:text-base">
-                {step.body}
-              </p>
-            </li>
-          ))}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <ol className="mt-12 space-y-0 border-t border-ink/8">
+          {cards.map((step, index) => {
+            const on = focus === index;
+            return (
+              <li
+                key={step.title}
+                className={`border-b border-ink/8 ${reduced ? "" : "animate-rise"}`}
+                style={
+                  reduced
+                    ? undefined
+                    : { animationDelay: `${120 + index * 55}ms` }
+                }
+              >
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setFocus(index)}
+                  className={`group grid w-full gap-2 py-7 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${
+                    on
+                      ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : "hover:bg-mist/30"
+                  }`}
+                >
+                  <span
+                    aria-hidden
+                    className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
+                      on
+                        ? "text-river"
+                        : "text-river/70 group-hover:text-river"
+                    }`}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                      {stepEyebrow}
+                    </p>
+                    <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                      {step.title}
+                    </h3>
+                  </div>
+                  <p className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
+                    {step.body}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
         </ol>
         <div className="mt-12">
           <Link
@@ -243,7 +317,8 @@ function PlainHow({
 
 /**
  * Tip 019 how-it-works deck — sticky throw cards.
- * Standard throw scrub + tip-011 chrome settle · SoftFail offline · Lumen tokens.
+ * Depth craft (BEA-231): mist-track step rail · sheet chrome · SoftFail · tip-011.
+ * Throw math stays Tip 019 Standard; tip-011 reserved for chrome settles.
  */
 export function LandingScrollDeck({
   title,
@@ -254,6 +329,8 @@ export function LandingScrollDeck({
   offlineNotice,
   stepEyebrow,
   progressLabel,
+  focusLabel,
+  liveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
   const pin = usePinEnabled(reduced);
@@ -322,6 +399,24 @@ export function LandingScrollDeck({
     });
   }, [cards.length, pin]);
 
+  const scrollToStep = useCallback(
+    (index: number) => {
+      const section = sectionRef.current;
+      if (!section || !pin) return;
+      const vh = window.innerHeight;
+      const scale = scrollScale(vh);
+      const throwDist = deckThrowDistance(scale);
+      const scrollY = window.scrollY || window.pageYOffset;
+      const start = section.getBoundingClientRect().top + scrollY;
+      const clamped = Math.min(cards.length - 1, Math.max(0, index));
+      window.scrollTo({
+        top: start + clamped * throwDist + 2,
+        behavior: reduced ? "auto" : "smooth",
+      });
+    },
+    [cards.length, pin, reduced],
+  );
+
   useEffect(() => {
     if (!pin) return;
     measureAndTick();
@@ -371,6 +466,7 @@ export function LandingScrollDeck({
         ctaHref={ctaHref}
         offlineNotice={offlineNotice}
         stepEyebrow={stepEyebrow}
+        focusLabel={focusLabel}
       />
     );
   }
@@ -416,14 +512,14 @@ export function LandingScrollDeck({
         }}
       >
         <header
-          className={`mx-auto mb-6 w-full max-w-xl text-center md:mb-8 ${revealClass}`}
+          className={`mx-auto mb-5 w-full max-w-xl text-center md:mb-6 ${revealClass}`}
           style={reveal(0)}
         >
           <span
             aria-hidden
             className="mx-auto mb-4 block h-1 w-10 rounded-full bg-river"
           />
-          <h2 className="font-display text-[clamp(2rem,5vw,2.85rem)] font-bold tracking-[-0.03em] text-ink">
+          <h2 className="font-display text-[clamp(1.85rem,4.5vw,2.65rem)] font-bold tracking-[-0.03em] text-ink">
             {title}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft md:text-base">
@@ -432,23 +528,55 @@ export function LandingScrollDeck({
         </header>
 
         <div
-          className={`mb-5 w-full max-w-xl ${revealClass}`}
-          style={reveal(60)}
+          className={`mb-4 w-full max-w-xl ${revealClass}`}
+          style={reveal(50)}
         >
           <SoftFailNotice open={!online} compact>
             {offlineNotice}
           </SoftFailNotice>
         </div>
 
+        {/* Step focus rail — mist-track · jumps throw progress (tip-011 settle) */}
+        <div
+          className={`mb-5 w-full max-w-xl ${revealClass}`}
+          style={reveal(80)}
+        >
+          <div
+            className="mx-auto flex max-w-full flex-wrap justify-center gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+            role="group"
+            aria-label={focusLabel}
+          >
+            {cards.map((card, i) => {
+              const on = activeIndex === i;
+              return (
+                <button
+                  key={card.title}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => scrollToStep(i)}
+                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                    on
+                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                      : "text-ink-soft hover:text-river"
+                  }`}
+                >
+                  {card.title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div
           className={`relative mx-auto w-full max-w-[27rem] ${revealClass}`}
-          style={reveal(100)}
+          style={reveal(110)}
         >
           <div className="relative" style={{ height: cardMaxH }}>
             {cards.map((card, i) => {
               const tint = DECK_TINTS[i % DECK_TINTS.length] ?? DECK_TINTS[0];
               const z = cards.length - i;
               const isActive = activeIndex === i;
+              const isFinale = i === cards.length - 1;
               return (
                 <article
                   key={card.title}
@@ -463,30 +591,74 @@ export function LandingScrollDeck({
                     transformOrigin: "bottom center",
                     willChange: "transform, opacity",
                     boxShadow: isActive
-                      ? i === cards.length - 1
-                        ? "0 20px 44px rgba(15, 23, 42, 0.24)"
-                        : "0 18px 40px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(47, 107, 255, 0.12)"
+                      ? isFinale
+                        ? "0 22px 48px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(96, 165, 250, 0.18)"
+                        : "0 20px 44px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(47, 107, 255, 0.16)"
                       : "0 10px 28px rgba(15, 23, 42, 0.06)",
                   }}
                 >
                   {/* Azure lead rail on the live card — hierarchy without card soup */}
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-full transition duration-bp ease-bp-out-strong"
+                    className="pointer-events-none absolute inset-y-3 left-0 z-10 w-[3px] rounded-full transition duration-bp ease-bp-out-strong"
                     style={{
                       backgroundColor: tint.accent,
-                      opacity: isActive ? 0.9 : 0,
+                      opacity: isActive ? 0.95 : 0,
                       transform: isActive ? "scaleY(1)" : "scaleY(0.4)",
                     }}
                   />
-                  <div
-                    className="m-2 overflow-hidden rounded-bp-lg"
+
+                  {/* Sheet chrome header — step eyebrow + live badge */}
+                  <header
+                    className="relative flex items-center justify-between gap-2 border-b px-4 py-2 sm:px-5"
                     style={{
-                      height: "44%",
-                      background:
-                        i === cards.length - 1
-                          ? "linear-gradient(160deg, #1e293b, #0f172a)"
-                          : "linear-gradient(160deg, rgba(255,255,255,0.7), rgba(47,107,255,0.12))",
+                      borderColor: isFinale
+                        ? "rgba(244, 246, 250, 0.08)"
+                        : "rgba(15, 23, 42, 0.06)",
+                      backgroundColor: isFinale
+                        ? "rgba(15, 23, 42, 0.55)"
+                        : "rgba(255, 255, 255, 0.42)",
+                    }}
+                  >
+                    <p
+                      className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+                      style={{ color: tint.accent, opacity: 0.95 }}
+                    >
+                      {stepEyebrow} · {String(i + 1).padStart(2, "0")}
+                    </p>
+                    <span
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp ease-bp-out-strong ${
+                        isActive
+                          ? "animate-stop-select bg-river/12 text-river"
+                          : isFinale
+                            ? "bg-foam/10 text-foam/70"
+                            : "bg-mist/60 text-ink-soft"
+                      }`}
+                      style={
+                        isActive && isFinale
+                          ? {
+                              backgroundColor: "rgba(96,165,250,0.18)",
+                              color: "#60A5FA",
+                            }
+                          : undefined
+                      }
+                    >
+                      {isActive ? liveBadge : String(i + 1).padStart(2, "0")}
+                    </span>
+                  </header>
+
+                  <div
+                    className="mx-2 mt-2 overflow-hidden rounded-bp-lg transition duration-bp ease-bp-out-strong"
+                    style={{
+                      height: "40%",
+                      background: isFinale
+                        ? "linear-gradient(160deg, #1e293b, #0f172a)"
+                        : "linear-gradient(160deg, rgba(255,255,255,0.7), rgba(47,107,255,0.12))",
+                      boxShadow: isActive
+                        ? isFinale
+                          ? "inset 0 0 0 1px rgba(96, 165, 250, 0.22)"
+                          : "inset 0 0 0 1px rgba(47, 107, 255, 0.18), 0 4px 16px rgba(47, 107, 255, 0.08)"
+                        : "inset 0 0 0 1px rgba(15, 23, 42, 0.04)",
                     }}
                   >
                     <DeckArt
@@ -496,14 +668,8 @@ export function LandingScrollDeck({
                     />
                   </div>
                   <div className="flex flex-col px-6 pb-6 pt-3">
-                    <p
-                      className="text-[11px] font-semibold uppercase tracking-[0.16em]"
-                      style={{ color: tint.accent, opacity: 0.9 }}
-                    >
-                      {stepEyebrow} · {String(i + 1).padStart(2, "0")}
-                    </p>
                     <h3
-                      className="mt-1.5 font-display text-[clamp(1.35rem,3.5vw,1.75rem)] font-bold tracking-[-0.02em]"
+                      className="font-display text-[clamp(1.35rem,3.5vw,1.75rem)] font-bold tracking-[-0.02em]"
                       style={{ color: tint.ink }}
                     >
                       {card.title}
@@ -521,10 +687,10 @@ export function LandingScrollDeck({
           </div>
         </div>
 
-        {/* Tip 019 §2 — quiet progress: thin bar + dots (tip-011 settle on chrome) */}
+        {/* Tip 019 §2 — quiet progress: thin bar + selectable dots (tip-011) */}
         <div
-          className={`mt-7 w-full max-w-[14rem] md:mt-8 ${revealClass}`}
-          style={reveal(140)}
+          className={`mt-6 w-full max-w-[14rem] md:mt-7 ${revealClass}`}
+          style={reveal(150)}
           role="group"
           aria-label={progressLabel}
         >
@@ -537,24 +703,32 @@ export function LandingScrollDeck({
               style={{ width: `${Math.round(progress01 * 100)}%` }}
             />
           </div>
-          <div className="mt-3 flex justify-center gap-1.5" aria-hidden>
-            {cards.map((card, i) => (
-              <span
-                key={card.title}
-                className="h-1 rounded-full transition-[background-color,width] duration-bp ease-bp-out-strong"
-                style={{
-                  width: activeIndex === i ? "1.35rem" : "0.7rem",
-                  backgroundColor:
-                    activeIndex === i
+          <div className="mt-3 flex justify-center gap-1.5">
+            {cards.map((card, i) => {
+              const on = activeIndex === i;
+              return (
+                <button
+                  key={card.title}
+                  type="button"
+                  aria-label={`${stepEyebrow} ${i + 1}`}
+                  aria-pressed={on}
+                  onClick={() => scrollToStep(i)}
+                  className={`h-1.5 rounded-full transition-[background-color,width,transform] duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                    on ? "animate-stop-select" : ""
+                  }`}
+                  style={{
+                    width: on ? "1.45rem" : "0.7rem",
+                    backgroundColor: on
                       ? "var(--bp-river)"
                       : "rgba(15, 23, 42, 0.14)",
-                }}
-              />
-            ))}
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
 
-        <div className={`mt-8 md:mt-9 ${revealClass}`} style={reveal(180)}>
+        <div className={`mt-7 md:mt-8 ${revealClass}`} style={reveal(190)}>
           <Link
             href={ctaHref}
             className="inline-flex rounded-bp bg-river px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
