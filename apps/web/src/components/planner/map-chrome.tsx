@@ -49,9 +49,10 @@ type Props = {
 
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
- * Hierarchy: basemap/engine control → search (primary) → layers/locate rail.
- * Basemap popover: azure mist-track engine chips + SoftFailNotice + #46 motion.
- * Search results: tip-009 popover + SheetPresence in/out, azure keyboard select.
+ * Depth ladder (after #56/#98):
+ *   popovers (shadow-bp · z-30) → search primary → engine chip / tool rail →
+ *   SoftFailNotice + transfer legend (field tools).
+ * Azure section chrome + SheetPresence + SoftFailNotice + #46 motion.
  */
 export function MapChrome({
   locale,
@@ -95,6 +96,13 @@ export function MapChrome({
   useEffect(() => {
     setActiveIndex(0);
   }, [results, q]);
+
+  // Search sheet owns the stage — fold secondary popovers while querying.
+  useEffect(() => {
+    if (q.length === 0) return;
+    setEngineOpen(false);
+    setLayersOpen(false);
+  }, [q]);
 
   useEffect(() => {
     if (!layersOpen && !engineOpen) return;
@@ -172,9 +180,12 @@ export function MapChrome({
     }
   }
 
-  const notice =
-    softFailMessage?.trim() ||
-    (softFail ? t(locale, "planner.map.softFail") : null);
+  const locateNotice = softFailMessage?.trim() || null;
+  // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap popover closed
+  // (popover owns the engine SoftFailNotice — avoids double depth).
+  const stageNotice =
+    locateNotice ||
+    (softFail && !engineOpen ? t(locale, "planner.map.softFail") : null);
 
   const activeOptionId = hasResults
     ? `${listboxId}-opt-${activeIndex}`
@@ -182,11 +193,12 @@ export function MapChrome({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[2]">
-      {/* Top row: basemap/engine control + search */}
+      {/* Top row: basemap identity · search (primary) · tool rail */}
       <div className="absolute left-3 right-3 top-3 flex items-start gap-2 sm:left-4 sm:right-4 sm:top-4 sm:gap-3">
         <div
           ref={engineRef}
-          className="pointer-events-auto relative flex min-w-0 shrink-0 flex-col gap-1"
+          className="animate-rise pointer-events-auto relative flex min-w-0 shrink-0 flex-col gap-1"
+          style={{ animationDelay: "40ms" }}
         >
           <button
             type="button"
@@ -197,16 +209,16 @@ export function MapChrome({
               setEngineOpen((o) => !o);
               setLayersOpen(false);
             }}
-            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur-md bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
               engineOpen
-                ? "border-river/45 text-river ring-2 ring-river/25"
+                ? "border-river/45 text-river shadow-bp ring-2 ring-river/25"
                 : "border-[color:var(--bp-line)] text-ink hover:border-river/35 hover:text-river"
             }`}
           >
             <span className="truncate">{engineLabel}</span>
             <EngineCaret open={engineOpen} />
           </button>
-          <span className="px-0.5 text-[11px] font-medium text-ink-soft">
+          <span className="px-0.5 text-[11px] font-medium text-ink-soft/90 drop-shadow-[0_1px_0_rgba(255,255,255,0.65)]">
             {modeLabel}
             <span className="mx-1 text-ink-soft/40" aria-hidden>
               ·
@@ -220,9 +232,13 @@ export function MapChrome({
             role="group"
             variant="popover"
             aria-label={t(locale, "planner.map.engineControl")}
-            className="absolute left-0 top-[calc(100%+6px)] z-20 w-[min(100vw-1.5rem,17.5rem)] overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+            className="absolute left-0 top-[calc(100%+6px)] z-30 w-[min(100vw-1.5rem,17.5rem)] overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5">
+            <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
+              <span
+                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
+                aria-hidden
+              />
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.map.basemapEyebrow")}
               </p>
@@ -283,13 +299,24 @@ export function MapChrome({
 
         <div
           ref={searchWrapRef}
-          className="pointer-events-auto relative min-w-0 flex-1 sm:max-w-sm sm:flex-none sm:basis-[min(100%,20rem)]"
+          className="animate-rise pointer-events-auto relative z-[3] min-w-0 flex-1 sm:max-w-sm sm:flex-none sm:basis-[min(100%,20rem)]"
+          style={{ animationDelay: "80ms" }}
         >
           <label className="sr-only" htmlFor={searchId}>
             {t(locale, "planner.search")}
           </label>
-          <div className="flex items-center gap-2 rounded-bp border border-[color:var(--bp-line)] bg-foam/95 px-3 shadow-bp-soft backdrop-blur transition duration-bp-fast ease-bp-out focus-within:border-river/50 focus-within:ring-2 focus-within:ring-focus/35">
-            <SearchGlyph className="shrink-0 text-ink-soft" />
+          <div
+            className={`flex items-center gap-2 rounded-bp border bg-foam/95 px-3 backdrop-blur-md transition duration-bp-fast ease-bp-out focus-within:border-river/50 focus-within:ring-2 focus-within:ring-focus/35 ${
+              sheetOpen
+                ? "border-river/40 shadow-bp"
+                : "border-[color:var(--bp-line)] shadow-bp-soft"
+            }`}
+          >
+            <SearchGlyph
+              className={`shrink-0 bp-transition ${
+                sheetOpen ? "text-river" : "text-ink-soft"
+              }`}
+            />
             <input
               id={searchId}
               data-bp-place-search
@@ -302,6 +329,10 @@ export function MapChrome({
               onChange={(e) => onQueryChange(e.target.value)}
               onCompositionEnd={(e) => onSearchCommit(e.currentTarget.value)}
               onKeyDown={onSearchKeyDown}
+              onFocus={() => {
+                setEngineOpen(false);
+                setLayersOpen(false);
+              }}
               placeholder={t(locale, "planner.searchPlaceholder")}
               className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-ink outline-none ring-0 placeholder:text-ink-soft/45"
               autoComplete="off"
@@ -316,11 +347,15 @@ export function MapChrome({
           <SheetPresence
             open={sheetOpen}
             variant="popover"
-            className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+            className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
+            <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5">
+              <span
+                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
+                aria-hidden
+              />
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "planner.search.eyebrow")}
                 </span>
                 {hasResults ? (
@@ -430,12 +465,19 @@ export function MapChrome({
           </SheetPresence>
         </div>
 
-        {/* Tool rail — layers + locate */}
+        {/* Tool rail — secondary depth under search */}
         <div
           ref={layersRef}
-          className="pointer-events-auto relative ml-auto flex shrink-0 flex-col gap-1.5"
+          className="animate-rise pointer-events-auto relative ml-auto flex shrink-0 flex-col gap-1.5"
+          style={{ animationDelay: "120ms" }}
         >
-          <div className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft backdrop-blur">
+          <div
+            className={`flex overflow-hidden rounded-bp border bg-foam/90 shadow-bp-soft backdrop-blur-md bp-transition ${
+              layersOpen
+                ? "border-river/40 shadow-bp"
+                : "border-[color:var(--bp-line)]"
+            }`}
+          >
             <button
               type="button"
               aria-expanded={layersOpen}
@@ -471,49 +513,71 @@ export function MapChrome({
             role="group"
             variant="popover"
             aria-label={t(locale, "planner.map.layers")}
-            className="absolute right-0 top-[calc(100%+6px)] z-20 w-44 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+            className="absolute right-0 top-[calc(100%+6px)] z-30 w-48 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <p className="border-b border-[color:var(--bp-line)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-              {t(locale, "planner.map.layers")}
-            </p>
-            {(
-              [
-                ["routes", "planner.map.layer.routes"],
-                ["stops", "planner.map.layer.stops"],
-                ["legend", "planner.map.layer.legend"],
-              ] as const
-            ).map(([key, labelKey]) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/50"
-              >
-                <input
-                  type="checkbox"
-                  checked={layers[key]}
-                  onChange={(e) =>
-                    onLayersChange({ ...layers, [key]: e.target.checked })
-                  }
-                  className="accent-[color:var(--bp-river)]"
-                />
-                {t(locale, labelKey)}
-              </label>
-            ))}
+            <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
+              <span
+                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
+                aria-hidden
+              />
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.map.layersEyebrow")}
+              </p>
+              <p className="mt-1 font-display text-sm font-semibold tracking-tight text-ink">
+                {t(locale, "planner.map.layersTitle")}
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
+                {t(locale, "planner.map.layersSupport")}
+              </p>
+            </header>
+            <div className="divide-y divide-[color:var(--bp-line)]">
+              {(
+                [
+                  ["routes", "planner.map.layer.routes"],
+                  ["stops", "planner.map.layer.stops"],
+                  ["legend", "planner.map.layer.legend"],
+                ] as const
+              ).map(([key, labelKey]) => (
+                <label
+                  key={key}
+                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm transition duration-bp-fast ease-bp-out hover:bg-mist/50 ${
+                    layers[key]
+                      ? "bg-river/[0.04] font-medium text-ink shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : "text-ink"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={layers[key]}
+                    onChange={(e) =>
+                      onLayersChange({ ...layers, [key]: e.target.checked })
+                    }
+                    className="accent-[color:var(--bp-river)]"
+                  />
+                  {t(locale, labelKey)}
+                </label>
+              ))}
+            </div>
           </SheetPresence>
         </div>
       </div>
 
-      {/* Bottom-left stack: SoftFailNotice + transfer legend (clears Leaflet zoom) */}
-      <div className="absolute bottom-4 left-3 z-[2] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
+      {/* Field tools — SoftFailNotice + transfer legend (under chrome) */}
+      <div className="absolute bottom-4 left-3 z-[1] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
         <div className="pointer-events-auto">
           <SoftFailNotice
-            open={Boolean(notice)}
-            className="shadow-bp-soft backdrop-blur"
+            open={Boolean(stageNotice)}
+            className="shadow-bp-soft backdrop-blur-md"
           >
-            {notice ?? ""}
+            {stageNotice ?? ""}
           </SoftFailNotice>
         </div>
         {layers.legend && hasRoute ? (
-          <div className="pointer-events-none flex flex-wrap items-center gap-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur">
+          <div className="animate-rise pointer-events-none relative flex flex-wrap items-center gap-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 pl-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur-md">
+            <span
+              className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-river/70"
+              aria-hidden
+            />
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"
