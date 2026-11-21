@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   HEADER_OFFSET_PX,
   deckDepthTransform,
@@ -43,15 +44,22 @@ type Props = {
   softLiveBadge: string;
 };
 
-/** SoftFail chrome strip — azure rail · Offline/Live · compact SoftFailNotice. */
-function ScrollSoftFailChrome({
+/**
+ * How-it-works SoftFail sheet — azure rail · Offline/Live · compact SoftFailNotice
+ * under rail · SheetPresence body (step rail / PlainHow rows). Tip-019 throw
+ * cards stay outside when provided as a sibling.
+ */
+function HowSoftFailSheet({
   softOpen,
   sheetEyebrow,
   sheetSupport,
   offlineBadge,
   softLiveBadge,
   offlineNotice,
+  bodyLabel,
+  dense,
   className,
+  children,
 }: {
   softOpen: boolean;
   sheetEyebrow: string;
@@ -59,7 +67,11 @@ function ScrollSoftFailChrome({
   offlineBadge: string;
   softLiveBadge: string;
   offlineNotice: string;
+  bodyLabel: string;
+  /** Tighter body padding for tip-019 sticky deck viewport budget. */
+  dense?: boolean;
   className?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div
@@ -84,9 +96,27 @@ function ScrollSoftFailChrome({
         </span>
       </header>
       {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-      <SoftFailNotice open={softOpen} compact>
+      <SoftFailNotice
+        open={softOpen}
+        compact
+        className="border-b border-[color:var(--bp-line)]"
+      >
         {offlineNotice}
       </SoftFailNotice>
+
+      <SheetPresence
+        open
+        role="group"
+        className={
+          dense
+            ? "px-3 py-3 sm:px-4 sm:py-3.5"
+            : "px-4 py-5 sm:px-5 sm:py-6"
+        }
+        style={{ animationDelay: "40ms" }}
+        aria-label={bodyLabel}
+      >
+        {children}
+      </SheetPresence>
     </div>
   );
 }
@@ -278,95 +308,103 @@ function PlainHow({
           </p>
         </header>
 
-        {/* SoftFail chrome strip — azure rail · Offline/Live · tip-011 (no floating notice) */}
-        <div className={reduced ? "mt-8" : "mt-8 animate-rise"}>
-          <ScrollSoftFailChrome
+        {/*
+          How SoftFail sheet (BEA-280 after #173/#205):
+          azure rail · Offline/Live · compact SoftFailNotice · mist-track steps ·
+          tip-011 SheetPresence rows — never timber.
+        */}
+        <div className={reduced ? "mt-10" : "mt-10 animate-rise"}>
+          <HowSoftFailSheet
             softOpen={softOpen}
             sheetEyebrow={sheetEyebrow}
             sheetSupport={sheetSupport}
             offlineBadge={offlineBadge}
             softLiveBadge={softLiveBadge}
             offlineNotice={offlineNotice}
-          />
-        </div>
-
-        {/* Step focus rail — mist-track · azure select (depth craft) */}
-        <div className="mt-10">
-          <div
-            className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
-            role="group"
-            aria-label={focusLabel}
+            bodyLabel={focusLabel}
           >
-            {cards.map((step, index) => {
-              const on = focus === index;
-              return (
-                <button
-                  key={step.title}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setFocus(index)}
-                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
-                    on
-                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                      : "text-ink-soft hover:text-river"
-                  }`}
-                >
-                  {step.title}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <ol className="mt-12 space-y-0 border-t border-ink/8">
-          {cards.map((step, index) => {
-            const on = focus === index;
-            return (
-              <li
-                key={step.title}
-                className={`border-b border-ink/8 ${reduced ? "" : "animate-rise"}`}
-                style={
-                  reduced
-                    ? undefined
-                    : { animationDelay: `${120 + index * 55}ms` }
-                }
+            {/* Step focus rail — mist-track · azure select (#46 / tip-011) */}
+            <div
+              className="animate-rise"
+              style={reduced ? undefined : { animationDelay: "55ms" }}
+            >
+              <div
+                className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                role="group"
+                aria-label={focusLabel}
               >
-                <button
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setFocus(index)}
-                  className={`group grid w-full gap-2 py-7 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${
-                    on
-                      ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : "hover:bg-mist/30"
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
-                      on
-                        ? "text-river"
-                        : "text-river/70 group-hover:text-river"
-                    }`}
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river/80">
-                      {stepEyebrow}
-                    </p>
-                    <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                {cards.map((step, index) => {
+                  const on = focus === index;
+                  return (
+                    <button
+                      key={step.title}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setFocus(index)}
+                      className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        on
+                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                          : "text-ink-soft hover:text-river"
+                      }`}
+                    >
                       {step.title}
-                    </h3>
-                  </div>
-                  <p className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
-                    {step.body}
-                  </p>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <ol className="mt-6 space-y-0 border-t border-ink/8">
+              {cards.map((step, index) => {
+                const on = focus === index;
+                return (
+                  <li
+                    key={step.title}
+                    className={`animate-rise border-b border-ink/8`}
+                    style={
+                      reduced
+                        ? undefined
+                        : { animationDelay: `${85 + index * 45}ms` }
+                    }
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setFocus(index)}
+                      className={`group grid w-full gap-2 py-6 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-7 ${
+                        on
+                          ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : "hover:bg-mist/30"
+                      }`}
+                    >
+                      <span
+                        aria-hidden
+                        className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
+                          on
+                            ? "text-river"
+                            : "text-river/70 group-hover:text-river"
+                        }`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                          {stepEyebrow}
+                        </p>
+                        <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                          {step.title}
+                        </h3>
+                      </div>
+                      <p className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
+                        {step.body}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </HowSoftFailSheet>
+        </div>
         <div className="mt-12">
           <Link
             href={ctaHref}
@@ -381,10 +419,11 @@ function PlainHow({
 }
 
 /**
- * Landing scroll SoftFailNotice chrome (BEA-270 after #163/#197):
- * azure how-it-works SoftFail rail · Offline/Live badge · compact SoftFailNotice
- * under rail · tip-019 throw deck unchanged · tip-011 chrome settles — SoftFail
- * owned by the strip (no floating notice). Never timber / Failed to fetch.
+ * Landing how-it-works SoftFailNotice chrome (BEA-280 after #173/#205):
+ * azure SoftFail sheet · Offline/Live badge · compact SoftFailNotice under rail ·
+ * SheetPresence mist-track step rail · tip-019 throw deck stays outside ·
+ * tip-011 chrome settles — SoftFail owned by the sheet (no floating notice).
+ * Never timber / Failed to fetch.
  */
 export function LandingScrollDeck({
   title,
@@ -603,53 +642,55 @@ export function LandingScrollDeck({
         </header>
 
         {/*
-          Scroll SoftFail chrome (BEA-270 after #163/#197):
-          azure how-it-works rail · Offline/Live badge · compact SoftFailNotice —
-          tip-019 throw cards stay outside the strip; never timber.
+          How SoftFail sheet (BEA-280 after #173/#205):
+          azure rail · Offline/Live · compact SoftFailNotice · mist-track step
+          rail in SheetPresence — tip-019 throw cards stay outside; never timber.
         */}
         <div
           className={`mb-4 w-full max-w-xl ${revealClass}`}
           style={reveal(50)}
         >
-          <ScrollSoftFailChrome
+          <HowSoftFailSheet
             softOpen={softOpen}
             sheetEyebrow={sheetEyebrow}
             sheetSupport={sheetSupport}
             offlineBadge={offlineBadge}
             softLiveBadge={softLiveBadge}
             offlineNotice={offlineNotice}
-          />
-        </div>
-
-        {/* Step focus rail — mist-track · jumps throw progress (tip-011 settle) */}
-        <div
-          className={`mb-5 w-full max-w-xl ${revealClass}`}
-          style={reveal(80)}
-        >
-          <div
-            className="mx-auto flex max-w-full flex-wrap justify-center gap-0.5 rounded-bp-sm bg-mist/50 p-1"
-            role="group"
-            aria-label={focusLabel}
+            bodyLabel={focusLabel}
+            dense
           >
-            {cards.map((card, i) => {
-              const on = activeIndex === i;
-              return (
-                <button
-                  key={card.title}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => scrollToStep(i)}
-                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
-                    on
-                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                      : "text-ink-soft hover:text-river"
-                  }`}
-                >
-                  {card.title}
-                </button>
-              );
-            })}
-          </div>
+            {/* Step focus rail — mist-track · jumps throw progress (tip-011) */}
+            <div
+              className="animate-rise"
+              style={reduced ? undefined : { animationDelay: "55ms" }}
+            >
+              <div
+                className="mx-auto flex max-w-full flex-wrap justify-center gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                role="group"
+                aria-label={focusLabel}
+              >
+                {cards.map((card, i) => {
+                  const on = activeIndex === i;
+                  return (
+                    <button
+                      key={card.title}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => scrollToStep(i)}
+                      className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        on
+                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                          : "text-ink-soft hover:text-river"
+                      }`}
+                    >
+                      {card.title}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </HowSoftFailSheet>
         </div>
 
         <div
