@@ -176,6 +176,13 @@ export function TripMembersBar({
   const visible = members.slice(0, 5);
   const overflow = Math.max(0, members.length - visible.length);
   const softOpen = demoSeeded || softOffline;
+  /**
+   * Presence SoftFailNotice chrome (BEA-241 after #141/#130):
+   * presence owns compact SoftFail under azure rail · mist soft badge ·
+   * SheetPresence chips body · tip-011 (#46). Invite sheet open → SoftFail
+   * yields (no double depth). Soft copy never timber / Failed to fetch.
+   */
+  const presenceSoftOpen = softOpen && !open;
   const presenceSoftCopy = softOffline
     ? t(locale, "collab.presenceSoftFail")
     : t(locale, "collab.presenceDemoNotice");
@@ -188,7 +195,11 @@ export function TripMembersBar({
 
   return (
     <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
-      {/* Presence list chrome — azure rail · mist-track chips · SoftFailNotice · tip-011 */}
+      {/*
+        Presence SoftFail chrome (BEA-241 after #141/#186):
+        azure rail · soft badge · compact SoftFailNotice · SheetPresence
+        chips · tip-011 rise — never timber.
+      */}
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
         <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -218,7 +229,7 @@ export function TripMembersBar({
             </span>
             {softOpen ? (
               <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                {t(locale, "collab.demoBadge")}
+                {t(locale, "collab.presence.softBadge")}
               </span>
             ) : members.length > 0 ? (
               <span className="inline-flex items-center gap-1.5 rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition">
@@ -237,7 +248,17 @@ export function TripMembersBar({
           </div>
         </header>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-2.5">
+        {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+        <SoftFailNotice open={presenceSoftOpen} compact>
+          {presenceSoftCopy}
+        </SoftFailNotice>
+
+        <SheetPresence
+          open
+          className="flex flex-wrap items-center justify-between gap-3 px-4 pb-2.5 pt-1"
+          style={{ animationDelay: "40ms" }}
+          aria-label={t(locale, "collab.members")}
+        >
           <div
             className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1"
             role="list"
@@ -249,11 +270,14 @@ export function TripMembersBar({
                 member={m}
                 locale={locale}
                 presence={presenceFor(m)}
-                style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}
+                style={{ animationDelay: `${Math.min(i, 4) * 40 + 55}ms` }}
               />
             ))}
             {overflow > 0 ? (
-              <span className="inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[11px] font-semibold text-ink-soft">
+              <span
+                className="animate-rise inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[11px] font-semibold text-ink-soft"
+                style={{ animationDelay: "115ms" }}
+              >
                 +{overflow}
               </span>
             ) : null}
@@ -270,7 +294,10 @@ export function TripMembersBar({
               </span>
             ) : null}
             {!pending && members.length === 0 ? (
-              <span className="px-2 py-1.5 text-sm text-ink-soft">
+              <span
+                className="animate-rise px-2 py-1.5 text-sm text-ink-soft"
+                style={{ animationDelay: "70ms" }}
+              >
                 {t(locale, "collab.presence.empty")}
               </span>
             ) : null}
@@ -283,7 +310,8 @@ export function TripMembersBar({
                 onChange={(e) =>
                   setInviteRole(e.target.value as "editor" | "viewer")
                 }
-                className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-2.5 py-1.5 text-xs text-ink-soft outline-none transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/35"
+                className="animate-rise rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-2.5 py-1.5 text-xs text-ink-soft outline-none transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/35"
+                style={{ animationDelay: "85ms" }}
                 aria-label={t(locale, "collab.inviteRole")}
               >
                 <option value="editor">{t(locale, "collab.role.editor")}</option>
@@ -292,25 +320,22 @@ export function TripMembersBar({
               <button
                 type="button"
                 onClick={() => void createInvite()}
-                className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                style={{ animationDelay: "100ms" }}
               >
                 {t(locale, "collab.invite")}
               </button>
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                style={{ animationDelay: "115ms" }}
               >
                 {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
               </button>
             </div>
           ) : null}
-        </div>
-
-        {/* Closed-bar SoftFailNotice — presence-scoped; rise in/out (#46) */}
-        <SoftFailNotice open={softOpen && !open} compact>
-          {presenceSoftCopy}
-        </SoftFailNotice>
+        </SheetPresence>
       </div>
 
       {hardError ? (
