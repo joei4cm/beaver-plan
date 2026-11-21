@@ -138,6 +138,19 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
   }, [legs, dayStops]);
 
+  const dayEmpty = dayStops.length === 0;
+  const demoShell = engineInfo?.mode !== "live";
+  const listSoftOpen = Boolean(
+    softNotice ||
+      (error && isPlannerNoiseError(new Error(error))) ||
+      (demoShell && (dayEmpty || dayLegs.length > 0 || dayStops.length > 0)),
+  );
+  const listSoftCopy =
+    softNotice ??
+    (dayEmpty
+      ? t(locale, "planner.emptySoftFail")
+      : t(locale, "planner.transfer.demoNotice"));
+
   useEffect(() => {
     if (!dayId) {
       setDayTabIndicator(null);
@@ -968,20 +981,26 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             onSelectStop={setSelectedStopId}
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Stop list chrome — hierarchy · azure select · SoftFailNotice · #46 */}
+            {/* Stop list chrome — azure hierarchy · SoftFailNotice · empty / #46 */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "planner.stops.eyebrow")}
                 </span>
                 <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
-                  {t(locale, "planner.stops.count").replace(
-                    "{n}",
-                    String(dayStops.length),
-                  )}
+                  {dayEmpty
+                    ? t(locale, "planner.emptyDay")
+                    : t(locale, "planner.stops.count").replace(
+                        "{n}",
+                        String(dayStops.length),
+                      )}
                 </span>
               </div>
-              {selectedStopId ? (
+              {dayEmpty ? (
+                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
+                  {t(locale, "planner.emptyBadge")}
+                </span>
+              ) : selectedStopId ? (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
                   {t(locale, "planner.stops.selected")}
                 </span>
@@ -992,16 +1011,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               )}
             </header>
 
-            <SoftFailNotice
-              open={Boolean(
-                softNotice ||
-                  (error && isPlannerNoiseError(new Error(error))) ||
-                  (engineInfo?.mode !== "live" &&
-                    (dayLegs.length > 0 || dayStops.length > 0)),
-              )}
-              compact
-            >
-              {softNotice ?? t(locale, "planner.transfer.demoNotice")}
+            <SoftFailNotice open={listSoftOpen} compact>
+              {listSoftCopy}
             </SoftFailNotice>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1013,12 +1024,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 label={t(locale, "planner.stopsList")}
                 dragHandleLabel={t(locale, "planner.dragReorder")}
                 empty={
-                  <li className="animate-fade list-none px-5 py-12">
+                  <li
+                    key={`empty-${dayId ?? "none"}`}
+                    className="animate-sheet-in list-none px-5 py-10"
+                  >
                     <div className="max-w-sm">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
                         {t(locale, "planner.stops.eyebrow")}
                       </p>
-                      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+                      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]">
                         {t(locale, "planner.emptyDay")}
                       </p>
                       <p className="mt-2 text-sm leading-relaxed text-ink-soft">
@@ -1036,16 +1050,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             block: "nearest",
                           });
                         }}
-                        className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                       >
                         {t(locale, "planner.emptyDayCta")}
                       </button>
-                      <SoftFailNotice
-                        open={engineInfo?.mode !== "live"}
-                        className="mt-5"
-                      >
-                        {softNotice ?? t(locale, "planner.demoLocal")}
-                      </SoftFailNotice>
                     </div>
                   </li>
                 }
