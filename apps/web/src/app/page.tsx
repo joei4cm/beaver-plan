@@ -148,11 +148,14 @@ export default async function HomePage() {
         signals={trustSignals}
       />
 
-      {/* Below fold — features (editorial hierarchy; after tip 019 scroll craft) */}
+      {/* Below fold — features depth (mist-track focus · SoftFail · tip-011) */}
       <LandingFeatures
         title={t(locale, "landing.pillars.title")}
         support={t(locale, "landing.pillars.support")}
         items={featureItems}
+        offlineNotice={t(locale, "landing.pillars.softOffline")}
+        focusLabel={t(locale, "landing.pillars.focusLabel")}
+        leadEyebrow={t(locale, "landing.pillars.leadEyebrow")}
       />
 
       {/* Below fold — tip 019 card deck (how it works) */}
