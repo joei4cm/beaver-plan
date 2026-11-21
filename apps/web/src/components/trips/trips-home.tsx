@@ -284,10 +284,10 @@ export function TripsHome({ locale }: Props) {
           </p>
         </header>
 
-        {/* Empty path: SoftFailNotice under section header (no list sheet yet). */}
-        {showEmptyInvite || loading ? (
+        {/* Loading: SoftFailNotice above list skeleton. Empty seed: notice lives in sheet. */}
+        {loading ? (
           <SoftFailNotice
-            open={!error && Boolean(softNotice) && !loading}
+            open={!error && Boolean(softNotice)}
             className="mb-6"
           >
             {softNotice ?? ""}
@@ -297,28 +297,68 @@ export function TripsHome({ locale }: Props) {
         {loading ? (
           <TripsListSkeleton />
         ) : showEmptyInvite ? (
-          <div className="animate-fade">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+            {/* Seed CTA chrome — azure rail · SoftFailNotice · primary/secondary hierarchy */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "trips.seedRail")}
+                </span>
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "trips.seedSupport")}
+                </span>
+              </div>
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  listSoft
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river"
+                }`}
+              >
+                {listSoft
+                  ? t(locale, "trips.seedDemo")
+                  : t(locale, "trips.seedReady")}
+              </span>
+            </header>
+
+            <SoftFailNotice
+              open={!error && Boolean(softNotice)}
+              compact
+            >
+              {softNotice ?? ""}
+            </SoftFailNotice>
+
+            <div
+              role="group"
+              aria-label={t(locale, "trips.seedActions")}
+              className="flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5"
+            >
               <Link
                 href="/trips/new"
-                className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                className="rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
               >
                 {t(locale, "trips.new")}
               </Link>
               <Link
                 href="/trips/sample-kyoto"
-                className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                className="rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
               >
                 {t(locale, "trips.openSample")}
               </Link>
+              <a
+                href="#trips-templates-heading"
+                className="rounded-bp-xs px-2.5 py-2 text-sm font-medium text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+              >
+                {t(locale, "trips.seedPlaybooks")}
+              </a>
             </div>
 
             {sampleTrips.length > 0 ? (
-              <div className="mt-10">
-                <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80">
+              <div className="border-t border-[color:var(--bp-line)]">
+                <p className="px-4 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80 sm:px-5">
                   {t(locale, "trips.sampleEyebrow")}
                 </p>
-                <ul className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+                <ul role="list" aria-label={t(locale, "trips.sampleEyebrow")}>
                   {sampleTrips.map((trip, index) => {
                     const badge = tripBadge(trip);
                     return (
