@@ -32,7 +32,11 @@ import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { ShareStudioSkeleton } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
-import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
+import {
+  SHARE_EXPORT_SCALE,
+  downloadBlob,
+  svgToPngBlob,
+} from "@/lib/export-png";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { patchUserPrefs, readUserPrefs } from "@/lib/user-prefs";
 
@@ -84,6 +88,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [preview, setPreview] = useState<RenderResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [softDemo, setSoftDemo] = useState(false);
+  const [exportSoftFail, setExportSoftFail] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
   const [swapTick, setSwapTick] = useState(0);
@@ -285,6 +290,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     if (!preview) return;
     setBusy(true);
     setError(null);
+    setExportSoftFail(false);
     try {
       const blob = await svgToPngBlob(
         preview.svg,
@@ -295,8 +301,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         blob,
         `beaver-plan-${preview.template.id}-${tripId}.png`,
       );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "png_failed");
+    } catch {
+      // Demo / keys-missing path: soft-fail — keep local SVG preview, never timber.
+      setExportSoftFail(true);
+      setError(null);
+      if (!softDemo) setSoftDemo(true);
     } finally {
       setBusy(false);
     }
@@ -308,6 +317,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       return;
     }
     setBusy(true);
+    setExportSoftFail(false);
     try {
       const blob = await svgToPngBlob(
         preview.svg,
@@ -330,7 +340,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       }
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
-      setError(e instanceof Error ? e.message : "share_failed");
+      // Soft-fail export demo — never surface raw Failed to fetch / encode noise.
+      setExportSoftFail(true);
+      setError(null);
+      if (!softDemo) setSoftDemo(true);
     } finally {
       setBusy(false);
     }
@@ -431,11 +444,33 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
-        {/* Preview stage — primary visual */}
+        {/* Preview stage — paper wash + azure rail hierarchy */}
         <section className="animate-fade flex flex-col items-center">
-          <div className="flex w-full max-w-[440px] flex-col items-center rounded-bp-lg border border-[color:var(--bp-line)] bg-mist/35 p-4 shadow-bp-soft md:p-5">
+          <div
+            className="relative flex w-full max-w-[440px] flex-col items-center overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] p-4 shadow-bp-soft md:p-5"
+            style={{
+              backgroundImage:
+                "radial-gradient(ellipse 85% 60% at 18% -5%, rgba(47,107,255,0.16), transparent 55%), linear-gradient(165deg, #FFFFFF 0%, #F4F6FA 48%, #DBE8FF 130%)",
+            }}
+          >
+            <span
+              aria-hidden
+              className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-river shadow-[0_0_12px_rgba(47,107,255,0.35)]"
+            />
+            <div className="mb-3 flex w-full max-w-[400px] items-center justify-between gap-2 pl-2">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                {t(locale, "share.canvasEyebrow")}
+              </p>
+              <p className="font-mono text-[10px] tracking-wide text-ink-soft">
+                {active.width}×{active.height} · {SHARE_EXPORT_SCALE}× PNG
+              </p>
+            </div>
             <div
-              className="animate-template-swap relative w-full max-w-[400px] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out"
+              className={`animate-template-swap relative w-full max-w-[400px] overflow-hidden rounded-bp border bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out ${
+                softDemo
+                  ? "border-river/35 ring-2 ring-river/20"
+                  : "border-[color:var(--bp-line)]"
+              }`}
               key={`frame-${templateId}-${swapTick}`}
               style={{
                 aspectRatio: `${active.width} / ${active.height}`,
@@ -689,8 +724,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </p>
             </div>
 
-            <SoftFailNotice open={softDemo}>
-              {t(locale, "share.demoNotice")}
+            <SoftFailNotice open={softDemo || exportSoftFail}>
+              {exportSoftFail
+                ? t(locale, "share.exportSoftFail")
+                : t(locale, "share.demoNotice")}
             </SoftFailNotice>
 
             <div

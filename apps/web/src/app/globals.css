@@ -454,6 +454,17 @@
     cursor: grabbing;
   }
 
+  /* Share canvas — crisp vector preview (matches 2× PNG export pipeline) */
+  .share-svg-preview {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+
+  .share-svg-preview svg {
+    shape-rendering: geometricPrecision;
+    text-rendering: geometricPrecision;
+  }
+
   .share-svg-preview text.bp-display {
     font-family: var(--bp-font-display) !important;
   }
