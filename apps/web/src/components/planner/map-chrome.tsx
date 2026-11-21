@@ -49,10 +49,10 @@ type Props = {
 
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
- * Depth ladder (after #56/#98):
+ * Depth ladder (after #56/#98/#118):
  *   popovers (shadow-bp · z-30) → search primary → engine chip / tool rail →
- *   SoftFailNotice + transfer legend (field tools).
- * Azure section chrome + SheetPresence + SoftFailNotice + #46 motion.
+ *   SoftFailNotice + transfer legend sheet (field tools).
+ * Legend: azure rail · SoftFailNotice compact · SheetPresence + tip-011 (#46).
  */
 export function MapChrome({
   locale,
@@ -181,11 +181,14 @@ export function MapChrome({
   }
 
   const locateNotice = softFailMessage?.trim() || null;
-  // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap popover closed
-  // (popover owns the engine SoftFailNotice — avoids double depth).
+  const legendOpen = layers.legend && hasRoute;
+  // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap
+  // popover and transfer legend are closed (each owns SoftFailNotice — no double depth).
   const stageNotice =
     locateNotice ||
-    (softFail && !engineOpen ? t(locale, "planner.map.softFail") : null);
+    (softFail && !engineOpen && !legendOpen
+      ? t(locale, "planner.map.softFail")
+      : null);
 
   const activeOptionId = hasResults
     ? `${listboxId}-opt-${activeIndex}`
@@ -562,7 +565,7 @@ export function MapChrome({
         </div>
       </div>
 
-      {/* Field tools — SoftFailNotice + transfer legend (under chrome) */}
+      {/* Field tools — SoftFailNotice + transfer legend sheet (under chrome) */}
       <div className="absolute bottom-4 left-3 z-[1] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
         <div className="pointer-events-auto">
           <SoftFailNotice
@@ -572,12 +575,41 @@ export function MapChrome({
             {stageNotice ?? ""}
           </SoftFailNotice>
         </div>
-        {layers.legend && hasRoute ? (
-          <div className="animate-rise pointer-events-none relative flex flex-wrap items-center gap-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2 pl-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft shadow-bp-soft backdrop-blur-md">
+
+        <SheetPresence
+          open={legendOpen}
+          variant="popover"
+          aria-label={t(locale, "planner.map.legendTitle")}
+          className="pointer-events-none overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
+        >
+          {/* Azure hierarchy — eyebrow · title · demo/live badge · SoftFailNotice */}
+          <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5">
             <span
-              className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-river/70"
+              className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-river"
               aria-hidden
             />
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.map.legendEyebrow")}
+              </span>
+              <span className="text-[11px] font-medium text-ink-soft/80">
+                {t(locale, "planner.map.legendTitle")}
+              </span>
+            </div>
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                softFail
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river-deep"
+              }`}
+            >
+              {softFail
+                ? t(locale, "planner.map.legendDemoBadge")
+                : t(locale, "planner.map.legendLiveBadge")}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"
@@ -600,7 +632,11 @@ export function MapChrome({
               {t(locale, "planner.transfer.change")}
             </span>
           </div>
-        ) : null}
+
+          <SoftFailNotice open={softFail} compact>
+            {t(locale, "planner.map.legendSoftFail")}
+          </SoftFailNotice>
+        </SheetPresence>
       </div>
     </div>
   );
