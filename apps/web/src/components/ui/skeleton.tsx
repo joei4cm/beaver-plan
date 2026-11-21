@@ -114,7 +114,7 @@ export function PlannerSkeleton() {
           </div>
         </div>
         <aside className="flex flex-col border-t border-[color:var(--bp-line)] lg:border-l lg:border-t-0">
-          {/* Stop drawer SoftFail chrome — Itinerary rail · SoftFailNotice slot (BEA-288) */}
+          {/* Stop drawer SoftFail depth — Itinerary rail · SoftFailNotice mist band (BEA-343) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex items-center justify-between gap-2 px-4 py-2.5">
               <div className="flex items-baseline gap-2">
@@ -126,7 +126,7 @@ export function PlannerSkeleton() {
                 <Skeleton className="h-5 w-16 rounded-bp-xs" />
               </div>
             </div>
-            {/* SoftFailNotice slot under azure Itinerary rail */}
+            {/* SoftFailNotice mist band under azure Itinerary rail — softSupport depth */}
             <Skeleton className="h-9 w-full rounded-none" />
           </div>
           {/* Day tabs chrome — azure Days rail · mist underline (BEA-247) */}
