@@ -399,24 +399,27 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * Empty SoftFailNotice chrome (BEA-240 after #149/#171/#175):
-   * empty canvas owns compact SoftFail under azure canvas rail ·
-   * SheetPresence empty body · tip-011 (#46). Control-sheet SoftFail yields
-   * while empty owns soft-fail (no double depth). Soft copy never timber /
+   * SoftFail ownership (BEA-256 after #149/#169/#183/#240):
+   * empty canvas owns SoftFail under azure canvas rail ·
+   * Export owns softDemo / exportSoftFail under azure Export rail ·
+   * sheet SoftFail yields (no double depth). Soft copy never timber /
    * Failed to fetch.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
+  const exportOwnsSoft =
+    !emptyOwnsSoft && (softDemo || exportSoftFail);
   const emptySoftOpen =
     emptyOwnsSoft && (softDemo || exportSoftFail || !busy);
+  /** Sheet SoftFail yields while empty / Export owns (no double depth). */
   const sheetSoftOpen =
-    !emptyOwnsSoft && (softDemo || exportSoftFail);
+    !emptyOwnsSoft && !exportOwnsSoft && (softDemo || exportSoftFail);
   const emptySoftCopy = exportSoftFail
     ? t(locale, "share.exportSoftFail")
     : softDemo || emptyOwnsSoft
       ? t(locale, "share.emptySoftFail")
       : t(locale, "share.demoNotice");
-  const sheetSoftCopy = exportSoftFail
+  const exportSoftCopy = exportSoftFail
     ? t(locale, "share.exportSoftFail")
     : t(locale, "share.demoNotice");
 
@@ -669,9 +672,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </span>
           </header>
 
-          {/* Sheet SoftFail yields while empty canvas owns soft-fail. */}
+          {/* Sheet SoftFail yields while empty / Export owns soft-fail. */}
           <SoftFailNotice open={sheetSoftOpen} compact>
-            {sheetSoftCopy}
+            {exportSoftCopy}
           </SoftFailNotice>
 
           <div className="space-y-5 px-4 py-4">
@@ -910,62 +913,102 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </p>
             ) : null}
 
-            {/* Export — river primary / ink secondary · tip-011 settle */}
+            {/*
+              Export SoftFail chrome (BEA-256 after #149/#169/#183):
+              azure Export rail · Demo/Live badge · compact SoftFailNotice ·
+              SheetPresence CTAs · tip-011 rise — never timber.
+            */}
             <section
-              className="animate-rise space-y-3 border-t border-[color:var(--bp-line)] pt-5"
+              className="animate-rise border-t border-[color:var(--bp-line)] pt-5"
               style={{ animationDelay: "100ms" }}
+              aria-label={t(locale, "share.export")}
             >
-              <div>
-                <SectionEyebrow>
-                  {t(locale, "share.exportEyebrow")}
-                </SectionEyebrow>
-                <h2 className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl">
-                  {t(locale, "share.export")}
-                </h2>
-                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                  {t(locale, "share.exportSupport")}
-                </p>
-              </div>
+              <div className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+                <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+                  <div className="min-w-0">
+                    <SectionEyebrow>
+                      {t(locale, "share.exportEyebrow")}
+                    </SectionEyebrow>
+                    <h2
+                      id="share-export-title"
+                      className="mt-1 font-display text-base tracking-tight text-ink md:text-lg"
+                    >
+                      {t(locale, "share.export")}
+                    </h2>
+                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                      {t(locale, "share.exportSupport")}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                      softDemo || exportSoftFail
+                        ? "bg-mist text-ink-soft"
+                        : "bg-river/12 text-river"
+                    }`}
+                  >
+                    {softDemo || exportSoftFail
+                      ? t(locale, "share.demoBadge")
+                      : t(locale, "share.liveBadge")}
+                  </span>
+                </div>
 
-              <div
-                className="flex flex-col gap-2.5"
-                role="group"
-                aria-label={t(locale, "share.export")}
-              >
-                <button
-                  type="button"
-                  disabled={busy || !preview}
-                  onClick={() => void downloadPng()}
-                  className="rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                {/* Compact SoftFail under azure Export rail — never timber / Failed to fetch. */}
+                <SoftFailNotice
+                  open={exportOwnsSoft}
+                  compact
+                  className="border-b border-[color:var(--bp-line)]"
                 >
-                  {t(locale, "share.downloadPng")}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || !preview}
-                  onClick={() => void shareNative()}
-                  className="rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                  {exportSoftCopy}
+                </SoftFailNotice>
+
+                <SheetPresence
+                  open
+                  className="flex flex-col gap-2.5 px-3 py-3"
+                  style={{ animationDelay: "40ms" }}
+                  role="group"
+                  aria-label={t(locale, "share.export")}
                 >
-                  {t(locale, "share.systemShare")}
-                </button>
-                <div className="flex items-center justify-between gap-3 pt-0.5">
                   <button
                     type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      kickRender();
-                      void render();
-                    }}
-                    className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                    disabled={busy || !preview}
+                    onClick={() => void downloadPng()}
+                    className="animate-rise rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{ animationDelay: "40ms" }}
+                    aria-labelledby="share-export-title"
                   >
-                    {t(locale, "share.refresh")}
+                    {t(locale, "share.downloadPng")}
                   </button>
-                  {!softDemo && !exportSoftFail ? (
-                    <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
-                      {t(locale, "share.demoHint")}
-                    </p>
-                  ) : null}
-                </div>
+                  <button
+                    type="button"
+                    disabled={busy || !preview}
+                    onClick={() => void shareNative()}
+                    className="animate-rise rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{ animationDelay: "70ms" }}
+                  >
+                    {t(locale, "share.systemShare")}
+                  </button>
+                  <div
+                    className="animate-rise flex items-center justify-between gap-3 pt-0.5"
+                    style={{ animationDelay: "100ms" }}
+                  >
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        kickRender();
+                        void render();
+                      }}
+                      className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                    >
+                      {t(locale, "share.refresh")}
+                    </button>
+                    {!softDemo && !exportSoftFail ? (
+                      <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
+                        {t(locale, "share.demoHint")}
+                      </p>
+                    ) : null}
+                  </div>
+                </SheetPresence>
               </div>
             </section>
 
