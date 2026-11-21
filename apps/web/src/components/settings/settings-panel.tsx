@@ -31,7 +31,10 @@ const MAP_OPTS: Trip["mapEngine"][] = ["auto", "google", "amap", "baidu"];
 const LOCALE_OPTS: Locale[] = ["zh-CN", "en"];
 const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
-/** Mist-track segmented control — nested #46 radii, azure active. */
+const CHIP_FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
+
+/** Mist-track segmented control — nested #46 radii, azure active, tip-020 chips. */
 function Segmented<T extends string>({
   value,
   options,
@@ -59,7 +62,7 @@ function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(opt)}
-            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold bp-transition ${
+            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold bp-transition ${CHIP_FOCUS} ${
               active
                 ? "bg-foam text-river shadow-bp-soft"
                 : "text-ink-soft hover:text-river"
@@ -70,6 +73,14 @@ function Segmented<T extends string>({
         );
       })}
     </div>
+  );
+}
+
+function SectionEyebrow({ children }: { children: string }) {
+  return (
+    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+      {children}
+    </p>
   );
 }
 
@@ -129,6 +140,15 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
   }
 
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
+  const showSoftFail = Boolean(softNotice) && !pending;
+  const statusCopy = pending
+    ? t(locale, "settings.resolving")
+    : resolve
+      ? t(locale, "settings.resolved")
+          .replace("{engine}", resolve.engineId)
+          .replace("{mode}", resolve.mode)
+          .replace("{region}", resolve.region)
+      : null;
 
   return (
     <section className="relative mx-auto max-w-3xl px-6 pb-24 pt-10 md:px-10 md:pt-14">
@@ -144,142 +164,143 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         }}
       />
 
-      <p className="animate-fade text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
-        {t(locale, "settings.eyebrow")}
-      </p>
-      <h1 className="animate-rise mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
-        {t(locale, "settings.title")}
-      </h1>
-      <p
-        className="animate-rise mt-4 max-w-xl text-base leading-relaxed text-ink-soft"
-        style={{ animationDelay: "40ms" }}
-      >
-        {t(locale, "settings.support")}
-      </p>
-      <p
-        className="animate-rise mt-2 text-sm text-ink-soft/80"
-        style={{ animationDelay: "60ms" }}
-      >
-        {brandName} · {t(locale, "settings.localHint")}
-      </p>
-
-      <SoftFailNotice open={Boolean(softNotice)} className="mt-8">
-        {softNotice ?? ""}
-      </SoftFailNotice>
+      <header className="animate-rise">
+        <SectionEyebrow>{t(locale, "settings.eyebrow")}</SectionEyebrow>
+        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+          {t(locale, "settings.title")}
+        </h1>
+        <p
+          className="mt-4 max-w-xl text-base leading-relaxed text-ink-soft"
+        >
+          {t(locale, "settings.support")}
+        </p>
+        <p className="mt-2 text-sm text-ink-soft/80">
+          {brandName} · {t(locale, "settings.localHint")}
+        </p>
+      </header>
 
       <div className="mt-14 space-y-0">
         {/* Language */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "80ms" }}
+          style={{ animationDelay: "40ms" }}
+          aria-labelledby="settings-locale-heading"
         >
-          <header>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+          <header className="mb-6">
+            <SectionEyebrow>
               {t(locale, "settings.localeEyebrow")}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+            </SectionEyebrow>
+            <h2
+              id="settings-locale-heading"
+              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+            >
               {t(locale, "settings.locale")}
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
               {t(locale, "settings.localeSupport")}
             </p>
           </header>
-          <div className="mt-6">
-            <Segmented
-              value={prefs.locale}
-              options={LOCALE_OPTS}
-              ariaLabel={t(locale, "settings.locale")}
-              labelFor={(opt) =>
-                t(locale, `settings.locale.${opt}` as MessageKey)
-              }
-              onChange={(next) => applyPatch({ locale: next })}
-            />
-          </div>
+          <Segmented
+            value={prefs.locale}
+            options={LOCALE_OPTS}
+            ariaLabel={t(locale, "settings.locale")}
+            labelFor={(opt) =>
+              t(locale, `settings.locale.${opt}` as MessageKey)
+            }
+            onChange={(next) => applyPatch({ locale: next })}
+          />
         </section>
 
-        {/* Map engine */}
+        {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "120ms" }}
+          style={{ animationDelay: "80ms" }}
+          aria-labelledby="settings-map-heading"
         >
-          <header>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-              {t(locale, "settings.mapEyebrow")}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+          <header className="mb-6">
+            <SectionEyebrow>{t(locale, "settings.mapEyebrow")}</SectionEyebrow>
+            <h2
+              id="settings-map-heading"
+              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+            >
               {t(locale, "settings.mapEngine")}
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
               {t(locale, "settings.mapEngineSupport")}
             </p>
           </header>
-          <div className="mt-6">
-            <Segmented
-              value={prefs.mapEngine}
-              options={MAP_OPTS}
-              ariaLabel={t(locale, "settings.mapEngine")}
-              labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
-              onChange={(next) => applyPatch({ mapEngine: next })}
-            />
-          </div>
-          <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-            {pending && !resolve
-              ? t(locale, "settings.resolving")
-              : resolve
-                ? t(locale, "settings.resolved")
-                    .replace("{engine}", resolve.engineId)
-                    .replace("{mode}", resolve.mode)
-                    .replace("{region}", resolve.region)
-                : t(locale, "settings.resolvedDemo")}
-          </p>
+
+          <SoftFailNotice open={showSoftFail} className="mb-6">
+            {softNotice ?? t(locale, "settings.resolvedDemo")}
+          </SoftFailNotice>
+
+          <Segmented
+            value={prefs.mapEngine}
+            options={MAP_OPTS}
+            ariaLabel={t(locale, "settings.mapEngine")}
+            labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
+            onChange={(next) => applyPatch({ mapEngine: next })}
+          />
+
+          {statusCopy ? (
+            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              {statusCopy}
+            </p>
+          ) : null}
         </section>
 
         {/* Distance */}
         <section
           className="animate-rise border-t border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "160ms" }}
+          style={{ animationDelay: "120ms" }}
+          aria-labelledby="settings-distance-heading"
         >
-          <header>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+          <header className="mb-6">
+            <SectionEyebrow>
               {t(locale, "settings.distanceEyebrow")}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+            </SectionEyebrow>
+            <h2
+              id="settings-distance-heading"
+              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+            >
               {t(locale, "settings.distance")}
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
               {t(locale, "settings.distanceSupport")}
             </p>
           </header>
-          <div className="mt-6">
-            <Segmented
-              value={prefs.distanceUnit}
-              options={DISTANCE_OPTS}
-              ariaLabel={t(locale, "settings.distance")}
-              labelFor={(opt) =>
-                t(locale, `settings.distance.${opt}` as MessageKey)
-              }
-              onChange={(next) => applyPatch({ distanceUnit: next })}
-            />
-          </div>
+          <Segmented
+            value={prefs.distanceUnit}
+            options={DISTANCE_OPTS}
+            ariaLabel={t(locale, "settings.distance")}
+            labelFor={(opt) =>
+              t(locale, `settings.distance.${opt}` as MessageKey)
+            }
+            onChange={(next) => applyPatch({ distanceUnit: next })}
+          />
         </section>
 
         {/* Share template */}
         <section
           className="animate-rise border-t border-b border-[color:var(--bp-line)] py-10"
-          style={{ animationDelay: "200ms" }}
+          style={{ animationDelay: "160ms" }}
+          aria-labelledby="settings-share-heading"
         >
-          <header>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+          <header className="mb-6">
+            <SectionEyebrow>
               {t(locale, "settings.shareEyebrow")}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+            </SectionEyebrow>
+            <h2
+              id="settings-share-heading"
+              className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+            >
               {t(locale, "settings.shareTemplate")}
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft">
               {t(locale, "settings.shareTemplateSupport")}
             </p>
           </header>
-          <ul className="mt-6 space-y-0">
+          <ul className="space-y-0">
             {SHARE_TEMPLATES.map((tpl, index) => {
               const selected = prefs.shareImageTemplateId === tpl.id;
               const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
@@ -292,7 +313,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
                     onClick={() =>
                       applyPatch({ shareImageTemplateId: tpl.id })
                     }
-                    className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 text-left bp-transition last:border-b ${
+                    className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 text-left bp-transition last:border-b ${CHIP_FOCUS} ${
                       selected
                         ? "border-l-2 border-l-river pl-3 text-river"
                         : "border-l-2 border-l-transparent pl-3 text-ink hover:border-l-river/35 hover:text-river"
@@ -331,7 +352,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       <p className="mt-10 text-sm text-ink-soft">
         <Link
           href="/trips"
-          className="font-semibold text-river bp-transition hover:text-river-deep"
+          className={`rounded-bp-xs font-semibold text-river bp-transition hover:text-river-deep ${CHIP_FOCUS}`}
         >
           ← {t(locale, "nav.trips")}
         </Link>
