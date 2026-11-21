@@ -192,9 +192,19 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     void apiGet<EngineResponse>(
       `/v1/maps/engine?preference=${encodeURIComponent(preference)}&timezone=${encodeURIComponent(trip?.timezone ?? "")}`,
     )
-      .then(setEngineInfo)
-      .catch(() => setEngineInfo(null));
-  }, [preference, trip?.timezone]);
+      .then((info) => {
+        setEngineInfo(info);
+        if (info.mode === "demo") {
+          setSoftNotice((prev) => prev ?? t(locale, "planner.transfer.demoNotice"));
+        }
+      })
+      .catch(() => {
+        // Keys/API absent — treat as demo shell; mute timber noise.
+        setEngineInfo(null);
+        setSoftNotice((prev) => prev ?? t(locale, "planner.transfer.demoNotice"));
+        setError(null);
+      });
+  }, [preference, trip?.timezone, locale]);
 
   useEffect(() => {
     return () => {
@@ -358,6 +368,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       return;
     }
     setRouting(true);
+    setError(null);
     try {
       const res = await apiSend<{
         legs: Leg[];
@@ -385,8 +396,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               region: "other",
             },
       );
+      // Soft muted notice when Directions keys absent — never timber noise.
+      if (res.mode === "demo") {
+        setSoftNotice(t(locale, "planner.transfer.demoNotice"));
+      } else {
+        setSoftNotice(null);
+      }
     } catch (e) {
-      // Client-side demo road geometry when Neon/API is down.
+      // Client-side demo transit when Neon/API/keys are down.
       const engineId = engineInfo?.engineId ?? "google";
       const routingEngine = new DemoRoutingEngine(engineId);
       const demoLegs = await routeAdjacentStops(
@@ -407,12 +424,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           ? { ...prev, engineId, mode: "demo" }
           : { preference, engineId, mode: "demo", region: "other" },
       );
-      if (isPlannerNoiseError(e)) {
-        setSoftNotice(t(locale, "planner.demoLocal"));
-        setError(null);
-      } else {
-        applySoftOrHard(e, "route_failed");
-      }
+      // Always soft-fail routing — demo legs already painted; no Failed to fetch.
+      setSoftNotice(t(locale, "planner.transfer.demoNotice"));
+      setError(null);
+      void e;
     } finally {
       setRouting(false);
     }
@@ -735,7 +750,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 : t(locale, "planner.generateRoutes")}
             </button>
             {dayLegs.length > 0 && (
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm tabular-nums text-ink-soft">
                 {dayLegs
                   .map(
                     (l) =>
@@ -744,10 +759,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   .join("  →  ")}
               </p>
             )}
-            {dayLegs.some((l) => l.transitSteps.length > 1) && (
-              <p className="text-xs text-river">
-                {t(locale, "planner.transfer.hint")}
-              </p>
+            {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
+              <span className="rounded-md bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
+                {t(locale, "planner.transfer.demoBadge")}
+              </span>
             )}
           </div>
         </section>
@@ -908,8 +923,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       )}
                       {leg && (
                         <>
-                          <div className="mt-2 text-xs font-medium text-river">
-                            → {summarizeTransfer(leg)}
+                          <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                              {leg.mode === "transit"
+                                ? t(locale, "planner.mode.transit")
+                                : leg.mode === "walk"
+                                  ? t(locale, "planner.mode.walk")
+                                  : t(locale, "planner.mode.drive")}
+                            </span>
+                            <span className="text-xs font-medium text-ink">
+                              {summarizeTransfer(leg)}
+                            </span>
                           </div>
                           {(leg.mode === "transit" ||
                             leg.transitSteps.length > 1) && (
@@ -917,6 +941,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                               leg={leg}
                               locale={locale}
                               variant="inline"
+                              demoMode={engineInfo?.mode !== "live"}
                             />
                           )}
                         </>
@@ -967,17 +992,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             })}
           </ol>
 
-          {error && (
+          {error && !isPlannerNoiseError(new Error(error)) && (
             <p className="px-4 py-2 text-sm text-timber" role="alert">
               {error}
             </p>
           )}
-          {!error && softNotice && (
+          {(softNotice ||
+            (error && isPlannerNoiseError(new Error(error)))) && (
             <p
-              className="border-t border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink-soft"
+              className="border-t border-[color:var(--bp-line)] bg-mist/45 px-4 py-2.5 text-xs leading-relaxed text-ink-soft"
               role="status"
             >
-              {softNotice}
+              {softNotice ?? t(locale, "planner.transfer.demoNotice")}
             </p>
           )}
           <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">

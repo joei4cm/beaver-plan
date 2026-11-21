@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import {
   createEngineBundle,
+  DemoRoutingEngine,
   inferRegionHint,
   normalizeBookingLinks,
   reorderStops,
@@ -614,6 +615,32 @@ tripRoutes.post("/v1/trips/:id/route-day", requireAuth, async (c) => {
     await replaceLegs(db, trip.id, nextLegs);
     return c.json({ legs, engineId, mode: bundle.mode, region });
   } catch (err) {
+    // Soft-fail to demo transit when live Directions keys/errors — never hard 502 for demo shells.
+    if (bundle.mode === "live") {
+      try {
+        const demo = new DemoRoutingEngine(engineId);
+        const legs = await routeAdjacentStops(
+          demo,
+          dayStops,
+          body.mode ?? "transit",
+          trip.locale,
+        );
+        const otherLegs = (await listLegs(db, trip.id)).filter(
+          (l) => !dayStops.some((s) => s.id === l.fromStopId),
+        );
+        const nextLegs = [...otherLegs, ...legs];
+        await replaceLegs(db, trip.id, nextLegs);
+        return c.json({
+          legs,
+          engineId,
+          mode: "demo" as const,
+          region,
+          fallback: "demo_after_live_error",
+        });
+      } catch {
+        /* fall through */
+      }
+    }
     const message = err instanceof Error ? err.message : "route_failed";
     return c.json({ error: message, engineId, mode: bundle.mode }, 502);
   }

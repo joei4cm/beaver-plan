@@ -27,7 +27,8 @@ export function strokeForMode(mode: string): PathStroke {
     case "transit":
       return { color: "#2F6BFF", width: 4.5, opacity: 1 };
     case "transfer":
-      return { color: "#E11D48", width: 3, dasharray: [0.8, 1.2], opacity: 0.95 };
+      // Soft azure dash — timber is reserved for errors, not transfer chrome.
+      return { color: "#60A5FA", width: 3, dasharray: [0.8, 1.2], opacity: 0.95 };
     case "drive":
       return { color: "#1A4FD6", width: 4, opacity: 1 };
     default:
