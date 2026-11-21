@@ -958,12 +958,12 @@ export default function TripDetailScreen() {
     : undefined;
 
   /**
-   * Expo transit filters SoftFailNotice (BEA-289 after #139 / #182):
+   * Expo transit filters SoftFailNotice depth (BEA-342 after #221 / BEA-289):
    * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
-   * own selected-stop soft chrome. Soft mode badge · filters-scoped copy ·
-   * tip-011 SheetPresence · StyleSheet.flatten. SoftFail yields while
-   * TransferSteps owns (no double depth). Soft copy never timber /
-   * Failed to fetch.
+   * own selected-stop soft chrome. Soft mode badge · softSupport · compact
+   * SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence ·
+   * StyleSheet.flatten. SoftFail yields while TransferSteps owns (no double
+   * depth). Soft copy never timber / Failed to fetch.
    */
   const selectedStopIndex = selectedStopId
     ? dayStops.findIndex((s) => s.id === selectedStopId)
@@ -979,6 +979,7 @@ export default function TripDetailScreen() {
   const modeSoftOpen =
     routingDemo && dayLegs.length > 0 && !transitSoftOwns;
   const modeSoftCopy = t(locale, "planner.mode.softFail");
+  const modeSoftSupport = t(locale, "planner.mode.softSupport");
 
   return (
     <View style={styles.root}>
@@ -1272,35 +1273,44 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit filters SoftFail chrome (BEA-289 after #139 / #182):
-                azure mode rail · Soft mode badge · compact SoftFail under rail ·
-                mist-track · azure select · tip-011 SheetPresence ·
-                StyleSheet.flatten. Yields while TransferSteps owns.
+                Transit filters SoftFail depth (BEA-342 after #221 / BEA-289):
+                azure mode rail · Soft mode badge · softSupport · compact
+                SoftFail mist band (`border-b`) · tip-011 mist-wash
+                SheetPresence · StyleSheet.flatten. Yields while TransferSteps
+                owns. Never timber / Failed to fetch.
               */}
               <View style={styles.modeFilter}>
-                <View style={styles.modeFilterHead}>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.modeFilterHead,
+                    modeSoftOpen ? styles.modeFilterHeadSoft : null,
+                  ])}
+                >
                   <Text style={styles.modeEyebrow}>
                     {t(locale, "planner.mode.eyebrow")}
                   </Text>
-                  <Text style={styles.modeSupport}>
-                    {t(locale, "planner.mode.support")}
+                  <Text style={styles.modeSupport} numberOfLines={1}>
+                    {modeSoftOpen
+                      ? modeSoftSupport
+                      : t(locale, "planner.mode.support")}
                   </Text>
-                  <View style={styles.modeSelectedBadge}>
-                    <Text style={styles.modeSelectedBadgeText}>
-                      {t(locale, `planner.mode.${travelMode}`)} ·{" "}
-                      {t(locale, "planner.mode.selected")}
-                    </Text>
-                  </View>
                   {modeSoftOpen ? (
                     <View style={styles.modeSoftBadge}>
                       <Text style={styles.modeSoftBadgeText}>
                         {t(locale, "planner.mode.softBadge")}
                       </Text>
                     </View>
-                  ) : null}
+                  ) : (
+                    <View style={styles.modeSelectedBadge}>
+                      <Text style={styles.modeSelectedBadgeText}>
+                        {t(locale, `planner.mode.${travelMode}`)} ·{" "}
+                        {t(locale, "planner.mode.selected")}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
-                {/* Compact SoftFail under azure mode rail — never timber / Failed to fetch. */}
+                {/* Compact SoftFail mist band under azure mode rail — never timber. */}
                 <SoftFailNotice
                   open={modeSoftOpen}
                   compact
@@ -1315,9 +1325,17 @@ export default function TripDetailScreen() {
                   delayMs={40}
                   accessibilityLabel={t(locale, "planner.mode.filterLabel")}
                 >
-                  <View style={styles.modeFilterBody}>
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.modeFilterBody,
+                      modeSoftOpen ? styles.modeFilterBodySoft : null,
+                    ])}
+                  >
                     <View
-                      style={styles.modeMistTrack}
+                      style={StyleSheet.flatten([
+                        styles.modeMistTrack,
+                        modeSoftOpen ? styles.modeMistTrackSoft : null,
+                      ])}
                       accessibilityRole="tablist"
                       accessibilityLabel={t(locale, "planner.mode.filterLabel")}
                     >
@@ -2671,6 +2689,14 @@ const styles = StyleSheet.create({
     rowGap: 4,
     paddingHorizontal: 2,
   },
+  /** Soft azure mode rail wash when SoftFail owns depth (BEA-342). */
+  modeFilterHeadSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    borderRadius: radius.xs,
+    marginHorizontal: -2,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
   modeEyebrow: {
     ...type.body,
     fontSize: 10,
@@ -2684,6 +2710,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     color: "rgba(100, 116, 139, 0.8)",
+    flexShrink: 1,
   },
   modeSelectedBadge: {
     borderRadius: radius.xs,
@@ -2706,6 +2733,13 @@ const styles = StyleSheet.create({
     columnGap: 10,
     rowGap: 8,
   },
+  /** Mist-wash mode body when SoftFail open (BEA-342 tip-011). */
+  modeFilterBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
+    borderRadius: radius.sm,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
   modeMistTrack: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -2713,6 +2747,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: "rgba(230, 236, 245, 0.55)",
     padding: 4,
+  },
+  /** Azure inset mist track when Mode SoftFail open (depth craft). */
+  modeMistTrackSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.78)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   modeChip: {
     borderRadius: radius.xs,
@@ -2766,7 +2806,7 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     paddingVertical: 2,
   },
-  /** Soft mode badge on azure rail when SoftFail owns (BEA-289). */
+  /** Soft mode badge on azure rail when SoftFail owns (BEA-342). */
   modeSoftBadge: {
     borderRadius: radius.xs,
     backgroundColor: colors.mist,
@@ -2781,7 +2821,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
-  /** Mist SoftFail strip under azure mode rail — border-b before chips. */
+  /** Mist SoftFail strip under azure mode rail — border-b before mist body. */
   modeSoftFail: {
     marginBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
