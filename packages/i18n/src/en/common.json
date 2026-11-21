@@ -512,6 +512,7 @@
   "translate.talkDemoBadge": "Demo talk",
   "translate.talkLiveBadge": "Live talk",
   "translate.lensSoftFail": "Lens soft-falls to scripted subtitles while vision keys are unset or the assist API is unreachable — OCR and caption still work; never a Failed to fetch crash.",
+  "translate.lensSupport": "OCR and caption soft-fall to demo subtitles while vision keys are unset — traveler and world lenses still share one stage.",
   "translate.lensDemoBadge": "Demo lens",
   "translate.lensLiveBadge": "Live lens",
   "translate.listening": "Listening…",

@@ -201,24 +201,22 @@ export default function TranslateScreen() {
             : null;
 
   /**
-   * Expo Lens SoftFailNotice chrome after web #52 / Expo #63:
-   * azure camera head · SoftFailNotice · tip-011 (#46) ·
+   * Expo Lens SoftFailNotice chrome (BEA-237 after Talk #150 / empty #178):
+   * foam lens rail · azure head · compact SoftFailNotice · tip-011 (#46) ·
    * StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
    * Hero SoftFailNotice yields while Lens owns soft-fail (no double depth).
    */
   const cameraSoftOpen =
-    tab === "camera" && (isDemo || camDenied || Boolean(error));
+    tab === "camera" && (isDemo || camDenied || Boolean(error) || softNotice);
   const cameraSoftCopy = camDenied
     ? t(uiLocale, "translate.permissionCamera")
     : softNotice && !online
       ? t(uiLocale, "translate.softOffline")
-      : isDemo
+      : isDemo || (error && isNoiseError(new Error(error)))
         ? t(uiLocale, "translate.lensSoftFail")
-        : error && isNoiseError(new Error(error))
-          ? t(uiLocale, "translate.lensSoftFail")
-          : error
-            ? t(uiLocale, "translate.error")
-            : null;
+        : error
+          ? t(uiLocale, "translate.error")
+          : t(uiLocale, "translate.lensSoftFail");
 
   useEffect(() => {
     let alive = true;
@@ -1224,184 +1222,217 @@ export default function TranslateScreen() {
           </View>
         ) : (
           <Animated.View
-            style={StyleSheet.flatten([styles.cameraPanel, historyRiseStyle])}
+            style={StyleSheet.flatten([styles.lensRail, historyRiseStyle])}
             accessibilityLabel={t(uiLocale, "translate.mode.camera")}
           >
-            {/* Azure hierarchy — eyebrow · soft/live badge · SoftFailNotice */}
+            {/*
+              Lens SoftFail chrome (BEA-237 after Talk #150 / empty #178):
+              foam sheet · azure head · compact SoftFailNotice · dual stage ·
+              tip-011 SheetPresence — never timber / Failed to fetch.
+            */}
             <View style={styles.cameraHead}>
               <View style={styles.cameraHeadTitles}>
                 <Text style={styles.cameraModeLabel}>
                   {t(uiLocale, "translate.mode.camera")}
                 </Text>
                 <Text style={styles.dualHint}>
-                  {t(uiLocale, "translate.dualHint")}
+                  {cameraSoftOpen
+                    ? t(uiLocale, "translate.lensSupport")
+                    : t(uiLocale, "translate.dualHint")}
                 </Text>
               </View>
               <View style={styles.cameraHeadBadges}>
-                {cameraSoftOpen ? (
-                  <Text style={styles.cameraSoftBadge}>
-                    {t(uiLocale, "translate.lensDemoBadge")}
+                <View
+                  style={StyleSheet.flatten([
+                    styles.cameraSoftBadgeWrap,
+                    cameraSoftOpen
+                      ? styles.cameraSoftBadgeSoft
+                      : styles.cameraSoftBadgeLive,
+                  ])}
+                >
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.cameraSoftBadgeText,
+                      cameraSoftOpen
+                        ? styles.cameraSoftBadgeTextSoft
+                        : styles.cameraSoftBadgeTextLive,
+                    ])}
+                  >
+                    {cameraSoftOpen
+                      ? t(uiLocale, "translate.lensDemoBadge")
+                      : t(uiLocale, "translate.lensLiveBadge")}
                   </Text>
-                ) : (
-                  <Text style={styles.cameraLiveBadge}>
-                    {t(uiLocale, "translate.lensLiveBadge")}
-                  </Text>
-                )}
+                </View>
               </View>
             </View>
 
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
             <SoftFailNotice
-              open={Boolean(cameraSoftCopy)}
+              open={cameraSoftOpen && Boolean(cameraSoftCopy)}
+              compact
               style={styles.cameraSoftFail}
             >
               {cameraSoftCopy ?? ""}
             </SoftFailNotice>
 
-            <View style={styles.dualFrame}>
-              <View style={styles.dualStage}>
-                {/* Traveler lens */}
-                <View
-                  style={StyleSheet.flatten([styles.lensPane, styles.lensYou])}
-                >
-                  <View style={styles.lensYouWash} />
-                  <View style={styles.lensYouGlow} />
-                  <View style={styles.lensBadgeWrap}>
-                    <Text style={styles.lensBadgeText}>
-                      {t(uiLocale, "translate.lensYou")} ·{" "}
-                      {t(uiLocale, "translate.cameraFront")}
+            <SheetPresence
+              open
+              delayMs={40}
+              rise={12}
+              style={styles.lensBody}
+              accessibilityLabel={t(uiLocale, "translate.dualHint")}
+            >
+              <View style={styles.dualFrame}>
+                <View style={styles.dualStage}>
+                  {/* Traveler lens */}
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.lensPane,
+                      styles.lensYou,
+                    ])}
+                  >
+                    <View style={styles.lensYouWash} />
+                    <View style={styles.lensYouGlow} />
+                    <View style={styles.lensBadgeWrap}>
+                      <Text style={styles.lensBadgeText}>
+                        {t(uiLocale, "translate.lensYou")} ·{" "}
+                        {t(uiLocale, "translate.cameraFront")}
+                      </Text>
+                    </View>
+                    <View style={styles.avatarOuter}>
+                      <View style={styles.avatarInner} />
+                    </View>
+                    <Text style={styles.lensFooterLabel}>
+                      {t(uiLocale, "translate.source")}
                     </Text>
                   </View>
-                  <View style={styles.avatarOuter}>
-                    <View style={styles.avatarInner} />
+
+                  {/* World lens */}
+                  <View style={styles.lensPane}>
+                    {camPermission?.granted ? (
+                      <CameraView
+                        ref={cameraRef}
+                        style={StyleSheet.absoluteFill}
+                        facing={facing}
+                      />
+                    ) : (
+                      <View style={styles.cameraFallback}>
+                        <View style={styles.cameraFallbackGlow} />
+                        <Text style={styles.cameraFallbackText}>
+                          {camDenied
+                            ? t(uiLocale, "translate.permissionCamera")
+                            : t(uiLocale, "translate.cameraHint")}
+                        </Text>
+                        <Pressable
+                          style={StyleSheet.flatten([styles.enableCamBtn])}
+                          onPress={() => {
+                            void requestCamPermission().then((next) => {
+                              if (!next.granted) setSoftNotice(true);
+                            });
+                          }}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.sendLabel}>
+                            {t(uiLocale, "translate.enableCamera")}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+                    <View style={styles.lensBadgeWrap}>
+                      <Text style={styles.lensBadgeText}>
+                        {t(uiLocale, "translate.lensWorld")} ·{" "}
+                        {facing === "back"
+                          ? t(uiLocale, "translate.cameraBack")
+                          : t(uiLocale, "translate.cameraFront")}
+                      </Text>
+                    </View>
+                    {busy && tab === "camera" && !overlay ? (
+                      <View style={styles.visionBusy}>
+                        <View style={styles.skeletonLineSm} />
+                        <View style={styles.skeletonLineLg} />
+                      </View>
+                    ) : null}
+                    {overlay ? (
+                      <View style={styles.subtitle}>
+                        <Text style={styles.subtitleMeta}>
+                          {t(uiLocale, "translate.target")}
+                        </Text>
+                        <Text style={styles.subtitleSource}>
+                          {overlay.source}
+                        </Text>
+                        {overlay.translated ? (
+                          <Text style={styles.subtitleTarget}>
+                            {overlay.translated}
+                          </Text>
+                        ) : null}
+                        {busy ? (
+                          <View
+                            style={StyleSheet.flatten([
+                              styles.skeletonLineSm,
+                              { marginTop: 8 },
+                            ])}
+                          />
+                        ) : null}
+                      </View>
+                    ) : null}
                   </View>
-                  <Text style={styles.lensFooterLabel}>
-                    {t(uiLocale, "translate.source")}
-                  </Text>
                 </View>
 
-                {/* World lens */}
-                <View style={styles.lensPane}>
-                  {camPermission?.granted ? (
-                    <CameraView
-                      ref={cameraRef}
-                      style={StyleSheet.absoluteFill}
-                      facing={facing}
-                    />
-                  ) : (
-                    <View style={styles.cameraFallback}>
-                      <View style={styles.cameraFallbackGlow} />
-                      <Text style={styles.cameraFallbackText}>
-                        {camDenied
-                          ? t(uiLocale, "translate.permissionCamera")
-                          : t(uiLocale, "translate.cameraHint")}
-                      </Text>
-                      <Pressable
-                        style={StyleSheet.flatten([styles.enableCamBtn])}
-                        onPress={() => {
-                          void requestCamPermission().then((next) => {
-                            if (!next.granted) setSoftNotice(true);
-                          });
-                        }}
-                        accessibilityRole="button"
-                      >
-                        <Text style={styles.sendLabel}>
-                          {t(uiLocale, "translate.enableCamera")}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
-                  <View style={styles.lensBadgeWrap}>
-                    <Text style={styles.lensBadgeText}>
-                      {t(uiLocale, "translate.lensWorld")} ·{" "}
+                {/* Control chrome rail */}
+                <View style={styles.controlChrome}>
+                  <Pressable
+                    style={StyleSheet.flatten([styles.facingBtn])}
+                    onPress={() =>
+                      setFacing((f) => (f === "back" ? "front" : "back"))
+                    }
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.facingLabel}>
                       {facing === "back"
-                        ? t(uiLocale, "translate.cameraBack")
-                        : t(uiLocale, "translate.cameraFront")}
+                        ? t(uiLocale, "translate.cameraFront")
+                        : t(uiLocale, "translate.cameraBack")}
                     </Text>
-                  </View>
-                  {busy && tab === "camera" && !overlay ? (
-                    <View style={styles.visionBusy}>
-                      <View style={styles.skeletonLineSm} />
-                      <View style={styles.skeletonLineLg} />
-                    </View>
-                  ) : null}
-                  {overlay ? (
-                    <View style={styles.subtitle}>
-                      <Text style={styles.subtitleMeta}>
-                        {t(uiLocale, "translate.target")}
-                      </Text>
-                      <Text style={styles.subtitleSource}>
-                        {overlay.source}
-                      </Text>
-                      {overlay.translated ? (
-                        <Text style={styles.subtitleTarget}>
-                          {overlay.translated}
-                        </Text>
-                      ) : null}
-                      {busy ? (
-                        <View
-                          style={StyleSheet.flatten([
-                            styles.skeletonLineSm,
-                            { marginTop: 8 },
-                          ])}
-                        />
-                      ) : null}
-                    </View>
-                  ) : null}
+                  </Pressable>
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.visionBtn,
+                      busy ? styles.disabled : null,
+                    ])}
+                    onPress={() => void onVision("ocr")}
+                    disabled={busy}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: busy }}
+                  >
+                    <Text style={styles.visionLabel}>
+                      {busy
+                        ? t(uiLocale, "translate.translating")
+                        : t(uiLocale, "translate.ocr")}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.visionBtnAlt,
+                      busy ? styles.disabled : null,
+                    ])}
+                    onPress={() => void onVision("caption")}
+                    disabled={busy}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: busy }}
+                  >
+                    <Text style={styles.visionLabelAlt}>
+                      {t(uiLocale, "translate.caption")}
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.controlMeta}>
+                    {camPermission?.granted
+                      ? t(uiLocale, "translate.lensWorld")
+                      : camDenied
+                        ? t(uiLocale, "translate.demoBadge")
+                        : t(uiLocale, "translate.loading")}
+                  </Text>
                 </View>
               </View>
-
-              {/* Control chrome rail */}
-              <View style={styles.controlChrome}>
-                <Pressable
-                  style={StyleSheet.flatten([styles.facingBtn])}
-                  onPress={() =>
-                    setFacing((f) => (f === "back" ? "front" : "back"))
-                  }
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.facingLabel}>
-                    {facing === "back"
-                      ? t(uiLocale, "translate.cameraFront")
-                      : t(uiLocale, "translate.cameraBack")}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.visionBtn,
-                    busy ? styles.disabled : null,
-                  ])}
-                  onPress={() => void onVision("ocr")}
-                  disabled={busy}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.visionLabel}>
-                    {busy
-                      ? t(uiLocale, "translate.translating")
-                      : t(uiLocale, "translate.ocr")}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.visionBtnAlt,
-                    busy ? styles.disabled : null,
-                  ])}
-                  onPress={() => void onVision("caption")}
-                  disabled={busy}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.visionLabelAlt}>
-                    {t(uiLocale, "translate.caption")}
-                  </Text>
-                </Pressable>
-                <Text style={styles.controlMeta}>
-                  {camPermission?.granted
-                    ? t(uiLocale, "translate.lensWorld")
-                    : camDenied
-                      ? t(uiLocale, "translate.demoBadge")
-                      : t(uiLocale, "translate.loading")}
-                </Text>
-              </View>
-            </View>
+            </SheetPresence>
           </Animated.View>
         )}
       </ScrollView>
@@ -2198,11 +2229,21 @@ const styles = StyleSheet.create({
   },
   demoNextLabel: { color: colors.river, fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.55 },
-  cameraPanel: {
-    marginTop: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 12,
+  /** Foam lens rail — Talk #150 / empty #178 SoftFail sheet parity. */
+  lensRail: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    overflow: "hidden",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -8 },
+    elevation: 3,
   },
   cameraHead: {
     flexDirection: "row",
@@ -2210,9 +2251,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-between",
     gap: 10,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     backgroundColor: "rgba(244, 246, 250, 0.72)",
@@ -2226,40 +2266,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  cameraSoftBadge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  cameraSoftBadgeWrap: {
     borderRadius: radius.xs,
-    overflow: "hidden",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  cameraLiveBadge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    color: colors.riverDeep,
+  cameraSoftBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  cameraSoftBadgeLive: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.xs,
-    overflow: "hidden",
+  },
+  cameraSoftBadgeText: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  cameraSoftBadgeTextSoft: {
+    color: colors.inkSoft,
+  },
+  cameraSoftBadgeTextLive: {
+    color: colors.riverDeep,
   },
   cameraModeLabel: {
-    fontSize: 11,
-    letterSpacing: 1.8,
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 2,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
   },
   dualHint: {
+    ...type.body,
     color: colors.inkSoft,
     fontSize: 13,
     lineHeight: 18,
@@ -2267,17 +2307,16 @@ const styles = StyleSheet.create({
   cameraSoftFail: {
     marginBottom: 0,
   },
+  lensBody: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
   dualFrame: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
-    shadowColor: colors.shadowDeep,
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
   },
   dualStage: {
     backgroundColor: colors.ink,

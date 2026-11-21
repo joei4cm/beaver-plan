@@ -512,6 +512,7 @@
   "translate.talkDemoBadge": "演示对话",
   "translate.talkLiveBadge": "实时对话",
   "translate.lensSoftFail": "镜头在视觉密钥未配置或助手段不可达时柔和回退到演示字幕 — 识别与场景字幕仍可用，不会出现 Failed to fetch。",
+  "translate.lensSupport": "识别与场景字幕在视觉密钥未配置时柔和回退到演示字幕——旅人与世界镜头仍共享同一舞台。",
   "translate.lensDemoBadge": "演示镜头",
   "translate.lensLiveBadge": "实时镜头",
   "translate.listening": "聆听中…",
