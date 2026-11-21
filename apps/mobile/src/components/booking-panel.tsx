@@ -27,6 +27,7 @@ import {
   searchBooking,
 } from "../api";
 import { type } from "../theme";
+import { SheetPresence } from "./sheet-presence";
 import { SoftFailNotice } from "./soft-fail-notice";
 
 type Props = {
@@ -113,8 +114,10 @@ async function searchLocal(
 }
 
 /**
- * Expo OTA booking sheet — soft-fail + depth chrome after web #78 / #95.
- * Azure header rail · SoftFailNotice · Search · Results · Pinned.
+ * Expo OTA booking sheet — confirm chrome after web #78 / #95 / #128.
+ * Azure header · SoftFailNotice · Search · Results · Confirm rail.
+ * SheetPresence (#46) + StyleSheet.flatten (RN Web). Save soft-fail stays
+ * section-scoped under the Confirm azure header.
  */
 export function BookingPanel({
   tripId,
@@ -132,6 +135,8 @@ export function BookingPanel({
   const [suggestions, setSuggestions] = useState<BookingSuggestion[]>([]);
   const [statusMode, setStatusMode] = useState<"demo" | "configured">("demo");
   const [softDemo, setSoftDemo] = useState(false);
+  /** Save soft-fail stays under the Confirm rail — never timber Failed to fetch. */
+  const [confirmSoftFail, setConfirmSoftFail] = useState(false);
   const [searched, setSearched] = useState(false);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [city, setCity] = useState(destinationHint ?? "");
@@ -142,6 +147,7 @@ export function BookingPanel({
 
   useEffect(() => {
     setDrafts(draftsFromStop(stop));
+    setConfirmSoftFail(false);
     if (stop) setOpen(true);
   }, [stop]);
 
@@ -210,10 +216,28 @@ export function BookingPanel({
     [stop],
   );
 
+  const pendingCount = useMemo(
+    () => drafts.filter((d) => d.url.trim()).length,
+    [drafts],
+  );
+
+  const isDirty = useMemo(() => {
+    const baseline = draftsFromStop(stop);
+    return BOOKING_LINK_KINDS.some((kind) => {
+      const draft = drafts.find((d) => d.kind === kind)!;
+      const saved = baseline.find((d) => d.kind === kind)!;
+      return (
+        draft.url.trim() !== saved.url.trim() ||
+        draft.providerLabel.trim() !== saved.providerLabel.trim()
+      );
+    });
+  }, [drafts, stop]);
+
   function updateDraft(
     kind: BookingLinkKind,
     patch: Partial<Omit<DraftRow, "kind">>,
   ) {
+    setConfirmSoftFail(false);
     setDrafts((prev) =>
       prev.map((row) => (row.kind === kind ? { ...row, ...patch } : row)),
     );
@@ -244,11 +268,12 @@ export function BookingPanel({
         bookingLinks,
         expectedVersion: trip.version,
       });
-      setSoftDemo(false);
+      setConfirmSoftFail(false);
       onSaved(res.stop);
     } catch (e) {
       if (isNoiseError(e)) {
-        setSoftDemo(true);
+        // Confirm-rail SoftFailNotice only — never surface timber "Failed to fetch".
+        setConfirmSoftFail(true);
         applyLocalStop(bookingLinks);
       }
     } finally {
@@ -595,83 +620,141 @@ export function BookingPanel({
             ) : null}
           </View>
 
-          {/* Pinned */}
-          <View
-            style={styles.pinnedSection}
-            accessibilityLabel={t(locale, "planner.booking.linksEyebrow")}
+          {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
+          <SheetPresence
+            open={open}
+            delayMs={90}
+            rise={10}
+            style={styles.confirmSection}
+            accessibilityLabel={t(locale, "planner.booking.confirmEyebrow")}
           >
-            <Text style={styles.sectionEyebrow}>
-              {t(locale, "planner.booking.linksEyebrow")}
-            </Text>
-            <Text style={styles.pinnedTitle}>
-              {t(locale, "planner.booking.linksTitle")}
-            </Text>
-
-            {!stop ? (
-              <Text style={styles.sectionSupport}>
-                {t(locale, "planner.booking.selectStop")}
-              </Text>
-            ) : (
-              <View style={styles.draftList}>
-                {drafts.map((row) => (
-                  <View key={row.kind} style={styles.draftCard}>
-                    <View style={styles.draftHead}>
-                      <Text style={styles.draftKind}>
-                        {t(locale, `planner.booking.kind.${row.kind}`)}
-                      </Text>
-                      {row.url.trim() ? (
-                        <Pressable
-                          style={styles.openChip}
-                          onPress={() => openExternal(row.url.trim())}
-                          accessibilityRole="button"
-                        >
-                          <Text style={styles.openChipLabel}>
-                            {t(locale, "planner.booking.open")}
-                          </Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                    <TextInput
-                      value={row.providerLabel}
-                      onChangeText={(v) =>
-                        updateDraft(row.kind, { providerLabel: v })
-                      }
-                      placeholder={t(
-                        locale,
-                        "planner.booking.providerPlaceholder",
-                      )}
-                      placeholderTextColor="rgba(100,116,139,0.5)"
-                      style={styles.input}
-                    />
-                    <TextInput
-                      value={row.url}
-                      onChangeText={(v) => updateDraft(row.kind, { url: v })}
-                      placeholder={t(locale, "planner.booking.urlPlaceholder")}
-                      placeholderTextColor="rgba(100,116,139,0.5)"
-                      style={styles.input}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
+            <View style={styles.confirmRail}>
+              <View style={styles.confirmHeader}>
+                <View style={styles.confirmHeaderText}>
+                  <View style={styles.confirmChipRow}>
+                    <Text style={styles.sectionEyebrow}>
+                      {t(locale, "planner.booking.confirmEyebrow")}
+                    </Text>
+                    {pendingCount > 0 ? (
+                      <View style={styles.pendingChip}>
+                        <Text style={styles.pendingChipLabel}>
+                          {t(locale, "planner.booking.confirmPending").replace(
+                            "{n}",
+                            String(pendingCount),
+                          )}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {isDirty ? (
+                      <View style={styles.dirtyChip}>
+                        <Text style={styles.dirtyChipLabel}>
+                          {t(locale, "planner.booking.confirmDirty")}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
-                ))}
-                <Pressable
-                  style={StyleSheet.flatten([
-                    styles.saveBtn,
-                    saving ? styles.searchBtnBusy : null,
-                  ])}
-                  disabled={saving}
-                  onPress={() => void save()}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.saveBtnLabel}>
-                    {saving
-                      ? t(locale, "planner.booking.saving")
-                      : t(locale, "planner.booking.save")}
+                  <Text style={styles.confirmTitle}>
+                    {t(locale, "planner.booking.confirmTitle")}
                   </Text>
-                </Pressable>
+                  <Text style={styles.confirmSupport}>
+                    {t(locale, "planner.booking.confirmSupport")}
+                  </Text>
+                </View>
+                {stop ? (
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.saveBtn,
+                      saving || !isDirty ? styles.searchBtnBusy : null,
+                    ])}
+                    disabled={saving || !isDirty}
+                    onPress={() => void save()}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.saveBtnLabel}>
+                      {saving
+                        ? t(locale, "planner.booking.saving")
+                        : t(locale, "planner.booking.save")}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
-            )}
-          </View>
+
+              <SoftFailNotice
+                open={confirmSoftFail}
+                compact
+                style={styles.confirmSoftFail}
+              >
+                {t(locale, "planner.booking.confirmSoftFail")}
+              </SoftFailNotice>
+
+              <View style={styles.draftList}>
+                {!stop ? (
+                  <Text style={styles.sectionSupport}>
+                    {t(locale, "planner.booking.selectStop")}
+                  </Text>
+                ) : (
+                  drafts.map((row, i) => {
+                    const filled = Boolean(row.url.trim());
+                    return (
+                      <SheetPresence
+                        key={row.kind}
+                        open={open}
+                        delayMs={filled ? 40 + i * 35 : 0}
+                        rise={filled ? 8 : 0}
+                        style={StyleSheet.flatten([
+                          styles.draftCard,
+                          filled ? styles.draftCardFilled : styles.draftCardEmpty,
+                        ])}
+                      >
+                        <View style={styles.draftHead}>
+                          <Text style={styles.draftKind}>
+                            {t(locale, `planner.booking.kind.${row.kind}`)}
+                          </Text>
+                          {filled ? (
+                            <Pressable
+                              style={styles.openChip}
+                              onPress={() => openExternal(row.url.trim())}
+                              accessibilityRole="button"
+                            >
+                              <Text style={styles.openChipLabel}>
+                                {t(locale, "planner.booking.open")}
+                              </Text>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                        <TextInput
+                          value={row.providerLabel}
+                          onChangeText={(v) =>
+                            updateDraft(row.kind, { providerLabel: v })
+                          }
+                          placeholder={t(
+                            locale,
+                            "planner.booking.providerPlaceholder",
+                          )}
+                          placeholderTextColor="rgba(100,116,139,0.5)"
+                          style={styles.confirmInput}
+                        />
+                        <TextInput
+                          value={row.url}
+                          onChangeText={(v) =>
+                            updateDraft(row.kind, { url: v })
+                          }
+                          placeholder={t(
+                            locale,
+                            "planner.booking.urlPlaceholder",
+                          )}
+                          placeholderTextColor="rgba(100,116,139,0.5)"
+                          style={styles.confirmInput}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                      </SheetPresence>
+                    );
+                  })
+                )}
+              </View>
+            </View>
+          </SheetPresence>
 
           <Text style={styles.hint}>{t(locale, "planner.booking.hint")}</Text>
         </Animated.View>
@@ -1024,36 +1107,113 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     opacity: 0.55,
   },
-  pinnedSection: {
+  confirmSection: {
     paddingHorizontal: 14,
     paddingVertical: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: "rgba(244,246,250,0.45)",
+  },
+  confirmRail: {
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+  },
+  confirmHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244,246,250,0.7)",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+  },
+  confirmHeaderText: {
+    flex: 1,
+    minWidth: 160,
+    gap: 4,
+  },
+  confirmChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     gap: 8,
   },
-  pinnedTitle: {
+  pendingChip: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47,107,255,0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
+  },
+  pendingChipLabel: {
     ...type.body,
-    fontSize: 11,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.riverDeep,
+  },
+  dirtyChip: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  dirtyChipLabel: {
+    ...type.body,
+    fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
+  confirmTitle: {
+    ...type.display,
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    color: colors.ink,
+  },
+  confirmSupport: {
+    ...type.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.inkSoft,
+  },
+  confirmSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
   draftList: {
     gap: 10,
-    marginTop: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   draftCard: {
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(148,163,184,0.4)",
-    backgroundColor: "rgba(255,255,255,0.8)",
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
+  },
+  draftCardFilled: {
+    borderColor: "rgba(47,107,255,0.3)",
+    backgroundColor: "rgba(47,107,255,0.04)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  draftCardEmpty: {
+    borderColor: "rgba(148,163,184,0.4)",
+    backgroundColor: "rgba(244,246,250,0.5)",
   },
   draftHead: {
     flexDirection: "row",
@@ -1082,6 +1242,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     color: colors.river,
+  },
+  confirmInput: {
+    ...type.body,
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.ink,
   },
   saveBtn: {
     alignSelf: "flex-start",
