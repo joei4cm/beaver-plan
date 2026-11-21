@@ -888,7 +888,11 @@ export default function TripDetailScreen() {
     ],
   };
 
-  /** Invite SoftFailNotice chrome — invite-scoped copy after web #130. */
+  /**
+   * Invite SoftFailNotice depth (BEA-300 after #186):
+   * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
+   * softSupport · tip-011. Soft copy never timber / Failed to fetch.
+   */
   const inviteSoftOpen = collabSeeded || collabSoftOffline;
   const inviteSoftCopy = collabSoftOffline
     ? t(locale, "collab.inviteSoftFail")
@@ -2025,14 +2029,20 @@ export default function TripDetailScreen() {
                   style={styles.inviteSheet}
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
-                  {/* Invite SoftFail depth (BEA-250) — azure rail · SoftFail · mist code · tip-011 */}
+                  {/*
+                    Invite SoftFail depth (BEA-300 after #186):
+                    azure rail · Soft invite · softSupport · SoftFailNotice ·
+                    mist code · tip-011 — never timber / Failed to fetch.
+                  */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
                       <Text style={styles.inviteSheetEyebrow}>
                         {t(locale, "collab.inviteEyebrow")}
                       </Text>
                       <Text style={styles.inviteSheetSupport}>
-                        {t(locale, "collab.inviteSupport")}
+                        {inviteSoftOpen
+                          ? t(locale, "collab.inviteSoftSupport")
+                          : t(locale, "collab.inviteSupport")}
                       </Text>
                     </View>
                     <View style={styles.inviteSheetBadges}>
@@ -2045,7 +2055,7 @@ export default function TripDetailScreen() {
                         ])}
                       >
                         {inviteSoftOpen
-                          ? t(locale, "collab.demoBadge")
+                          ? t(locale, "collab.inviteSoftBadge")
                           : t(locale, "collab.inviteLiveBadge")}
                       </Text>
                       {inviteCode ? (
@@ -2055,16 +2065,29 @@ export default function TripDetailScreen() {
                       ) : null}
                     </View>
                   </View>
-                  <SoftFailNotice open={inviteSoftOpen} compact>
+                  {/* Compact SoftFail under azure invite rail — never timber / Failed to fetch. */}
+                  <SoftFailNotice
+                    open={inviteSoftOpen}
+                    compact
+                    style={styles.inviteSheetSoftFail}
+                  >
                     {inviteSoftCopy}
                   </SoftFailNotice>
-                  <View style={styles.inviteSheetBody}>
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.inviteSheetBody,
+                      inviteSoftOpen ? styles.inviteSheetBodySoft : null,
+                    ])}
+                  >
                     {inviteCode ? (
                       <SheetPresence
                         open
                         delayMs={40}
                         rise={10}
-                        style={styles.inviteCodeInset}
+                        style={StyleSheet.flatten([
+                          styles.inviteCodeInset,
+                          inviteSoftOpen ? styles.inviteCodeInsetSoft : null,
+                        ])}
                       >
                         <Text style={styles.inviteCodeEyebrow}>
                           {t(locale, "collab.inviteCodeEyebrow")}
@@ -3492,11 +3515,20 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
   },
+  /** Mist SoftFail strip under azure invite rail — border-b before mist body. */
+  inviteSheetSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
   inviteSheetBody: {
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 12,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  inviteSheetBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
   inviteCodeInset: {
     gap: 10,
@@ -3507,6 +3539,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+  },
+  inviteCodeInsetSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
   },
   inviteCodeEyebrow: {
     ...type.body,
