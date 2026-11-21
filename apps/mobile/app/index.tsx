@@ -99,6 +99,13 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/settings" asChild>
+          <Pressable style={styles.ghost}>
+            <Text style={styles.ghostLabel}>
+              {t(locale, "nav.settings")}
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/sign-in" asChild>
           <Pressable style={styles.ghost}>
             <Text style={styles.ghostLabel}>

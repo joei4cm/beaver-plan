@@ -130,6 +130,26 @@ export function isApiSoftFail(err: unknown): boolean {
   );
 }
 
+export type EngineResolve = {
+  preference: string;
+  region: string;
+  engineId: string;
+  mode: string;
+  autoAmapCn?: boolean;
+};
+
+/** Resolve which map engine would be used (settings probe). */
+export async function fetchMapEngine(input: {
+  preference: Trip["mapEngine"];
+  timezone?: string;
+}): Promise<EngineResolve> {
+  const params = new URLSearchParams({
+    preference: input.preference,
+  });
+  if (input.timezone) params.set("timezone", input.timezone);
+  return apiGet<EngineResolve>(`/v1/maps/engine?${params.toString()}`);
+}
+
 export type PlacesSearchResponse = {
   places: PlaceSummary[];
   engineId?: MapEngineId;
