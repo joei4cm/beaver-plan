@@ -25,6 +25,11 @@ import {
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  DualCameraSkeleton,
+  Skeleton,
+  TranslateStatusSkeleton,
+} from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   createWebOfflineQueueStore,
@@ -198,6 +203,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [facing, setFacing] = useState<Facing>("environment");
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraDenied, setCameraDenied] = useState(false);
   const [overlay, setOverlay] = useState<{
     source: string;
     translated: string;
@@ -601,6 +608,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   }
 
   async function startCamera(nextFacing: Facing = facing) {
+    setCameraStarting(true);
+    setCameraDenied(false);
     try {
       cameraStreamRef.current?.getTracks().forEach((tr) => tr.stop());
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -613,8 +622,13 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         await videoRef.current.play();
       }
       setCameraReady(true);
+      setCameraDenied(false);
     } catch {
       setCameraReady(false);
+      setCameraDenied(true);
+      setSoftNotice(true);
+    } finally {
+      setCameraStarting(false);
     }
   }
 
@@ -724,38 +738,37 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           {t(locale, "translate.webSupport")}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
-          <span
-            className={`rounded-bp-xs px-2.5 py-1 font-semibold ${
-              isDemo
-                ? "bg-river/12 text-river-deep"
-                : "bg-river text-foam"
-            }`}
-          >
-            {isDemo
-              ? t(locale, "translate.demoBadge")
-              : t(locale, "translate.liveBadge")}
-          </span>
-          <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-river-deep">
-            {t(locale, "translate.streamingBadge")}
-          </span>
-          <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
-            {online
-              ? t(locale, "offline.online")
-              : t(locale, "translate.offlineBadge")}
-          </span>
-          <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
-            {t(locale, "translate.asrReady")} · {status?.asr ?? "…"}
-          </span>
-          <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
-            {t(locale, "translate.ttsReady")} · {status?.tts ?? "…"}
-          </span>
-          {!status ? (
-            <span className="text-ink-soft/70">
-              {t(locale, "translate.loading")}
+        {!status ? (
+          <TranslateStatusSkeleton />
+        ) : (
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
+            <span
+              className={`rounded-bp-xs px-2.5 py-1 font-semibold ${
+                isDemo
+                  ? "bg-river/12 text-river-deep"
+                  : "bg-river text-foam"
+              }`}
+            >
+              {isDemo
+                ? t(locale, "translate.demoBadge")
+                : t(locale, "translate.liveBadge")}
             </span>
-          ) : null}
-        </div>
+            <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-river-deep">
+              {t(locale, "translate.streamingBadge")}
+            </span>
+            <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
+              {online
+                ? t(locale, "offline.online")
+                : t(locale, "translate.offlineBadge")}
+            </span>
+            <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+              {t(locale, "translate.asrReady")} · {status.asr}
+            </span>
+            <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+              {t(locale, "translate.ttsReady")} · {status.tts}
+            </span>
+          </div>
+        )}
 
         {isDemo ? (
           <SoftFailNotice className="mt-4">
@@ -767,7 +780,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       </header>
 
       <div
-        className="animate-rise mt-8 flex gap-2 rounded-xl bg-mist/70 p-1.5"
+        className="animate-rise mt-8 flex gap-2 rounded-bp bg-mist/70 p-1.5"
         style={{ animationDelay: "40ms" }}
         role="tablist"
         aria-label={t(locale, "translate.title")}
@@ -789,14 +802,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 if (cameraStreamRef.current && videoRef.current) {
                   videoRef.current.srcObject = cameraStreamRef.current;
                   void videoRef.current.play();
-                } else if (!cameraReady) {
+                } else if (!cameraReady && !cameraStarting) {
                   void startCamera();
                 }
               }
             }}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+            className={`bp-transition flex-1 rounded-bp-sm px-4 py-2.5 text-sm font-semibold duration-bp-fast ease-bp-out ${
               tab === id
-                ? "bg-river text-foam shadow-sm"
+                ? "bg-river text-foam shadow-bp-soft"
                 : "text-ink-soft hover:text-ink"
             }`}
           >
@@ -829,7 +842,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               setSourceLocale(next.sourceLocale);
               setTargetLocale(next.targetLocale);
             }}
-            className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-sm transition hover:bg-river-deep"
+            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep"
             aria-label={t(locale, "translate.swap")}
           >
             ⇄
@@ -1017,117 +1030,175 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           className="animate-sheet-in mt-6"
           aria-label={t(locale, "translate.mode.camera")}
         >
-          <p className="mb-3 text-sm text-ink-soft">
-            {t(locale, "translate.dualHint")}
-          </p>
-          <div className="grid overflow-hidden rounded-2xl border border-[color:var(--bp-line)] bg-ink shadow-[0_20px_50px_rgba(15,23,42,0.12)] md:grid-cols-2">
-            <div className="relative min-h-[220px] border-b border-white/10 md:min-h-[320px] md:border-b-0 md:border-r">
-              <div
-                className="animate-lens-breathe absolute inset-0"
-                style={{
-                  backgroundImage: `
-                    radial-gradient(ellipse 60% 50% at 40% 35%, rgba(47,107,255,0.45), transparent 60%),
-                    linear-gradient(160deg, #1a4fd6 0%, #0f172a 70%)
-                  `,
-                }}
-              />
-              <div className="bp-topo absolute inset-0 opacity-30" />
-              <div className="absolute left-3 top-3 rounded-bp-sm bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
-                {t(locale, "translate.lensYou")} ·{" "}
-                {t(locale, "translate.cameraFront")}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-20 w-20 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
-              </div>
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                {t(locale, "translate.mode.camera")}
+              </p>
+              <p className="mt-1 text-sm text-ink-soft">
+                {t(locale, "translate.dualHint")}
+              </p>
             </div>
+            {cameraDenied ? (
+              <SoftFailNotice className="max-w-sm">
+                {t(locale, "translate.permissionCamera")}
+              </SoftFailNotice>
+            ) : null}
+          </div>
 
-            <div className="relative min-h-[220px] md:min-h-[320px]">
-              {cameraReady ? (
-                <video
-                  ref={videoRef}
-                  muted
-                  playsInline
-                  autoPlay
-                  className={`absolute inset-0 h-full w-full object-cover ${
-                    facing === "user" ? "scale-x-[-1]" : ""
-                  }`}
-                />
-              ) : (
-                <>
+          {cameraStarting && !cameraReady ? (
+            <DualCameraSkeleton />
+          ) : (
+            <div className="overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp">
+              <div className="grid md:grid-cols-2">
+                {/* Traveler lens */}
+                <div className="relative isolate min-h-[240px] border-b border-[color:var(--bp-line)] md:min-h-[340px] md:border-b-0 md:border-r">
                   <div
                     className="animate-lens-breathe absolute inset-0"
                     style={{
                       backgroundImage: `
-                        radial-gradient(ellipse 70% 55% at 70% 40%, rgba(96,165,250,0.35), transparent 55%),
-                        linear-gradient(200deg, #334155 0%, #0f172a 85%)
+                        radial-gradient(ellipse 60% 50% at 40% 35%, rgba(47,107,255,0.42), transparent 60%),
+                        linear-gradient(160deg, #1a4fd6 0%, #0f172a 72%)
                       `,
                     }}
                   />
-                  <div className="bp-topo absolute inset-0 opacity-40" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                    <p className="text-sm text-foam/80">
-                      {t(locale, "translate.cameraHint")}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => void startCamera()}
-                      className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam"
-                    >
-                      {t(locale, "translate.enableCamera")}
-                    </button>
+                  <div className="bp-topo absolute inset-0 opacity-30" />
+                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm ring-1 ring-white/15">
+                    {t(locale, "translate.lensYou")} ·{" "}
+                    {t(locale, "translate.cameraFront")}
                   </div>
-                </>
-              )}
-              <div className="absolute left-3 top-3 rounded-bp-sm bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
-                {t(locale, "translate.lensWorld")} ·{" "}
-                {facing === "environment"
-                  ? t(locale, "translate.cameraBack")
-                  : t(locale, "translate.cameraFront")}
-              </div>
-              {overlay ? (
-                <div className="absolute inset-x-3 bottom-3 rounded-xl bg-ink/75 px-4 py-3 backdrop-blur-md">
-                  <p className="text-xs text-foam/70">{overlay.source}</p>
-                  {overlay.translated ? (
-                    <p className="mt-1 font-display text-lg font-semibold leading-snug text-foam">
-                      {overlay.translated}
-                    </p>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex h-[5.5rem] w-[5.5rem] items-center justify-center rounded-full border border-white/30 bg-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] backdrop-blur-sm">
+                      <div className="h-14 w-14 rounded-full bg-river/35 ring-2 ring-foam/25" />
+                    </div>
+                  </div>
+                  <p className="absolute inset-x-3 bottom-3 z-10 text-center text-[11px] font-medium tracking-wide text-foam/65">
+                    {t(locale, "translate.source")}
+                  </p>
+                </div>
+
+                {/* World lens */}
+                <div className="relative isolate min-h-[240px] bg-ink md:min-h-[340px]">
+                  {cameraReady ? (
+                    <video
+                      ref={videoRef}
+                      muted
+                      playsInline
+                      autoPlay
+                      className={`absolute inset-0 h-full w-full object-cover ${
+                        facing === "user" ? "scale-x-[-1]" : ""
+                      }`}
+                    />
+                  ) : (
+                    <>
+                      <div
+                        className="animate-lens-breathe absolute inset-0"
+                        style={{
+                          backgroundImage: `
+                            radial-gradient(ellipse 70% 55% at 70% 40%, rgba(96,165,250,0.32), transparent 55%),
+                            linear-gradient(200deg, #334155 0%, #0f172a 88%)
+                          `,
+                        }}
+                      />
+                      <div className="bp-topo absolute inset-0 opacity-35" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                        <p className="max-w-xs text-sm leading-relaxed text-foam/80">
+                          {cameraDenied
+                            ? t(locale, "translate.permissionCamera")
+                            : t(locale, "translate.cameraHint")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void startCamera()}
+                          className="bp-transition rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep"
+                        >
+                          {t(locale, "translate.enableCamera")}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm ring-1 ring-white/15">
+                    {t(locale, "translate.lensWorld")} ·{" "}
+                    {facing === "environment"
+                      ? t(locale, "translate.cameraBack")
+                      : t(locale, "translate.cameraFront")}
+                  </div>
+
+                  {busy && tab === "camera" && !overlay ? (
+                    <div className="absolute inset-x-3 bottom-3 z-10 space-y-2 rounded-bp bg-ink/70 px-4 py-3 backdrop-blur-md">
+                      <Skeleton className="h-3 w-36 max-w-[60%] bg-white/20" />
+                      <Skeleton className="h-5 w-52 max-w-full bg-white/25" />
+                    </div>
+                  ) : null}
+
+                  {overlay ? (
+                    <div className="animate-sheet-in absolute inset-x-3 bottom-3 z-10 rounded-bp bg-ink/78 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-foam/55">
+                        {t(locale, "translate.target")}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-foam/70">
+                        {overlay.source}
+                      </p>
+                      {overlay.translated ? (
+                        <p className="mt-1.5 font-display text-lg font-semibold leading-snug tracking-tight text-foam">
+                          {overlay.translated}
+                        </p>
+                      ) : null}
+                      {busy ? (
+                        <div className="mt-2">
+                          <Skeleton className="h-2.5 w-24 bg-white/20" />
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : null}
-            </div>
-          </div>
+              </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const next = facing === "environment" ? "user" : "environment";
-                setFacing(next);
-                void startCamera(next);
-              }}
-              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-river/30 hover:text-river"
-            >
-              {facing === "environment"
-                ? t(locale, "translate.cameraFront")
-                : t(locale, "translate.cameraBack")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onVision("ocr")}
-              disabled={busy}
-              className="rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-50"
-            >
-              {t(locale, "translate.ocr")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onVision("caption")}
-              disabled={busy}
-              className="rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-ink disabled:opacity-50"
-            >
-              {t(locale, "translate.caption")}
-            </button>
-          </div>
+              {/* Control chrome rail */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--bp-line)] bg-paper/85 px-3 py-3 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next =
+                      facing === "environment" ? "user" : "environment";
+                    setFacing(next);
+                    void startCamera(next);
+                  }}
+                  disabled={cameraStarting}
+                  className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft duration-bp-fast ease-bp-out hover:border-river/30 hover:text-river disabled:opacity-50"
+                >
+                  {facing === "environment"
+                    ? t(locale, "translate.cameraFront")
+                    : t(locale, "translate.cameraBack")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onVision("ocr")}
+                  disabled={busy || cameraStarting}
+                  className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep disabled:opacity-50"
+                >
+                  {busy
+                    ? t(locale, "translate.translating")
+                    : t(locale, "translate.ocr")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onVision("caption")}
+                  disabled={busy || cameraStarting}
+                  className="bp-transition rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-ink disabled:opacity-50"
+                >
+                  {t(locale, "translate.caption")}
+                </button>
+                <span className="ml-auto hidden text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft/70 sm:inline">
+                  {cameraReady
+                    ? t(locale, "translate.lensWorld")
+                    : cameraDenied
+                      ? t(locale, "translate.demoBadge")
+                      : t(locale, "translate.loading")}
+                </span>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -1238,7 +1309,7 @@ function LocaleSelect({
   onChange: (v: TranslationLocale) => void;
 }) {
   return (
-    <label className="block rounded-xl border border-[color:var(--bp-line)] bg-foam/90 p-3 shadow-sm backdrop-blur-sm">
+    <label className="block rounded-bp border border-[color:var(--bp-line)] bg-foam/90 p-3 shadow-bp-soft backdrop-blur-sm">
       <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
         {label}
       </span>
