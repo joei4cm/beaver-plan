@@ -287,6 +287,48 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
+/** Tip 017 — day-fill draft preview while propose soft-runs. */
+export function DayFillSkeleton({ days = 3 }: { days?: number }) {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="animate-fade space-y-3"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3.5 w-56 max-w-full" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-bp" />
+      </div>
+      <ol className="space-y-3">
+        {Array.from({ length: days }).map((_, i) => (
+          <li
+            key={i}
+            className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-36 max-w-[50%]" />
+            </div>
+            <div className="mt-2.5 space-y-2">
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-5 shrink-0 rounded-full" />
+                <Skeleton className="h-4 w-40 max-w-[70%]" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-5 shrink-0 rounded-full" />
+                <Skeleton className="h-4 w-32 max-w-[60%]" />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 /** Tip 017 — status chip placeholders while translation BFF warms. */
 export function TranslateStatusSkeleton() {
   return (
