@@ -48,12 +48,16 @@ const COMPOSE_CTA =
 /** Compose media rail shows three frame slots (Polarsteps-like strip). */
 const PHOTO_SLOT_MAX = 3;
 
-/** Editorial index mark — trips-index chrome for journal entries. */
-function EntryIndexMark({ n }: { n: number }) {
+/** Editorial index mark — mist by default; river when scrub/select linked (#46). */
+function EntryIndexMark({ n, active }: { n: number; active?: boolean }) {
   return (
     <span
       aria-hidden
-      className="w-9 shrink-0 font-display text-2xl font-bold tabular-nums leading-none text-mist md:w-10 md:text-3xl"
+      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-bp font-display text-sm font-bold tabular-nums shadow-bp-soft transition duration-bp-fast ease-bp-out md:h-10 md:w-10 md:text-base ${
+        active
+          ? "bg-river text-foam ring-1 ring-river/30"
+          : "bg-mist/80 text-ink-soft"
+      }`}
     >
       {String(n).padStart(2, "0")}
     </span>
@@ -737,29 +741,52 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             className="min-w-0 space-y-0 px-5 py-6 md:px-7"
             aria-label={t(locale, "journal.listEyebrow")}
           >
-            <div
-              className="animate-sheet-in border-b border-[color:var(--bp-line)] pb-5"
+            {/* Entry list chrome — azure rail · count · scrub-linked · SoftFail (#46) */}
+            <header
+              className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
               key={`list-head-${dayId ?? "all"}`}
             >
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-                {t(locale, "journal.listEyebrow")}
-                {" · "}
-                {t(locale, "journal.daySection").replace(
-                  "{n}",
-                  String(activeDayIndex + 1),
-                )}
-              </p>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                  {t(locale, "journal.listEyebrow")}
+                  {" · "}
+                  {t(locale, "journal.daySection").replace(
+                    "{n}",
+                    String(activeDayIndex + 1),
+                  )}
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums uppercase tracking-[0.12em] text-river-deep">
+                    {t(locale, "journal.entryCount").replace(
+                      "{n}",
+                      String(visible.length),
+                    )}
+                  </span>
+                  {stopId ? (
+                    <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river transition duration-bp-fast ease-bp-out">
+                      {t(locale, "journal.entryLinked")}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
                 {activeDay?.note ?? activeDay?.date ?? trip.title}
               </h2>
               <p className="mt-2 text-sm text-ink-soft">
                 {activeDay?.date ? `${activeDay.date} · ` : ""}
-                {t(locale, "journal.entryCount").replace(
-                  "{n}",
-                  String(visible.length),
-                )}
+                {t(locale, "journal.entryDetailHint")}
               </p>
-            </div>
+            </header>
+
+            <SoftFailNotice
+              open={demoSeeded || softNotice}
+              compact
+              className="mb-1"
+            >
+              {softNotice && !online
+                ? t(locale, "journal.softOffline")
+                : t(locale, "journal.demoNotice")}
+            </SoftFailNotice>
 
             {visible.length === 0 && (
               <div
@@ -806,37 +833,76 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               {visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
                 const scrubMatch = Boolean(stopId && entry.stopId === stopId);
+                const placeLabel =
+                  stop?.place.name ??
+                  days.find((d) => d.id === entry.dayId)?.note ??
+                  t(locale, "journal.dayNote");
+                const selectEntry = () => {
+                  if (entry.stopId) setStopId(entry.stopId);
+                };
                 return (
                   <li key={entry.id}>
                     <article
-                      className={`animate-entry-in group flex gap-4 py-7 first:pt-6 sm:gap-5 bp-transition ${
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={scrubMatch}
+                      aria-label={`${t(locale, "journal.entryEyebrow")} ${String(index + 1).padStart(2, "0")} · ${placeLabel}`}
+                      onClick={selectEntry}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          selectEntry();
+                        }
+                      }}
+                      className={`animate-entry-in group relative flex gap-4 px-2 py-7 first:pt-6 sm:gap-5 sm:px-3 bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 ${
                         scrubMatch
-                          ? "rounded-bp-sm bg-river/[0.04] ring-1 ring-river/25"
-                          : ""
+                          ? "animate-stop-select rounded-bp-sm bg-river/[0.08] shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : "rounded-bp-sm hover:bg-mist/30"
                       }`}
                       style={{ animationDelay: `${index * 55 + 40}ms` }}
                     >
-                      <EntryIndexMark n={index + 1} />
+                      <EntryIndexMark n={index + 1} active={scrubMatch} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
-                            {stop?.place.name ??
-                              days.find((d) => d.id === entry.dayId)?.note ??
-                              t(locale, "journal.dayNote")}
-                            {entry.id.startsWith("local-")
-                              ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
-                              : ""}
-                          </p>
+                          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                              {t(locale, "journal.entryEyebrow")}
+                              {" · "}
+                              {placeLabel}
+                            </p>
+                            {scrubMatch ? (
+                              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                                {t(locale, "journal.entryLinked")}
+                              </span>
+                            ) : null}
+                            {entry.id.startsWith("local-") ? (
+                              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                                {t(locale, "offline.pending").replace(
+                                  "{n}",
+                                  "1",
+                                )}
+                              </span>
+                            ) : null}
+                          </div>
                           <button
                             type="button"
-                            onClick={() => void removeEntry(entry.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void removeEntry(entry.id);
+                            }}
                             className="shrink-0 rounded-bp-xs px-1.5 py-0.5 text-xs text-ink-soft/55 bp-transition hover:bg-river/8 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
                           >
                             {t(locale, "journal.remove")}
                           </button>
                         </div>
                         {entry.body ? (
-                          <p className="mt-2.5 font-display text-2xl leading-snug tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-3xl">
+                          <p
+                            className={`mt-2.5 font-display leading-snug tracking-tight transition duration-bp-fast ease-bp-out md:text-3xl ${
+                              scrubMatch
+                                ? "text-2xl font-bold text-ink"
+                                : "text-2xl text-ink group-hover:text-river"
+                            }`}
+                          >
                             {entry.body}
                           </p>
                         ) : null}
@@ -943,15 +1009,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </header>
 
             <div className="flex flex-col p-5 md:p-6">
+              {/* Compose-scoped SoftFail — media/API only; demo seed lives under entry list */}
               <SoftFailNotice
-                open={demoSeeded || softNotice || composeSoftFail}
+                open={composeSoftFail && !demoSeeded && !softNotice}
                 className="mb-5"
               >
-                {softNotice && !online
-                  ? t(locale, "journal.softOffline")
-                  : composeSoftFail && !demoSeeded
-                    ? t(locale, "journal.composeSoftFail")
-                    : t(locale, "journal.demoNotice")}
+                {t(locale, "journal.composeSoftFail")}
               </SoftFailNotice>
 
               <label className="block text-xs font-medium uppercase tracking-wider text-ink-soft">

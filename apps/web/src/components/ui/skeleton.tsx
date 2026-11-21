@@ -162,19 +162,33 @@ export function JournalSkeleton() {
         </div>
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
           <div className="space-y-0 px-5 py-6 md:px-7">
-            <div className="space-y-2 border-b border-[color:var(--bp-line)] pb-5">
-              <Skeleton className="h-3 w-36" />
+            {/* Entry list azure rail + SoftFail slot + numbered entry chrome */}
+            <div className="space-y-2 border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-3 w-36" />
+                <Skeleton className="h-4 w-12 rounded-bp-xs" />
+              </div>
               <Skeleton className="h-9 w-56 max-w-[80%]" />
-              <Skeleton className="h-3.5 w-40" />
+              <Skeleton className="h-3.5 w-52" />
             </div>
+            <Skeleton className="mt-2 h-10 w-full rounded-none" />
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="flex gap-4 border-b border-[color:var(--bp-line)] py-7 last:border-b-0 sm:gap-5"
+                className={`flex gap-4 border-b border-[color:var(--bp-line)] px-2 py-7 last:border-b-0 sm:gap-5 sm:px-3 ${
+                  i === 0
+                    ? "rounded-bp-sm bg-river/[0.06] shadow-[inset_3px_0_0_var(--bp-river)]"
+                    : ""
+                }`}
               >
-                <Skeleton className="h-8 w-9 shrink-0 md:h-9 md:w-10" />
+                <Skeleton className="mt-0.5 h-9 w-9 shrink-0 rounded-bp md:h-10 md:w-10" />
                 <div className="min-w-0 flex-1 space-y-3">
-                  <Skeleton className="h-3 w-28" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-28" />
+                    {i === 0 ? (
+                      <Skeleton className="h-4 w-10 rounded-bp-xs" />
+                    ) : null}
+                  </div>
                   <Skeleton className="h-7 w-full max-w-md" />
                   <div className="flex gap-2.5 pt-1">
                     <Skeleton className="h-36 w-[6.75rem] shrink-0 rounded-bp-sm" />
