@@ -886,6 +886,27 @@ export default function TripDetailScreen() {
     ? t(locale, "collab.inviteSoftFail")
     : t(locale, "collab.inviteDemoNotice");
 
+  /** Title + stop-list chrome hierarchy after web #105 / Expo #148. */
+  const dayEmpty = dayStops.length === 0;
+  const detailDemo =
+    Boolean(softNotice) ||
+    tripId === "sample-kyoto" ||
+    routingDemo ||
+    searchDemo;
+  const detailStatus: "offline" | "demo" | "live" =
+    !online || fromCache ? "offline" : detailDemo ? "demo" : "live";
+  const detailSoftOpen = Boolean(softNotice) || fromCache || !online;
+  const detailSoftCopy =
+    !online || fromCache
+      ? (softNotice ?? t(locale, "planner.demoLocal"))
+      : (softNotice ?? "");
+  /** Stop SoftFailNotice — empty day owns soft-fail; page SoftFail yields. */
+  const stopsSoftOpen = dayEmpty;
+  const stopsSoftCopy = t(locale, "planner.emptySoftFail");
+  const selectedStop = selectedStopId
+    ? dayStops.find((s) => s.id === selectedStopId)
+    : undefined;
+
   return (
     <View style={styles.root}>
       <Stack.Screen
@@ -906,7 +927,10 @@ export default function TripDetailScreen() {
             <Text style={styles.errorBannerText}>{error}</Text>
           </View>
           <Text style={styles.hint}>{t(locale, "planner.notFound")}</Text>
-          <Pressable style={styles.retry} onPress={() => void load()}>
+          <Pressable
+            style={StyleSheet.flatten([styles.retry])}
+            onPress={() => void load()}
+          >
             <Text style={styles.retryLabel}>Retry</Text>
           </Pressable>
         </View>
@@ -919,11 +943,43 @@ export default function TripDetailScreen() {
         >
           <View style={styles.skyWash} pointerEvents="none" />
 
-          <Animated.View style={[styles.header, riseStyle]}>
-            <Text style={styles.brandLine}>
-              Beaver Plan · {trip.destination ?? t(locale, "planner.trip")}
-              {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
-            </Text>
+          {/* Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice · #46 */}
+          <Animated.View
+            style={StyleSheet.flatten([styles.header, riseStyle])}
+          >
+            <View style={styles.titleRail}>
+              <Text style={styles.brandLine} numberOfLines={1}>
+                Beaver Plan ·{" "}
+                {trip.destination ?? t(locale, "planner.trip")}
+              </Text>
+              <View
+                style={StyleSheet.flatten([
+                  styles.statusChip,
+                  detailStatus === "offline"
+                    ? styles.statusChipOffline
+                    : detailStatus === "demo"
+                      ? styles.statusChipDemo
+                      : styles.statusChipLive,
+                ])}
+              >
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.statusChipText,
+                    detailStatus === "offline"
+                      ? styles.statusChipTextOffline
+                      : detailStatus === "demo"
+                        ? styles.statusChipTextDemo
+                        : styles.statusChipTextLive,
+                  ])}
+                >
+                  {detailStatus === "offline"
+                    ? t(locale, "offline.offline")
+                    : detailStatus === "demo"
+                      ? t(locale, "trips.listDemo")
+                      : t(locale, "trips.listLive")}
+                </Text>
+              </View>
+            </View>
             <Text style={styles.title}>{trip.title}</Text>
             {formatTripSupport(trip) ? (
               <Text style={styles.support}>{formatTripSupport(trip)}</Text>
@@ -962,7 +1018,7 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                style={styles.actionBtn}
+                style={StyleSheet.flatten([styles.actionBtn])}
                 onPress={() => router.push("/translate")}
               >
                 <Text style={styles.actionLabel}>
@@ -970,16 +1026,13 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
             </View>
-          </Animated.View>
-
-          <Animated.View style={riseStyle}>
+            {/* Page SoftFailNotice yields while empty-day stop rail owns soft-fail. */}
             <SoftFailNotice
-              open={Boolean(softNotice) || fromCache || !online}
+              open={detailSoftOpen && !stopsSoftOpen}
+              compact
               style={styles.softBanner}
             >
-              {!online || fromCache
-                ? softNotice ?? t(locale, "planner.demoLocal")
-                : (softNotice ?? "")}
+              {detailSoftCopy}
             </SoftFailNotice>
           </Animated.View>
 
@@ -1324,6 +1377,111 @@ export default function TripDetailScreen() {
                 ) : null}
               </View>
 
+              {/* Stop list chrome — azure rail · mist-track chips · SoftFailNotice · #46 */}
+              <View style={styles.stopsChrome}>
+                <View style={styles.stopsRail}>
+                  <View style={styles.stopsRailCopy}>
+                    <Text style={styles.stopsEyebrow}>
+                      {t(locale, "planner.stops.eyebrow")}
+                    </Text>
+                    <Text style={styles.stopsCount}>
+                      {dayEmpty
+                        ? t(locale, "planner.emptyDay")
+                        : t(locale, "planner.stops.count").replace(
+                            "{n}",
+                            String(dayStops.length),
+                          )}
+                    </Text>
+                    {!dayEmpty ? (
+                      <Text style={styles.stopsSupport} numberOfLines={1}>
+                        {t(locale, "planner.stops.support")}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {dayEmpty ? (
+                    <View style={styles.stopsEmptyBadge}>
+                      <Text style={styles.stopsEmptyBadgeText}>
+                        {t(locale, "planner.emptyBadge")}
+                      </Text>
+                    </View>
+                  ) : selectedStop ? (
+                    <View style={styles.stopsSelectedBadge}>
+                      <Text style={styles.stopsSelectedBadgeText} numberOfLines={1}>
+                        {selectedStop.place.name} ·{" "}
+                        {t(locale, "planner.stops.selected")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.stopsListHint}>
+                      {t(locale, "planner.stopsList")}
+                    </Text>
+                  )}
+                </View>
+
+                {!dayEmpty ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.stopChipScroll}
+                    contentContainerStyle={styles.stopChipTrack}
+                    accessibilityRole="tablist"
+                    accessibilityLabel={t(locale, "planner.stops.filterLabel")}
+                  >
+                    {dayStops.map((stop, i) => {
+                      const on = selectedStopId === stop.id;
+                      return (
+                        <Pressable
+                          key={stop.id}
+                          onPress={() => selectStop(stop.id)}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected: on }}
+                          accessibilityLabel={t(
+                            locale,
+                            "planner.stops.chip",
+                          ).replace("{n}", String(i + 1))}
+                          style={StyleSheet.flatten([
+                            styles.stopChip,
+                            on ? styles.stopChipOn : null,
+                          ])}
+                        >
+                          <Animated.View
+                            style={StyleSheet.flatten([
+                              styles.stopChipIndex,
+                              on ? styles.stopChipIndexOn : null,
+                              on
+                                ? { transform: [{ scale: stopPop }] }
+                                : null,
+                            ])}
+                          >
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.stopChipIndexText,
+                                on ? styles.stopChipIndexTextOn : null,
+                              ])}
+                            >
+                              {i + 1}
+                            </Text>
+                          </Animated.View>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.stopChipLabel,
+                              on ? styles.stopChipLabelOn : null,
+                            ])}
+                            numberOfLines={1}
+                          >
+                            {stop.place.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
+
+                <SoftFailNotice open={stopsSoftOpen} compact>
+                  {stopsSoftCopy}
+                </SoftFailNotice>
+              </View>
+
               {dayStops.map((stop, index) => {
                 const leg = dayLegs.find((l) => l.fromStopId === stop.id);
                 const selected = stop.id === selectedStopId;
@@ -1337,13 +1495,13 @@ export default function TripDetailScreen() {
                     onPress={() => selectStop(stop.id)}
                   >
                     <Animated.View
-                      style={[
+                      style={StyleSheet.flatten([
                         styles.stopIndex,
                         selected ? styles.stopIndexSelected : null,
                         selected
                           ? { transform: [{ scale: stopPop }] }
                           : null,
-                      ]}
+                      ])}
                     >
                       <Text style={styles.stopIndexText}>{index + 1}</Text>
                     </Animated.View>
@@ -1393,7 +1551,7 @@ export default function TripDetailScreen() {
                           {(stop.bookingLinks ?? []).map((link) => (
                             <Pressable
                               key={`${link.kind}-${link.url}`}
-                              style={styles.bookingChip}
+                              style={StyleSheet.flatten([styles.bookingChip])}
                               onPress={() => void Linking.openURL(link.url)}
                             >
                               <Text style={styles.bookingChipText}>
@@ -1424,7 +1582,7 @@ export default function TripDetailScreen() {
                     {t(locale, "planner.emptyDayHint")}
                   </Text>
                   <Pressable
-                    style={styles.emptyDayCta}
+                    style={StyleSheet.flatten([styles.emptyDayCta])}
                     onPress={() => {
                       setSearchOpen(true);
                       searchInputRef.current?.focus();
@@ -1882,16 +2040,60 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    paddingBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderRadius: radius.md,
+  },
+  titleRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 10,
   },
   brandLine: {
     ...type.body,
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 2.4,
     textTransform: "uppercase",
     color: colors.river,
-    marginBottom: 10,
+  },
+  statusChip: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusChipOffline: {
+    backgroundColor: colors.mist,
+  },
+  statusChipDemo: {
+    backgroundColor: colors.mist,
+  },
+  statusChipLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  statusChipText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  statusChipTextOffline: {
+    color: colors.inkSoft,
+  },
+  statusChipTextDemo: {
+    color: colors.inkSoft,
+  },
+  statusChipTextLive: {
+    color: colors.river,
   },
   title: {
     ...type.display,
@@ -1945,7 +2147,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   softBanner: {
-    marginBottom: 14,
+    marginTop: 12,
+    marginBottom: 0,
   },
   bookingPanelWrap: {
     paddingHorizontal: 12,
@@ -2353,6 +2556,154 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inkSoft,
   },
+  /* Stop list chrome — azure rail · mist-track chips (web #105). */
+  stopsChrome: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  stopsRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  stopsRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  stopsEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  stopsCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  stopsSupport: {
+    ...type.body,
+    fontSize: 11,
+    color: "rgba(100, 116, 139, 0.8)",
+    flexShrink: 1,
+  },
+  stopsEmptyBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  stopsEmptyBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  stopsSelectedBadge: {
+    maxWidth: 160,
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  stopsSelectedBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  stopsListHint: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: "rgba(100, 116, 139, 0.55)",
+  },
+  stopChipScroll: {
+    maxHeight: 44,
+  },
+  stopChipTrack: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    paddingTop: 2,
+  },
+  stopChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    maxWidth: 176,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.xs,
+    backgroundColor: "transparent",
+  },
+  stopChipOn: {
+    backgroundColor: colors.foam,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.25)",
+    // Soft Lumen lift — selected chip over Mist track
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  stopChipIndex: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.xs,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.1)",
+  },
+  stopChipIndexOn: {
+    backgroundColor: colors.river,
+  },
+  stopChipIndexText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    color: colors.inkSoft,
+  },
+  stopChipIndexTextOn: {
+    color: colors.foam,
+  },
+  stopChipLabel: {
+    ...type.body,
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.inkSoft,
+  },
+  stopChipLabelOn: {
+    color: colors.river,
+    fontWeight: "700",
+  },
   stopRow: {
     flexDirection: "row",
     gap: 12,
@@ -2362,7 +2713,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
   },
   stopRowSelected: {
-    backgroundColor: "rgba(47,107,255,0.06)",
+    backgroundColor: "rgba(47,107,255,0.08)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingLeft: 11,
   },
   stopIndex: {
     width: 28,
