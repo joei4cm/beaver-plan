@@ -96,21 +96,36 @@ export function JournalSkeleton() {
           <Skeleton className="h-7 w-16 rounded-bp-sm" />
         </div>
       </div>
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)]">
-        <div className="space-y-6">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="space-y-3 border-b border-[color:var(--bp-line)] pb-6">
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-3.5 w-full max-w-lg" />
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-                <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-                <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-              </div>
-            </div>
-          ))}
+      <div className="mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp">
+        <div className="flex gap-2 border-b border-[color:var(--bp-line)] bg-paper/60 px-3 py-3">
+          <Skeleton className="h-12 w-24 rounded-bp-sm" />
+          <Skeleton className="h-12 w-24 rounded-bp-sm" />
+          <Skeleton className="h-12 w-24 rounded-bp-sm" />
         </div>
-        <Skeleton className="hidden h-72 rounded-bp lg:block" />
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
+          <div className="space-y-6 px-5 py-6 md:px-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="space-y-3 border-b border-[color:var(--bp-line)] pb-6 last:border-b-0"
+              >
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-3.5 w-full max-w-lg" />
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 p-5 lg:block">
+            <Skeleton className="h-7 w-36" />
+            <Skeleton className="mt-3 h-3.5 w-full" />
+            <Skeleton className="mt-6 h-24 w-full rounded-bp-sm" />
+            <Skeleton className="mt-4 h-11 w-full rounded-bp" />
+          </div>
+        </div>
       </div>
     </div>
   );
