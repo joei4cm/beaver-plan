@@ -114,11 +114,12 @@ async function searchLocal(
 }
 
 /**
- * Expo booking SoftFailNotice chrome (BEA-290 after web #198 / Expo #165/#185):
- * azure OTA sheet rail · soft OTA badge · compact SoftFailNotice under rail ·
- * tip-011 (#46) · StyleSheet.flatten Pressables · Lumen tokens.
- * Confirm SoftFail (BEA-245) stays section-scoped — OTA SoftFail yields while
- * Confirm owns save soft-fail (no double depth). Never timber / Failed to fetch.
+ * Expo booking SoftFailNotice depth (BEA-349 after #220 / web #246):
+ * azure OTA sheet rail · Soft OTA badge · softSupport · soft rail wash ·
+ * compact SoftFail mist band · tip-011 mist-wash body · StyleSheet.flatten ·
+ * Lumen tokens. Confirm SoftFail (#260) owns save soft-fail so OTA SoftFail
+ * yields (no double depth). Never timber / Failed to fetch.
+ * Web booking OTA SoftFail (#246) stays out of scope.
  */
 export function BookingPanel({
   tripId,
@@ -377,15 +378,23 @@ export function BookingPanel({
   };
 
   /**
-   * Confirm SoftFailNotice depth (BEA-340 after #185 / persistence #218):
-   * azure Confirm rail · Soft save badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
-   * Confirm owns save soft-fail so OTA SoftFail (#220) yields (no double depth).
-   * SoftFail copy always confirmSoftFail — never timber / Failed to fetch.
-   * Web booking confirm SoftFail stays out of scope.
+   * OTA SoftFailNotice depth (BEA-349 after #220 / web #246):
+   * azure OTA rail · Soft OTA badge · softSupport · soft rail wash ·
+   * compact SoftFail mist band · tip-011 mist-wash body · StyleSheet.flatten.
+   * Confirm SoftFail (#260) owns save soft-fail so OTA SoftFail yields
+   * (no double depth). SoftFail copy never timber / Failed to fetch.
+   * Web booking OTA SoftFail (#246) stays out of scope.
    */
   const showConfirmSoftFail = confirmSoftFail;
   const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
+  const sheetSupportCopy = showOtaSoftFail
+    ? t(locale, "planner.booking.softSupport")
+    : stop
+      ? t(locale, "planner.booking.forStop").replace(
+          "{name}",
+          stop.place.name,
+        )
+      : t(locale, "planner.booking.support");
   /** Confirm SoftFail copy owned by azure Confirm rail — never inherit timber. */
   const confirmSoftCopy = t(locale, "planner.booking.confirmSoftFail");
   const confirmSupportCopy = showConfirmSoftFail
@@ -398,12 +407,15 @@ export function BookingPanel({
       accessibilityLabel={t(locale, "planner.booking.title")}
     >
       {/*
-        OTA SoftFail chrome (BEA-290 after web #198 / Expo #165):
-        azure sheet rail · Demo/Keys badge · soft OTA badge · tip-011 —
-        never timber / Failed to fetch.
+        OTA SoftFail depth (BEA-349 after #220):
+        azure sheet rail · Demo/Keys badge · Soft OTA badge · softSupport ·
+        soft rail wash · tip-011 — Confirm SoftFail (#260) owns save soft-fail.
       */}
       <Pressable
-        style={styles.header}
+        style={StyleSheet.flatten([
+          styles.header,
+          showOtaSoftFail ? styles.headerSoft : null,
+        ])}
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -449,14 +461,7 @@ export function BookingPanel({
               </Text>
             ) : null}
           </View>
-          <Text style={styles.headerSupport}>
-            {stop
-              ? t(locale, "planner.booking.forStop").replace(
-                  "{name}",
-                  stop.place.name,
-                )
-              : t(locale, "planner.booking.support")}
-          </Text>
+          <Text style={styles.headerSupport}>{sheetSupportCopy}</Text>
         </View>
         <Text style={StyleSheet.flatten([styles.chevron, open && styles.chevronOpen])}>
           ▾
@@ -464,8 +469,14 @@ export function BookingPanel({
       </Pressable>
 
       {open ? (
-        <Animated.View style={StyleSheet.flatten([styles.body, bodyStyle])}>
-          {/* Compact SoftFail under azure OTA rail — never timber / Failed to fetch. */}
+        <Animated.View
+          style={StyleSheet.flatten([
+            styles.body,
+            showOtaSoftFail ? styles.bodySoft : null,
+            bodyStyle,
+          ])}
+        >
+          {/* Compact SoftFail mist band under azure OTA rail — Confirm SoftFail yields. */}
           <SoftFailNotice
             open={showOtaSoftFail}
             compact
@@ -728,10 +739,10 @@ export function BookingPanel({
           </SheetPresence>
 
           {/*
-            Confirm SoftFail depth (BEA-340 after #185 / #218):
+            Confirm SoftFail depth (BEA-340 / #260 after #185 / #218):
             azure Confirm rail · Soft save badge · softSupport · compact SoftFail
             mist band · tip-011 mist-wash pin body — never timber / Failed to fetch.
-            OTA SoftFail (#220) yields while Confirm owns soft-fail.
+            OTA SoftFail (BEA-349) yields while Confirm owns soft-fail.
           */}
           <SheetPresence
             open={open}
@@ -920,6 +931,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
+  /** Soft azure OTA rail wash when SoftFail owns depth (BEA-349). */
+  headerSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
   headerText: {
     flex: 1,
     minWidth: 0,
@@ -1005,6 +1020,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
+  /** Mist SoftFail strip under azure OTA rail — border-b before tip-011 body. */
   otaSoftFail: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
@@ -1012,6 +1028,10 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: 0,
+  },
+  /** Mist-wash tip-011 sheet body when SoftFail owns the OTA rail (BEA-349). */
+  bodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   section: {
     paddingHorizontal: 14,
