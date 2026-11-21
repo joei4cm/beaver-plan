@@ -165,9 +165,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * SoftFailNotice depth ownership (BEA-343 drawer / BEA-348 drag after #195/#214):
-   * Empty SoftFail (BEA-222) under Stops when the day is empty.
-   * Drag SoftFail under Stops when softNotice is the drag SoftFail string —
+   * SoftFailNotice depth ownership (BEA-343 drawer / BEA-348 drag / BEA-355 empty):
+   * Empty SoftFail depth (BEA-355 after #122) under Stops when the day is empty —
+   * Soft empty badge · softSupport · tip-011 mist-wash empty body.
+   * Drag SoftFail under Stops when softNotice / dragSoftPreview (BEA-348) —
    * Soft reorder badge · softSupport · tip-011 mist-wash · stop-drawer SoftFail
    * (#257) and day-fill SoftFail (#248) yield (no double depth).
    * Otherwise Itinerary owns SoftFail (BEA-343) when the day has stops.
@@ -190,18 +191,28 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const drawerSupportCopy = drawerSoftOpen
     ? t(locale, "planner.drawer.softSupport")
     : t(locale, "planner.drawer.support");
-  /** Empty SoftFail under Stops — yields while drawer SoftFail owns Itinerary. */
+  /**
+   * Empty SoftFailNotice depth (BEA-355 after #122 / BEA-222):
+   * azure Stops rail · Soft empty badge · softSupport · compact SoftFail mist
+   * band · tip-011 mist-wash empty body. Yields to drawer SoftFail (#257),
+   * day-fill SoftFail (#248), and drag SoftFail (BEA-348) — no double depth.
+   * SoftFail copy always emptySoftFail (never inherit transfer / drag timber).
+   */
   const listSoftOpen = emptyOwnsSoft
     ? Boolean(softNotice || plannerNoise || demoShell)
     : dragOwnsSoft;
+  const emptySoftOpen = emptyOwnsSoft && listSoftOpen;
   const stopsSupportCopy = emptyOwnsSoft
-    ? t(locale, "planner.emptySupport")
+    ? emptySoftOpen
+      ? t(locale, "planner.emptySoftSupport")
+      : t(locale, "planner.emptySupport")
     : dragOwnsSoft
       ? t(locale, "planner.stops.dragSoftSupport")
       : t(locale, "planner.stops.support");
   /**
    * SoftFailNotice copy ownership:
-   * - Empty day → empty SoftFail (BEA-222); never borrow transfer / drawer softNotice.
+   * - Empty day → empty SoftFail depth (BEA-355); never borrow transfer /
+   *   drawer / day-fill / drag softNotice.
    * - Drag softNotice → Stops SoftFail depth (BEA-348); drawer / day-fill yield.
    * - Else day with stops → SoftFail under Itinerary (BEA-343 depth).
    *   Day-fill SoftFail (#248) stays under Day fill rail. Transfer soft-fail
@@ -1198,10 +1209,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops SoftFail depth (BEA-222 empty / BEA-348 drag after #195/#214):
-              azure Stops rail · empty/drag Soft badge · softSupport · compact
-              SoftFail mist band · tip-011 mist-wash chips/list — stop-drawer
-              SoftFail (#257) / day-fill SoftFail (#248) yield while drag owns —
+              Stops SoftFail depth (BEA-355 empty after #122 / BEA-348 drag):
+              azure Stops rail · Soft empty / Soft reorder badge · softSupport ·
+              compact SoftFail mist band · tip-011 mist-wash empty body / chips —
+              stop-drawer SoftFail (#257) / day-fill SoftFail (#248) yield —
               never timber / Failed to fetch.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
@@ -1226,12 +1237,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   {dayEmpty ? (
                     <span
                       className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                        listSoftOpen
+                        emptySoftOpen
                           ? "bg-mist text-ink-soft"
                           : "bg-river/12 text-river"
                       }`}
                     >
-                      {t(locale, "planner.emptyBadge")}
+                      {emptySoftOpen
+                        ? t(locale, "planner.emptySoftBadge")
+                        : t(locale, "planner.emptyBadge")}
                     </span>
                   ) : dragOwnsSoft && listSoftOpen ? (
                     <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
@@ -1330,7 +1343,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
 
             <div
               className={`min-h-0 flex-1 overflow-y-auto ${
-                dragOwnsSoft
+                emptySoftOpen || dragOwnsSoft
                   ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
                   : ""
               }`}
@@ -1349,7 +1362,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   >
                     <SheetPresence
                       open
-                      className="max-w-sm"
+                      className={`max-w-sm ${
+                        emptySoftOpen
+                          ? "rounded-bp-sm bg-mist/25 px-3 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-4"
+                          : ""
+                      }`}
                       style={{ animationDelay: "40ms" }}
                       aria-label={t(locale, "planner.emptyDay")}
                     >
