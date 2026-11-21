@@ -95,14 +95,21 @@ export function PlannerSkeleton() {
           <Skeleton className="h-3 w-40" />
           <Skeleton className="h-10 w-72 max-w-full" />
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Skeleton className="h-2.5 w-44" />
-          <div className="flex items-center gap-2">
+        {/* Share CTA SoftFail depth — azure Export rail · softSupport · SoftFail mist band · mist tip-011 CTA (BEA-362) */}
+        <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft sm:w-auto">
+          <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex items-baseline gap-2">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-2.5 w-40" />
+            </div>
+            <Skeleton className="h-5 w-16 rounded-bp-xs" />
+          </div>
+          <Skeleton className="h-9 w-full rounded-none" />
+          <div className="flex items-center justify-end gap-2 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-3 py-2.5">
             <Skeleton className="h-8 w-16 rounded-bp" />
             <Skeleton className="h-8 w-20 rounded-bp" />
             <Skeleton className="h-9 w-28 rounded-bp" />
           </div>
-          <Skeleton className="h-8 w-56 rounded-bp-sm" />
         </div>
       </div>
       <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
