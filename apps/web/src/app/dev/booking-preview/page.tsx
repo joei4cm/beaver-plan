@@ -65,8 +65,8 @@ export default function BookingPreviewPage() {
         预订
       </h1>
       <p className="relative mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
-        Search → results → azure open CTA. SoftFailNotice when the booking API
-        is offline; no checkout in Beaver Plan.
+        Deeper sheet: Search → Results → Pinned. SoftFailNotice + SheetPresence
+        when the booking API is offline; no checkout in Beaver Plan.
       </p>
       <div className="relative mt-8 animate-rise">
         <BookingPanel
