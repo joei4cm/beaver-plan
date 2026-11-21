@@ -40,6 +40,7 @@ import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { PlannerSkeleton } from "@/components/ui/skeleton";
 import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
@@ -111,6 +112,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const [copyJournal, setCopyJournal] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchGenRef = useRef(0);
+  const dayTabsRef = useRef<HTMLDivElement | null>(null);
+  const dayTabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [dayTabIndicator, setDayTabIndicator] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
 
   const preference = trip?.mapEngine ?? "auto";
 
@@ -123,6 +130,28 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     const ids = new Set(dayStops.map((s) => s.id));
     return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
   }, [legs, dayStops]);
+
+  useEffect(() => {
+    if (!dayId) {
+      setDayTabIndicator(null);
+      return;
+    }
+    const measure = () => {
+      const tab = dayTabRefs.current.get(dayId);
+      if (!tab) return;
+      setDayTabIndicator({
+        left: tab.offsetLeft,
+        width: tab.offsetWidth,
+      });
+    };
+    measure();
+    const frame = requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measure);
+    };
+  }, [dayId, days]);
 
   const applySoftOrHard = useCallback((err: unknown, hardFallback: string) => {
     if (isPlannerNoiseError(err)) {
@@ -593,11 +622,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   }
 
   if (!trip && pending) {
-    return (
-      <div className="px-6 py-20 text-ink-soft md:px-10">
-        {t(locale, "planner.loading")}
-      </div>
-    );
+    return <PlannerSkeleton />;
   }
 
   if (!trip) {
@@ -627,7 +652,10 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
             Beaver Plan · {trip.destination ?? t(locale, "planner.trip")}
           </p>
-          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tight text-ink md:text-5xl">
+          <h1
+            className="bp-vt-trip-title mt-1.5 font-display text-3xl font-bold tracking-tight text-ink md:text-5xl"
+            style={{ viewTransitionName: `bp-trip-${trip.id}` }}
+          >
             {trip.title}
           </h1>
         </div>
@@ -772,27 +800,48 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
           style={{ animationDelay: "100ms" }}
         >
-          <div className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60">
-            {days.map((day, i) => (
-              <button
-                key={day.id}
-                type="button"
-                onClick={() => {
-                  setDayId(day.id);
-                  setSelectedStopId(null);
+          <div
+            ref={dayTabsRef}
+            className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60"
+          >
+            {/* Tip 015 — sliding day indicator (pattern g) */}
+            {dayTabIndicator && (
+              <span
+                aria-hidden
+                className="animate-tab-indicator pointer-events-none absolute inset-y-0 z-0 bg-river"
+                style={{
+                  left: dayTabIndicator.left,
+                  width: dayTabIndicator.width,
                 }}
-                className={`shrink-0 px-5 py-3.5 text-left transition ${
-                  dayId === day.id
-                    ? "bg-river text-foam"
-                    : "text-ink-soft hover:bg-mist/70 hover:text-ink"
-                }`}
-              >
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
-                  {t(locale, "planner.day")} {i + 1}
-                </div>
-                <div className="mt-0.5 text-sm font-semibold">{day.date}</div>
-              </button>
-            ))}
+              />
+            )}
+            {days.map((day, i) => {
+              const active = dayId === day.id;
+              return (
+                <button
+                  key={day.id}
+                  type="button"
+                  ref={(el) => {
+                    if (el) dayTabRefs.current.set(day.id, el);
+                    else dayTabRefs.current.delete(day.id);
+                  }}
+                  onClick={() => {
+                    setDayId(day.id);
+                    setSelectedStopId(null);
+                  }}
+                  className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
+                    active
+                      ? "text-foam"
+                      : "text-ink-soft hover:bg-mist/70 hover:text-ink"
+                  }`}
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
+                    {t(locale, "planner.day")} {i + 1}
+                  </div>
+                  <div className="mt-0.5 text-sm font-semibold">{day.date}</div>
+                </button>
+              );
+            })}
           </div>
 
           <div className="relative border-b border-[color:var(--bp-line)] px-4 py-3">
@@ -829,13 +878,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </span>
             )}
             {results.length > 0 && (
-              <ul className="absolute left-0 right-0 top-full z-20 max-h-64 overflow-auto border border-[color:var(--bp-line)] bg-foam shadow-bp">
+              <ul
+                role="listbox"
+                className="bp-popover absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp"
+              >
                 {results.map((place) => (
-                  <li key={place.enginePlaceId}>
+                  <li key={place.enginePlaceId} role="option">
                     <button
                       type="button"
                       onClick={() => void addPlace(place)}
-                      className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition hover:bg-mist/60"
+                      className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/60"
                     >
                       <span className="text-sm font-medium text-ink">
                         {place.name}

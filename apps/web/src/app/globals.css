@@ -9,6 +9,12 @@
     scroll-behavior: smooth;
   }
 
+  @supports (view-transition-name: none) {
+    @view-transition {
+      navigation: auto;
+    }
+  }
+
   body {
     @apply bg-paper text-ink font-body antialiased;
     background-image:
@@ -21,6 +27,17 @@
   ::selection {
     background: rgba(47, 107, 255, 0.18);
   }
+
+  /* Tip 004 — continuous corners as progressive enhancement */
+  @supports (corner-shape: superellipse(1.25)) {
+    :where(button, a, input, textarea, select, [class*="rounded-bp"]) {
+      corner-shape: superellipse(1.25);
+    }
+
+    :where(.rounded-full, [class*="rounded-full"]) {
+      corner-shape: round;
+    }
+  }
 }
 
 @layer components {
@@ -32,31 +49,67 @@
   .bp-hairline {
     border-color: var(--bp-line);
   }
+
+  /* Tip 011 — default interactive hover/press */
+  .bp-transition {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+    transition-duration: var(--bp-duration-fast);
+    transition-timing-function: var(--bp-ease-out);
+  }
+
+  /* Tip 017 — skeleton band (list-wide shimmer) */
+  .bp-skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bp-mist);
+    border-radius: var(--bp-radius-sm);
+  }
+
+  .bp-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.72) 45%,
+      transparent 90%
+    );
+    background-size: 320px 100%;
+    animation: bp-skeleton-band 1.2s linear infinite;
+  }
+
+  /* Tip 009 — popover anchored under trigger */
+  .bp-popover {
+    transform-origin: top center;
+    animation: bp-popover-in var(--bp-duration) var(--bp-ease-out) both;
+  }
+
 }
 
 @layer utilities {
   .animate-rise {
-    animation: bp-rise var(--bp-duration) var(--bp-ease) both;
+    animation: bp-rise var(--bp-duration) var(--bp-ease-out) both;
   }
 
   .animate-fade {
-    animation: bp-fade var(--bp-duration-slow) var(--bp-ease) both;
+    animation: bp-fade var(--bp-duration-slow) var(--bp-ease-out) both;
   }
 
   .animate-drift {
-    animation: bp-drift 26s ease-in-out infinite alternate;
+    animation: bp-drift 26s var(--bp-ease-in-out) infinite alternate;
   }
 
   .animate-stop-select {
-    animation: bp-stop-select var(--bp-duration) var(--bp-ease-out) both;
+    animation: bp-stop-select var(--bp-duration) var(--bp-ease-out-strong) both;
   }
 
   .animate-preview-in {
-    animation: bp-preview-in var(--bp-duration-slow) var(--bp-ease) both;
+    animation: bp-preview-in var(--bp-duration-slow) var(--bp-ease-out) both;
   }
 
   .animate-template-swap {
-    animation: bp-template-swap var(--bp-duration) var(--bp-ease-out) both;
+    animation: bp-template-swap var(--bp-duration) var(--bp-ease-out-strong) both;
   }
 
   .animate-sheet-in {
@@ -68,7 +121,7 @@
   }
 
   .animate-lens-breathe {
-    animation: bp-lens-breathe 4.8s ease-in-out infinite alternate;
+    animation: bp-lens-breathe 4.8s var(--bp-ease-in-out) infinite alternate;
   }
 
   .animate-entry-in {
@@ -80,9 +133,15 @@
   }
 
   .animate-marker-pop {
-    animation: bp-marker-pop 0.55s var(--bp-ease-out) both;
+    animation: bp-marker-pop 0.55s var(--bp-ease-overshoot) both;
     transform-origin: center;
     transform-box: fill-box;
+  }
+
+  .animate-tab-indicator {
+    transition:
+      left var(--bp-duration) var(--bp-ease-in-out),
+      width var(--bp-duration) var(--bp-ease-in-out);
   }
 
   .share-svg-preview text.bp-display {
@@ -224,6 +283,31 @@
   }
 }
 
+@keyframes bp-skeleton-band {
+  from {
+    background-position: -320px 0;
+  }
+  to {
+    background-position: calc(100% + 320px) 0;
+  }
+}
+
+@keyframes bp-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--bp-duration);
+  animation-timing-function: var(--bp-ease-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-fade,
@@ -236,7 +320,24 @@
   .animate-lens-breathe,
   .animate-entry-in,
   .animate-route-draw,
-  .animate-marker-pop {
+  .animate-marker-pop,
+  .bp-popover {
+    animation: none !important;
+  }
+
+  .bp-skeleton::after,
+  .animate-tab-indicator {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .bp-skeleton::after {
+    display: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation: none !important;
   }
 }

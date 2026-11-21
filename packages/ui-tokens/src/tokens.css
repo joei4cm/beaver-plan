@@ -35,7 +35,7 @@
   --bp-text-xl: 1.35rem;
   --bp-text-display: clamp(2.75rem, 7vw, 5.5rem);
 
-  /* Space */
+  /* Space — 4px grid */
   --bp-space-1: 0.25rem;
   --bp-space-2: 0.5rem;
   --bp-space-3: 0.75rem;
@@ -45,13 +45,32 @@
   --bp-space-7: 3rem;
   --bp-space-8: 4.5rem;
 
-  /* Radius / elevation / motion — product-soft, not atlas-hard */
-  --bp-radius-sm: 6px;
+  /*
+   * Radius — 4px grid; nested: inner = outer − padding (floor 4).
+   * xs chips · sm controls · md panels · lg frames · xl sheets
+   */
+  --bp-radius-xs: 4px;
+  --bp-radius-sm: 8px;
   --bp-radius-md: 12px;
   --bp-radius-lg: 20px;
-  --bp-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --bp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --bp-duration-fast: 180ms;
-  --bp-duration: 380ms;
-  --bp-duration-slow: 600ms;
+  --bp-radius-xl: 24px;
+
+  /*
+   * Motion — role curves (Vibe tip 011)
+   * out: entrances · out-strong: post-click settle · in: exits only
+   * in-out: on-screen moves · overshoot: tiny confirms
+   */
+  --bp-ease-out: cubic-bezier(0, 0, 0.58, 1);
+  --bp-ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);
+  --bp-ease-in: cubic-bezier(0.42, 0, 1, 1);
+  --bp-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+  --bp-ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Back-compat aliases used across the app */
+  --bp-ease: var(--bp-ease-out-strong);
+  --bp-duration-fast: 200ms;
+  --bp-duration: 320ms;
+  --bp-duration-slow: 420ms;
+  --bp-duration-sm: var(--bp-duration-fast);
+  --bp-duration-md: var(--bp-duration);
+  --bp-duration-lg: var(--bp-duration-slow);
 }

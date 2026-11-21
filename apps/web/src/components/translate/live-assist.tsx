@@ -726,7 +726,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
           <span
-            className={`rounded-md px-2.5 py-1 font-semibold ${
+            className={`rounded-bp-xs px-2.5 py-1 font-semibold ${
               isDemo
                 ? "bg-river/12 text-river-deep"
                 : "bg-river text-foam"
@@ -736,18 +736,18 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               ? t(locale, "translate.demoBadge")
               : t(locale, "translate.liveBadge")}
           </span>
-          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-river-deep">
+          <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-river-deep">
             {t(locale, "translate.streamingBadge")}
           </span>
-          <span className="rounded-md bg-mist px-2.5 py-1 font-medium text-ink-soft">
+          <span className="rounded-bp-xs bg-mist px-2.5 py-1 font-medium text-ink-soft">
             {online
               ? t(locale, "offline.online")
               : t(locale, "translate.offlineBadge")}
           </span>
-          <span className="rounded-md bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+          <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
             {t(locale, "translate.asrReady")} · {status?.asr ?? "…"}
           </span>
-          <span className="rounded-md bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
+          <span className="rounded-bp-xs bg-foam/80 px-2.5 py-1 font-medium text-ink-soft ring-1 ring-[color:var(--bp-line)]">
             {t(locale, "translate.ttsReady")} · {status?.tts ?? "…"}
           </span>
           {!status ? (
@@ -852,7 +852,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       {tab === "conversation" ? (
         <>
           {(listening || partialText) && (
-            <p className="animate-sheet-in mt-6 rounded-md border border-river/20 bg-foam/90 px-4 py-3 text-sm text-river-deep">
+            <p className="animate-sheet-in mt-6 rounded-bp-sm border border-river/20 bg-foam/90 px-4 py-3 text-sm text-river-deep">
               <span className="mr-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river">
                 {t(locale, "translate.partialHint")}
               </span>
@@ -931,7 +931,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   key={cat}
                   type="button"
                   onClick={() => setPhraseCategory(cat)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                  className={`rounded-bp-sm px-3 py-1.5 text-xs font-medium transition ${
                     phraseCategory === cat
                       ? "bg-river text-foam"
                       : "bg-mist text-river-deep hover:bg-river/15"
@@ -1005,7 +1005,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 type="button"
                 onClick={() => void onFlushQueue()}
                 disabled={!online || pendingQueueCount(queue) === 0}
-                className="mt-3 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river disabled:opacity-40"
+                className="mt-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river disabled:opacity-40"
               >
                 {t(locale, "translate.queueFlush")}
               </button>
@@ -1032,7 +1032,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 }}
               />
               <div className="bp-topo absolute inset-0 opacity-30" />
-              <div className="absolute left-3 top-3 rounded-md bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
+              <div className="absolute left-3 top-3 rounded-bp-sm bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
                 {t(locale, "translate.lensYou")} ·{" "}
                 {t(locale, "translate.cameraFront")}
               </div>
@@ -1071,14 +1071,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     <button
                       type="button"
                       onClick={() => void startCamera()}
-                      className="rounded-md bg-river px-4 py-2 text-sm font-semibold text-foam"
+                      className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam"
                     >
                       {t(locale, "translate.enableCamera")}
                     </button>
                   </div>
                 </>
               )}
-              <div className="absolute left-3 top-3 rounded-md bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
+              <div className="absolute left-3 top-3 rounded-bp-sm bg-black/35 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm">
                 {t(locale, "translate.lensWorld")} ·{" "}
                 {facing === "environment"
                   ? t(locale, "translate.cameraBack")
@@ -1105,7 +1105,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 setFacing(next);
                 void startCamera(next);
               }}
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-river/30 hover:text-river"
+              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-river/30 hover:text-river"
             >
               {facing === "environment"
                 ? t(locale, "translate.cameraFront")
@@ -1115,7 +1115,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void onVision("ocr")}
               disabled={busy}
-              className="rounded-md bg-river px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-50"
+              className="rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-50"
             >
               {t(locale, "translate.ocr")}
             </button>
@@ -1123,7 +1123,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void onVision("caption")}
               disabled={busy}
-              className="rounded-md bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-ink disabled:opacity-50"
+              className="rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam transition hover:bg-ink disabled:opacity-50"
             >
               {t(locale, "translate.caption")}
             </button>
@@ -1140,7 +1140,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             <button
               type="button"
               onClick={() => setTtsEnabled((v) => !v)}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              className={`rounded-bp-sm px-3 py-1.5 text-xs font-semibold transition ${
                 ttsEnabled
                   ? "bg-river/12 text-river-deep"
                   : "bg-mist text-ink-soft"
@@ -1160,14 +1160,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 if (e.key === "Enter") void onSend();
               }}
               placeholder={t(locale, "translate.typeHint")}
-              className="flex-1 rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
+              className="flex-1 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm text-ink outline-none ring-focus focus:ring-2"
               disabled={busy}
             />
             <button
               type="button"
               onClick={() => void onSend()}
               disabled={busy}
-              className="rounded-md bg-river px-4 py-2.5 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-50"
+              className="rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam transition hover:bg-river-deep disabled:opacity-50"
             >
               {busy
                 ? t(locale, "translate.translating")
@@ -1177,7 +1177,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void onQueueDraft()}
               disabled={busy || !draft.trim()}
-              className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river disabled:opacity-50"
+              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river disabled:opacity-50"
             >
               {t(locale, "translate.queueAdd")}
             </button>
@@ -1199,7 +1199,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 stopMic();
               }}
               disabled={busy && !listening}
-              className={`min-w-[10rem] flex-1 rounded-md px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
+              className={`min-w-[10rem] flex-1 rounded-bp-sm px-4 py-3 text-sm font-semibold text-foam transition disabled:opacity-50 ${
                 listening ? "bg-ink" : "bg-river hover:bg-river-deep"
               }`}
             >
@@ -1211,7 +1211,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void runTurn({})}
               disabled={busy}
-              className="rounded-md border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition hover:border-river/40 disabled:opacity-50"
+              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition hover:border-river/40 disabled:opacity-50"
             >
               {t(locale, "translate.nextDemo")}
             </button>
@@ -1245,7 +1245,7 @@ function LocaleSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as TranslationLocale)}
-        className="mt-2 w-full rounded-md border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm font-medium text-ink outline-none ring-focus focus:ring-2"
+        className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2.5 text-sm font-medium text-ink outline-none ring-focus focus:ring-2"
       >
         {locales.map((loc) => (
           <option key={loc} value={loc}>
