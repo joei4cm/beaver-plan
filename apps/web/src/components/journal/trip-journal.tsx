@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type KeyboardEvent,
 } from "react";
 import Link from "next/link";
 import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
@@ -37,6 +38,18 @@ import {
 /** Shared focus craft for compose controls (#46 focus + bp-transition). */
 const COMPOSE_CONTROL =
   "bp-transition border border-[color:var(--bp-line)] bg-foam outline-none focus:border-river focus:ring-2 focus:ring-focus/45";
+
+/** Editorial index mark — trips-index chrome for journal entries. */
+function EntryIndexMark({ n }: { n: number }) {
+  return (
+    <span
+      aria-hidden
+      className="w-9 shrink-0 font-display text-2xl font-bold tabular-nums leading-none text-mist md:w-10 md:text-3xl"
+    >
+      {String(n).padStart(2, "0")}
+    </span>
+  );
+}
 
 type TripPayload = {
   trip: Trip;
@@ -118,6 +131,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [pending, startTransition] = useTransition();
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
   const composeMountedRef = useRef(false);
+  const dayTabsRef = useRef<HTMLDivElement | null>(null);
+  const dayTabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [dayTabIndicator, setDayTabIndicator] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
 
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
@@ -132,6 +151,82 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       window.removeEventListener("offline", sync);
     };
   }, []);
+
+  // Tip 015 — sliding day indicator on the journal list rail.
+  useEffect(() => {
+    if (!dayId) {
+      setDayTabIndicator(null);
+      return;
+    }
+    const INSET_X = 4;
+    const measure = () => {
+      const tab = dayTabRefs.current.get(dayId);
+      if (!tab) return;
+      const width = Math.max(tab.offsetWidth - INSET_X * 2, 0);
+      setDayTabIndicator({
+        left: tab.offsetLeft + INSET_X,
+        width,
+      });
+    };
+    measure();
+    const frame = requestAnimationFrame(measure);
+    const tab = dayTabRefs.current.get(dayId);
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    tab?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      inline: "nearest",
+      block: "nearest",
+    });
+    const rail = dayTabsRef.current;
+    const ro =
+      typeof ResizeObserver !== "undefined" && rail
+        ? new ResizeObserver(measure)
+        : null;
+    if (rail) ro?.observe(rail);
+    window.addEventListener("resize", measure);
+    rail?.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+      rail?.removeEventListener("scroll", measure);
+    };
+  }, [dayId, days]);
+
+  const selectDay = useCallback((nextId: string) => {
+    setDayId(nextId);
+    setStopId("");
+  }, []);
+
+  const onDayTabsKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (!days.length || !dayId) return;
+      const idx = days.findIndex((d) => d.id === dayId);
+      if (idx < 0) return;
+      let next = idx;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        next = (idx + 1) % days.length;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        next = (idx - 1 + days.length) % days.length;
+      } else if (e.key === "Home") {
+        next = 0;
+      } else if (e.key === "End") {
+        next = days.length - 1;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      const id = days[next]?.id;
+      if (!id) return;
+      selectDay(id);
+      requestAnimationFrame(() => {
+        dayTabRefs.current.get(id)?.focus();
+      });
+    },
+    [dayId, days, selectDay],
+  );
 
   // Day-tab compose remount → sheet-in, then land focus in the body.
   useEffect(() => {
@@ -532,13 +627,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/trips/${tripId}`}
-              className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline"
+              className="rounded-bp-xs px-4 py-2 text-sm text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
             >
               {t(locale, "journal.backPlanner")}
             </Link>
             <Link
               href={`/trips/${tripId}/share`}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "journal.toShare")}
             </Link>
@@ -552,44 +647,73 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         style={{ animationDelay: "40ms" }}
       >
         <div
-          className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60"
+          ref={dayTabsRef}
+          className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60 p-1"
           role="tablist"
           aria-label={t(locale, "journal.eyebrow")}
+          onKeyDown={onDayTabsKeyDown}
         >
-          {days.map((day, i) => (
-            <button
-              key={day.id}
-              type="button"
-              role="tab"
-              aria-selected={dayId === day.id}
-              onClick={() => {
-                setDayId(day.id);
-                setStopId("");
+          {dayTabIndicator ? (
+            <span
+              aria-hidden
+              className="animate-tab-indicator pointer-events-none absolute top-1 bottom-1 z-0 rounded-bp-sm bg-river shadow-bp-soft"
+              style={{
+                left: dayTabIndicator.left,
+                width: dayTabIndicator.width,
               }}
-              className={`shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
-                dayId === day.id
-                  ? "bg-river text-foam"
-                  : "text-ink-soft hover:bg-mist/70 hover:text-ink"
-              }`}
-            >
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
-                {t(locale, "journal.daySection").replace("{n}", String(i + 1))}
-              </span>
-              <span className="text-sm font-semibold">{day.date}</span>
-            </button>
-          ))}
+            />
+          ) : null}
+          {days.map((day, i) => {
+            const active = dayId === day.id;
+            return (
+              <button
+                key={day.id}
+                type="button"
+                role="tab"
+                id={`journal-day-tab-${day.id}`}
+                aria-selected={active}
+                aria-controls="journal-day-panel"
+                tabIndex={active ? 0 : -1}
+                ref={(el) => {
+                  if (el) dayTabRefs.current.set(day.id, el);
+                  else dayTabRefs.current.delete(day.id);
+                }}
+                onClick={() => selectDay(day.id)}
+                className="bp-day-tab relative z-[1] shrink-0 rounded-bp-sm px-5 py-3 text-left"
+              >
+                <span
+                  className={`block text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                    active ? "opacity-90" : "opacity-70"
+                  }`}
+                >
+                  {t(locale, "journal.daySection").replace(
+                    "{n}",
+                    String(i + 1),
+                  )}
+                </span>
+                <span className="mt-0.5 block text-sm font-semibold tabular-nums">
+                  {day.date}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
           <section
+            id="journal-day-panel"
+            role="tabpanel"
+            aria-labelledby={dayId ? `journal-day-tab-${dayId}` : undefined}
             className="min-w-0 space-y-0 px-5 py-6 md:px-7"
-            aria-label={t(locale, "journal.eyebrow")}
+            aria-label={t(locale, "journal.listEyebrow")}
           >
             <div
               className="animate-sheet-in border-b border-[color:var(--bp-line)] pb-5"
-              key={dayId ?? "all"}
+              key={`list-head-${dayId ?? "all"}`}
             >
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                {t(locale, "journal.listEyebrow")}
+                {" · "}
                 {t(locale, "journal.daySection").replace(
                   "{n}",
                   String(activeDayIndex + 1),
@@ -598,13 +722,28 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
                 {activeDay?.note ?? activeDay?.date ?? trip.title}
               </h2>
-              {activeDay?.date ? (
-                <p className="mt-2 text-sm text-ink-soft">{activeDay.date}</p>
-              ) : null}
+              <p className="mt-2 text-sm text-ink-soft">
+                {activeDay?.date ? `${activeDay.date} · ` : ""}
+                {t(locale, "journal.entryCount").replace(
+                  "{n}",
+                  String(visible.length),
+                )}
+              </p>
             </div>
 
+            {demoSeeded || softNotice ? (
+              <SoftFailNotice className="mt-5">
+                {softNotice && !online
+                  ? t(locale, "journal.softOffline")
+                  : t(locale, "journal.demoNotice")}
+              </SoftFailNotice>
+            ) : null}
+
             {visible.length === 0 && (
-              <div className="animate-fade mt-6 max-w-lg py-8">
+              <div
+                key={`list-empty-${dayId ?? "all"}`}
+                className="animate-sheet-in mt-6 max-w-lg py-8"
+              >
                 <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
                   {t(locale, "journal.empty")}
                 </p>
@@ -620,7 +759,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                       block: "nearest",
                     });
                   }}
-                  className="mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+                  className="mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 >
                   {t(locale, "journal.emptyCta")}
                 </button>
@@ -636,64 +775,76 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </div>
             )}
 
-            <div className="divide-y divide-[color:var(--bp-line)]">
+            <ul
+              key={`list-${dayId ?? "all"}`}
+              className="divide-y divide-[color:var(--bp-line)]"
+              role="list"
+              aria-label={t(locale, "journal.listEyebrow")}
+            >
               {visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
                 return (
-                  <article
-                    key={entry.id}
-                    className="animate-entry-in py-7 first:pt-6"
-                    style={{ animationDelay: `${index * 70}ms` }}
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="text-xs font-medium uppercase tracking-[0.16em] text-river">
-                        {stop?.place.name ??
-                          days.find((d) => d.id === entry.dayId)?.note ??
-                          t(locale, "journal.dayNote")}
-                        {entry.id.startsWith("local-")
-                          ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
-                          : ""}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void removeEntry(entry.id)}
-                        className="text-xs text-ink-soft/60 transition duration-bp-fast ease-bp-out hover:text-timber"
-                      >
-                        {t(locale, "journal.remove")}
-                      </button>
-                    </div>
-                    {entry.body ? (
-                      <p className="mt-3 font-display text-2xl leading-snug tracking-tight text-ink md:text-3xl">
-                        {entry.body}
-                      </p>
-                    ) : null}
-                    {entry.media.length > 0 ? (
-                      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-                        {entry.media.map((url, mediaIndex) => (
-                          <MediaFrame
-                            key={`${entry.id}-${mediaIndex}`}
-                            src={resolveMediaUrl(url)}
-                            alt=""
-                            label={t(locale, "journal.mediaPlaceholder")}
-                            className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
-                          />
-                        ))}
+                  <li key={entry.id}>
+                    <article
+                      className="animate-entry-in group flex gap-4 py-7 first:pt-6 sm:gap-5"
+                      style={{ animationDelay: `${index * 55 + 40}ms` }}
+                    >
+                      <EntryIndexMark n={index + 1} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                            {stop?.place.name ??
+                              days.find((d) => d.id === entry.dayId)?.note ??
+                              t(locale, "journal.dayNote")}
+                            {entry.id.startsWith("local-")
+                              ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
+                              : ""}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void removeEntry(entry.id)}
+                            className="shrink-0 rounded-bp-xs px-1.5 py-0.5 text-xs text-ink-soft/55 bp-transition hover:bg-river/8 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
+                          >
+                            {t(locale, "journal.remove")}
+                          </button>
+                        </div>
+                        {entry.body ? (
+                          <p className="mt-2.5 font-display text-2xl leading-snug tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-3xl">
+                            {entry.body}
+                          </p>
+                        ) : null}
+                        {entry.media.length > 0 ? (
+                          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+                            {entry.media.map((url, mediaIndex) => (
+                              <MediaFrame
+                                key={`${entry.id}-${mediaIndex}`}
+                                src={resolveMediaUrl(url)}
+                                alt=""
+                                label={t(locale, "journal.mediaPlaceholder")}
+                                className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
+                            {[0, 1].map((i) => (
+                              <div
+                                key={i}
+                                className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/10 via-mist/60 to-foam"
+                                aria-label={t(
+                                  locale,
+                                  "journal.mediaPlaceholder",
+                                )}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
-                        {[0, 1].map((i) => (
-                          <div
-                            key={i}
-                            className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/10 via-mist/60 to-foam"
-                            aria-label={t(locale, "journal.mediaPlaceholder")}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </article>
+                    </article>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </section>
 
           <aside
@@ -711,14 +862,6 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             <p className="mt-1 text-sm leading-relaxed text-ink-soft">
               {t(locale, "journal.composeHint")}
             </p>
-
-            {demoSeeded || softNotice ? (
-              <SoftFailNotice className="mt-4">
-                {softNotice && !online
-                  ? t(locale, "journal.softOffline")
-                  : t(locale, "journal.demoNotice")}
-              </SoftFailNotice>
-            ) : null}
 
             <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
               {t(locale, "journal.bindStop")}
