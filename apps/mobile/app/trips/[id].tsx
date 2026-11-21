@@ -895,14 +895,37 @@ export default function TripDetailScreen() {
     searchDemo;
   const detailStatus: "offline" | "demo" | "live" =
     !online || fromCache ? "offline" : detailDemo ? "demo" : "live";
-  const detailSoftOpen = Boolean(softNotice) || fromCache || !online;
+  const detailSoftNoise =
+    Boolean(softNotice) || fromCache || !online || detailDemo;
+  /**
+   * Expo trip-detail SoftFailNotice (BEA-253 after web #189 / Expo #158):
+   * Stops rail owns compact SoftFail when the day has map stops · soft badge ·
+   * tip-011 chip rise. Empty day still owns SoftFail. Title SoftFail yields
+   * while Stops owns soft-fail (no double depth). Soft copy never timber /
+   * Failed to fetch.
+   */
+  const emptyOwnsSoft = dayEmpty;
+  const stopsOwnsSoft = !dayEmpty;
+  const stopsSoftOpen = emptyOwnsSoft
+    ? detailSoftNoise
+    : Boolean(
+        softNotice ||
+          fromCache ||
+          !online ||
+          (detailDemo && (dayLegs.length > 0 || dayStops.length > 0)),
+      );
+  const stopsSoftCopy =
+    softNotice ??
+    (dayEmpty
+      ? t(locale, "planner.emptySoftFail")
+      : t(locale, "planner.stops.softFail"));
+  /** Title SoftFail yields while Stops rail owns soft-fail. */
+  const detailSoftOpen =
+    !emptyOwnsSoft && !stopsOwnsSoft && detailSoftNoise;
   const detailSoftCopy =
     !online || fromCache
       ? (softNotice ?? t(locale, "planner.demoLocal"))
       : (softNotice ?? "");
-  /** Stop SoftFailNotice — empty day owns soft-fail; page SoftFail yields. */
-  const stopsSoftOpen = dayEmpty;
-  const stopsSoftCopy = t(locale, "planner.emptySoftFail");
   const selectedStop = selectedStopId
     ? dayStops.find((s) => s.id === selectedStopId)
     : undefined;
@@ -1045,9 +1068,9 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
             </View>
-            {/* Page SoftFailNotice yields while empty-day stop rail owns soft-fail. */}
+            {/* Title SoftFail yields while Stops rail owns soft-fail. */}
             <SoftFailNotice
-              open={detailSoftOpen && !stopsSoftOpen}
+              open={detailSoftOpen}
               compact
               style={styles.softBanner}
             >
@@ -1402,7 +1425,11 @@ export default function TripDetailScreen() {
                 ) : null}
               </View>
 
-              {/* Stop list chrome — azure rail · mist-track chips · SoftFailNotice · #46 */}
+              {/*
+                Map-stop SoftFail chrome (BEA-253 after web #189 / Expo #158):
+                azure Stops rail · soft/selected badge · compact SoftFailNotice ·
+                tip-011 chip rise — never timber / Failed to fetch.
+              */}
               <View style={styles.stopsChrome}>
                 <View style={styles.stopsRail}>
                   <View style={styles.stopsRailCopy}>
@@ -1423,85 +1450,117 @@ export default function TripDetailScreen() {
                       </Text>
                     ) : null}
                   </View>
-                  {dayEmpty ? (
-                    <View style={styles.stopsEmptyBadge}>
-                      <Text style={styles.stopsEmptyBadgeText}>
-                        {t(locale, "planner.emptyBadge")}
+                  <View style={styles.stopsRailBadges}>
+                    {dayEmpty ? (
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.stopsEmptyBadge,
+                          stopsSoftOpen
+                            ? styles.stopsEmptyBadgeSoft
+                            : styles.stopsEmptyBadgeLive,
+                        ])}
+                      >
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.stopsEmptyBadgeText,
+                            stopsSoftOpen
+                              ? styles.stopsEmptyBadgeTextSoft
+                              : styles.stopsEmptyBadgeTextLive,
+                          ])}
+                        >
+                          {t(locale, "planner.emptyBadge")}
+                        </Text>
+                      </View>
+                    ) : selectedStop ? (
+                      <View style={styles.stopsSelectedBadge}>
+                        <Text
+                          style={styles.stopsSelectedBadgeText}
+                          numberOfLines={1}
+                        >
+                          {selectedStop.place.name} ·{" "}
+                          {t(locale, "planner.stops.selected")}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.stopsListHint}>
+                        {t(locale, "planner.stopsList")}
                       </Text>
-                    </View>
-                  ) : selectedStop ? (
-                    <View style={styles.stopsSelectedBadge}>
-                      <Text style={styles.stopsSelectedBadgeText} numberOfLines={1}>
-                        {selectedStop.place.name} ·{" "}
-                        {t(locale, "planner.stops.selected")}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.stopsListHint}>
-                      {t(locale, "planner.stopsList")}
-                    </Text>
-                  )}
+                    )}
+                    {stopsOwnsSoft && stopsSoftOpen ? (
+                      <View style={styles.stopsSoftBadge}>
+                        <Text style={styles.stopsSoftBadgeText}>
+                          {t(locale, "planner.stops.softBadge")}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
 
                 {!dayEmpty ? (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.stopChipScroll}
-                    contentContainerStyle={styles.stopChipTrack}
-                    accessibilityRole="tablist"
-                    accessibilityLabel={t(locale, "planner.stops.filterLabel")}
-                  >
-                    {dayStops.map((stop, i) => {
-                      const on = selectedStopId === stop.id;
-                      return (
-                        <Pressable
-                          key={stop.id}
-                          onPress={() => selectStop(stop.id)}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected: on }}
-                          accessibilityLabel={t(
-                            locale,
-                            "planner.stops.chip",
-                          ).replace("{n}", String(i + 1))}
-                          style={StyleSheet.flatten([
-                            styles.stopChip,
-                            on ? styles.stopChipOn : null,
-                          ])}
-                        >
-                          <Animated.View
+                  <SheetPresence open delayMs={40} rise={8}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.stopChipScroll}
+                      contentContainerStyle={styles.stopChipTrack}
+                      accessibilityRole="tablist"
+                      accessibilityLabel={t(
+                        locale,
+                        "planner.stops.filterLabel",
+                      )}
+                    >
+                      {dayStops.map((stop, i) => {
+                        const on = selectedStopId === stop.id;
+                        return (
+                          <Pressable
+                            key={stop.id}
+                            onPress={() => selectStop(stop.id)}
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected: on }}
+                            accessibilityLabel={t(
+                              locale,
+                              "planner.stops.chip",
+                            ).replace("{n}", String(i + 1))}
                             style={StyleSheet.flatten([
-                              styles.stopChipIndex,
-                              on ? styles.stopChipIndexOn : null,
-                              on
-                                ? { transform: [{ scale: stopPop }] }
-                                : null,
+                              styles.stopChip,
+                              on ? styles.stopChipOn : null,
                             ])}
                           >
-                            <Text
+                            <Animated.View
                               style={StyleSheet.flatten([
-                                styles.stopChipIndexText,
-                                on ? styles.stopChipIndexTextOn : null,
+                                styles.stopChipIndex,
+                                on ? styles.stopChipIndexOn : null,
+                                on
+                                  ? { transform: [{ scale: stopPop }] }
+                                  : null,
                               ])}
                             >
-                              {i + 1}
+                              <Text
+                                style={StyleSheet.flatten([
+                                  styles.stopChipIndexText,
+                                  on ? styles.stopChipIndexTextOn : null,
+                                ])}
+                              >
+                                {i + 1}
+                              </Text>
+                            </Animated.View>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.stopChipLabel,
+                                on ? styles.stopChipLabelOn : null,
+                              ])}
+                              numberOfLines={1}
+                            >
+                              {stop.place.name}
                             </Text>
-                          </Animated.View>
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.stopChipLabel,
-                              on ? styles.stopChipLabelOn : null,
-                            ])}
-                            numberOfLines={1}
-                          >
-                            {stop.place.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </SheetPresence>
                 ) : null}
 
+                {/* Compact SoftFail under azure Stops rail — never timber. */}
                 <SoftFailNotice open={stopsSoftOpen} compact>
                   {stopsSoftCopy}
                 </SoftFailNotice>
@@ -2657,11 +2716,22 @@ const styles = StyleSheet.create({
     color: "rgba(100, 116, 139, 0.8)",
     flexShrink: 1,
   },
+  stopsRailBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
   stopsEmptyBadge: {
     borderRadius: radius.xs,
-    backgroundColor: colors.mist,
     paddingHorizontal: 6,
     paddingVertical: 2,
+  },
+  stopsEmptyBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  stopsEmptyBadgeLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
   stopsEmptyBadgeText: {
     ...type.body,
@@ -2669,7 +2739,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
+  },
+  stopsEmptyBadgeTextSoft: {
     color: colors.inkSoft,
+  },
+  stopsEmptyBadgeTextLive: {
+    color: colors.river,
   },
   stopsSelectedBadge: {
     maxWidth: 160,
@@ -2686,6 +2761,20 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
+  stopsSoftBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  stopsSoftBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
   stopsListHint: {
     ...type.body,
     fontSize: 10,
@@ -2701,9 +2790,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
-    paddingTop: 2,
+    marginHorizontal: 10,
+    marginBottom: 10,
+    marginTop: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.5)",
   },
   stopChip: {
     flexDirection: "row",
