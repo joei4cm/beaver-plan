@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type {
-  BookingLink,
-  BookingLinkKind,
-  BookingSuggestion,
-  Stop,
-  Trip,
+import {
+  DemoBookingProvider,
+  BOOKING_LINK_KINDS,
+  normalizeBookingLinks,
+  type BookingLink,
+  type BookingLinkKind,
+  type BookingSuggestion,
+  type BookingSuggestionKind,
+  type Stop,
+  type Trip,
 } from "@beaver/core";
-import { BOOKING_LINK_KINDS, normalizeBookingLinks } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Props = {
   tripId: string;
@@ -21,6 +24,8 @@ type Props = {
   destinationHint?: string;
   onSaved: () => Promise<void>;
   onError: (message: string) => void;
+  /** When true, expand and prefer the search → results flow (preview / demo). */
+  defaultOpen?: boolean;
 };
 
 type DraftRow = {
@@ -39,6 +44,11 @@ type StatusResponse = {
   mode: "demo" | "configured";
   provider: string;
 };
+
+type KindFilter = BookingSuggestionKind | "all";
+
+const KIND_FILTERS: KindFilter[] = ["all", "hotel", "activity"];
+const demoProvider = new DemoBookingProvider();
 
 function emptyDrafts(): DraftRow[] {
   return BOOKING_LINK_KINDS.map((kind) => ({
@@ -65,6 +75,42 @@ function kindLabel(locale: Locale, kind: BookingLinkKind): string {
   return t(locale, `planner.booking.kind.${kind}`);
 }
 
+function suggestionKindLabel(
+  locale: Locale,
+  kind: BookingSuggestionKind,
+): string {
+  return kind === "hotel"
+    ? t(locale, "planner.booking.kind.hotel")
+    : t(locale, "planner.booking.kind.ticket");
+}
+
+function filterLabel(locale: Locale, kind: KindFilter): string {
+  if (kind === "all") return t(locale, "planner.booking.filterAll");
+  if (kind === "hotel") return t(locale, "planner.booking.kind.hotel");
+  return t(locale, "planner.booking.filterActivity");
+}
+
+async function searchLocal(
+  city: string,
+  checkIn: string,
+  checkOut: string,
+  kind: KindFilter,
+  locale: Locale,
+): Promise<SearchResponse> {
+  const suggestions = await demoProvider.search({
+    city,
+    checkIn: checkIn || undefined,
+    checkOut: checkOut || undefined,
+    kind,
+    locale,
+  });
+  return {
+    suggestions,
+    mode: "demo",
+    provider: demoProvider.id,
+  };
+}
+
 export function BookingPanel({
   tripId,
   locale,
@@ -73,16 +119,21 @@ export function BookingPanel({
   destinationHint,
   onSaved,
   onError,
+  defaultOpen = false,
 }: Props) {
-  const [open, setOpen] = useState(() => Boolean(stop));
+  const [open, setOpen] = useState(() => Boolean(stop) || defaultOpen);
   const [drafts, setDrafts] = useState<DraftRow[]>(() => draftsFromStop(stop));
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<BookingSuggestion[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [softDemo, setSoftDemo] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [city, setCity] = useState(destinationHint ?? "");
   const [checkIn, setCheckIn] = useState(trip.startDate ?? "");
   const [checkOut, setCheckOut] = useState(trip.endDate ?? "");
+  const [seeded, setSeeded] = useState(false);
 
   useEffect(() => {
     setDrafts(draftsFromStop(stop));
@@ -95,9 +146,46 @@ export function BookingPanel({
 
   useEffect(() => {
     void apiGet<StatusResponse>("/v1/booking/status")
-      .then(setStatus)
-      .catch(() => setStatus(null));
+      .then((res) => {
+        setStatus(res);
+        setSoftDemo(false);
+      })
+      .catch(() => {
+        setStatus({ mode: "demo", provider: demoProvider.id });
+        setSoftDemo(true);
+      });
   }, []);
+
+  // Seed demo results so search → results is immediately usable without API.
+  useEffect(() => {
+    if (seeded) return;
+    const q = (destinationHint || city || trip.destination || "").trim();
+    if (!q) return;
+    setSeeded(true);
+    void (async () => {
+      try {
+        const res = await apiSend<SearchResponse>("/v1/booking/search", "POST", {
+          city: q,
+          checkIn: checkIn || undefined,
+          checkOut: checkOut || undefined,
+          kind: "all",
+          locale,
+        });
+        setSuggestions(res.suggestions);
+        setStatus({ mode: res.mode, provider: res.provider });
+        setSoftDemo(false);
+        setSearched(true);
+      } catch (e) {
+        if (isPlannerNoiseError(e)) {
+          const local = await searchLocal(q, checkIn, checkOut, "all", locale);
+          setSuggestions(local.suggestions);
+          setStatus({ mode: local.mode, provider: local.provider });
+          setSoftDemo(true);
+          setSearched(true);
+        }
+      }
+    })();
+  }, [seeded, destinationHint, city, trip.destination, checkIn, checkOut, locale]);
 
   const savedCount = useMemo(
     () => (stop?.bookingLinks ?? []).filter((l) => l.url).length,
@@ -133,9 +221,17 @@ export function BookingPanel({
           expectedVersion: trip.version,
         },
       );
+      setSoftDemo(false);
       await onSaved();
     } catch (e) {
-      onError(e instanceof Error ? e.message : "booking_save_failed");
+      if (isPlannerNoiseError(e)) {
+        setSoftDemo(true);
+        // Planner maps transport noise → soft demo notice (not a red error).
+        onError("Failed to fetch");
+        await onSaved();
+      } else {
+        onError(e instanceof Error ? e.message : "booking_save_failed");
+      }
     } finally {
       setSaving(false);
     }
@@ -154,13 +250,25 @@ export function BookingPanel({
         city: q,
         checkIn: checkIn || undefined,
         checkOut: checkOut || undefined,
-        kind: "all",
+        kind: kindFilter,
         locale,
       });
       setSuggestions(res.suggestions);
       setStatus({ mode: res.mode, provider: res.provider });
+      setSoftDemo(false);
+      setSearched(true);
+      setOpen(true);
     } catch (e) {
-      onError(e instanceof Error ? e.message : "booking_search_failed");
+      if (isPlannerNoiseError(e)) {
+        const local = await searchLocal(q, checkIn, checkOut, kindFilter, locale);
+        setSuggestions(local.suggestions);
+        setStatus({ mode: local.mode, provider: local.provider });
+        setSoftDemo(true);
+        setSearched(true);
+        setOpen(true);
+      } else {
+        onError(e instanceof Error ? e.message : "booking_search_failed");
+      }
     } finally {
       setSearching(false);
     }
@@ -193,15 +301,15 @@ export function BookingPanel({
         aria-expanded={open}
       >
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
-            <span className="rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-river ring-1 ring-river/25">
+            <span className="rounded-md bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
               {badge}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-ink-soft">
+          <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
             {stop
               ? t(locale, "planner.booking.forStop").replace(
                   "{name}",
@@ -213,145 +321,241 @@ export function BookingPanel({
               : ""}
           </p>
         </div>
-        <span className="text-ink-soft">{open ? "−" : "+"}</span>
+        <span
+          className={`text-river transition ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        >
+          ▾
+        </span>
       </button>
 
       {open && (
-        <div className="space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4">
-          {!stop ? (
-            <p className="text-sm text-ink-soft">
-              {t(locale, "planner.booking.selectStop")}
+        <div
+          className="animate-fade space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
+          style={{ animationDelay: "40ms" }}
+        >
+          {softDemo && (
+            <p
+              className="rounded-md border border-river/20 bg-river/5 px-3 py-2 text-xs leading-relaxed text-river"
+              role="status"
+            >
+              {t(locale, "planner.booking.demoNotice")}
             </p>
-          ) : (
-            <div className="space-y-3">
-              {drafts.map((row) => (
-                <div key={row.kind} className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs font-medium uppercase tracking-[0.12em] text-ink-soft">
-                      {kindLabel(locale, row.kind)}
-                    </label>
-                    {row.url.trim() && (
-                      <button
-                        type="button"
-                        onClick={() => openExternal(row.url.trim())}
-                        className="text-xs text-river hover:underline"
-                      >
-                        {t(locale, "planner.booking.open")}
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    value={row.providerLabel}
-                    onChange={(e) =>
-                      updateDraft(row.kind, { providerLabel: e.target.value })
-                    }
-                    placeholder={t(locale, "planner.booking.providerPlaceholder")}
-                    className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
-                  />
-                  <input
-                    value={row.url}
-                    onChange={(e) =>
-                      updateDraft(row.kind, { url: e.target.value })
-                    }
-                    placeholder={t(locale, "planner.booking.urlPlaceholder")}
-                    className="w-full rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
-                  />
-                </div>
-              ))}
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void save()}
-                className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-40"
-              >
-                {saving
-                  ? t(locale, "planner.booking.saving")
-                  : t(locale, "planner.booking.save")}
-              </button>
-            </div>
           )}
 
-          <div className="space-y-3 border-t border-[color:var(--bp-line)] pt-4">
+          {/* Primary flow: search → results → deep-link out */}
+          <section className="space-y-3">
             <div>
-              <h3 className="text-sm font-medium text-ink">
+              <h3 className="font-display text-base tracking-tight text-ink">
                 {t(locale, "planner.booking.suggestTitle")}
               </h3>
-              <p className="mt-0.5 text-xs text-ink-soft">
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
                 {t(locale, "planner.booking.suggestSupport")}
               </p>
             </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder={t(locale, "planner.booking.cityPlaceholder")}
-                className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm outline-none ring-river/30 focus:ring-2 sm:col-span-1"
-              />
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-                className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm outline-none ring-river/30 focus:ring-2"
-              />
-              <input
-                type="date"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-3 py-2 text-sm outline-none ring-river/30 focus:ring-2"
-              />
+
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label={t(locale, "planner.booking.filterLabel")}
+            >
+              {KIND_FILTERS.map((id) => {
+                const on = kindFilter === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setKindFilter(id)}
+                    className={`rounded-md px-3 py-1.5 text-sm transition ${
+                      on
+                        ? "bg-river text-foam"
+                        : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
+                    }`}
+                  >
+                    {filterLabel(locale, id)}
+                  </button>
+                );
+              })}
             </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <label className="block sm:col-span-1">
+                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                  {t(locale, "planner.booking.cityPlaceholder")}
+                </span>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder={t(locale, "planner.booking.cityPlaceholder")}
+                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                  {t(locale, "planner.booking.checkIn")}
+                </span>
+                <input
+                  type="date"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                  {t(locale, "planner.booking.checkOut")}
+                </span>
+                <input
+                  type="date"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 focus:ring-2"
+                />
+              </label>
+            </div>
+
             <button
               type="button"
               disabled={searching}
               onClick={() => void runSearch()}
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-3 py-2 text-sm text-ink-soft transition hover:border-river/40 hover:text-river disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {searching
                 ? t(locale, "planner.booking.searching")
                 : t(locale, "planner.booking.search")}
             </button>
 
+            {searched && suggestions.length === 0 && (
+              <p className="text-sm text-ink-soft">
+                {t(locale, "planner.booking.emptyResults")}
+              </p>
+            )}
+
             {suggestions.length > 0 && (
-              <ul className="divide-y divide-[color:var(--bp-line)] border border-[color:var(--bp-line)]">
-                {suggestions.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex flex-wrap items-start justify-between gap-2 px-3 py-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-ink">{s.title}</div>
-                      <div className="mt-0.5 text-xs text-ink-soft">
-                        {s.kind === "hotel"
-                          ? t(locale, "planner.booking.kind.hotel")
-                          : t(locale, "planner.booking.kind.ticket")}
-                        {" · "}
-                        {s.providerLabel}
-                        {s.priceHint ? ` · ${s.priceHint}` : ""}
+              <div className="space-y-2">
+                <div className="text-[11px] uppercase tracking-[0.14em] text-ink-soft">
+                  {t(locale, "planner.booking.resultsTitle").replace(
+                    "{n}",
+                    String(suggestions.length),
+                  )}
+                </div>
+                <ul className="space-y-2">
+                  {suggestions.map((s, i) => (
+                    <li
+                      key={s.id}
+                      className="animate-preview-in rounded-md border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+                      style={{ animationDelay: `${60 + i * 40}ms` }}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-ink">
+                            {s.title}
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-soft">
+                            <span className="rounded bg-mist/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
+                              {suggestionKindLabel(locale, s.kind)}
+                            </span>
+                            <span>{s.providerLabel}</span>
+                            {s.priceHint ? <span>· {s.priceHint}</span> : null}
+                            {typeof s.ratingHint === "number" ? (
+                              <span>
+                                · {t(locale, "planner.booking.rating").replace(
+                                  "{n}",
+                                  s.ratingHint.toFixed(1),
+                                )}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openExternal(s.url)}
+                            className="rounded-bp bg-river px-3 py-1.5 text-xs font-semibold text-foam transition hover:bg-river-deep"
+                          >
+                            {t(locale, "planner.booking.openExternal")}
+                          </button>
+                          {stop && (
+                            <button
+                              type="button"
+                              onClick={() => applySuggestion(s)}
+                              className="rounded-md border border-river/30 px-2.5 py-1.5 text-xs font-medium text-river transition hover:bg-river/10"
+                            >
+                              {t(locale, "planner.booking.useLink")}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openExternal(s.url)}
-                        className="text-xs text-river hover:underline"
-                      >
-                        {t(locale, "planner.booking.open")}
-                      </button>
-                      {stop && (
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          {/* Secondary: persist deep links on the selected stop */}
+          <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-4">
+            <div>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                {t(locale, "planner.booking.linksTitle")}
+              </h3>
+            </div>
+            {!stop ? (
+              <p className="text-sm text-ink-soft">
+                {t(locale, "planner.booking.selectStop")}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {drafts.map((row) => (
+                  <div key={row.kind} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.12em] text-ink-soft">
+                        {kindLabel(locale, row.kind)}
+                      </label>
+                      {row.url.trim() && (
                         <button
                           type="button"
-                          onClick={() => applySuggestion(s)}
-                          className="rounded border border-river/30 px-2 py-1 text-xs text-river transition hover:bg-river/10"
+                          onClick={() => openExternal(row.url.trim())}
+                          className="text-xs font-medium text-river hover:underline"
                         >
-                          {t(locale, "planner.booking.useLink")}
+                          {t(locale, "planner.booking.open")}
                         </button>
                       )}
                     </div>
-                  </li>
+                    <input
+                      value={row.providerLabel}
+                      onChange={(e) =>
+                        updateDraft(row.kind, { providerLabel: e.target.value })
+                      }
+                      placeholder={t(
+                        locale,
+                        "planner.booking.providerPlaceholder",
+                      )}
+                      className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                    />
+                    <input
+                      value={row.url}
+                      onChange={(e) =>
+                        updateDraft(row.kind, { url: e.target.value })
+                      }
+                      placeholder={t(locale, "planner.booking.urlPlaceholder")}
+                      className="w-full rounded-md border border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 text-sm text-ink outline-none ring-river/30 placeholder:text-ink-soft/50 focus:ring-2"
+                    />
+                  </div>
                 ))}
-              </ul>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void save()}
+                  className="rounded-bp bg-ink px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:opacity-40"
+                >
+                  {saving
+                    ? t(locale, "planner.booking.saving")
+                    : t(locale, "planner.booking.save")}
+                </button>
+              </div>
             )}
-          </div>
+          </section>
 
           <p className="text-[11px] leading-relaxed text-ink-soft/80">
             {t(locale, "planner.booking.hint")}
@@ -381,7 +585,7 @@ export function BookingLinkChips({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 rounded border border-river/25 bg-river/5 px-2 py-0.5 text-[11px] text-river transition hover:border-river/50 hover:bg-river/10"
+          className="inline-flex items-center gap-1 rounded-md border border-river/25 bg-river/5 px-2 py-0.5 text-[11px] font-medium text-river transition hover:border-river/50 hover:bg-river/10"
         >
           <span>{kindLabel(locale, link.kind)}</span>
           {link.providerLabel ? (
