@@ -13,6 +13,7 @@ import { SHARE_TEMPLATES, type Trip } from "@beaver/core";
 import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { fetchMapEngine, type EngineResolve } from "../src/api";
+import { SheetPresence } from "../src/components/sheet-presence";
 import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { type } from "../src/theme";
 import {
@@ -27,14 +28,15 @@ const MAP_OPTS: Trip["mapEngine"][] = ["auto", "google", "amap", "baidu"];
 const LOCALE_OPTS: Locale[] = ["zh-CN", "en"];
 const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
+/** Tip 011 — ease-out-strong (#46). */
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
-/** River uppercase eyebrow — 0.28em tracking parity with web #97. */
+/** River uppercase eyebrow — 0.28em tracking parity with web #162. */
 function SectionEyebrow({ children }: { children: string }) {
   return <Text style={styles.sectionEyebrow}>{children}</Text>;
 }
 
-/** Mist-track segmented control — nested #46 radii, foam/river active. */
+/** Mist-track segmented control — nested #46 radii, foam/river active, tip-011. */
 function Segmented<T extends string>({
   value,
   options,
@@ -82,6 +84,12 @@ function Segmented<T extends string>({
   );
 }
 
+/**
+ * Expo settings SoftFailNotice chrome (BEA-221 after web #162):
+ * azure prefs sheet · SoftFailNotice section-scoped under Maps · tip-011
+ * SheetPresence rise · StyleSheet.flatten · Lumen tokens. Never timber /
+ * Failed to fetch — prefs still save locally.
+ */
 export default function SettingsScreen() {
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_USER_PREFS);
   const [hydrated, setHydrated] = useState(false);
@@ -197,158 +205,233 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
-        {/* Language */}
+        {/* Prefs sheet — azure rail · SoftFail under Maps · tip-011 hierarchy */}
         <View
-          style={styles.section}
-          accessibilityLabelledBy="settings-locale-heading"
+          style={styles.prefsSheet}
+          accessibilityLabel={t(locale, "settings.title")}
         >
-          <View style={styles.sectionHeader}>
-            <SectionEyebrow>
-              {t(locale, "settings.localeEyebrow")}
-            </SectionEyebrow>
-            <Text nativeID="settings-locale-heading" style={styles.sectionTitle}>
-              {t(locale, "settings.locale")}
-            </Text>
-            <Text style={styles.sectionSupport}>
-              {t(locale, "settings.localeSupport")}
-            </Text>
-          </View>
-          <Segmented
-            value={prefs.locale}
-            options={LOCALE_OPTS}
-            accessibilityLabel={t(locale, "settings.locale")}
-            labelFor={(opt) =>
-              t(locale, `settings.locale.${opt}` as MessageKey)
-            }
-            onChange={(next) => void applyPatch({ locale: next })}
-          />
-        </View>
-
-        {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
-        <View
-          style={styles.section}
-          accessibilityLabelledBy="settings-map-heading"
-        >
-          <View style={styles.sectionHeader}>
-            <SectionEyebrow>{t(locale, "settings.mapEyebrow")}</SectionEyebrow>
-            <Text nativeID="settings-map-heading" style={styles.sectionTitle}>
-              {t(locale, "settings.mapEngine")}
-            </Text>
-            <Text style={styles.sectionSupport}>
-              {t(locale, "settings.mapEngineSupport")}
-            </Text>
-          </View>
-
-          <SoftFailNotice open={showSoftFail} style={styles.mapSoftNotice}>
-            {softNotice ?? t(locale, "settings.resolvedDemo")}
-          </SoftFailNotice>
-
-          <Segmented
-            value={prefs.mapEngine}
-            options={MAP_OPTS}
-            accessibilityLabel={t(locale, "settings.mapEngine")}
-            labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
-            onChange={(next) => void applyPatch({ mapEngine: next })}
-          />
-
-          {statusCopy ? (
-            <Text style={styles.resolveLine}>{statusCopy}</Text>
-          ) : null}
-        </View>
-
-        {/* Distance */}
-        <View
-          style={styles.section}
-          accessibilityLabelledBy="settings-distance-heading"
-        >
-          <View style={styles.sectionHeader}>
-            <SectionEyebrow>
-              {t(locale, "settings.distanceEyebrow")}
-            </SectionEyebrow>
-            <Text
-              nativeID="settings-distance-heading"
-              style={styles.sectionTitle}
+          <View style={styles.sheetRail}>
+            <View style={styles.sheetRailCopy}>
+              <Text style={styles.sheetEyebrow}>
+                {t(locale, "settings.sheetEyebrow")}
+              </Text>
+              <Text style={styles.sheetSupport}>
+                {t(locale, "settings.sheetSupport")}
+              </Text>
+            </View>
+            <View
+              style={StyleSheet.flatten([
+                styles.statusBadge,
+                showSoftFail ? styles.statusBadgeDemo : styles.statusBadgeLocal,
+              ])}
             >
-              {t(locale, "settings.distance")}
-            </Text>
-            <Text style={styles.sectionSupport}>
-              {t(locale, "settings.distanceSupport")}
-            </Text>
-          </View>
-          <Segmented
-            value={prefs.distanceUnit}
-            options={DISTANCE_OPTS}
-            accessibilityLabel={t(locale, "settings.distance")}
-            labelFor={(opt) =>
-              t(locale, `settings.distance.${opt}` as MessageKey)
-            }
-            onChange={(next) => void applyPatch({ distanceUnit: next })}
-          />
-        </View>
-
-        {/* Share template */}
-        <View
-          style={StyleSheet.flatten([styles.section, styles.sectionLast])}
-          accessibilityLabelledBy="settings-share-heading"
-        >
-          <View style={styles.sectionHeader}>
-            <SectionEyebrow>
-              {t(locale, "settings.shareEyebrow")}
-            </SectionEyebrow>
-            <Text nativeID="settings-share-heading" style={styles.sectionTitle}>
-              {t(locale, "settings.shareTemplate")}
-            </Text>
-            <Text style={styles.sectionSupport}>
-              {t(locale, "settings.shareTemplateSupport")}
-            </Text>
-          </View>
-          {SHARE_TEMPLATES.map((tpl, index) => {
-            const selected = prefs.shareImageTemplateId === tpl.id;
-            const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
-            const blurb = locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn;
-            return (
-              <Pressable
-                key={tpl.id}
-                onPress={() =>
-                  void applyPatch({ shareImageTemplateId: tpl.id })
-                }
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
+              <Text
                 style={StyleSheet.flatten([
-                  styles.shareRow,
-                  selected ? styles.shareRowSelected : null,
-                  index === SHARE_TEMPLATES.length - 1
-                    ? styles.shareRowLast
-                    : null,
+                  styles.statusBadgeText,
+                  showSoftFail
+                    ? styles.statusBadgeTextDemo
+                    : styles.statusBadgeTextLocal,
                 ])}
               >
+                {showSoftFail
+                  ? t(locale, "settings.demoBadge")
+                  : t(locale, "settings.localBadge")}
+              </Text>
+            </View>
+          </View>
+
+          {/* Language */}
+          <SheetPresence
+            open={hydrated}
+            delayMs={60}
+            rise={10}
+            style={styles.section}
+            accessibilityLabel={t(locale, "settings.locale")}
+          >
+            <View
+              accessibilityLabelledBy="settings-locale-heading"
+            >
+              <View style={styles.sectionHeader}>
+                <SectionEyebrow>
+                  {t(locale, "settings.localeEyebrow")}
+                </SectionEyebrow>
                 <Text
-                  style={StyleSheet.flatten([
-                    styles.shareIndex,
-                    selected ? styles.shareIndexSelected : null,
-                  ])}
+                  nativeID="settings-locale-heading"
+                  style={styles.sectionTitle}
                 >
-                  {String(index + 1).padStart(2, "0")}
+                  {t(locale, "settings.locale")}
                 </Text>
-                <View style={styles.shareCopy}>
-                  <Text
+                <Text style={styles.sectionSupport}>
+                  {t(locale, "settings.localeSupport")}
+                </Text>
+              </View>
+              <Segmented
+                value={prefs.locale}
+                options={LOCALE_OPTS}
+                accessibilityLabel={t(locale, "settings.locale")}
+                labelFor={(opt) =>
+                  t(locale, `settings.locale.${opt}` as MessageKey)
+                }
+                onChange={(next) => void applyPatch({ locale: next })}
+              />
+            </View>
+          </SheetPresence>
+
+          {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
+          <SheetPresence
+            open={hydrated}
+            delayMs={90}
+            rise={10}
+            style={StyleSheet.flatten([styles.section, styles.sectionBordered])}
+            accessibilityLabel={t(locale, "settings.mapEngine")}
+          >
+            <View accessibilityLabelledBy="settings-map-heading">
+              <View style={styles.sectionHeader}>
+                <SectionEyebrow>
+                  {t(locale, "settings.mapEyebrow")}
+                </SectionEyebrow>
+                <Text
+                  nativeID="settings-map-heading"
+                  style={styles.sectionTitle}
+                >
+                  {t(locale, "settings.mapEngine")}
+                </Text>
+                <Text style={styles.sectionSupport}>
+                  {t(locale, "settings.mapEngineSupport")}
+                </Text>
+              </View>
+
+              <SoftFailNotice open={showSoftFail} style={styles.mapSoftNotice}>
+                {softNotice ?? t(locale, "settings.resolvedDemo")}
+              </SoftFailNotice>
+
+              <Segmented
+                value={prefs.mapEngine}
+                options={MAP_OPTS}
+                accessibilityLabel={t(locale, "settings.mapEngine")}
+                labelFor={(opt) =>
+                  t(locale, `planner.pref.${opt}` as MessageKey)
+                }
+                onChange={(next) => void applyPatch({ mapEngine: next })}
+              />
+
+              {statusCopy ? (
+                <Text style={styles.resolveLine}>{statusCopy}</Text>
+              ) : null}
+            </View>
+          </SheetPresence>
+
+          {/* Distance */}
+          <SheetPresence
+            open={hydrated}
+            delayMs={120}
+            rise={10}
+            style={StyleSheet.flatten([styles.section, styles.sectionBordered])}
+            accessibilityLabel={t(locale, "settings.distance")}
+          >
+            <View accessibilityLabelledBy="settings-distance-heading">
+              <View style={styles.sectionHeader}>
+                <SectionEyebrow>
+                  {t(locale, "settings.distanceEyebrow")}
+                </SectionEyebrow>
+                <Text
+                  nativeID="settings-distance-heading"
+                  style={styles.sectionTitle}
+                >
+                  {t(locale, "settings.distance")}
+                </Text>
+                <Text style={styles.sectionSupport}>
+                  {t(locale, "settings.distanceSupport")}
+                </Text>
+              </View>
+              <Segmented
+                value={prefs.distanceUnit}
+                options={DISTANCE_OPTS}
+                accessibilityLabel={t(locale, "settings.distance")}
+                labelFor={(opt) =>
+                  t(locale, `settings.distance.${opt}` as MessageKey)
+                }
+                onChange={(next) => void applyPatch({ distanceUnit: next })}
+              />
+            </View>
+          </SheetPresence>
+
+          {/* Share template */}
+          <SheetPresence
+            open={hydrated}
+            delayMs={150}
+            rise={10}
+            style={StyleSheet.flatten([
+              styles.section,
+              styles.sectionBordered,
+              styles.sectionLast,
+            ])}
+            accessibilityLabel={t(locale, "settings.shareTemplate")}
+          >
+            <View accessibilityLabelledBy="settings-share-heading">
+              <View style={styles.sectionHeader}>
+                <SectionEyebrow>
+                  {t(locale, "settings.shareEyebrow")}
+                </SectionEyebrow>
+                <Text
+                  nativeID="settings-share-heading"
+                  style={styles.sectionTitle}
+                >
+                  {t(locale, "settings.shareTemplate")}
+                </Text>
+                <Text style={styles.sectionSupport}>
+                  {t(locale, "settings.shareTemplateSupport")}
+                </Text>
+              </View>
+              {SHARE_TEMPLATES.map((tpl, index) => {
+                const selected = prefs.shareImageTemplateId === tpl.id;
+                const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
+                const blurb = locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn;
+                return (
+                  <Pressable
+                    key={tpl.id}
+                    onPress={() =>
+                      void applyPatch({ shareImageTemplateId: tpl.id })
+                    }
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     style={StyleSheet.flatten([
-                      styles.shareName,
-                      selected ? styles.shareNameSelected : null,
+                      styles.shareRow,
+                      selected ? styles.shareRowSelected : null,
+                      index === SHARE_TEMPLATES.length - 1
+                        ? styles.shareRowLast
+                        : null,
                     ])}
                   >
-                    {name}
-                  </Text>
-                  <Text style={styles.shareBlurb}>{blurb}</Text>
-                </View>
-                {selected ? (
-                  <Text style={styles.shareBadge}>
-                    {t(locale, "settings.selected")}
-                  </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.shareIndex,
+                        selected ? styles.shareIndexSelected : null,
+                      ])}
+                    >
+                      {String(index + 1).padStart(2, "0")}
+                    </Text>
+                    <View style={styles.shareCopy}>
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.shareName,
+                          selected ? styles.shareNameSelected : null,
+                        ])}
+                      >
+                        {name}
+                      </Text>
+                      <Text style={styles.shareBlurb}>{blurb}</Text>
+                    </View>
+                    {selected ? (
+                      <Text style={styles.shareBadge}>
+                        {t(locale, "settings.selected")}
+                      </Text>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </SheetPresence>
         </View>
 
         <Link href="/trips" asChild>
@@ -425,15 +508,89 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "rgba(100, 116, 139, 0.85)",
   },
+  prefsSheet: {
+    marginTop: 28,
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  sheetRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  sheetRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  sheetEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  sheetSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  statusBadge: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusBadgeDemo: {
+    backgroundColor: "rgba(230, 236, 245, 0.9)",
+  },
+  statusBadgeLocal: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  statusBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  statusBadgeTextDemo: {
+    color: colors.inkSoft,
+  },
+  statusBadgeTextLocal: {
+    color: colors.river,
+  },
   section: {
-    marginTop: 36,
-    paddingTop: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 28,
+  },
+  sectionBordered: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
   },
   sectionLast: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 8,
+    paddingBottom: 20,
   },
   sectionHeader: {
     marginBottom: 24,
@@ -517,6 +674,7 @@ const styles = StyleSheet.create({
   },
   shareRowSelected: {
     borderLeftColor: colors.river,
+    backgroundColor: "rgba(47, 107, 255, 0.04)",
   },
   shareRowLast: {
     borderBottomWidth: StyleSheet.hairlineWidth,
