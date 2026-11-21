@@ -135,7 +135,6 @@ export function JournalSkeleton() {
               <Skeleton className="h-9 w-56 max-w-[80%]" />
               <Skeleton className="h-3.5 w-40" />
             </div>
-            <Skeleton className="mt-5 h-12 w-full rounded-bp-sm" />
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
@@ -153,14 +152,19 @@ export function JournalSkeleton() {
               </div>
             ))}
           </div>
-          <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 p-5 lg:block">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="mt-2 h-7 w-36" />
-            <Skeleton className="mt-2 h-3.5 w-full" />
-            <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
-            <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
-            <Skeleton className="mt-4 h-20 w-full rounded-bp-sm" />
-            <Skeleton className="mt-4 h-11 w-full rounded-bp" />
+          <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 lg:block">
+            <div className="space-y-2 border-b border-[color:var(--bp-line)] px-5 py-4 md:px-6">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-7 w-36" />
+              <Skeleton className="h-3.5 w-full" />
+            </div>
+            <div className="p-5 md:p-6">
+              <Skeleton className="h-12 w-full rounded-bp-sm" />
+              <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
+              <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
+              <Skeleton className="mt-4 h-20 w-full rounded-bp-sm" />
+              <Skeleton className="mt-4 h-11 w-full rounded-bp" />
+            </div>
           </div>
         </div>
       </div>
