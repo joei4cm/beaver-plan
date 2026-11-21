@@ -242,9 +242,36 @@
 
   /*
    * Planner map stop markers (Leaflet DivIcon + shared markerHtml).
-   * Tip 011 overshoot on select/pop; idle pins stay foam + river ring.
+   * Depth: shell ground shadow + active halo; tip 011 overshoot on select.
+   * Idle pins stay foam + river ring; SoftFailNotice stays on map chrome.
    */
+  .bp-map-marker-shell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+  }
+
+  .bp-map-marker-shell--active {
+    z-index: 2;
+  }
+
+  /* Soft azure halo — tip 011 in-out breathe while selected. */
+  .bp-map-marker-halo {
+    position: absolute;
+    inset: 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bp-river) 22%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bp-river) 18%, transparent);
+    animation: bp-map-marker-halo 2.2s var(--bp-ease-in-out) infinite alternate;
+    pointer-events: none;
+  }
+
   .bp-map-marker {
+    position: relative;
+    z-index: 1;
     box-sizing: border-box;
     display: grid;
     place-items: center;
@@ -256,21 +283,29 @@
     border-radius: 999px;
     background: var(--bp-foam);
     color: var(--bp-ink);
-    font: 700 11px/1 "Plus Jakarta Sans", system-ui, sans-serif;
+    font: 700 11px/1 var(--bp-font-body);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+    pointer-events: auto;
+    /* Layered Lumen elevation — soft contact + deep cast. */
+    box-shadow:
+      0 1px 2px var(--bp-shadow),
+      0 4px 12px var(--bp-shadow-deep);
     transform-origin: center;
     transition:
-      transform 220ms var(--bp-ease-overshoot),
+      transform var(--bp-duration-fast) var(--bp-ease-overshoot),
       background-color var(--bp-duration-fast) var(--bp-ease-out),
       color var(--bp-duration-fast) var(--bp-ease-out),
       box-shadow var(--bp-duration) var(--bp-ease-out),
       width var(--bp-duration-fast) var(--bp-ease-out),
-      height var(--bp-duration-fast) var(--bp-ease-out);
+      height var(--bp-duration-fast) var(--bp-ease-out),
+      border-color var(--bp-duration-fast) var(--bp-ease-out);
   }
 
   .bp-map-marker:hover {
-    transform: scale(1.06);
+    transform: scale(1.07) translateY(-1px);
+    box-shadow:
+      0 2px 4px var(--bp-shadow),
+      0 8px 18px var(--bp-shadow-deep);
   }
 
   .bp-map-marker:focus-visible {
@@ -283,19 +318,25 @@
     height: 30px;
     background: var(--bp-river);
     color: var(--bp-foam);
+    border-color: var(--bp-river-deep);
     font-size: 12px;
+    /* Lifted pin: river ring + deeper cast shadow. */
     box-shadow:
-      0 0 0 4px rgba(47, 107, 255, 0.28),
-      0 6px 16px rgba(15, 23, 42, 0.2);
+      0 0 0 3px color-mix(in srgb, var(--bp-river) 28%, transparent),
+      0 2px 4px var(--bp-shadow),
+      0 10px 22px var(--bp-shadow-deep);
+    transform: translateY(-1px);
   }
 
   .bp-map-marker--active:hover {
-    transform: scale(1.05);
+    transform: scale(1.05) translateY(-2px);
   }
 
-  /* Select pop settles on the active footprint (tip 011 overshoot). */
+  /* Select pop settles on the active footprint (tip 011 overshoot + lift). */
   .bp-map-marker--active.animate-marker-pop {
     animation-name: bp-map-marker-select;
+    animation-duration: 0.58s;
+    animation-timing-function: var(--bp-ease-overshoot);
   }
 
   .bp-leaflet-marker {
@@ -799,18 +840,35 @@
   }
 }
 
+/* Tip 011 — overshoot pop with map lift; settles slightly elevated. */
 @keyframes bp-map-marker-select {
   from {
-    transform: scale(0.78);
-    opacity: 0.55;
+    transform: scale(0.72) translateY(5px);
+    opacity: 0.4;
   }
-  68% {
-    transform: scale(1.16);
+  58% {
+    transform: scale(1.18) translateY(-3px);
+    opacity: 1;
+  }
+  82% {
+    transform: scale(0.97) translateY(-0.5px);
     opacity: 1;
   }
   to {
-    transform: scale(1);
+    transform: scale(1) translateY(-1px);
     opacity: 1;
+  }
+}
+
+/* Active halo breathe — tip 011 in-out; calm presence on the map. */
+@keyframes bp-map-marker-halo {
+  from {
+    transform: scale(0.88);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.14);
+    opacity: 0.22;
   }
 }
 
@@ -940,8 +998,18 @@
     transition: none !important;
   }
 
-  .bp-map-marker:hover,
+  .bp-map-marker:hover {
+    transform: none !important;
+  }
+
+  .bp-map-marker--active,
   .bp-map-marker--active:hover {
+    transform: translateY(-1px) !important;
+  }
+
+  .bp-map-marker-halo {
+    animation: none !important;
+    opacity: 0.35 !important;
     transform: none !important;
   }
 
