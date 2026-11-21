@@ -11,21 +11,32 @@ const WECHAT_STRATEGY = "oauth_wechat" as OAuthStrategy;
 
 /**
  * Honors `/sign-in?strategy=oauth_wechat` by starting Clerk's WeChat OAuth redirect.
- * SoftFailNotice on failure — never timber / raw transport noise.
+ * SoftFailNotice on failure — never timber / Failed to fetch.
+ * Reports SoftFail ownership so the sign-in sheet SoftFail can yield (no double depth).
  * `strategy` is passed from the server page (avoids useSearchParams + Suspense).
  */
 export function WeChatOAuthTrigger({
   locale,
   strategy,
+  onSoftFailChange,
 }: {
   locale: Locale;
   strategy?: string | null;
+  /** Parent SoftFail yields while this SoftFail is open. */
+  onSoftFailChange?: (owns: boolean) => void;
 }) {
   const { isLoaded, signIn } = useSignIn();
   const started = useRef(false);
   const [failed, setFailed] = useState(false);
   const [starting, setStarting] = useState(false);
   const wantsWechat = strategy === "oauth_wechat";
+
+  useEffect(() => {
+    onSoftFailChange?.(failed && wantsWechat);
+    return () => {
+      onSoftFailChange?.(false);
+    };
+  }, [failed, wantsWechat, onSoftFailChange]);
 
   useEffect(() => {
     if (!wantsWechat) return;
@@ -57,7 +68,12 @@ export function WeChatOAuthTrigger({
           {t(locale, "auth.wechatStarting")}
         </p>
       ) : null}
-      <SoftFailNotice open={failed}>
+      {/* Child SoftFail — sign-in sheet SoftFail yields while open. */}
+      <SoftFailNotice
+        open={failed}
+        compact
+        className="border-b border-[color:var(--bp-line)]"
+      >
         {t(locale, "auth.wechatStartFailed")}
       </SoftFailNotice>
     </div>
