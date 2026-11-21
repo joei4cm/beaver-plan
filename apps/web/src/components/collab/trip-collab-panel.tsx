@@ -250,9 +250,20 @@ export function TripCollabPanel({
   const showLoading =
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
   const softNoticeOpen = demoSeeded || softOffline;
+  /**
+   * Timeline SoftFailNotice chrome (BEA-257 after #164/#181):
+   * Activity sheet owns compact SoftFail under azure Timeline rail · mist
+   * soft badge · tip-011 rise. Panel SoftFail yields on Activity (no double
+   * depth). Soft copy never timber / Failed to fetch.
+   */
+  const timelineSoftOpen = softNoticeOpen && tab === "activity";
+  const panelSoftOpen = softNoticeOpen && tab !== "activity";
   const softNoticeCopy = softOffline
     ? t(locale, "collab.panel.softOffline")
     : t(locale, "collab.panel.demoNotice");
+  const timelineSoftCopy = softOffline
+    ? t(locale, "collab.panel.timelineSoftFail")
+    : t(locale, "collab.panel.timelineDemoNotice");
   const threadCount = t(locale, "collab.panel.count").replace(
     "{n}",
     String(visibleComments.length),
@@ -311,7 +322,8 @@ export function TripCollabPanel({
         </div>
       </header>
 
-      <SoftFailNotice open={softNoticeOpen} className="mb-4">
+      {/* Panel SoftFail — Comments tab; yields when Timeline owns soft-fail. */}
+      <SoftFailNotice open={panelSoftOpen} className="mb-4">
         {softNoticeCopy}
       </SoftFailNotice>
 
@@ -492,7 +504,11 @@ export function TripCollabPanel({
         </div>
       </SheetPresence>
 
-      {/* Activity — mist-track depth · azure nodes · tip-011 (BEA-215) */}
+      {/*
+        Timeline SoftFail chrome (BEA-257 after #164/#181):
+        azure Timeline rail · soft badge · compact SoftFailNotice · mist-track
+        nodes · tip-011 rise — never timber.
+      */}
       <SheetPresence
         open={tab === "activity"}
         id="collab-panel-activity"
@@ -520,7 +536,7 @@ export function TripCollabPanel({
                 }`}
               >
                 {softNoticeOpen
-                  ? t(locale, "collab.demoBadge")
+                  ? t(locale, "collab.panel.timelineSoftBadge")
                   : t(locale, "collab.panel.liveBadge")}
               </span>
               {liveApi && !demoSeeded ? (
@@ -537,24 +553,34 @@ export function TripCollabPanel({
                       );
                     })
                   }
-                  className="text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+                  className="animate-rise text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+                  style={{ animationDelay: "55ms" }}
                 >
                   {t(locale, "collab.panel.refresh")}
                 </button>
               ) : null}
             </div>
           </div>
-          <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft">
+          <p
+            className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft"
+            style={{ animationDelay: "40ms" }}
+          >
             {t(locale, "collab.panel.timelineSupport")}
           </p>
         </header>
+
+        {/* Compact SoftFail under azure Timeline rail — never timber. */}
+        <SoftFailNotice open={timelineSoftOpen} compact>
+          {timelineSoftCopy}
+        </SoftFailNotice>
 
         <ol className="bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto bg-gradient-to-b from-mist/30 via-mist/10 to-transparent px-4 py-4 pl-5">
           {/* Mist track — gradient spine behind azure nodes */}
           <span aria-hidden className="bp-collab-timeline__track" />
           {showLoading ? (
             <li
-              className="bp-collab-timeline__item space-y-3 py-1"
+              className="animate-rise bp-collab-timeline__item space-y-3 py-1"
+              style={{ animationDelay: "70ms" }}
               aria-busy="true"
             >
               <div className="h-3 w-24 rounded-bp-xs bg-mist" />
@@ -565,7 +591,10 @@ export function TripCollabPanel({
             </li>
           ) : null}
           {!showLoading && events.length === 0 ? (
-            <li className="animate-fade bp-collab-timeline__item space-y-1.5 py-3">
+            <li
+              className="animate-fade bp-collab-timeline__item space-y-1.5 py-3"
+              style={{ animationDelay: "70ms" }}
+            >
               <p className="font-display text-sm font-semibold tracking-tight text-ink">
                 {t(locale, "collab.panel.emptyActivity")}
               </p>
@@ -578,7 +607,7 @@ export function TripCollabPanel({
             <li
               key={ev.id}
               className="animate-rise bp-collab-timeline__item"
-              style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
+              style={{ animationDelay: `${Math.min(i, 8) * 35 + 70}ms` }}
             >
               <span
                 className={`bp-collab-timeline__node${
