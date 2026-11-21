@@ -49,11 +49,11 @@ type Props = {
 
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
- * Depth ladder (after #56/#98/#118):
- *   popovers (shadow-bp · z-30) → search primary → engine chip / tool rail →
- *   SoftFailNotice + transfer legend sheet (field tools).
- * Search empty: azure rail · empty status · SoftFailNotice compact · tip-011 (#46).
- * Legend: azure rail · SoftFailNotice compact · SheetPresence + tip-011 (#46).
+ * Depth ladder (BEA-224 after #56/#98/#118):
+ *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
+ *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
+ * Tip-011 (#46) rise / stop-select settle · SoftFailNotice ownership intact ·
+ * Lumen tokens — never timber / Failed to fetch.
  */
 export function MapChrome({
   locale,
@@ -193,6 +193,14 @@ export function MapChrome({
       ? t(locale, "planner.map.softFail")
       : null);
 
+  const layersActive = (["routes", "stops", "legend"] as const).filter(
+    (key) => layers[key],
+  ).length;
+  const layersActiveLabel = t(locale, "planner.map.layersActiveCount").replace(
+    "{n}",
+    String(layersActive),
+  );
+
   const activeOptionId = hasResults
     ? `${listboxId}-opt-${activeIndex}`
     : undefined;
@@ -215,7 +223,7 @@ export function MapChrome({
               setEngineOpen((o) => !o);
               setLayersOpen(false);
             }}
-            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur-md bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur-md transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
               engineOpen
                 ? "border-river/45 text-river shadow-bp ring-2 ring-river/25"
                 : "border-[color:var(--bp-line)] text-ink hover:border-river/35 hover:text-river"
@@ -240,11 +248,10 @@ export function MapChrome({
             aria-label={t(locale, "planner.map.engineControl")}
             className="absolute left-0 top-[calc(100%+6px)] z-30 w-[min(100vw-1.5rem,17.5rem)] overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
-              <span
-                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
-                aria-hidden
-              />
+            <header
+              className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+              style={{ animationDelay: "40ms" }}
+            >
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.map.basemapEyebrow")}
               </p>
@@ -257,7 +264,8 @@ export function MapChrome({
             </header>
 
             <div
-              className="flex flex-col gap-2 px-3 py-3"
+              className="animate-rise flex flex-col gap-2 px-3 py-3"
+              style={{ animationDelay: "70ms" }}
               role="group"
               aria-label={t(locale, "planner.map.basemapTitle")}
             >
@@ -270,10 +278,10 @@ export function MapChrome({
                       type="button"
                       aria-pressed={active}
                       onClick={() => onPreferenceChange(opt)}
-                      className={`min-w-0 flex-1 rounded-bp-xs px-1.5 py-1.5 text-[11px] font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`min-w-0 flex-1 rounded-bp-xs px-1.5 py-1.5 text-[11px] font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                         active
                           ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                          : "text-ink-soft hover:text-river"
+                          : "text-ink-soft hover:bg-foam/70 hover:text-river"
                       }`}
                     >
                       {t(locale, `planner.pref.${opt}` as MessageKey)}
@@ -312,14 +320,14 @@ export function MapChrome({
             {t(locale, "planner.search")}
           </label>
           <div
-            className={`flex items-center gap-2 rounded-bp border bg-foam/95 px-3 backdrop-blur-md transition duration-bp-fast ease-bp-out focus-within:border-river/50 focus-within:ring-2 focus-within:ring-focus/35 ${
+            className={`flex items-center gap-2 rounded-bp border bg-foam/95 px-3 backdrop-blur-md transition duration-bp ease-bp-out-strong focus-within:border-river/50 focus-within:ring-2 focus-within:ring-focus/35 ${
               sheetOpen
-                ? "border-river/40 shadow-bp"
+                ? "border-river/40 shadow-bp ring-1 ring-river/15"
                 : "border-[color:var(--bp-line)] shadow-bp-soft"
             }`}
           >
             <SearchGlyph
-              className={`shrink-0 bp-transition ${
+              className={`shrink-0 transition duration-bp-fast ease-bp-out ${
                 sheetOpen ? "text-river" : "text-ink-soft"
               }`}
             />
@@ -355,11 +363,10 @@ export function MapChrome({
             variant="popover"
             className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5">
-              <span
-                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
-                aria-hidden
-              />
+            <div
+              className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+              style={{ animationDelay: "40ms" }}
+            >
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                   {t(locale, "planner.search.eyebrow")}
@@ -412,16 +419,16 @@ export function MapChrome({
                         aria-selected={selected}
                         onMouseEnter={() => setActiveIndex(i)}
                         onClick={() => onPickPlace(place)}
-                        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition duration-bp-fast ease-bp-out ${
+                        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition duration-bp ease-bp-out-strong ${
                           selected
-                            ? "bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
+                            ? "animate-stop-select bg-river/[0.06] shadow-[inset_3px_0_0_var(--bp-river)]"
                             : "hover:bg-mist/50"
                         }`}
                       >
                         <span
                           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition duration-bp-fast ease-bp-out ${
                             selected
-                              ? "bg-river text-foam shadow-bp-soft"
+                              ? "bg-river text-foam shadow-bp-soft ring-1 ring-river/30"
                               : "bg-mist text-ink-soft"
                           }`}
                           aria-hidden
@@ -491,9 +498,9 @@ export function MapChrome({
           style={{ animationDelay: "120ms" }}
         >
           <div
-            className={`flex overflow-hidden rounded-bp border bg-foam/90 shadow-bp-soft backdrop-blur-md bp-transition ${
+            className={`flex overflow-hidden rounded-bp border bg-foam/90 shadow-bp-soft backdrop-blur-md transition duration-bp ease-bp-out-strong ${
               layersOpen
-                ? "border-river/40 shadow-bp"
+                ? "border-river/40 shadow-bp ring-2 ring-river/20"
                 : "border-[color:var(--bp-line)]"
             }`}
           >
@@ -506,8 +513,8 @@ export function MapChrome({
                 setLayersOpen((o) => !o);
                 setEngineOpen(false);
               }}
-              className={`bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
-                layersOpen ? "bg-mist/80 text-river" : ""
+              className={`flex h-10 w-10 items-center justify-center transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                layersOpen ? "bg-mist/80 text-river" : "text-ink-soft"
               }`}
             >
               <LayersGlyph />
@@ -520,7 +527,7 @@ export function MapChrome({
               type="button"
               aria-label={t(locale, "planner.map.locate")}
               onClick={handleLocate}
-              className="bp-transition flex h-10 w-10 items-center justify-center text-ink-soft hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+              className="flex h-10 w-10 items-center justify-center text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
             >
               <LocateGlyph />
             </button>
@@ -532,24 +539,39 @@ export function MapChrome({
             role="group"
             variant="popover"
             aria-label={t(locale, "planner.map.layers")}
-            className="absolute right-0 top-[calc(100%+6px)] z-30 w-48 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+            className="absolute right-0 top-[calc(100%+6px)] z-30 w-52 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
-              <span
-                className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
-                aria-hidden
-              />
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-                {t(locale, "planner.map.layersEyebrow")}
-              </p>
-              <p className="mt-1 font-display text-sm font-semibold tracking-tight text-ink">
-                {t(locale, "planner.map.layersTitle")}
-              </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
-                {t(locale, "planner.map.layersSupport")}
-              </p>
+            <header
+              className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+              style={{ animationDelay: "40ms" }}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 space-y-0.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                    {t(locale, "planner.map.layersEyebrow")}
+                  </p>
+                  <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                    {t(locale, "planner.map.layersTitle")}
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-ink-soft">
+                    {t(locale, "planner.map.layersSupport")}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                    layersActive > 0
+                      ? "bg-river/12 text-river-deep"
+                      : "bg-mist text-ink-soft"
+                  }`}
+                >
+                  {layersActiveLabel}
+                </span>
+              </div>
             </header>
-            <div className="divide-y divide-[color:var(--bp-line)]">
+            <div
+              className="animate-rise divide-y divide-[color:var(--bp-line)]"
+              style={{ animationDelay: "70ms" }}
+            >
               {(
                 [
                   ["routes", "planner.map.layer.routes"],
@@ -559,10 +581,10 @@ export function MapChrome({
               ).map(([key, labelKey]) => (
                 <label
                   key={key}
-                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm transition duration-bp-fast ease-bp-out hover:bg-mist/50 ${
+                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm transition duration-bp ease-bp-out-strong hover:bg-mist/50 ${
                     layers[key]
-                      ? "bg-river/[0.04] font-medium text-ink shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : "text-ink"
+                      ? "animate-stop-select bg-river/[0.04] font-medium text-ink shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : "text-ink hover:shadow-[inset_3px_0_0_rgba(47,107,255,0.35)]"
                   }`}
                 >
                   <input
@@ -598,12 +620,11 @@ export function MapChrome({
           aria-label={t(locale, "planner.map.legendTitle")}
           className="pointer-events-none overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
         >
-          {/* Azure hierarchy — eyebrow · title · demo/live badge · SoftFailNotice */}
-          <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5">
-            <span
-              className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-river"
-              aria-hidden
-            />
+          {/* Azure hierarchy — inset rail · eyebrow · title · demo/live · SoftFailNotice */}
+          <div
+            className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+            style={{ animationDelay: "40ms" }}
+          >
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.map.legendEyebrow")}
@@ -625,7 +646,10 @@ export function MapChrome({
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+          <div
+            className="animate-rise flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft"
+            style={{ animationDelay: "70ms" }}
+          >
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="inline-block h-0.5 w-4 border-t-2 border-dashed border-ink-soft"

@@ -275,6 +275,7 @@
   "planner.map.layersEyebrow": "Overlay",
   "planner.map.layersTitle": "Map layers",
   "planner.map.layersSupport": "Toggle routes, stops, and the transfer legend on the map.",
+  "planner.map.layersActiveCount": "{n} on",
   "planner.map.layer.routes": "Routes",
   "planner.map.layer.stops": "Stops",
   "planner.map.layer.legend": "Legend",
