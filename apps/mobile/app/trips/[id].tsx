@@ -907,6 +907,25 @@ export default function TripDetailScreen() {
     ? dayStops.find((s) => s.id === selectedStopId)
     : undefined;
 
+  /**
+   * Expo transit SoftFailNotice (BEA-242): TransferSteps SoftFail owns when
+   * the selected stop shows leg / empty soft chrome. Mode SoftFail yields —
+   * no double depth. Soft copy never timber / Failed to fetch.
+   */
+  const selectedStopIndex = selectedStopId
+    ? dayStops.findIndex((s) => s.id === selectedStopId)
+    : -1;
+  const selectedOutgoingLeg = selectedStopId
+    ? dayLegs.find((l) => l.fromStopId === selectedStopId)
+    : undefined;
+  const transitSoftOwns =
+    routingDemo &&
+    selectedStopIndex >= 0 &&
+    (Boolean(selectedOutgoingLeg) ||
+      (!routing && selectedStopIndex < dayStops.length - 1));
+  const modeSoftOpen =
+    routingDemo && dayLegs.length > 0 && !transitSoftOwns;
+
   return (
     <View style={styles.root}>
       <Stack.Screen
@@ -1114,7 +1133,11 @@ export default function TripDetailScreen() {
                 </View>
               </ScrollView>
 
-              {/* Transit filter chips — mist-track · azure select · SoftFailNotice · #46 */}
+              {/*
+                Transit SoftFail chrome (BEA-242 after #139 filters):
+                mist-track · azure select · compact SoftFail under mode rail ·
+                tip-011 · StyleSheet.flatten. Yields while TransferSteps owns.
+              */}
               <View style={styles.modeFilter}>
                 <View style={styles.modeFilterHead}>
                   <Text style={styles.modeEyebrow}>
@@ -1199,7 +1222,7 @@ export default function TripDetailScreen() {
                     </Text>
                   ) : null}
 
-                  {routingDemo && dayLegs.length > 0 ? (
+                  {modeSoftOpen ? (
                     <View style={styles.modeDemoBadge}>
                       <Text style={styles.modeDemoBadgeText}>
                         {t(locale, "planner.transfer.demoBadge")}
@@ -1208,9 +1231,11 @@ export default function TripDetailScreen() {
                   ) : null}
                 </View>
 
+                {/* Compact SoftFail under azure mode rail — yields to TransferSteps. */}
                 <SoftFailNotice
-                  open={routingDemo && dayLegs.length > 0}
+                  open={modeSoftOpen}
                   compact
+                  style={styles.modeSoftFail}
                 >
                   {t(locale, "planner.transfer.demoNotice")}
                 </SoftFailNotice>
@@ -2373,6 +2398,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.inkSoft,
+  },
+  modeSoftFail: {
+    marginBottom: 0,
   },
   searchWrap: {
     paddingHorizontal: 12,

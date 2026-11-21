@@ -11,6 +11,7 @@ import {
 import { t, type Locale } from "@beaver/i18n";
 import { colors, radius } from "@beaver/ui-tokens";
 import { type } from "../theme";
+import { SheetPresence } from "./sheet-presence";
 import { SoftFailNotice } from "./soft-fail-notice";
 
 type Props = {
@@ -238,9 +239,10 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit leg card — Lumen hierarchy after web #93:
- * azure header rail · Summary / Steps · SoftFailNotice / soft-fail empty.
- * StyleSheet.flatten keeps RN Web parents from choking on style arrays (#76).
+ * Expo transit SoftFailNotice chrome (BEA-242 after web #93 / Expo #109):
+ * azure header rail · Summary / Steps · compact SoftFailNotice ·
+ * tip-011 SheetPresence rise · StyleSheet.flatten.
+ * Soft-fail never timber / Failed to fetch. SoftFail owns demo badge chrome.
  */
 export function TransferSteps({
   leg,
@@ -257,27 +259,30 @@ export function TransferSteps({
   const hasSteps = Boolean(view && view.transitSteps.length > 0);
   const empty = Boolean(showEmpty && !leg);
   const open = Boolean(leg) || empty;
-  const noticeDemo = demoMode && (showSoftFail || empty);
-
-  if (!open) return null;
+  /** SoftFail owns demo chrome when Directions absent (selected stop). */
+  const softOpen = demoMode && (showSoftFail || empty);
 
   return (
-    <View
+    <SheetPresence
+      open={open}
+      delayMs={50}
+      rise={10}
       style={StyleSheet.flatten([styles.shell, style])}
       accessibilityLabel={t(locale, "planner.transfer.title")}
     >
       {empty ? (
         <>
           <LegCardHeader locale={locale} demoMode={demoMode} />
-          <View style={styles.emptyBody}>
+          <SheetPresence open delayMs={60} rise={8} style={styles.emptyBody}>
             <Text style={styles.emptyTitle}>
               {t(locale, "planner.transfer.emptyTitle")}
             </Text>
             <Text style={styles.emptyHint}>
               {t(locale, "planner.transfer.emptyHint")}
             </Text>
-          </View>
-          <SoftFailNotice open={Boolean(noticeDemo)} compact>
+          </SheetPresence>
+          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
             {t(locale, "planner.transfer.softFailEmpty")}
           </SoftFailNotice>
         </>
@@ -286,7 +291,10 @@ export function TransferSteps({
           <LegCardHeader locale={locale} demoMode={demoMode} view={view} />
 
           <View style={styles.sections}>
-            <View
+            <SheetPresence
+              open
+              delayMs={55}
+              rise={8}
               style={styles.section}
               accessibilityLabel={t(locale, "planner.transfer.summaryEyebrow")}
             >
@@ -301,10 +309,13 @@ export function TransferSteps({
                 </View>
                 <Text style={styles.summaryText}>{summarizeTransfer(view)}</Text>
               </View>
-            </View>
+            </SheetPresence>
 
             {hasSteps ? (
-              <View
+              <SheetPresence
+                open
+                delayMs={75}
+                rise={6}
                 style={StyleSheet.flatten([styles.section, styles.stepsSection])}
                 accessibilityLabel={t(locale, "planner.transfer.stepsEyebrow")}
               >
@@ -321,16 +332,17 @@ export function TransferSteps({
                     />
                   ))}
                 </View>
-              </View>
+              </SheetPresence>
             ) : null}
           </View>
 
-          <SoftFailNotice open={Boolean(noticeDemo)} compact>
+          {/* SoftFail owns footer — section-scoped under steps; tip-011 rise. */}
+          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
             {t(locale, "planner.transfer.demoNotice")}
           </SoftFailNotice>
         </>
       ) : null}
-    </View>
+    </SheetPresence>
   );
 }
 
@@ -342,6 +354,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: "rgba(244,246,250,0.98)",
+  },
+  softFail: {
+    marginBottom: 0,
   },
   header: {
     flexDirection: "row",
