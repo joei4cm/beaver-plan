@@ -165,14 +165,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * SoftFailNotice depth ownership (BEA-343 drawer / BEA-348 drag / BEA-355 empty):
+   * SoftFailNotice depth ownership (BEA-343 drawer / BEA-348 drag / BEA-355 empty /
+   * BEA-362 share CTA):
    * Empty SoftFail depth (BEA-355 after #122) under Stops when the day is empty —
    * Soft empty badge · softSupport · tip-011 mist-wash empty body.
    * Drag SoftFail under Stops when softNotice / dragSoftPreview (BEA-348) —
    * Soft reorder badge · softSupport · tip-011 mist-wash · stop-drawer SoftFail
    * (#257) and day-fill SoftFail (#248) yield (no double depth).
    * Otherwise Itinerary owns SoftFail (BEA-343) when the day has stops.
-   * Title SoftFail yields while drawer / empty / drag owns. Soft copy never
+   * Title Export SoftFail depth (BEA-362 after #121) owns SoftFail under the
+   * azure Export rail independently (different rail) — Soft share badge ·
+   * softSupport · tip-011 mist-wash CTA. Yields share export SoftFail (#255) /
+   * share studio SoftFail (#243) on /share (no double depth). Soft copy never
    * timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
@@ -217,14 +221,22 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
    * - Else day with stops → SoftFail under Itinerary (BEA-343 depth).
    *   Day-fill SoftFail (#248) stays under Day fill rail. Transfer soft-fail
    *   stays on transit.
+   * - Title Export SoftFail depth (BEA-362) always shareSoftFail — never timber.
    */
   const listSoftCopy = emptyOwnsSoft
     ? t(locale, "planner.emptySoftFail")
     : dragSoftFailCopy;
-  const shareSoftOpen =
-    !emptyOwnsSoft &&
-    !drawerOwnsSoft &&
-    (demoShell || plannerNoise);
+  /**
+   * Share CTA SoftFailNotice depth (BEA-362 after #121):
+   * azure Export rail · Soft share badge · softSupport · compact SoftFail mist
+   * band · tip-011 mist-wash CTA. Own rail — empty / drawer SoftFails stay under
+   * Stops / Itinerary. Yield share export SoftFail (#255) / share studio SoftFail
+   * (#243) on /share. SoftFail copy always shareSoftFail.
+   */
+  const shareSoftOpen = demoShell || plannerNoise;
+  const shareSupportCopy = shareSoftOpen
+    ? t(locale, "planner.shareSoftSupport")
+    : t(locale, "planner.shareSupport");
 
   useEffect(() => {
     if (!dayId) {
@@ -838,7 +850,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
 
   return (
     <div className="mx-auto max-w-[1480px] px-3 pb-16 pt-2 md:px-6 lg:px-8 lg:pt-4">
-      {/* Title rail — Share primary export entry · SoftFailNotice · #46 */}
+      {/*
+        Share CTA SoftFail depth (BEA-362 after #121):
+        azure Export rail · Soft share badge · softSupport · compact SoftFail
+        mist band · tip-011 mist-wash CTA · yield share export SoftFail (#255) /
+        share studio SoftFail (#243) on /share — never timber / Failed to fetch.
+      */}
       <header className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
         <div>
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
@@ -851,75 +868,92 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             {trip.title}
           </h1>
         </div>
-        <div className="flex min-w-0 flex-col items-stretch gap-2 sm:max-w-xl sm:items-end">
-          <div className="flex w-full flex-col items-end gap-1.5">
-            <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5">
+        <div className="flex min-w-0 w-full flex-col overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft sm:max-w-xl sm:w-auto">
+          <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.shareEyebrow")}
               </span>
               <span className="text-[11px] leading-snug text-ink-soft/80">
-                {t(locale, "planner.shareSupport")}
+                {shareSupportCopy}
               </span>
             </div>
-            <div
-              role="group"
-              aria-label={t(locale, "planner.shareActions")}
-              className="flex flex-wrap items-center justify-end gap-2 text-sm"
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                shareSoftOpen
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river"
+              }`}
             >
-              <OfflinePinControl
-                tripId={tripId}
-                locale={locale}
-                trip={trip}
-                days={days}
-                stops={stops}
-                legs={legs}
-                compact
-              />
-              <div className="flex flex-wrap items-center gap-1 border-l border-[color:var(--bp-line)] pl-2">
-                <label className="flex cursor-pointer items-center gap-1.5 rounded-bp-xs px-2 py-1.5 text-ink-soft bp-transition hover:text-river focus-within:ring-2 focus-within:ring-focus/40">
-                  <input
-                    type="checkbox"
-                    checked={copyJournal}
-                    onChange={(e) => setCopyJournal(e.target.checked)}
-                    className="accent-[color:var(--bp-river)]"
-                  />
-                  <span className="hidden sm:inline">
-                    {t(locale, "planner.copyJournal")}
-                  </span>
-                </label>
-                <button
-                  type="button"
-                  disabled={duplicating}
-                  onClick={() => void duplicateTrip()}
-                  className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
-                >
-                  {duplicating
-                    ? t(locale, "planner.duplicating")
-                    : t(locale, "planner.duplicate")}
-                </button>
-              </div>
-              <Link
-                href={`/trips/${tripId}/journal`}
-                className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-              >
-                {t(locale, "nav.journal")}
-              </Link>
-              <Link
-                href={`/trips/${tripId}/share`}
-                className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-              >
-                {t(locale, "planner.shareCta")}
-              </Link>
-            </div>
+              {shareSoftOpen
+                ? t(locale, "planner.shareSoftBadge")
+                : t(locale, "planner.shareLiveBadge")}
+            </span>
           </div>
-          {/* Title SoftFail yields while drawer / empty SoftFail owns. */}
+
+          {/* Compact SoftFail mist band under azure Export rail — #255/#243 yield on /share. */}
           <SoftFailNotice
             open={shareSoftOpen}
             compact
-            className="w-full sm:max-w-md"
+            className="border-b border-[color:var(--bp-line)]"
           >
             {t(locale, "planner.shareSoftFail")}
           </SoftFailNotice>
+
+          <div
+            role="group"
+            aria-label={t(locale, "planner.shareActions")}
+            className={`flex flex-wrap items-center justify-end gap-2 px-3 py-2.5 text-sm ${
+              shareSoftOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
+          >
+            <OfflinePinControl
+              tripId={tripId}
+              locale={locale}
+              trip={trip}
+              days={days}
+              stops={stops}
+              legs={legs}
+              compact
+            />
+            <div className="flex flex-wrap items-center gap-1 border-l border-[color:var(--bp-line)] pl-2">
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-bp-xs px-2 py-1.5 text-ink-soft bp-transition hover:text-river focus-within:ring-2 focus-within:ring-focus/40">
+                <input
+                  type="checkbox"
+                  checked={copyJournal}
+                  onChange={(e) => setCopyJournal(e.target.checked)}
+                  className="accent-[color:var(--bp-river)]"
+                />
+                <span className="hidden sm:inline">
+                  {t(locale, "planner.copyJournal")}
+                </span>
+              </label>
+              <button
+                type="button"
+                disabled={duplicating}
+                onClick={() => void duplicateTrip()}
+                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+              >
+                {duplicating
+                  ? t(locale, "planner.duplicating")
+                  : t(locale, "planner.duplicate")}
+              </button>
+            </div>
+            <Link
+              href={`/trips/${tripId}/journal`}
+              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            >
+              {t(locale, "nav.journal")}
+            </Link>
+            <Link
+              href={`/trips/${tripId}/share`}
+              className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            >
+              {t(locale, "planner.shareCta")}
+            </Link>
+          </div>
         </div>
       </header>
 
