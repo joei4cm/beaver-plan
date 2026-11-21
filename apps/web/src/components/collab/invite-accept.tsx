@@ -34,6 +34,10 @@ function demoPreview(code: string): Preview {
   };
 }
 
+/**
+ * Lumen invite accept sheet — azure header · SoftFailNotice · Join CTA,
+ * SheetPresence (#69) + tip-011 settle (#46). Soft-fail never timber.
+ */
 export function InviteAccept({
   code,
   locale,
@@ -96,6 +100,15 @@ export function InviteAccept({
   }
 
   const sheetOpen = Boolean(preview) || Boolean(softNotice) || Boolean(error);
+  const hardError =
+    error && !softNotice && !isPlannerNoiseError(new Error(error))
+      ? error
+      : null;
+  const softCopy =
+    softNotice ??
+    (error && isPlannerNoiseError(new Error(error))
+      ? t(locale, "invite.softOffline")
+      : null);
 
   return (
     <section className="relative mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-3xl flex-col justify-center px-6 py-16 md:px-10">
@@ -136,24 +149,38 @@ export function InviteAccept({
         style={{ animationDelay: "120ms" }}
         aria-label={t(locale, "invite.title")}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            {t(locale, "invite.title")}
-          </span>
-          {preview ? (
-            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
-              {t(locale, `collab.role.${preview.role}`)}
+        {/* Azure hierarchy — eyebrow · title · soft/role badge · SoftFailNotice */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              {t(locale, "invite.sheetEyebrow")}
             </span>
-          ) : null}
+            <span className="text-[11px] font-medium text-ink-soft/80">
+              {t(locale, "invite.title")}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {softCopy ? (
+              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
+                {t(locale, "invite.softBadge")}
+              </span>
+            ) : null}
+            {preview ? (
+              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+                {t(locale, `collab.role.${preview.role}`)}
+              </span>
+            ) : null}
+          </div>
         </div>
 
+        <SoftFailNotice open={Boolean(softCopy)} compact>
+          {softCopy ?? ""}
+        </SoftFailNotice>
+
         <div className="space-y-5 px-5 py-5">
-          <SoftFailNotice open={Boolean(softNotice)}>
-            {softNotice ?? ""}
-          </SoftFailNotice>
-          {error && !softNotice ? (
+          {hardError ? (
             <p className="text-sm text-timber" role="alert">
-              {error}
+              {hardError}
             </p>
           ) : null}
 
@@ -183,7 +210,7 @@ export function InviteAccept({
                   type="button"
                   disabled={joining}
                   onClick={() => void accept()}
-                  className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep disabled:opacity-50"
+                  className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:opacity-50"
                 >
                   {joining
                     ? t(locale, "invite.joining")
@@ -192,7 +219,7 @@ export function InviteAccept({
                 {clerkEnabled() && (
                   <Link
                     href={`/sign-in?redirect_url=/invite/${encodeURIComponent(code)}`}
-                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river"
+                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                   >
                     {t(locale, "nav.signIn")}
                   </Link>
