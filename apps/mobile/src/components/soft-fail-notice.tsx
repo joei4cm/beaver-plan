@@ -18,9 +18,17 @@ export function SoftFailNotice({ children, style, compact }: Props) {
     <View
       accessibilityRole="text"
       accessibilityLiveRegion="polite"
-      style={[compact ? styles.compact : styles.notice, style]}
+      style={StyleSheet.flatten([
+        compact ? styles.compact : styles.notice,
+        style,
+      ])}
     >
-      <Text style={[styles.text, compact && styles.textCompact]}>
+      <Text
+        style={StyleSheet.flatten([
+          styles.text,
+          compact ? styles.textCompact : null,
+        ])}
+      >
         {children}
       </Text>
     </View>

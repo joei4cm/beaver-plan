@@ -372,7 +372,8 @@ export default function JournalScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View style={StyleSheet.flatten([styles.hero, riseStyle])}>
+          {/* Animated.View keeps style arrays — flatten breaks animated nodes on RN Web. */}
+          <Animated.View style={[styles.hero, riseStyle]}>
             <Text style={styles.eyebrow}>
               {brand.en}
               {fromCache ? ` · ${t(locale, "offline.offline")}` : ""}
@@ -383,7 +384,7 @@ export default function JournalScreen() {
             <Text style={styles.support}>{t(locale, "journal.support")}</Text>
           </Animated.View>
 
-          <Animated.View style={StyleSheet.flatten([styles.sheet, riseStyle])}>
+          <Animated.View style={[styles.sheet, riseStyle]}>
             {/* Day tabs — tip 015 mist rail + river active (web #80 / planner #66). */}
             <ScrollView
               horizontal
@@ -745,7 +746,6 @@ const styles = StyleSheet.create({
     width: 36,
     fontSize: 26,
     fontWeight: "700",
-    fontVariant: ["tabular-nums"],
     color: colors.mist,
     lineHeight: 30,
   },

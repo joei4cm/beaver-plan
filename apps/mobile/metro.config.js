@@ -46,22 +46,25 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       filePath: path.join(projectRoot, "src/camera-web-stub.ts"),
     };
   }
-  if (moduleName === "react") {
-    return { type: "sourceFile", filePath: path.join(reactRoot, "index.js") };
-  }
-  if (moduleName === "react-dom") {
-    return { type: "sourceFile", filePath: path.join(reactDomRoot, "index.js") };
-  }
-  if (moduleName === "react/jsx-runtime") {
+  // Pin every react / react-dom subpath to Expo's React 18 — workspace root
+  // ships Next's React 19, and an unpinned `react-dom/client` crash-boots web
+  // with `Cannot read properties of undefined (reading 'S')`.
+  if (moduleName === "react" || moduleName.startsWith("react/")) {
+    const sub =
+      moduleName === "react" ? "./index.js" : `./${moduleName.slice("react/".length)}`;
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-runtime"),
+      filePath: resolveFromPkg(reactRoot, sub),
     };
   }
-  if (moduleName === "react/jsx-dev-runtime") {
+  if (moduleName === "react-dom" || moduleName.startsWith("react-dom/")) {
+    const sub =
+      moduleName === "react-dom"
+        ? "./index.js"
+        : `./${moduleName.slice("react-dom/".length)}`;
     return {
       type: "sourceFile",
-      filePath: resolveFromPkg(reactRoot, "./jsx-dev-runtime"),
+      filePath: resolveFromPkg(reactDomRoot, sub),
     };
   }
   if (moduleName === "scheduler" || moduleName.startsWith("scheduler/")) {
