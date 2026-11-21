@@ -25,6 +25,7 @@ import {
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   DualCameraSkeleton,
   Skeleton,
@@ -190,12 +191,13 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   const [sourceLocale, setSourceLocale] = useState<TranslationLocale>("zh-CN");
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [draft, setDraft] = useState("");
-  const [turns, setTurns] = useState<Turn[]>(() => seedTurns("zh-CN", "en"));
+  /** Empty first paint — empty SoftFail owns history chrome (BEA-310). */
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [partialText, setPartialText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(2);
+  const [demoIndex, setDemoIndex] = useState(0);
   const [online, setOnline] = useState(true);
   const [phrases, setPhrases] = useState<PhrasebookLookup[]>([]);
   const [phraseCategory, setPhraseCategory] =
@@ -227,6 +229,23 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const isDemo = !status || status.mode === "demo" || softNotice;
+  /**
+   * Empty SoftFailNotice depth (BEA-310 after #81):
+   * empty owns compact SoftFail under azure history rail · Soft empty badge ·
+   * emptySupport · emptySoftFail copy (never inherit header softNotice) ·
+   * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
+   * Header + Talk SoftFail yield while empty owns (no double depth). Soft copy
+   * never timber / Failed to fetch.
+   */
+  const historyEmpty = turns.length === 0;
+  const emptyOwnsSoft = tab === "conversation" && historyEmpty;
+  const emptySoftOpen = emptyOwnsSoft;
+  const emptySoftCopy = t(locale, "translate.emptySoftFail");
+  const headerSoftOpen = isDemo && !emptyOwnsSoft;
+  const talkSoftOpen =
+    tab === "conversation" &&
+    !emptyOwnsSoft &&
+    Boolean(micDenied || error);
 
   const refreshQueue = useCallback(async () => {
     setQueue(await listQueuedTranslations(queueStore));
@@ -787,7 +806,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           </div>
         )}
 
-        <SoftFailNotice open={isDemo} className="mt-4">
+        {/* Header SoftFail yields while empty history owns soft-fail (no double depth). */}
+        <SoftFailNotice open={headerSoftOpen} className="mt-4">
           {softNotice && !online
             ? t(locale, "translate.softOffline")
             : t(locale, "translate.demoNotice")}
@@ -896,41 +916,101 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             </p>
           )}
 
+          {/*
+            Empty SoftFail depth (BEA-310 after #81):
+            azure history rail · Soft empty badge · emptySupport ·
+            compact SoftFailNotice mist band · SheetPresence empty body ·
+            tip-011 rise — never timber / Failed to fetch.
+          */}
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
             style={{ animationDelay: "120ms" }}
             aria-label={t(locale, "translate.history")}
           >
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 md:px-6">
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
-                  {t(locale, "translate.history")}
-                </p>
+            <header className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
+              <div className="min-w-0">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                    {t(locale, "translate.history")}
+                  </p>
+                  {historyEmpty ? (
+                    <span className="text-[11px] leading-snug text-ink-soft/80">
+                      {t(locale, "translate.emptySupport")}
+                    </span>
+                  ) : null}
+                </div>
                 <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
-                  {t(locale, "translate.historyHint")}
+                  {historyEmpty
+                    ? t(locale, "translate.emptyHint")
+                    : t(locale, "translate.historyHint")}
                 </p>
               </div>
-              {turns.length > 0 ? (
+              {historyEmpty ? (
+                <span
+                  className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                    emptySoftOpen
+                      ? "bg-mist text-ink-soft"
+                      : "bg-river/12 text-river"
+                  }`}
+                >
+                  {emptySoftOpen
+                    ? t(locale, "translate.emptySoftBadge")
+                    : t(locale, "translate.emptyBadge")}
+                </span>
+              ) : (
                 <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
                   {t(locale, "translate.historyCount").replace(
                     "{n}",
                     String(turns.length),
                   )}
                 </span>
-              ) : null}
-            </div>
+              )}
+            </header>
 
-            {busy && turns.length === 0 ? (
-              <TranslateHistorySkeleton rows={2} />
-            ) : turns.length === 0 ? (
-              <div className="animate-fade max-w-lg px-5 py-10 md:px-6">
-                <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; never timber / Failed to fetch. */}
+            <SoftFailNotice
+              open={emptySoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {emptySoftCopy}
+            </SoftFailNotice>
+
+            {busy && historyEmpty ? (
+              <TranslateHistorySkeleton rows={2} emptySoft />
+            ) : historyEmpty ? (
+              <SheetPresence
+                open
+                className={`max-w-lg px-5 py-10 md:px-6 ${
+                  emptySoftOpen
+                    ? "rounded-bp-sm bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                    : ""
+                }`}
+                style={{ animationDelay: "40ms" }}
+                aria-label={t(locale, "translate.empty")}
+              >
+                <p
+                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                  style={{ animationDelay: "40ms" }}
+                >
+                  {t(locale, "translate.history")}
+                </p>
+                <p
+                  className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+                  style={{ animationDelay: "70ms" }}
+                >
                   {t(locale, "translate.empty")}
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                <p
+                  className="animate-rise mt-3 text-sm leading-relaxed text-ink-soft"
+                  style={{ animationDelay: "100ms" }}
+                >
                   {t(locale, "translate.emptyHint")}
                 </p>
-                <div className="mt-7 flex flex-wrap gap-3">
+                <div
+                  className="animate-rise mt-7 flex flex-wrap gap-3"
+                  style={{ animationDelay: "130ms" }}
+                >
                   <button
                     type="button"
                     onClick={() => focusComposer("mic")}
@@ -947,7 +1027,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     {t(locale, "translate.nextDemo")}
                   </button>
                 </div>
-              </div>
+              </SheetPresence>
             ) : (
               <div className="divide-y divide-[color:var(--bp-line)]">
                 {busy ? (
@@ -1332,10 +1412,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           </div>
 
           <div className="space-y-3 px-6 py-4 md:px-10">
-            <SoftFailNotice
-              open={Boolean(micDenied || error)}
-              className="max-w-xl"
-            >
+            {/* Talk SoftFail yields while empty history owns soft-fail (no double depth). */}
+            <SoftFailNotice open={talkSoftOpen} className="max-w-xl">
               {micDenied
                 ? t(locale, "translate.permissionMic")
                 : (error ?? t(locale, "translate.error"))}

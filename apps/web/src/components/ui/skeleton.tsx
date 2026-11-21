@@ -541,8 +541,35 @@ export function TranslateStatusSkeleton() {
   );
 }
 
-/** Tip 017 — conversation history rows while a turn is in flight. */
-export function TranslateHistorySkeleton({ rows = 2 }: { rows?: number }) {
+/**
+ * Tip 017 — conversation history rows while a turn is in flight.
+ * `emptySoft` paints mist-wash empty body under SoftFailNotice (BEA-310).
+ */
+export function TranslateHistorySkeleton({
+  rows = 2,
+  emptySoft = false,
+}: {
+  rows?: number;
+  emptySoft?: boolean;
+}) {
+  if (emptySoft) {
+    return (
+      <div
+        aria-busy="true"
+        aria-live="polite"
+        className="max-w-lg space-y-3 rounded-bp-sm bg-mist/25 px-5 py-10 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6"
+      >
+        <Skeleton className="h-2.5 w-16" />
+        <Skeleton className="h-8 w-56 max-w-full" />
+        <Skeleton className="h-4 w-72 max-w-full" />
+        <div className="mt-2 flex flex-wrap gap-3">
+          <Skeleton className="h-11 w-36 rounded-bp" />
+          <Skeleton className="h-11 w-32 rounded-bp-sm" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       aria-busy="true"
