@@ -109,6 +109,15 @@ export function PlannerSkeleton() {
             <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
             <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
           </div>
+          {/* Stops chrome — azure rail + SoftFailNotice slot (tip 017) */}
+          <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex items-baseline gap-2">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-5 w-12 rounded-bp-xs" />
+          </div>
+          <Skeleton className="h-9 w-full rounded-none" />
           <div className="space-y-0 px-4 py-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
