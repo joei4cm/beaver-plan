@@ -36,9 +36,30 @@ export function strokeForMode(mode: string): PathStroke {
   }
 }
 
+function pushRoadLine(
+  lines: PathLine[],
+  id: string,
+  mode: string,
+  from: Point,
+  to: Point,
+) {
+  const fallback = encodeRoadPolyline(from, to, {
+    mode: mode === "walk" || mode === "drive" ? mode : "transit",
+  });
+  try {
+    const points = decodeSimplePolyline(fallback);
+    if (points.length < 2) return;
+    lines.push({ id, mode, points });
+  } catch {
+    /* ignore bad soft-fail geometry */
+  }
+}
+
 /**
  * Collect road-following polylines for a day: prefer encoded leg segments,
  * else synthesize demo road geometry between adjacent stops.
+ * Soft-fail when routing/legs are absent — still draw road-following paths
+ * between ordered stops (never straight chords).
  */
 export function collectPathLines(stops: Stop[], legs: Leg[]): PathLine[] {
   const lines: PathLine[] = [];
@@ -67,14 +88,29 @@ export function collectPathLines(stops: Stop[], legs: Leg[]): PathLine[] {
     if (!from || !to) continue;
     const mode =
       leg.mode === "walk" ? "walk" : leg.mode === "drive" ? "drive" : "transit";
-    const fallback = encodeRoadPolyline(
+    pushRoadLine(
+      lines,
+      leg.id,
+      mode,
       { lat: from.place.lat, lng: from.place.lng },
       { lat: to.place.lat, lng: to.place.lng },
-      { mode },
     );
-    const points = decodeSimplePolyline(fallback);
-    if (points.length < 2) continue;
-    lines.push({ id: leg.id, mode, points });
+  }
+
+  // Soft-fail: Directions/routing absent (empty legs) — still paint azure roads.
+  if (lines.length === 0 && stops.length >= 2) {
+    const ordered = [...stops].sort((a, b) => a.order - b.order);
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const from = ordered[i]!;
+      const to = ordered[i + 1]!;
+      pushRoadLine(
+        lines,
+        `soft-${from.id}-${to.id}`,
+        "transit",
+        { lat: from.place.lat, lng: from.place.lng },
+        { lat: to.place.lat, lng: to.place.lng },
+      );
+    }
   }
   return lines;
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { Stop } from "../domain.js";
 import {
   buildDemoTransitRoute,
   buildDemoWalkOrDrive,
@@ -8,6 +9,7 @@ import {
   polylineLooksLikeChord,
   roadFollowPath,
 } from "./demo-road-paths.js";
+import { collectPathLines } from "./path-lines.js";
 import { decodeSimplePolyline } from "./polyline.js";
 
 describe("roadFollowPath", () => {
@@ -79,5 +81,45 @@ describe("demo walk/drive", () => {
       true,
     );
     assert.equal(polylineLooksLikeChord(drive.polyline), false);
+  });
+});
+
+describe("collectPathLines soft-fail", () => {
+  it("synthesizes road-following paths when routing/legs are absent", () => {
+    const place = (lat: number, lng: number, name: string) => ({
+      engine: "google" as const,
+      enginePlaceId: name,
+      name,
+      address: name,
+      lat,
+      lng,
+    });
+    const stops: Stop[] = [
+      {
+        id: "a",
+        dayId: "d1",
+        order: 0,
+        place: place(34.9949, 135.785, "Kiyomizu"),
+        photos: [],
+        bookingLinks: [],
+      },
+      {
+        id: "b",
+        dayId: "d1",
+        order: 1,
+        place: place(35.0037, 135.7786, "Gion"),
+        photos: [],
+        bookingLinks: [],
+      },
+    ];
+    const lines = collectPathLines(stops, []);
+    assert.equal(lines.length, 1);
+    assert.ok(lines[0]!.points.length >= 4);
+    assert.equal(
+      polylineLooksLikeChord(
+        lines[0]!.points.map((p) => `${p.lat},${p.lng}`).join(";"),
+      ),
+      false,
+    );
   });
 });
