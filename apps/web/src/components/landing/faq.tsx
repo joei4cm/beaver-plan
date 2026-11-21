@@ -26,6 +26,10 @@ type Props = {
   items: FaqItem[];
   offlineNotice: string;
   filterLabel: string;
+  sheetEyebrow: string;
+  sheetSupport: string;
+  offlineBadge: string;
+  liveBadge: string;
 };
 
 function useSectionReveal(reduced: boolean) {
@@ -80,9 +84,10 @@ function useBrowserOnline(): boolean {
 }
 
 /**
- * Landing FAQ accordion — Lumen Route craft.
- * Hierarchy · mist-track / azure select · SoftFail if offline · tip-011 motion.
- * SheetPresence on answer panels; no card soup.
+ * Landing FAQ SoftFailNotice chrome (BEA-254 after #143/#190):
+ * azure FAQ sheet rail · Offline/Live badge · compact SoftFailNotice under
+ * rail · mist-track topic chips · tip-011 rise stagger — SoftFail owned by
+ * the sheet (no floating notice). Never timber / Failed to fetch.
  */
 export function LandingFaq({
   title,
@@ -91,10 +96,15 @@ export function LandingFaq({
   items,
   offlineNotice,
   filterLabel,
+  sheetEyebrow,
+  sheetSupport,
+  offlineBadge,
+  liveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
   const online = useBrowserOnline();
+  const softOpen = !online;
   const baseId = useId();
 
   const [topic, setTopic] = useState<FaqTopic>("all");
@@ -149,106 +159,143 @@ export function LandingFaq({
           </p>
         </header>
 
+        {/*
+          FAQ SoftFail chrome (BEA-254 after #143/#190):
+          azure FAQ rail · Offline/Live badge · compact SoftFailNotice ·
+          mist-track topics · tip-011 accordion — never timber.
+        */}
         <div
-          className={`mt-8 ${revealClass(visible, reduced)}`}
+          className={`mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft ${revealClass(visible, reduced)}`}
           style={reduced ? undefined : { animationDelay: "100ms" }}
+          aria-label={sheetEyebrow}
         >
-          <SoftFailNotice open={!online}>{offlineNotice}</SoftFailNotice>
-        </div>
+          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {sheetEyebrow}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {sheetSupport}
+              </span>
+            </div>
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                softOpen
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river"
+              }`}
+            >
+              {softOpen ? offlineBadge : liveBadge}
+            </span>
+          </header>
 
-        {/* Topic rail — mist-track · azure select (#46 / tip-011) */}
-        <div
-          className={`mt-10 ${revealClass(visible, reduced)}`}
-          style={reduced ? undefined : { animationDelay: "140ms" }}
-        >
-          <div
-            className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+          <SoftFailNotice open={softOpen} compact>
+            {offlineNotice}
+          </SoftFailNotice>
+
+          <SheetPresence
+            open
             role="group"
+            className="px-4 py-5 sm:px-5 sm:py-6"
+            style={{ animationDelay: "40ms" }}
             aria-label={filterLabel}
           >
-            {topics.map((opt) => {
-              const on = topic === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setTopic(opt.id)}
-                  className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
-                    on
-                      ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                      : "text-ink-soft hover:text-river"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Accordion — hairline rows; azure rail when open */}
-        <ul className="mt-10 border-t border-ink/8 md:mt-12">
-          {filtered.map((item, index) => {
-            const open = openId === item.id;
-            const panelId = `${baseId}-panel-${item.id}`;
-            const triggerId = `${baseId}-trigger-${item.id}`;
-            const delay = 180 + index * 55;
-
-            return (
-              <li
-                key={item.id}
-                className={`border-b border-ink/8 ${revealClass(visible, reduced)}`}
-                style={
-                  reduced ? undefined : { animationDelay: `${delay}ms` }
-                }
+            {/* Topic rail — mist-track · azure select (#46 / tip-011) */}
+            <div
+              className="animate-rise"
+              style={reduced ? undefined : { animationDelay: "55ms" }}
+            >
+              <div
+                className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                role="group"
+                aria-label={filterLabel}
               >
-                <button
-                  type="button"
-                  id={triggerId}
-                  aria-expanded={open}
-                  aria-controls={panelId}
-                  onClick={() => setOpenId(open ? null : item.id)}
-                  className={`group relative flex w-full items-start justify-between gap-4 py-5 text-left transition duration-bp ease-bp-out-strong hover:bg-mist/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:py-6 ${
-                    open
-                      ? "bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : ""
-                  }`}
-                >
-                  <span className="min-w-0 pl-1 md:pl-2">
-                    <span className="font-display text-base font-semibold tracking-[-0.02em] text-ink md:text-lg">
-                      {item.question}
-                    </span>
-                  </span>
-                  <span
-                    aria-hidden
-                    className={`mt-0.5 shrink-0 pr-1 text-river transition duration-bp ease-bp-out-strong md:pr-2 ${
-                      open ? "rotate-180" : ""
-                    }`}
-                  >
-                    ▾
-                  </span>
-                </button>
+                {topics.map((opt) => {
+                  const on = topic === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setTopic(opt.id)}
+                      className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        on
+                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                          : "text-ink-soft hover:text-river"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                <SheetPresence
-                  open={open}
-                  id={panelId}
-                  role="region"
-                  aria-label={item.question}
-                  className="overflow-hidden"
-                  style={{ animationDelay: "30ms" }}
-                >
-                  <p
-                    className="max-w-2xl pb-6 pl-1 pr-8 text-sm leading-relaxed text-ink-soft md:pl-2 md:pr-12 md:text-base"
-                    id={`${panelId}-copy`}
+            {/* Accordion — hairline rows; azure rail when open */}
+            <ul className="mt-6 border-t border-ink/8">
+              {filtered.map((item, index) => {
+                const open = openId === item.id;
+                const panelId = `${baseId}-panel-${item.id}`;
+                const triggerId = `${baseId}-trigger-${item.id}`;
+                const delay = 85 + index * 45;
+
+                return (
+                  <li
+                    key={item.id}
+                    className={`animate-rise border-b border-ink/8`}
+                    style={
+                      reduced ? undefined : { animationDelay: `${delay}ms` }
+                    }
                   >
-                    {item.answer}
-                  </p>
-                </SheetPresence>
-              </li>
-            );
-          })}
-        </ul>
+                    <button
+                      type="button"
+                      id={triggerId}
+                      aria-expanded={open}
+                      aria-controls={panelId}
+                      onClick={() => setOpenId(open ? null : item.id)}
+                      className={`group relative flex w-full items-start justify-between gap-4 py-4 text-left transition duration-bp ease-bp-out-strong hover:bg-mist/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:py-5 ${
+                        open
+                          ? "bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : ""
+                      }`}
+                    >
+                      <span className="min-w-0 pl-0.5 md:pl-1">
+                        <span className="font-display text-base font-semibold tracking-[-0.02em] text-ink md:text-lg">
+                          {item.question}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`mt-0.5 shrink-0 pr-0.5 text-river transition duration-bp ease-bp-out-strong md:pr-1 ${
+                          open ? "rotate-180" : ""
+                        }`}
+                      >
+                        ▾
+                      </span>
+                    </button>
+
+                    <SheetPresence
+                      open={open}
+                      id={panelId}
+                      role="region"
+                      aria-label={item.question}
+                      className="overflow-hidden"
+                      style={{ animationDelay: "30ms" }}
+                    >
+                      <p
+                        className="max-w-2xl pb-5 pl-0.5 pr-6 text-sm leading-relaxed text-ink-soft md:pl-1 md:pr-10 md:text-base"
+                        id={`${panelId}-copy`}
+                      >
+                        {item.answer}
+                      </p>
+                    </SheetPresence>
+                  </li>
+                );
+              })}
+            </ul>
+          </SheetPresence>
+        </div>
       </div>
     </section>
   );
