@@ -56,6 +56,14 @@ const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
 const uiLocale = "zh-CN" as const;
 
+/** Soft-fail transport noise — never surface timber / Failed to fetch. */
+function isNoiseError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return /_503$|_502$|_504$|Failed to fetch|Network request failed|load_failed|ECONNREFUSED|TypeError/i.test(
+    msg,
+  );
+}
+
 type Tab = "conversation" | "camera";
 type Facing = "front" | "back";
 
@@ -146,6 +154,27 @@ export default function TranslateScreen() {
   const reduceMotionRef = useRef(false);
 
   const isDemo = !status || status.mode === "demo" || softNotice;
+
+  /**
+   * Expo Talk SoftFailNotice chrome after web #104 / Expo #116:
+   * azure talk rail · compact SoftFailNotice · tip-011 (#46) ·
+   * StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
+   * Hero SoftFailNotice yields while Talk owns soft-fail (no double depth).
+   */
+  const talkSoftOpen =
+    tab === "conversation" &&
+    (isDemo || micDenied || Boolean(error));
+  const talkSoftCopy = micDenied
+    ? t(uiLocale, "translate.permissionMic")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : isDemo
+        ? t(uiLocale, "translate.talkSoftFail")
+        : error && isNoiseError(new Error(error))
+          ? t(uiLocale, "translate.talkSoftFail")
+          : error
+            ? t(uiLocale, "translate.error")
+            : null;
 
   useEffect(() => {
     let alive = true;
@@ -714,7 +743,11 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          <SoftFailNotice open={isDemo} style={styles.heroSoftNotice}>
+          {/* Hero SoftFailNotice yields while Talk owns soft-fail — no double depth. */}
+          <SoftFailNotice
+            open={isDemo && !talkSoftOpen}
+            style={styles.heroSoftNotice}
+          >
             {softNotice && !online
               ? t(uiLocale, "translate.softOffline")
               : t(uiLocale, "translate.demoNotice")}
@@ -724,26 +757,32 @@ export default function TranslateScreen() {
         <View style={styles.tabs}>
           <Pressable
             onPress={() => setTab("conversation")}
-            style={[styles.tab, tab === "conversation" && styles.tabActive]}
+            style={StyleSheet.flatten([
+              styles.tab,
+              tab === "conversation" ? styles.tabActive : null,
+            ])}
           >
             <Text
-              style={[
+              style={StyleSheet.flatten([
                 styles.tabLabel,
-                tab === "conversation" && styles.tabLabelActive,
-              ]}
+                tab === "conversation" ? styles.tabLabelActive : null,
+              ])}
             >
               {t(uiLocale, "translate.mode.conversation")}
             </Text>
           </Pressable>
           <Pressable
             onPress={() => setTab("camera")}
-            style={[styles.tab, tab === "camera" && styles.tabActive]}
+            style={StyleSheet.flatten([
+              styles.tab,
+              tab === "camera" ? styles.tabActive : null,
+            ])}
           >
             <Text
-              style={[
+              style={StyleSheet.flatten([
                 styles.tabLabel,
-                tab === "camera" && styles.tabLabelActive,
-              ]}
+                tab === "camera" ? styles.tabLabelActive : null,
+              ])}
             >
               {t(uiLocale, "translate.mode.camera")}
             </Text>
@@ -942,8 +981,9 @@ export default function TranslateScreen() {
               style={styles.talkRail}
               accessibilityLabel={t(uiLocale, "translate.talkRail")}
             >
+              {/* Azure hierarchy — eyebrow · soft/live badge · SoftFailNotice */}
               <View style={styles.talkHead}>
-                <View style={styles.talkHeadCopy}>
+                <View style={styles.talkHeadTitles}>
                   <Text style={styles.talkEyebrow}>
                     {t(uiLocale, "translate.talkRail")}
                   </Text>
@@ -951,37 +991,47 @@ export default function TranslateScreen() {
                     {t(uiLocale, "translate.talkHint")}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setTtsEnabled((v) => !v)}
-                  style={StyleSheet.flatten([
-                    styles.ttsChip,
-                    ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
-                  ])}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: ttsEnabled }}
-                >
-                  <Text
+                <View style={styles.talkHeadBadges}>
+                  {talkSoftOpen ? (
+                    <Text style={styles.talkSoftBadge}>
+                      {t(uiLocale, "translate.talkDemoBadge")}
+                    </Text>
+                  ) : (
+                    <Text style={styles.talkLiveBadge}>
+                      {t(uiLocale, "translate.talkLiveBadge")}
+                    </Text>
+                  )}
+                  <Pressable
+                    onPress={() => setTtsEnabled((v) => !v)}
                     style={StyleSheet.flatten([
-                      styles.ttsChipText,
-                      ttsEnabled ? styles.ttsChipTextOn : null,
+                      styles.ttsChip,
+                      ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
                     ])}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: ttsEnabled }}
                   >
-                    {t(uiLocale, "translate.ttsReady")}{" "}
-                    {ttsEnabled ? "· on" : "· off"}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.ttsChipText,
+                        ttsEnabled ? styles.ttsChipTextOn : null,
+                      ])}
+                    >
+                      {t(uiLocale, "translate.ttsReady")}{" "}
+                      {ttsEnabled ? "· on" : "· off"}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
 
-              <View style={styles.talkBody}>
-                <SoftFailNotice
-                  open={Boolean(micDenied || error)}
-                  style={styles.talkSoftFail}
-                >
-                  {micDenied
-                    ? t(uiLocale, "translate.permissionMic")
-                    : (error ?? t(uiLocale, "translate.error"))}
-                </SoftFailNotice>
+              <SoftFailNotice
+                open={Boolean(talkSoftCopy)}
+                compact
+                style={styles.talkSoftFail}
+              >
+                {talkSoftCopy ?? ""}
+              </SoftFailNotice>
 
+              <View style={styles.talkBody}>
                 <View style={styles.compose}>
                   <TextInput
                     ref={draftRef}
@@ -1829,11 +1879,45 @@ const styles = StyleSheet.create({
     gap: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
     backgroundColor: "rgba(244, 246, 250, 0.72)",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  talkHeadCopy: { flex: 1, minWidth: 180, gap: 4 },
+  talkHeadTitles: { flex: 1, minWidth: 160, gap: 4 },
+  talkHeadBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  talkSoftBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  talkLiveBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.riverDeep,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
   talkEyebrow: {
     ...type.body,
     fontSize: 10,
@@ -2252,5 +2336,5 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
-  queueNote: { color: colors.timber, fontSize: 12 },
+  queueNote: { color: colors.inkSoft, fontSize: 12 },
 });
