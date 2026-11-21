@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Animated,
   Easing,
@@ -158,6 +159,15 @@ export default function TripDetailScreen() {
   const stopPop = useRef(new Animated.Value(1)).current;
   const inviteSheet = useRef(new Animated.Value(0)).current;
   const presencePulse = useRef(new Animated.Value(0)).current;
+  /** Tip 015 stretch + tip-011 settle — underline select (web #117). */
+  const dayTabLayouts = useRef(new Map<string, { x: number; width: number }>());
+  const dayUnderlineLeft = useRef(new Animated.Value(0)).current;
+  const dayUnderlineWidth = useRef(new Animated.Value(0)).current;
+  const dayUnderlineSettle = useRef(new Animated.Value(1)).current;
+  const dayUnderlineOpacity = useRef(new Animated.Value(1)).current;
+  const dayUnderlineReady = useRef(false);
+  const reduceMotionRef = useRef(false);
+  const [dayUnderlineVisible, setDayUnderlineVisible] = useState(false);
 
   const refreshPin = useCallback(async () => {
     try {
@@ -414,6 +424,102 @@ export default function TripDetailScreen() {
       useNativeDriver: true,
     }).start();
   }, [selectedStopId, stopPop]);
+
+  useEffect(() => {
+    let alive = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (alive) reduceMotionRef.current = enabled;
+    });
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (enabled) => {
+        reduceMotionRef.current = enabled;
+      },
+    );
+    return () => {
+      alive = false;
+      sub.remove();
+    };
+  }, []);
+
+  const applyDayUnderline = useCallback(
+    (dayKey: string, animate: boolean) => {
+      const layout = dayTabLayouts.current.get(dayKey);
+      if (!layout) return;
+      /* Underline sits inset under the label block (tip 015 stretch). */
+      const INSET_X = 10;
+      const left = layout.x + INSET_X;
+      const width = Math.max(12, layout.width - INSET_X * 2);
+      setDayUnderlineVisible(true);
+      if (!dayUnderlineReady.current || !animate || reduceMotionRef.current) {
+        dayUnderlineLeft.setValue(left);
+        dayUnderlineWidth.setValue(width);
+        dayUnderlineSettle.setValue(1);
+        dayUnderlineOpacity.setValue(1);
+        dayUnderlineReady.current = true;
+        return;
+      }
+      Animated.parallel([
+        Animated.timing(dayUnderlineLeft, {
+          toValue: left,
+          duration: motion.durationMdMs,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(dayUnderlineWidth, {
+          toValue: width,
+          duration: motion.durationMdMs,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ]).start();
+    },
+    [dayUnderlineLeft, dayUnderlineOpacity, dayUnderlineSettle, dayUnderlineWidth],
+  );
+
+  useEffect(() => {
+    if (!dayId) {
+      setDayUnderlineVisible(false);
+      dayUnderlineReady.current = false;
+      return;
+    }
+    applyDayUnderline(dayId, true);
+    if (reduceMotionRef.current) {
+      dayUnderlineSettle.setValue(1);
+      dayUnderlineOpacity.setValue(1);
+      return;
+    }
+    /* Tip-011 underline settle without remounting (keeps tip-015 stretch). */
+    dayUnderlineSettle.setValue(0.35);
+    dayUnderlineOpacity.setValue(0.55);
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(dayUnderlineSettle, {
+          toValue: 1.28,
+          duration: Math.round(motion.durationMdMs * 0.55),
+          easing: easeRise,
+          useNativeDriver: false,
+        }),
+        Animated.timing(dayUnderlineSettle, {
+          toValue: 1,
+          duration: Math.round(motion.durationMdMs * 0.45),
+          easing: easeRise,
+          useNativeDriver: false,
+        }),
+      ]),
+      Animated.timing(dayUnderlineOpacity, {
+        toValue: 1,
+        duration: Math.round(motion.durationMdMs * 0.55),
+        easing: easeRise,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [
+    applyDayUnderline,
+    dayId,
+    dayUnderlineOpacity,
+    dayUnderlineSettle,
+  ]);
 
   // Soft-fetch Places intel for the selected stop; demo fixtures when offline.
   useEffect(() => {
@@ -712,7 +818,7 @@ export default function TripDetailScreen() {
   }
 
   function selectDay(nextDayId: string) {
-    setDayId(nextDayId);
+    setDayId((prev) => (prev === nextDayId ? prev : nextDayId));
     setSelectedStopId(null);
   }
 
@@ -859,44 +965,72 @@ export default function TripDetailScreen() {
             />
 
             <View style={styles.sheet}>
+              {/* Day tabs — underline select + tip-011 settle (web #117 / tip 015). */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={styles.dayRow}
                 contentContainerStyle={styles.dayRowContent}
+                accessibilityRole="tablist"
+                accessibilityLabel={t(locale, "planner.dayFill.days")}
               >
-                {days.map((day, i) => {
-                  const active = dayId === day.id;
-                  return (
-                    <Pressable
-                      key={day.id}
-                      onPress={() => selectDay(day.id)}
+                <View style={styles.dayRailInner}>
+                  {dayUnderlineVisible ? (
+                    <Animated.View
+                      pointerEvents="none"
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
                       style={StyleSheet.flatten([
-                        styles.dayChip,
-                        active ? styles.dayChipActive : null,
+                        styles.dayUnderline,
+                        {
+                          left: dayUnderlineLeft,
+                          width: dayUnderlineWidth,
+                          opacity: dayUnderlineOpacity,
+                          transform: [{ scaleY: dayUnderlineSettle }],
+                        },
                       ])}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: active }}
-                    >
-                      <Text
+                    />
+                  ) : null}
+                  {days.map((day, i) => {
+                    const active = dayId === day.id;
+                    return (
+                      <Pressable
+                        key={day.id}
+                        onPress={() => selectDay(day.id)}
+                        onLayout={(e) => {
+                          const { x, width } = e.nativeEvent.layout;
+                          dayTabLayouts.current.set(day.id, { x, width });
+                          if (day.id === dayId) {
+                            applyDayUnderline(day.id, dayUnderlineReady.current);
+                          }
+                        }}
                         style={StyleSheet.flatten([
-                          styles.dayChipLabel,
-                          active ? styles.dayChipLabelActive : null,
+                          styles.dayChip,
+                          active ? styles.dayChipActive : null,
                         ])}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: active }}
                       >
-                        {t(locale, "planner.day")} {i + 1}
-                      </Text>
-                      <Text
-                        style={StyleSheet.flatten([
-                          styles.dayChipDate,
-                          active ? styles.dayChipLabelActive : null,
-                        ])}
-                      >
-                        {day.date}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.dayChipEyebrow,
+                            active ? styles.dayChipEyebrowActive : null,
+                          ])}
+                        >
+                          {t(locale, "planner.day")} {i + 1}
+                        </Text>
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.dayChipDate,
+                            active ? styles.dayChipDateActive : null,
+                          ])}
+                        >
+                          {day.date}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </ScrollView>
 
               <View style={styles.searchWrap}>
@@ -1718,38 +1852,72 @@ const styles = StyleSheet.create({
   dayRow: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /* Mist wash rail — not full pill (web .bp-day-tab-rail--underline). */
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
   },
   dayRowContent: {
-    gap: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
+    paddingHorizontal: 4,
+    paddingTop: 2,
+    paddingBottom: 0,
+    minWidth: "100%",
+  },
+  dayRailInner: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 0,
+  },
+  dayUnderline: {
+    position: "absolute",
+    bottom: 0,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: colors.river,
+    /* Soft azure edge — matches web gradient underline. */
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 1,
+    shadowOffset: { width: 0, height: 0 },
+    zIndex: 0,
   },
   dayChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
+    position: "relative",
+    zIndex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderTopLeftRadius: radius.sm,
+    borderTopRightRadius: radius.sm,
     backgroundColor: "transparent",
   },
   dayChipActive: {
-    backgroundColor: colors.river,
+    backgroundColor: "rgba(47, 107, 255, 0.08)",
   },
-  dayChipLabel: {
+  dayChipEyebrow: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     color: colors.inkSoft,
+    opacity: 0.72,
     textTransform: "uppercase",
     letterSpacing: 1.2,
+  },
+  dayChipEyebrowActive: {
+    color: colors.river,
+    opacity: 1,
   },
   dayChipDate: {
     ...type.body,
     marginTop: 2,
     fontSize: 13,
-    color: colors.ink,
+    color: colors.inkSoft,
     fontWeight: "600",
+    fontVariant: ["tabular-nums"],
   },
-  dayChipLabelActive: { color: colors.foam },
+  dayChipDateActive: {
+    color: colors.ink,
+    fontWeight: "700",
+  },
   searchWrap: {
     paddingHorizontal: 12,
     paddingTop: 12,
