@@ -405,6 +405,7 @@
   "journal.demoNotice": "已写入京都示例手记 — 未配置 Neon/R2 时走柔和种子，不会空白或报错。",
   "journal.softOffline": "助手段暂时不可达，正在阅读本机示例手记。",
   "journal.composeSoftFail": "媒体 / 手记 API 离线或密钥未配置 — 文案与图框先留在本机，直到 Neon/R2 就绪。不会出现 Failed to fetch。",
+  "journal.composeSoftBadge": "柔和媒体",
   "journal.demoBadge": "示例手记",
   "journal.daySection": "第 {n} 天",
   "journal.listEyebrow": "手记索引",
