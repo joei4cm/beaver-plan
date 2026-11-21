@@ -162,7 +162,7 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.pillars.liveBadge")}
       />
 
-      {/* Below fold — how-it-works SoftFail sheet (azure rail · Offline/Live · tip-011) */}
+      {/* Below fold — how-it-works SoftFail depth (BEA-317 · Soft badge · mist SoftFail band · tip-011) */}
       <LandingScrollDeck
         title={t(locale, "landing.how.title")}
         support={t(locale, "landing.how.support")}
@@ -176,7 +176,8 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.how.liveBadge")}
         sheetEyebrow={t(locale, "landing.how.sheetEyebrow")}
         sheetSupport={t(locale, "landing.how.sheetSupport")}
-        offlineBadge={t(locale, "landing.how.offlineBadge")}
+        softSupport={t(locale, "landing.how.softSupport")}
+        softBadge={t(locale, "landing.how.softBadge")}
         softLiveBadge={t(locale, "landing.how.softLiveBadge")}
       />
 
