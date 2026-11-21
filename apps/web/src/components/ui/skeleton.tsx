@@ -530,7 +530,7 @@ export function TranslateStatusSkeleton() {
     <div
       aria-busy="true"
       aria-live="polite"
-      className="mt-5 flex flex-wrap items-center gap-2"
+      className="flex flex-wrap items-center gap-2"
     >
       <Skeleton className="h-7 w-24 rounded-bp-xs" />
       <Skeleton className="h-7 w-28 rounded-bp-xs" />
