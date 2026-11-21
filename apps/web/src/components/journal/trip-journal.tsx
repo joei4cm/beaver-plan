@@ -481,7 +481,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
-          {demoSeeded ? (
+          {demoSeeded || softNotice ? (
             <span className="rounded-bp-xs bg-river/12 px-2.5 py-1 font-semibold text-river-deep">
               {t(locale, "journal.demoBadge")}
             </span>
@@ -493,7 +493,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </span>
         </div>
 
-        {demoSeeded ? (
+        {demoSeeded || softNotice ? (
           <SoftFailNotice className="mt-4">
             {softNotice && !online
               ? t(locale, "journal.softOffline")
@@ -514,13 +514,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/trips/${tripId}`}
-              className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition hover:text-river hover:underline"
+              className="px-4 py-2 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline"
             >
               {t(locale, "journal.backPlanner")}
             </Link>
             <Link
               href={`/trips/${tripId}/share`}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
             >
               {t(locale, "journal.toShare")}
             </Link>
@@ -528,232 +528,244 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         </div>
       </header>
 
+      {/* One composition: entry list + compose editor */}
       <div
-        className="animate-rise relative mt-8 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)]"
+        className="animate-rise relative mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
         style={{ animationDelay: "40ms" }}
-        role="tablist"
-        aria-label={t(locale, "journal.eyebrow")}
       >
-        {days.map((day, i) => (
-          <button
-            key={day.id}
-            type="button"
-            role="tab"
-            aria-selected={dayId === day.id}
-            onClick={() => {
-              setDayId(day.id);
-              setStopId("");
-            }}
-            className={`shrink-0 px-5 py-3 text-left transition ${
-              dayId === day.id
-                ? "bg-river text-foam"
-                : "text-ink-soft hover:bg-mist/70 hover:text-ink"
-            }`}
-          >
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
-              {t(locale, "journal.daySection").replace("{n}", String(i + 1))}
-            </span>
-            <span className="text-sm font-semibold">{day.date}</span>
-          </button>
-        ))}
-      </div>
+        <div
+          className="flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60"
+          role="tablist"
+          aria-label={t(locale, "journal.eyebrow")}
+        >
+          {days.map((day, i) => (
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={dayId === day.id}
+              onClick={() => {
+                setDayId(day.id);
+                setStopId("");
+              }}
+              className={`shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
+                dayId === day.id
+                  ? "bg-river text-foam"
+                  : "text-ink-soft hover:bg-mist/70 hover:text-ink"
+              }`}
+            >
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                {t(locale, "journal.daySection").replace("{n}", String(i + 1))}
+              </span>
+              <span className="text-sm font-semibold">{day.date}</span>
+            </button>
+          ))}
+        </div>
 
-      <section
-        className="relative mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr]"
-      >
-        <div className="space-y-8">
-          <div
-            className="animate-sheet-in border-b border-[color:var(--bp-line)] pb-5"
-            key={dayId ?? "all"}
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
+          <section
+            className="min-w-0 space-y-0 px-5 py-6 md:px-7"
+            aria-label={t(locale, "journal.eyebrow")}
           >
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
-              {t(locale, "journal.daySection").replace(
-                "{n}",
-                String(activeDayIndex + 1),
-              )}
-            </p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
-              {activeDay?.note ?? activeDay?.date ?? trip.title}
+            <div
+              className="animate-sheet-in border-b border-[color:var(--bp-line)] pb-5"
+              key={dayId ?? "all"}
+            >
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                {t(locale, "journal.daySection").replace(
+                  "{n}",
+                  String(activeDayIndex + 1),
+                )}
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
+                {activeDay?.note ?? activeDay?.date ?? trip.title}
+              </h2>
+              {activeDay?.date ? (
+                <p className="mt-2 text-sm text-ink-soft">{activeDay.date}</p>
+              ) : null}
+            </div>
+
+            {visible.length === 0 && (
+              <div className="animate-fade mt-6 rounded-bp border border-dashed border-river/30 bg-mist/25 px-6 py-14">
+                <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
+                  {t(locale, "journal.empty")}
+                </p>
+                <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "journal.emptyHint")}
+                </p>
+                <div className="mt-8 grid max-w-sm grid-cols-3 gap-3">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/15 via-mist to-foam"
+                      aria-hidden
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="divide-y divide-[color:var(--bp-line)]">
+              {visible.map((entry, index) => {
+                const stop = stops.find((s) => s.id === entry.stopId);
+                return (
+                  <article
+                    key={entry.id}
+                    className="animate-entry-in py-7 first:pt-6"
+                    style={{ animationDelay: `${index * 70}ms` }}
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-xs font-medium uppercase tracking-[0.16em] text-river">
+                        {stop?.place.name ??
+                          days.find((d) => d.id === entry.dayId)?.note ??
+                          t(locale, "journal.dayNote")}
+                        {entry.id.startsWith("local-")
+                          ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
+                          : ""}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void removeEntry(entry.id)}
+                        className="text-xs text-ink-soft/60 transition duration-bp-fast ease-bp-out hover:text-timber"
+                      >
+                        {t(locale, "journal.remove")}
+                      </button>
+                    </div>
+                    {entry.body ? (
+                      <p className="mt-3 font-display text-2xl leading-snug tracking-tight text-ink md:text-3xl">
+                        {entry.body}
+                      </p>
+                    ) : null}
+                    {entry.media.length > 0 ? (
+                      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+                        {entry.media.map((url, mediaIndex) => (
+                          <MediaFrame
+                            key={`${entry.id}-${mediaIndex}`}
+                            src={resolveMediaUrl(url)}
+                            alt=""
+                            label={t(locale, "journal.mediaPlaceholder")}
+                            className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
+                        {[0, 1].map((i) => (
+                          <div
+                            key={i}
+                            className="aspect-[3/4] rounded-bp-sm border border-dashed border-river/25 bg-mist/40"
+                            aria-label={t(locale, "journal.mediaPlaceholder")}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <aside
+            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 p-5 md:p-6 lg:border-l lg:border-t-0"
+            style={{ animationDelay: "100ms" }}
+            aria-label={t(locale, "journal.compose")}
+          >
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
+              {t(locale, "journal.compose")}
             </h2>
-            {activeDay?.date ? (
-              <p className="mt-2 text-sm text-ink-soft">{activeDay.date}</p>
-            ) : null}
-          </div>
+            <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+              {t(locale, "journal.composeHint")}
+            </p>
 
-          {visible.length === 0 && (
-            <div className="animate-fade border border-dashed border-river/30 bg-foam/40 px-6 py-14">
-              <p className="font-display text-2xl font-semibold text-ink md:text-3xl">
-                {t(locale, "journal.empty")}
+            <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
+              {t(locale, "journal.bindStop")}
+              <select
+                value={stopId}
+                onChange={(e) => setStopId(e.target.value)}
+                className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-3 py-2 text-sm text-ink transition duration-bp-fast ease-bp-out focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+              >
+                <option value="">{t(locale, "journal.dayOnly")}</option>
+                {dayStops.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.place.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={4}
+              placeholder={t(locale, "journal.placeholder")}
+              className="mt-4 w-full resize-none rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+            />
+
+            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/[0.04]">
+              <span className="text-sm font-semibold text-river">
+                {t(locale, "journal.addPhotos")}
+              </span>
+              <span className="text-xs text-ink-soft">
+                {t(locale, "journal.uploadHint")}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                onChange={(e) => void onPickFiles(e.target.files)}
+              />
+            </label>
+
+            <div className="mt-3">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                {t(locale, "journal.photoSlots")}
               </p>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
-                {t(locale, "journal.emptyHint")}
-              </p>
-              <div className="mt-8 grid max-w-sm grid-cols-3 gap-3">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/15 via-mist to-sky-100/80"
-                    aria-hidden
+              <div className="mt-2 flex flex-wrap gap-2">
+                {previewMedia.map((item) => (
+                  <MediaFrame
+                    key={item.key}
+                    src={item.src}
+                    alt=""
+                    label={t(locale, "journal.mediaPlaceholder")}
+                    className="h-20 w-14 rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
                   />
+                ))}
+                {Array.from({ length: emptySlots }).map((_, i) => (
+                  <div
+                    key={`slot-${i}`}
+                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
+                    aria-hidden
+                  >
+                    +
+                  </div>
                 ))}
               </div>
             </div>
-          )}
 
-          {visible.map((entry, index) => {
-            const stop = stops.find((s) => s.id === entry.stopId);
-            return (
-              <article
-                key={entry.id}
-                className="animate-entry-in border-b border-[color:var(--bp-line)] pb-8"
-                style={{ animationDelay: `${index * 70}ms` }}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-river">
-                    {stop?.place.name ??
-                      days.find((d) => d.id === entry.dayId)?.note ??
-                      t(locale, "journal.dayNote")}
-                    {entry.id.startsWith("local-")
-                      ? ` · ${t(locale, "offline.pending").replace("{n}", "1")}`
-                      : ""}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void removeEntry(entry.id)}
-                    className="text-xs text-ink-soft/60 transition hover:text-timber"
-                  >
-                    {t(locale, "journal.remove")}
-                  </button>
-                </div>
-                {entry.body ? (
-                  <p className="mt-3 font-display text-2xl leading-snug tracking-tight text-ink md:text-3xl">
-                    {entry.body}
-                  </p>
-                ) : null}
-                {entry.media.length > 0 ? (
-                  <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-                    {entry.media.map((url, mediaIndex) => (
-                      <MediaFrame
-                        key={`${entry.id}-${mediaIndex}`}
-                        src={resolveMediaUrl(url)}
-                        alt=""
-                        label={t(locale, "journal.mediaPlaceholder")}
-                        className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
-                    {[0, 1].map((i) => (
-                      <div
-                        key={i}
-                        className="aspect-[3/4] rounded-bp-sm border border-dashed border-river/25 bg-mist/40"
-                        aria-label={t(locale, "journal.mediaPlaceholder")}
-                      />
-                    ))}
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
+            {info && <p className="mt-3 text-sm text-river">{info}</p>}
+            {error && !isPlannerNoiseError(new Error(error)) && (
+              <p className="mt-3 text-sm text-timber" role="alert">
+                {error}
+              </p>
+            )}
 
-        <aside className="animate-sheet-in h-fit border border-[color:var(--bp-line)] bg-foam/80 p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm lg:sticky lg:top-6">
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-            {t(locale, "journal.compose")}
-          </h2>
-          <p className="mt-1 text-sm text-ink-soft">
-            {t(locale, "journal.composeHint")}
-          </p>
-
-          <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
-            {t(locale, "journal.bindStop")}
-            <select
-              value={stopId}
-              onChange={(e) => setStopId(e.target.value)}
-              className="mt-2 w-full rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-sm text-ink focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
+            <button
+              type="button"
+              disabled={
+                saving ||
+                (!body.trim() &&
+                  pendingMedia.length === 0 &&
+                  pendingLocalPhotos.length === 0)
+              }
+              onClick={() => void saveEntry()}
+              className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <option value="">{t(locale, "journal.dayOnly")}</option>
-              {dayStops.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.place.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={4}
-            placeholder={t(locale, "journal.placeholder")}
-            className="mt-4 w-full resize-none rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 focus:border-river focus:outline-none focus:ring-2 focus:ring-focus/40"
-          />
-
-          <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/30 px-4 py-5 transition hover:border-river/60 hover:bg-river/[0.04]">
-            <span className="text-sm font-semibold text-river">
-              {t(locale, "journal.addPhotos")}
-            </span>
-            <span className="text-xs text-ink-soft">
-              {t(locale, "journal.uploadHint")}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="sr-only"
-              onChange={(e) => void onPickFiles(e.target.files)}
-            />
-          </label>
-
-          <div className="mt-3">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-              {t(locale, "journal.photoSlots")}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {previewMedia.map((item) => (
-                <MediaFrame
-                  key={item.key}
-                  src={item.src}
-                  alt=""
-                  label={t(locale, "journal.mediaPlaceholder")}
-                  className="h-20 w-14 rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
-                />
-              ))}
-              {Array.from({ length: emptySlots }).map((_, i) => (
-                <div
-                  key={`slot-${i}`}
-                  className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/10 to-mist/60 text-[10px] font-medium text-river/70"
-                  aria-hidden
-                >
-                  +
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {info && <p className="mt-3 text-sm text-river">{info}</p>}
-          {error && !isPlannerNoiseError(new Error(error)) && (
-            <p className="mt-3 text-sm text-timber" role="alert">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="button"
-            disabled={
-              saving ||
-              (!body.trim() &&
-                pendingMedia.length === 0 &&
-                pendingLocalPhotos.length === 0)
-            }
-            onClick={() => void saveEntry()}
-            className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {saving ? t(locale, "journal.saving") : t(locale, "journal.save")}
-          </button>
-        </aside>
-      </section>
+              {saving ? t(locale, "journal.saving") : t(locale, "journal.save")}
+            </button>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }
