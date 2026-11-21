@@ -57,10 +57,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Map place intel SoftFailNotice chrome (BEA-265 after #161/#216):
- * azure inset rail · soft badge · compact SoftFail under rail · tip-011 (#46)
- * Snapshot / Categories / About / Note rise stagger — never timber /
- * Failed to fetch. SoftFail owned by place intel sheet (no footer double depth).
+ * Map place intel SoftFailNotice depth (BEA-333 after #200):
+ * azure inset rail · Soft intel badge · softSupport · compact SoftFail mist
+ * band under rail · mist-wash tip-011 body · Snapshot / Categories / About /
+ * Note rise stagger. SoftFail stays under Place intel rail — map search
+ * (#226) / floating (#242) SoftFail own map chrome when open (no double
+ * depth). Never timber / Failed to fetch.
  */
 export function PlaceIntel({
   details,
@@ -102,6 +104,11 @@ export function PlaceIntel({
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
   const softOpen = open && demo;
+  const sheetSupportCopy = softOpen
+    ? t(locale, "planner.place.softSupport")
+    : view?.address
+      ? view.address
+      : t(locale, "planner.place.pinSupport");
   const tagCountLabel = t(locale, "planner.place.tagCount").replace(
     "{n}",
     String(tags.length),
@@ -117,8 +124,10 @@ export function PlaceIntel({
       {view ? (
         <>
           {/*
-            SoftFail chrome (BEA-265): azure Place intel rail · soft/live badge ·
-            tip-011 rise — SoftFail sits under rail, not footer.
+            SoftFail depth (BEA-333 after #200): azure Place intel rail · Soft
+            intel badge · softSupport · tip-011 mist-wash — SoftFail under
+            rail; map search (#226) / floating (#242) SoftFail stay on map
+            chrome when open (no double depth).
           */}
           <header
             className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -159,21 +168,19 @@ export function PlaceIntel({
                 <p className="font-display text-sm font-semibold tracking-tight text-ink">
                   {view.name}
                 </p>
-                {view.address ? (
-                  <p className="truncate text-[11px] leading-snug text-ink-soft">
-                    {view.address}
-                  </p>
-                ) : (
-                  <p className="text-[11px] leading-snug text-ink-soft/80">
-                    {t(locale, "planner.place.pinSupport")}
-                  </p>
-                )}
+                <p
+                  className={`truncate text-[11px] leading-snug ${
+                    softOpen ? "text-ink-soft/80" : "text-ink-soft"
+                  }`}
+                >
+                  {sheetSupportCopy}
+                </p>
               </div>
               <PinGlyph className="mt-0.5 shrink-0 text-river" />
             </div>
           </header>
 
-          {/* Compact SoftFail under azure Place intel rail — never timber / Failed to fetch. */}
+          {/* Compact SoftFail mist band under azure Place intel rail — map search (#226) / floating (#242) SoftFail stay on map chrome. */}
           <SoftFailNotice
             open={softOpen}
             compact
@@ -182,10 +189,18 @@ export function PlaceIntel({
             {t(locale, "planner.place.softFail")}
           </SoftFailNotice>
 
-          <div className="divide-y divide-[color:var(--bp-line)]">
+          <div
+            className={`divide-y divide-[color:var(--bp-line)] ${
+              softOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
+          >
             {showSnapshot ? (
               <section
-                className="animate-rise space-y-2 bg-mist/25 px-3 py-3"
+                className={`animate-rise space-y-2 px-3 py-3 ${
+                  softOpen ? "" : "bg-mist/25"
+                }`}
                 style={{ animationDelay: "70ms" }}
                 aria-label={t(locale, "planner.place.snapshotEyebrow")}
               >
