@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type CSSProperties,
   type KeyboardEvent,
 } from "react";
 import Link from "next/link";
@@ -36,9 +37,13 @@ import {
   readCachedTrip,
 } from "@/lib/offline/trip-offline";
 
-/** Shared focus craft for compose controls (#46 focus + bp-transition). */
+/** Shared focus craft for compose controls (#46 focus + tip-011 bp-transition). */
 const COMPOSE_CONTROL =
   "bp-transition border border-[color:var(--bp-line)] bg-foam outline-none focus:border-river focus:ring-2 focus:ring-focus/45";
+
+/** Azure primary CTA settle — tip-011 ease-out-strong (#46). */
+const COMPOSE_CTA =
+  "rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40";
 
 /** Editorial index mark — trips-index chrome for journal entries. */
 function EntryIndexMark({ n }: { n: number }) {
@@ -78,11 +83,13 @@ function MediaFrame({
   alt,
   className,
   label,
+  style,
 }: {
   src: string;
   alt: string;
   className?: string;
   label: string;
+  style?: CSSProperties;
 }) {
   const [broken, setBroken] = useState(false);
   const fallback = lumenJournalPlaceholder({
@@ -96,6 +103,7 @@ function MediaFrame({
       src={broken ? fallback : src}
       alt={alt}
       className={className}
+      style={style}
       onError={() => setBroken(true)}
     />
   );
@@ -128,6 +136,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     Boolean(initialTrip?.journal?.length),
   );
   const [softNotice, setSoftNotice] = useState(false);
+  /** Media / journal API soft-fail while composing (R2 / Neon absent). */
+  const [composeSoftFail, setComposeSoftFail] = useState(false);
   const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
@@ -254,6 +264,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       setDayId((prev) => prev ?? fixture.days[0]?.id ?? null);
       setDemoSeeded(true);
       setSoftNotice(Boolean(opts?.soft));
+      setComposeSoftFail(true);
       setFromCache(false);
       setError(null);
       return true;
@@ -276,6 +287,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         (!data.entries || data.entries.length === 0),
     );
     setSoftNotice(false);
+    setComposeSoftFail(false);
     setFromCache(false);
     return next;
   }, [tripId]);
@@ -336,12 +348,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               setError(e instanceof Error ? e.message : "load_failed");
             } else if (ok && tripId === "sample-kyoto") {
               setSoftNotice(true);
+              setComposeSoftFail(true);
             }
             return;
           }
           const ok = await loadFromCache();
           if (!ok && !applySampleSeed({ soft: true })) {
             setError(e instanceof Error ? e.message : "load_failed");
+          } else if (ok) {
+            setComposeSoftFail(true);
           }
         }
       })();
@@ -364,6 +379,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           await loadJournal();
           setInfo(null);
           setSoftNotice(false);
+          setComposeSoftFail(false);
         } catch {
           /* stay on cache / seed */
         }
@@ -439,6 +455,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             });
           }
           setPendingLocalPhotos((prev) => [...prev, ...locals].slice(0, 8));
+          setComposeSoftFail(true);
           setInfo(t(locale, "offline.savedLocal"));
           return;
         } catch {
@@ -502,6 +519,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       }
     } catch (e) {
       if (isOfflineTransportError(e) || isPlannerNoiseError(e)) {
+        setComposeSoftFail(true);
         await finishLocal();
         return;
       }
@@ -739,12 +757,6 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </div>
 
-            <SoftFailNotice open={demoSeeded || softNotice} className="mt-5">
-              {softNotice && !online
-                ? t(locale, "journal.softOffline")
-                : t(locale, "journal.demoNotice")}
-            </SoftFailNotice>
-
             {visible.length === 0 && (
               <div
                 key={`list-empty-${dayId ?? "all"}`}
@@ -860,108 +872,133 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
 
           <aside
             key={`compose-${dayId ?? "all"}`}
-            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 p-5 md:p-6 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
+            className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
             style={{ animationDelay: "80ms" }}
             aria-label={t(locale, "journal.compose")}
           >
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
-              {t(locale, "journal.composeEyebrow")}
-            </p>
-            <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink">
-              {t(locale, "journal.compose")}
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-              {t(locale, "journal.composeHint")}
-            </p>
-
-            <label className="mt-5 block text-xs font-medium uppercase tracking-wider text-ink-soft">
-              {t(locale, "journal.bindStop")}
-              <select
-                value={stopId}
-                onChange={(e) => setStopId(e.target.value)}
-                className={`mt-2 w-full rounded-bp-sm px-3 py-2 text-sm text-ink ${COMPOSE_CONTROL}`}
-              >
-                <option value="">{t(locale, "journal.dayOnly")}</option>
-                {dayStops.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.place.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <textarea
-              ref={composeRef}
-              id="journal-compose-body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={5}
-              placeholder={t(locale, "journal.placeholder")}
-              className={`mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
-            />
-
-            <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
-              <span className="text-sm font-semibold text-river">
-                {t(locale, "journal.addPhotos")}
-              </span>
-              <span className="text-xs text-ink-soft">
-                {t(locale, "journal.uploadHint")}
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="sr-only"
-                onChange={(e) => void onPickFiles(e.target.files)}
-              />
-            </label>
-
-            <div className="mt-3">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-                {t(locale, "journal.photoSlots")}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {previewMedia.map((item) => (
-                  <MediaFrame
-                    key={item.key}
-                    src={item.src}
-                    alt=""
-                    label={t(locale, "journal.mediaPlaceholder")}
-                    className="h-20 w-14 rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
-                  />
-                ))}
-                {Array.from({ length: emptySlots }).map((_, i) => (
-                  <div
-                    key={`slot-${i}`}
-                    className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70"
-                    aria-hidden
-                  >
-                    +
-                  </div>
-                ))}
+            {/* Azure hierarchy rail — eyebrow · title · hint (#46) */}
+            <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                  {t(locale, "journal.composeEyebrow")}
+                </p>
+                <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
+                  {t(locale, "journal.compose")}
+                </h2>
               </div>
-            </div>
-
-            {info && <p className="mt-3 text-sm text-river">{info}</p>}
-            {error && !isPlannerNoiseError(new Error(error)) && (
-              <p className="mt-3 text-sm text-timber" role="alert">
-                {error}
+              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                {t(locale, "journal.composeHint")}
               </p>
-            )}
+            </header>
 
-            <button
-              type="button"
-              disabled={
-                saving ||
-                (!body.trim() &&
-                  pendingMedia.length === 0 &&
-                  pendingLocalPhotos.length === 0)
-              }
-              onClick={() => void saveEntry()}
-              className="mt-5 w-full rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {saving ? t(locale, "journal.saving") : t(locale, "journal.save")}
-            </button>
+            <div className="flex flex-col p-5 md:p-6">
+              <SoftFailNotice
+                open={demoSeeded || softNotice || composeSoftFail}
+                className="mb-5"
+              >
+                {softNotice && !online
+                  ? t(locale, "journal.softOffline")
+                  : composeSoftFail && !demoSeeded
+                    ? t(locale, "journal.composeSoftFail")
+                    : t(locale, "journal.demoNotice")}
+              </SoftFailNotice>
+
+              <label className="block text-xs font-medium uppercase tracking-wider text-ink-soft">
+                {t(locale, "journal.bindStop")}
+                <select
+                  value={stopId}
+                  onChange={(e) => setStopId(e.target.value)}
+                  className={`mt-2 w-full rounded-bp-sm px-3 py-2 text-sm text-ink ${COMPOSE_CONTROL}`}
+                >
+                  <option value="">{t(locale, "journal.dayOnly")}</option>
+                  {dayStops.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.place.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <textarea
+                ref={composeRef}
+                id="journal-compose-body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={5}
+                placeholder={t(locale, "journal.placeholder")}
+                className={`mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
+              />
+
+              <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
+                <span className="text-sm font-semibold text-river">
+                  {t(locale, "journal.addPhotos")}
+                </span>
+                <span className="text-xs text-ink-soft">
+                  {t(locale, "journal.uploadHint")}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => void onPickFiles(e.target.files)}
+                />
+              </label>
+
+              <div className="mt-3">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                  {t(locale, "journal.photoSlots")}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {previewMedia.map((item, i) => (
+                    <MediaFrame
+                      key={item.key}
+                      src={item.src}
+                      alt=""
+                      label={t(locale, "journal.mediaPlaceholder")}
+                      className="animate-stop-select h-20 w-14 rounded-bp-sm object-cover ring-1 ring-river/30"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    />
+                  ))}
+                  {Array.from({ length: emptySlots }).map((_, i) => (
+                    <div
+                      key={`slot-${i}`}
+                      className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70 bp-transition"
+                      aria-hidden
+                    >
+                      +
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {info && (
+                <p className="mt-3 text-sm text-river" role="status">
+                  {info}
+                </p>
+              )}
+              {error && !isPlannerNoiseError(new Error(error)) && (
+                <p className="mt-3 text-sm text-timber" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="button"
+                disabled={
+                  saving ||
+                  (!body.trim() &&
+                    pendingMedia.length === 0 &&
+                    pendingLocalPhotos.length === 0)
+                }
+                onClick={() => void saveEntry()}
+                className={`mt-5 w-full ${COMPOSE_CTA}`}
+              >
+                {saving
+                  ? t(locale, "journal.saving")
+                  : t(locale, "journal.save")}
+              </button>
+            </div>
           </aside>
         </div>
       </div>
