@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { BasemapProps } from "./types";
 import {
   basemapProviderLabel,
@@ -34,16 +34,41 @@ const BaiduBasemap = dynamic(
  * otherwise Leaflet + OSM daylight raster tiles (Esri soft-fail; no key, no WebGL)
  * so demos never look like an empty grid.
  *
+ * Soft-fail: if a vendor JS chunk/API fails to load, fall back to Leaflet.
  * Each vendor chunk loads only when that kind is selected — keeps the OSM demo path lean.
  */
-export function InteractiveBasemap(props: BasemapProps) {
-  const kind = useMemo(
+export function InteractiveBasemap({
+  onBasemapSoftFail,
+  ...props
+}: BasemapProps) {
+  const preferred = useMemo(
     () => resolveBasemapKind(props.engineId),
     [props.engineId],
   );
+  const [softFailVendor, setSoftFailVendor] = useState(false);
+  const notifiedRef = useRef(false);
+  const onSoftFailProp = useRef(onBasemapSoftFail);
+  onSoftFailProp.current = onBasemapSoftFail;
 
-  if (kind === "google") return <GoogleBasemap {...props} />;
-  if (kind === "amap") return <AmapBasemap {...props} />;
-  if (kind === "baidu") return <BaiduBasemap {...props} />;
+  const onVendorFail = useCallback(() => {
+    setSoftFailVendor(true);
+    if (!notifiedRef.current) {
+      notifiedRef.current = true;
+      onSoftFailProp.current?.();
+    }
+  }, []);
+
+  const kind =
+    softFailVendor || preferred === "leaflet" ? "leaflet" : preferred;
+
+  if (kind === "google") {
+    return <GoogleBasemap {...props} onEngineFail={onVendorFail} />;
+  }
+  if (kind === "amap") {
+    return <AmapBasemap {...props} onEngineFail={onVendorFail} />;
+  }
+  if (kind === "baidu") {
+    return <BaiduBasemap {...props} onEngineFail={onVendorFail} />;
+  }
   return <LeafletBasemap {...props} />;
 }

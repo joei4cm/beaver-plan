@@ -7,6 +7,8 @@ import type { BasemapProps } from "./types";
 import {
   collectFitPoints,
   collectPathLines,
+  MARKER_ICON_ANCHOR,
+  MARKER_ICON_SIZE,
   markerHtml,
   strokeForMode,
 } from "./route-style";
@@ -20,6 +22,7 @@ import { MapSkeleton } from "./map-skeleton";
  * - Leaflet JS/CSS load only inside this effect (code-split from planner shell).
  * - Fit bounds *before* attaching tiles so the first tile request matches the route.
  * - Skeleton stays until the first tile layer `load` (or soft-fail swap).
+ * - Stop markers: tip-011 overshoot pop on select; fixed DivIcon footprint.
  */
 const OSM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTR =
@@ -52,8 +55,11 @@ export function LeafletBasemap({
   const fittedRef = useRef(false);
   const lastStopCountRef = useRef(0);
   const lastFitNonceRef = useRef(0);
+  const prevSelectedRef = useRef<string | null>(null);
+  const markersPaintedRef = useRef(false);
   const [engineReady, setEngineReady] = useState(false);
   const [tilesReady, setTilesReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -149,8 +155,11 @@ export function LeafletBasemap({
       tilesTimer = window.setTimeout(markTilesReady, 4000);
       sizeTimer = window.setTimeout(() => map?.invalidateSize(), 80);
     })().catch(() => {
-      // Soft-fail: drop skeleton so empty paper still shows (no blank MapLibre grid).
-      if (!cancelled) setTilesReady(true);
+      // Soft-fail: map API / Leaflet chunk absent — drop skeleton, keep paper stage.
+      if (!cancelled) {
+        setTilesReady(true);
+        setLoadFailed(true);
+      }
     });
 
     return () => {
@@ -163,6 +172,8 @@ export function LeafletBasemap({
       LRef.current = null;
       fittedRef.current = false;
       lastStopCountRef.current = 0;
+      markersPaintedRef.current = false;
+      prevSelectedRef.current = null;
     };
   }, []);
 
@@ -200,20 +211,42 @@ export function LeafletBasemap({
         }).addTo(group);
       }
 
+      const selectionChanged =
+        selectedStopId !== null && selectedStopId !== prevSelectedRef.current;
+      const firstPaint = !markersPaintedRef.current;
+
       if (showStops) {
         stops.forEach((stop, index) => {
+          // Skip pins without usable coordinates (soft-fail geometry).
+          if (
+            !Number.isFinite(stop.place.lat) ||
+            !Number.isFinite(stop.place.lng)
+          ) {
+            return;
+          }
           const selected = stop.id === selectedStopId;
+          const pop =
+            selected && (selectionChanged || (firstPaint && selected));
           const icon = L.divIcon({
-            className: "bp-leaflet-marker",
-            html: markerHtml(index, selected),
-            iconSize: [selected ? 28 : 22, selected ? 28 : 22],
-            iconAnchor: [selected ? 14 : 11, selected ? 14 : 11],
+            className: selected
+              ? "bp-leaflet-marker bp-leaflet-marker--active"
+              : "bp-leaflet-marker",
+            html: markerHtml(index, selected, { pop }),
+            iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
+            iconAnchor: [MARKER_ICON_ANCHOR, MARKER_ICON_ANCHOR],
           });
-          const marker = L.marker([stop.place.lat, stop.place.lng], { icon });
+          const marker = L.marker([stop.place.lat, stop.place.lng], {
+            icon,
+            zIndexOffset: selected ? 1000 : index,
+            riseOnHover: true,
+          });
           marker.on("click", () => onSelectRef.current(stop.id));
           marker.addTo(group);
         });
+        markersPaintedRef.current = true;
       }
+
+      prevSelectedRef.current = selectedStopId;
 
       const fitPts = collectFitPoints(stops, collectPathLines(stops, legs)).map(
         (p) => L.latLng(p.lat, p.lng),
@@ -255,7 +288,9 @@ export function LeafletBasemap({
     <>
       <div
         ref={containerRef}
-        className="absolute inset-0 z-0 h-full w-full [&_.leaflet-control-attribution]:text-[10px] [&_.bp-leaflet-marker]:border-0 [&_.bp-leaflet-marker]:bg-transparent [&_.bp-osm-tiles]:brightness-[1.02] [&_.bp-osm-tiles]:saturate-[0.85] [&_.bp-osm-tiles]:contrast-[0.96]"
+        className="absolute inset-0 z-0 h-full w-full [&_.leaflet-control-attribution]:text-[10px] [&_.bp-osm-tiles]:brightness-[1.02] [&_.bp-osm-tiles]:saturate-[0.85] [&_.bp-osm-tiles]:contrast-[0.96]"
+        data-map-soft-fail={loadFailed ? "true" : undefined}
+        aria-hidden={loadFailed || undefined}
       />
       {!tilesReady && <MapSkeleton label="Loading tiles" />}
     </>

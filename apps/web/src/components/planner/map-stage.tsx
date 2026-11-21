@@ -63,9 +63,12 @@ export function MapStage({
   onPickPlace,
 }: Props) {
   const basemapKind = resolveBasemapKind(engineId);
-  const tileLabel = basemapProviderLabel(basemapKind);
-  // Soft-fail when Directions/Places are demo *or* vendor JS map keys are absent (Leaflet fallback).
-  const softFail = mode !== "live" || basemapKind === "leaflet";
+  const [vendorSoftFail, setVendorSoftFail] = useState(false);
+  const effectiveKind = vendorSoftFail ? "leaflet" : basemapKind;
+  const tileLabel = basemapProviderLabel(effectiveKind);
+  // Soft-fail when Directions/Places are demo *or* vendor JS map keys/API absent (Leaflet).
+  const softFail =
+    mode !== "live" || effectiveKind === "leaflet" || vendorSoftFail;
   const [layers, setLayers] = useState<MapLayerFlags>(DEFAULT_LAYERS);
   const [fitNonce, setFitNonce] = useState(0);
   const [locateNotice, setLocateNotice] = useState<string | null>(null);
@@ -84,6 +87,7 @@ export function MapStage({
         showRoutes={layers.routes}
         showStops={layers.stops}
         fitNonce={fitNonce}
+        onBasemapSoftFail={() => setVendorSoftFail(true)}
       />
 
       <MapChrome
