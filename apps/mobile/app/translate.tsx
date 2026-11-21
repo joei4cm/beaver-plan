@@ -200,22 +200,22 @@ export default function TranslateScreen() {
           : t(uiLocale, "translate.talkSoftFail");
 
   /**
-   * Expo Lens SoftFailNotice chrome (BEA-237 after Talk #150 / empty #178):
-   * foam lens rail · azure head · compact SoftFailNotice · tip-011 (#46) ·
+   * Expo translate dual SoftFailNotice chrome (BEA-261 after Lens #180 / Talk #150):
+   * foam dual rail · azure head · compact SoftFailNotice · tip-011 (#46) ·
    * StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
-   * Hero SoftFailNotice yields while Lens owns soft-fail (no double depth).
+   * Hero SoftFailNotice yields while Dual owns soft-fail (no double depth).
    */
-  const cameraSoftOpen =
+  const dualSoftOpen =
     tab === "camera" && (isDemo || camDenied || Boolean(error) || softNotice);
-  const cameraSoftCopy = camDenied
+  const dualSoftCopy = camDenied
     ? t(uiLocale, "translate.permissionCamera")
     : softNotice && !online
       ? t(uiLocale, "translate.softOffline")
       : isDemo || (error && isNoiseError(new Error(error)))
-        ? t(uiLocale, "translate.lensSoftFail")
+        ? t(uiLocale, "translate.dualSoftFail")
         : error
           ? t(uiLocale, "translate.error")
-          : t(uiLocale, "translate.lensSoftFail");
+          : t(uiLocale, "translate.dualSoftFail");
 
   useEffect(() => {
     let alive = true;
@@ -784,9 +784,9 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {/* Hero SoftFail yields while empty / Talk / Lens own soft-fail — no double depth. */}
+          {/* Hero SoftFail yields while empty / Talk / Dual own soft-fail — no double depth. */}
           <SoftFailNotice
-            open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !cameraSoftOpen}
+            open={isDemo && !emptyOwnsSoft && !talkSoftOpen && !dualSoftOpen}
             style={styles.heroSoftNotice}
           >
             {softNotice && !online
@@ -1253,64 +1253,64 @@ export default function TranslateScreen() {
           </View>
         ) : (
           <Animated.View
-            style={StyleSheet.flatten([styles.lensRail, historyRiseStyle])}
+            style={StyleSheet.flatten([styles.dualRail, historyRiseStyle])}
             accessibilityLabel={t(uiLocale, "translate.mode.camera")}
           >
             {/*
-              Lens SoftFail chrome (BEA-237 after Talk #150 / empty #178):
-              foam sheet · azure head · compact SoftFailNotice · dual stage ·
+              Dual SoftFail chrome (BEA-261 after Lens #180 / Talk #150):
+              foam dual rail · azure head · compact SoftFailNotice · dual stage ·
               tip-011 SheetPresence — never timber / Failed to fetch.
             */}
-            <View style={styles.cameraHead}>
-              <View style={styles.cameraHeadTitles}>
-                <Text style={styles.cameraModeLabel}>
+            <View style={styles.dualHead}>
+              <View style={styles.dualHeadTitles}>
+                <Text style={styles.dualEyebrow}>
                   {t(uiLocale, "translate.mode.camera")}
                 </Text>
                 <Text style={styles.dualHint}>
-                  {cameraSoftOpen
-                    ? t(uiLocale, "translate.lensSupport")
+                  {dualSoftOpen
+                    ? t(uiLocale, "translate.dualSupport")
                     : t(uiLocale, "translate.dualHint")}
                 </Text>
               </View>
-              <View style={styles.cameraHeadBadges}>
+              <View style={styles.dualHeadBadges}>
                 <View
                   style={StyleSheet.flatten([
-                    styles.cameraSoftBadgeWrap,
-                    cameraSoftOpen
-                      ? styles.cameraSoftBadgeSoft
-                      : styles.cameraSoftBadgeLive,
+                    styles.dualSoftBadgeWrap,
+                    dualSoftOpen
+                      ? styles.dualSoftBadgeSoft
+                      : styles.dualSoftBadgeLive,
                   ])}
                 >
                   <Text
                     style={StyleSheet.flatten([
-                      styles.cameraSoftBadgeText,
-                      cameraSoftOpen
-                        ? styles.cameraSoftBadgeTextSoft
-                        : styles.cameraSoftBadgeTextLive,
+                      styles.dualSoftBadgeText,
+                      dualSoftOpen
+                        ? styles.dualSoftBadgeTextSoft
+                        : styles.dualSoftBadgeTextLive,
                     ])}
                   >
-                    {cameraSoftOpen
-                      ? t(uiLocale, "translate.lensDemoBadge")
-                      : t(uiLocale, "translate.lensLiveBadge")}
+                    {dualSoftOpen
+                      ? t(uiLocale, "translate.dualDemoBadge")
+                      : t(uiLocale, "translate.dualLiveBadge")}
                   </Text>
                 </View>
               </View>
             </View>
 
-            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            {/* Compact SoftFail under azure dual rail — never timber / Failed to fetch. */}
             <SoftFailNotice
-              open={cameraSoftOpen && Boolean(cameraSoftCopy)}
+              open={dualSoftOpen && Boolean(dualSoftCopy)}
               compact
-              style={styles.cameraSoftFail}
+              style={styles.dualSoftFail}
             >
-              {cameraSoftCopy ?? ""}
+              {dualSoftCopy ?? ""}
             </SoftFailNotice>
 
             <SheetPresence
               open
               delayMs={40}
               rise={12}
-              style={styles.lensBody}
+              style={styles.dualBody}
               accessibilityLabel={t(uiLocale, "translate.dualHint")}
             >
               <View style={styles.dualFrame}>
@@ -1349,10 +1349,9 @@ export default function TranslateScreen() {
                     ) : (
                       <View style={styles.cameraFallback}>
                         <View style={styles.cameraFallbackGlow} />
+                        {/* SoftFail owns permission/demo copy — pane keeps a calm stage hint. */}
                         <Text style={styles.cameraFallbackText}>
-                          {camDenied
-                            ? t(uiLocale, "translate.permissionCamera")
-                            : t(uiLocale, "translate.cameraHint")}
+                          {t(uiLocale, "translate.cameraHint")}
                         </Text>
                         <Pressable
                           style={StyleSheet.flatten([styles.enableCamBtn])}
@@ -2258,8 +2257,8 @@ const styles = StyleSheet.create({
   },
   demoNextLabel: { color: colors.river, fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.55 },
-  /** Foam lens rail — Talk #150 / empty #178 SoftFail sheet parity. */
-  lensRail: {
+  /** Foam dual rail — Talk #150 / Lens #180 SoftFail sheet parity (BEA-261). */
+  dualRail: {
     marginTop: 16,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -2274,7 +2273,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -8 },
     elevation: 3,
   },
-  cameraHead: {
+  dualHead: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "flex-end",
@@ -2288,38 +2287,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  cameraHeadTitles: { flex: 1, minWidth: 160, gap: 4 },
-  cameraHeadBadges: {
+  dualHeadTitles: { flex: 1, minWidth: 160, gap: 4 },
+  dualHeadBadges: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
     gap: 6,
   },
-  cameraSoftBadgeWrap: {
+  dualSoftBadgeWrap: {
     borderRadius: radius.xs,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  cameraSoftBadgeSoft: {
+  dualSoftBadgeSoft: {
     backgroundColor: colors.mist,
   },
-  cameraSoftBadgeLive: {
+  dualSoftBadgeLive: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
-  cameraSoftBadgeText: {
+  dualSoftBadgeText: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  cameraSoftBadgeTextSoft: {
+  dualSoftBadgeTextSoft: {
     color: colors.inkSoft,
   },
-  cameraSoftBadgeTextLive: {
+  dualSoftBadgeTextLive: {
     color: colors.riverDeep,
   },
-  cameraModeLabel: {
+  dualEyebrow: {
     ...type.body,
     fontSize: 10,
     letterSpacing: 2,
@@ -2333,10 +2332,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  cameraSoftFail: {
+  /** Mist SoftFail strip under azure dual rail — Talk SoftFail parity. */
+  dualSoftFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
   },
-  lensBody: {
+  dualBody: {
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
