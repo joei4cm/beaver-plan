@@ -398,6 +398,7 @@
   "planner.stops.dragEyebrow": "重排",
   "planner.stops.dragSupport": "拖动手柄 · ↑↓ 亦可。",
   "planner.stops.dragSoftBadge": "柔和重排",
+  "planner.stops.dragSoftSupport": "柔和重排 — SoftFail 留在站点轨道下，于 Neon/API 离线时；拖动手柄顺序先留在本地。",
   "planner.stops.dragSoftFail": "柔和重排 — Neon/API 离线。拖动手柄顺序先留在本地，等同步就绪后再写入。绝不是 Failed to fetch 崩溃。",
   "planner.scrub.label": "当日时间轴",
   "planner.scrub.value": "第 {n} / {total} 站：{name}",
