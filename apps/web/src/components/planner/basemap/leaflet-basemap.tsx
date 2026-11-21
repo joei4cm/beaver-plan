@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap, LayerGroup } from "leaflet";
+import type { Map as LeafletMap, LayerGroup, Renderer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { BasemapProps } from "./types";
 import {
@@ -12,6 +12,7 @@ import {
   markerHtml,
   strokeForMode,
 } from "./route-style";
+import { armLeafletRouteDraw, routeDrawSignature } from "./route-draw";
 import { MapSkeleton } from "./map-skeleton";
 
 /**
@@ -23,6 +24,7 @@ import { MapSkeleton } from "./map-skeleton";
  * - Fit bounds *before* attaching tiles so the first tile request matches the route.
  * - Skeleton stays until the first tile layer `load` (or soft-fail swap).
  * - Stop markers: tip-011 overshoot pop on select; fixed DivIcon footprint.
+ * - Route polylines: SVG renderer + tip-011 ease draw-in (azure / mode stroke).
  */
 const OSM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTR =
@@ -30,6 +32,9 @@ const OSM_ATTR =
 const ESRI_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
 const ESRI_ATTR = "Tiles &copy; Esri";
+
+/** Stagger between segment draw-ins (tip-011 entrance cadence). */
+const ROUTE_DRAW_STAGGER_MS = 110;
 
 type LeafletNS = typeof import("leaflet");
 
@@ -44,7 +49,9 @@ export function LeafletBasemap({
 }: BasemapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
-  const layerRef = useRef<LayerGroup | null>(null);
+  const routesLayerRef = useRef<LayerGroup | null>(null);
+  const markersLayerRef = useRef<LayerGroup | null>(null);
+  const routeRendererRef = useRef<Renderer | null>(null);
   const LRef = useRef<LeafletNS | null>(null);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
@@ -57,6 +64,7 @@ export function LeafletBasemap({
   const lastFitNonceRef = useRef(0);
   const prevSelectedRef = useRef<string | null>(null);
   const markersPaintedRef = useRef(false);
+  const lastRouteSigRef = useRef<string>("");
   const [engineReady, setEngineReady] = useState(false);
   const [tilesReady, setTilesReady] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -86,13 +94,19 @@ export function LeafletBasemap({
         zoomControl: false,
         attributionControl: true,
         scrollWheelZoom: true,
+        // Canvas tiles stay fine; route vectors use a dedicated SVG renderer
+        // so tip-011 stroke-dash draw-in works (canvas cannot CSS-animate paths).
         preferCanvas: true,
-        // Skip fade so first tiles feel snappier on soft paper.
         fadeAnimation: false,
         zoomAnimation: true,
         markerZoomAnimation: false,
       });
       L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      // Dedicated SVG pane for azure road polylines (draw-in + mode dashes).
+      const routeRenderer = L.svg({ padding: 0.5 });
+      routeRenderer.addTo(map);
+      routeRendererRef.current = routeRenderer;
 
       // Fit route extent *before* requesting tiles (avoids Kyoto default → re-zoom double fetch).
       const lines = collectPathLines(stopsRef.current, legsRef.current);
@@ -147,7 +161,8 @@ export function LeafletBasemap({
       });
       osm.addTo(map);
 
-      layerRef.current = L.layerGroup().addTo(map);
+      routesLayerRef.current = L.layerGroup().addTo(map);
+      markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
       setEngineReady(true);
 
@@ -168,48 +183,113 @@ export function LeafletBasemap({
       window.clearTimeout(tilesTimer);
       map?.remove();
       mapRef.current = null;
-      layerRef.current = null;
+      routesLayerRef.current = null;
+      markersLayerRef.current = null;
+      routeRendererRef.current = null;
       LRef.current = null;
       fittedRef.current = false;
       lastStopCountRef.current = 0;
       markersPaintedRef.current = false;
       prevSelectedRef.current = null;
+      lastRouteSigRef.current = "";
     };
   }, []);
 
+  // Routes: road-following polylines + tip-011 draw-in (only when geometry changes).
   useEffect(() => {
     const L = LRef.current;
     const map = mapRef.current;
-    const group = layerRef.current;
-    if (!L || !map || !group || !engineReady) return;
+    const routes = routesLayerRef.current;
+    const renderer = routeRendererRef.current;
+    if (!L || !map || !routes || !engineReady) return;
 
-    const paint = () => {
-      group.clearLayers();
-      const lines = showRoutes ? collectPathLines(stops, legs) : [];
+    const lines = showRoutes ? collectPathLines(stops, legs) : [];
+    const sig = showRoutes ? routeDrawSignature(lines) : "";
+    const routesChanged = sig !== lastRouteSigRef.current;
 
-      for (const line of lines) {
+    if (routesChanged) {
+      routes.clearLayers();
+      lastRouteSigRef.current = sig;
+
+      const reduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      lines.forEach((line, index) => {
         const style = strokeForMode(line.mode);
         const latlngs = line.points.map((p) => L.latLng(p.lat, p.lng));
-        L.polyline(latlngs, {
+        const modeDash = style.dasharray
+          ? style.dasharray.map((n) => n * 4).join(" ")
+          : undefined;
+        const delayMs = index * ROUTE_DRAW_STAGGER_MS;
+
+        const halo = L.polyline(latlngs, {
           color: "#FFFFFF",
           weight: style.width + 3,
           opacity: 0.85,
           lineCap: "round",
           lineJoin: "round",
           interactive: false,
-        }).addTo(group);
-        L.polyline(latlngs, {
+          renderer: renderer ?? undefined,
+          className: "bp-route-polyline bp-route-polyline--halo",
+        }).addTo(routes);
+
+        const stroke = L.polyline(latlngs, {
           color: style.color,
           weight: style.width,
           opacity: style.opacity,
-          dashArray: style.dasharray
-            ? style.dasharray.map((n) => n * 4).join(" ")
-            : undefined,
+          dashArray: reduceMotion ? modeDash : undefined,
           lineCap: "round",
           lineJoin: "round",
           interactive: false,
-        }).addTo(group);
-      }
+          renderer: renderer ?? undefined,
+          className: "bp-route-polyline bp-route-polyline--stroke",
+        }).addTo(routes);
+
+        if (!reduceMotion) {
+          // Halo draws slightly ahead; azure stroke follows with tip-011 ease-out.
+          requestAnimationFrame(() => {
+            armLeafletRouteDraw(halo.getElement() as SVGPathElement | null, {
+              delayMs,
+            });
+            armLeafletRouteDraw(stroke.getElement() as SVGPathElement | null, {
+              delayMs: delayMs + 40,
+              restoreDash: modeDash,
+            });
+          });
+        }
+      });
+    }
+
+    const fitPts = collectFitPoints(stops, lines).map((p) =>
+      L.latLng(p.lat, p.lng),
+    );
+    const stopCountChanged = stops.length !== lastStopCountRef.current;
+    lastStopCountRef.current = stops.length;
+    const locateRequested = fitNonce !== lastFitNonceRef.current;
+    if (locateRequested) lastFitNonceRef.current = fitNonce;
+    const shouldFit =
+      fitPts.length > 0 &&
+      (!fittedRef.current || stopCountChanged || locateRequested);
+    if (shouldFit) {
+      map.fitBounds(L.latLngBounds(fitPts), {
+        padding: [56, 56],
+        maxZoom: 14,
+      });
+      fittedRef.current = true;
+      window.setTimeout(() => map.invalidateSize(), 50);
+    }
+  }, [stops, legs, engineReady, showRoutes, fitNonce]);
+
+  // Markers: tip-011 overshoot pop — independent of route draw so select stays calm.
+  useEffect(() => {
+    const L = LRef.current;
+    const map = mapRef.current;
+    const markers = markersLayerRef.current;
+    if (!L || !map || !markers || !engineReady) return;
+
+    const paint = () => {
+      markers.clearLayers();
 
       const selectionChanged =
         selectedStopId !== null && selectedStopId !== prevSelectedRef.current;
@@ -241,48 +321,23 @@ export function LeafletBasemap({
             riseOnHover: true,
           });
           marker.on("click", () => onSelectRef.current(stop.id));
-          marker.addTo(group);
+          marker.addTo(markers);
         });
         markersPaintedRef.current = true;
       }
 
       prevSelectedRef.current = selectedStopId;
 
-      const fitPts = collectFitPoints(stops, collectPathLines(stops, legs)).map(
-        (p) => L.latLng(p.lat, p.lng),
-      );
-      const stopCountChanged = stops.length !== lastStopCountRef.current;
-      lastStopCountRef.current = stops.length;
-      const locateRequested = fitNonce !== lastFitNonceRef.current;
-      if (locateRequested) lastFitNonceRef.current = fitNonce;
-      const shouldFit =
-        fitPts.length > 0 &&
-        (!fittedRef.current || stopCountChanged || locateRequested);
-      if (shouldFit) {
-        map.fitBounds(L.latLngBounds(fitPts), {
-          padding: [56, 56],
-          maxZoom: 14,
-        });
-        fittedRef.current = true;
-        window.setTimeout(() => map.invalidateSize(), 50);
-      } else if (selectedStopId && showStops) {
+      // Pan to selection only when routes did not just re-fit.
+      if (selectedStopId && showStops && selectionChanged) {
         const sel = stops.find((s) => s.id === selectedStopId);
         if (sel) map.panTo([sel.place.lat, sel.place.lng]);
       }
     };
 
-    // Defer overlay paint one frame so tile decode stays ahead of markers.
     const id = window.requestAnimationFrame(paint);
     return () => window.cancelAnimationFrame(id);
-  }, [
-    stops,
-    legs,
-    selectedStopId,
-    engineReady,
-    showRoutes,
-    showStops,
-    fitNonce,
-  ]);
+  }, [stops, selectedStopId, engineReady, showStops]);
 
   return (
     <>

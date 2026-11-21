@@ -160,6 +160,23 @@
   }
 
   /*
+   * Planner map route polylines (Leaflet SVG renderer).
+   * Tip 011 ease-out draw-in; pathLength=1 set in JS (route-draw.ts).
+   * Azure / mode stroke already on the path; halo stays foam white.
+   */
+  .bp-route-polyline {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .bp-route-polyline--draw {
+    stroke-dasharray: 1 !important;
+    stroke-dashoffset: 1;
+    animation: bp-map-route-draw 900ms var(--bp-ease-out) both;
+    animation-delay: var(--bp-route-delay, 0ms);
+  }
+
+  /*
    * Planner map stop markers (Leaflet DivIcon + shared markerHtml).
    * Tip 011 overshoot on select/pop; idle pins stay foam + river ring.
    */
@@ -500,6 +517,18 @@
   }
 }
 
+/* Map itinerary roads — tip-011 out; settles at full stroke opacity. */
+@keyframes bp-map-route-draw {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0.25;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
 @keyframes bp-skeleton-band {
   from {
     background-position: -320px 0;
@@ -561,9 +590,15 @@
   .animate-entry-in,
   .animate-route-draw,
   .animate-marker-pop,
+  .bp-route-polyline--draw,
   .bp-popover,
   .bp-popover-out {
     animation: none !important;
+  }
+
+  .bp-route-polyline--draw {
+    stroke-dashoffset: 0 !important;
+    opacity: 1 !important;
   }
 
   .bp-map-marker {
