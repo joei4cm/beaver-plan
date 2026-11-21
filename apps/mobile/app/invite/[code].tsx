@@ -47,10 +47,10 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Expo invite SoftFailNotice depth (BEA-250) after web #174:
- * azure sheet rail · soft/live badge · compact SoftFailNotice ·
- * mist-track trip preview · tip-011 SheetPresence stagger ·
- * StyleSheet.flatten Pressables. Soft-fail never timber.
+ * Expo invite SoftFailNotice depth (BEA-300 after #186):
+ * azure sheet rail · Soft/Live badge · softSupport · compact SoftFailNotice
+ * (border-b) · mist-wash trip preview · tip-011 SheetPresence stagger ·
+ * StyleSheet.flatten Pressables. Soft-fail never timber / Failed to fetch.
  */
 export default function InviteScreen() {
   const { code: raw } = useLocalSearchParams<{ code: string }>();
@@ -183,14 +183,20 @@ export default function InviteScreen() {
             style={styles.sheet}
             accessibilityLabel={t(locale, "invite.title")}
           >
-            {/* Azure SoftFail chrome — eyebrow · support · soft/live · SoftFailNotice */}
+            {/*
+              SoftFail depth (BEA-300 after #186):
+              azure rail · Soft/Live · softSupport · SoftFailNotice · tip-011 —
+              never timber / Failed to fetch.
+            */}
             <View style={styles.sheetHeader}>
               <View style={styles.sheetHeaderTitles}>
                 <Text style={styles.sheetEyebrow}>
                   {t(locale, "invite.sheetEyebrow")}
                 </Text>
                 <Text style={styles.sheetSupport}>
-                  {t(locale, "invite.sheetSupport")}
+                  {softOpen
+                    ? t(locale, "invite.softSupport")
+                    : t(locale, "invite.sheetSupport")}
                 </Text>
               </View>
               <View style={styles.sheetBadges}>
@@ -212,11 +218,21 @@ export default function InviteScreen() {
               </View>
             </View>
 
-            <SoftFailNotice open={softOpen} compact>
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            <SoftFailNotice
+              open={softOpen}
+              compact
+              style={styles.sheetSoftFail}
+            >
               {softCopy ?? ""}
             </SoftFailNotice>
 
-            <View style={styles.sheetBody}>
+            <View
+              style={StyleSheet.flatten([
+                styles.sheetBody,
+                softOpen ? styles.sheetBodySoft : null,
+              ])}
+            >
               {hardError ? (
                 <Text style={styles.error} accessibilityRole="alert">
                   {hardError}
@@ -225,7 +241,15 @@ export default function InviteScreen() {
 
               {preview ? (
                 <>
-                  <SheetPresence open delayMs={40} rise={10} style={styles.tripInset}>
+                  <SheetPresence
+                    open
+                    delayMs={40}
+                    rise={10}
+                    style={StyleSheet.flatten([
+                      styles.tripInset,
+                      softOpen ? styles.tripInsetSoft : null,
+                    ])}
+                  >
                     <Text style={styles.previewEyebrow}>
                       {t(locale, "invite.previewEyebrow")}
                     </Text>
@@ -435,11 +459,20 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
   },
+  /** Mist SoftFail strip under azure rail — border-b before mist body. */
+  sheetSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
   sheetBody: {
     paddingHorizontal: 18,
     paddingVertical: 18,
     gap: 16,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  sheetBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
   tripInset: {
     gap: 6,
@@ -450,6 +483,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+  },
+  tripInsetSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
   },
   previewEyebrow: {
     ...type.body,
@@ -527,6 +563,6 @@ const styles = StyleSheet.create({
   error: {
     ...type.body,
     fontSize: 14,
-    color: colors.timber,
+    color: colors.inkSoft,
   },
 });
