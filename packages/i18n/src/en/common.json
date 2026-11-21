@@ -114,6 +114,7 @@
   "trips.templatesCount": "{n} playbooks",
   "trips.templatesSeeded": "Seeded",
   "trips.playbooksSoftBadge": "Soft playbooks",
+  "trips.playbooksSoftSupport": "Soft playbooks — seeded city routes while Templates API is unreachable.",
   "trips.templatesCatalog": "Catalog",
   "trips.templatesRail": "Playbooks",
   "trips.templatesEmptySupport": "Blank trip while the catalog warms",

@@ -45,20 +45,21 @@ export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-/** Layout-matched city playbooks (azure rail · SoftFailNotice · dense number · title · Use / Customize). */
+/** Layout-matched city playbooks SoftFail depth — azure rail · SoftFail · mist tip-011 body. */
 export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite">
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
-        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
           <div className="flex items-baseline gap-2">
             <Skeleton className="h-2.5 w-16" />
-            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-40" />
           </div>
           <Skeleton className="h-5 w-14 rounded-bp-xs" />
         </div>
+        {/* SoftFailNotice mist band under Playbooks rail */}
         <Skeleton className="h-9 w-full rounded-none" />
-        <ul className="space-y-0">
+        <ul className="space-y-0 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}

@@ -114,6 +114,7 @@
   "trips.templatesCount": "{n} 本玩法",
   "trips.templatesSeeded": "内置",
   "trips.playbooksSoftBadge": "柔和玩法",
+  "trips.playbooksSoftSupport": "柔和玩法 — Templates API 暂不可达时内置城市路线留在本地。",
   "trips.templatesCatalog": "目录",
   "trips.templatesRail": "玩法",
   "trips.templatesEmptySupport": "目录未就绪时可先建空白行程",
