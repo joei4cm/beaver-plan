@@ -176,9 +176,9 @@ export function JournalSkeleton() {
                 <div className="min-w-0 flex-1 space-y-3">
                   <Skeleton className="h-3 w-28" />
                   <Skeleton className="h-7 w-full max-w-md" />
-                  <div className="grid max-w-xs grid-cols-3 gap-2 pt-1">
-                    <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-                    <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                  <div className="flex gap-2.5 pt-1">
+                    <Skeleton className="h-36 w-[6.75rem] shrink-0 rounded-bp-sm" />
+                    <Skeleton className="h-32 w-24 shrink-0 rounded-bp-sm" />
                   </div>
                 </div>
               </div>
@@ -194,7 +194,19 @@ export function JournalSkeleton() {
               <Skeleton className="h-12 w-full rounded-bp-sm" />
               <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
-              <Skeleton className="mt-4 h-20 w-full rounded-bp-sm" />
+              {/* Compose media rail — header · drop · photo strip */}
+              <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]">
+                <div className="flex items-center justify-between border-b border-[color:var(--bp-line)] px-3.5 py-2.5">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-4 w-10 rounded-bp-xs" />
+                </div>
+                <Skeleton className="mx-3.5 mt-3 h-16 w-[calc(100%-1.75rem)] rounded-bp-sm" />
+                <div className="mt-3 flex gap-2 px-3.5 pb-3">
+                  <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                  <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                  <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                </div>
+              </div>
               <Skeleton className="mt-4 h-11 w-full rounded-bp" />
             </div>
           </div>
