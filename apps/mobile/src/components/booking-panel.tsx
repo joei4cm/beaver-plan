@@ -147,9 +147,14 @@ export function BookingPanel({
 
   useEffect(() => {
     setDrafts(draftsFromStop(stop));
-    setConfirmSoftFail(false);
     if (stop) setOpen(true);
   }, [stop]);
+
+  // Clear Confirm SoftFail when switching stops — keep it after soft-fail local apply
+  // (same stop identity) so SoftFailNotice stays under the azure Confirm rail.
+  useEffect(() => {
+    setConfirmSoftFail(false);
+  }, [stop?.id]);
 
   useEffect(() => {
     setCity((prev) => prev || destinationHint || "");
