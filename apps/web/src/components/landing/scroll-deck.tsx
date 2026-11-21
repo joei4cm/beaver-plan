@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import {
   HEADER_OFFSET_PX,
+  deckDepthTransform,
+  deckHoldDistance,
+  deckThrowDistance,
+  deckThrowTransform,
   scrollScale,
   usePinEnabled,
   usePrefersReducedMotion,
@@ -27,6 +32,9 @@ type Props = {
   cards: DeckCard[];
   ctaLabel: string;
   ctaHref: string;
+  offlineNotice: string;
+  stepEyebrow: string;
+  progressLabel: string;
 };
 
 const ROUTE_PATHS = [
@@ -34,6 +42,24 @@ const ROUTE_PATHS = [
   "M28 156 C 100 108, 145 140, 200 92 S 280 36, 338 54",
   "M22 164 C 88 118, 155 148, 218 96 S 300 34, 342 48",
 ] as const;
+
+/** SSR-safe online gate — assume online until mount to avoid hydration mismatch. */
+function useBrowserOnline(): boolean {
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
+
+  return online;
+}
 
 function DeckArt({
   index,
@@ -127,7 +153,18 @@ function DeckArt({
   );
 }
 
-function PlainHow({ title, support, cards, ctaLabel, ctaHref }: Props) {
+function PlainHow({
+  title,
+  support,
+  cards,
+  ctaLabel,
+  ctaHref,
+  offlineNotice,
+  stepEyebrow,
+}: Omit<Props, "progressLabel">) {
+  const online = useBrowserOnline();
+  const reduced = usePrefersReducedMotion();
+
   return (
     <section className="relative overflow-hidden border-t border-ink/8 bg-paper">
       <div
@@ -153,21 +190,38 @@ function PlainHow({ title, support, cards, ctaLabel, ctaHref }: Props) {
             {support}
           </p>
         </header>
+
+        <div className="mt-8">
+          <SoftFailNotice open={!online}>{offlineNotice}</SoftFailNotice>
+        </div>
+
         <ol className="mt-14 space-y-0 border-t border-ink/8">
           {cards.map((step, index) => (
             <li
               key={step.title}
-              className="grid gap-2 border-b border-ink/8 py-7 md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-8"
+              className={`grid gap-2 border-b border-ink/8 py-7 md:grid-cols-[4.5rem_minmax(10rem,16rem)_1fr] md:items-baseline md:gap-8 md:py-8 ${
+                index === 0
+                  ? "shadow-[inset_3px_0_0_var(--bp-river)]"
+                  : ""
+              } ${reduced ? "" : "animate-rise"}`}
+              style={
+                reduced ? undefined : { animationDelay: `${120 + index * 55}ms` }
+              }
             >
               <span
                 aria-hidden
-                className="font-display text-lg font-bold tabular-nums tracking-[-0.03em] text-river md:text-xl"
+                className="pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] text-river md:pl-2 md:text-xl"
               >
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <h3 className="font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
-                {step.title}
-              </h3>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                  {stepEyebrow}
+                </p>
+                <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                  {step.title}
+                </h3>
+              </div>
               <p className="text-sm leading-relaxed text-ink-soft md:text-base">
                 {step.body}
               </p>
@@ -177,7 +231,7 @@ function PlainHow({ title, support, cards, ctaLabel, ctaHref }: Props) {
         <div className="mt-12">
           <Link
             href={ctaHref}
-            className="inline-flex rounded-bp bg-river px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp hover:bg-river-deep"
+            className="inline-flex rounded-bp bg-river px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
           >
             {ctaLabel}
           </Link>
@@ -189,7 +243,7 @@ function PlainHow({ title, support, cards, ctaLabel, ctaHref }: Props) {
 
 /**
  * Tip 019 how-it-works deck — sticky throw cards.
- * Hierarchy / azure / #46 motion polished to match landing features.
+ * Standard throw scrub + tip-011 chrome settle · SoftFail offline · Lumen tokens.
  */
 export function LandingScrollDeck({
   title,
@@ -197,14 +251,20 @@ export function LandingScrollDeck({
   cards,
   ctaLabel,
   ctaHref,
+  offlineNotice,
+  stepEyebrow,
+  progressLabel,
 }: Props) {
   const reduced = usePrefersReducedMotion();
   const pin = usePinEnabled(reduced);
+  const online = useBrowserOnline();
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const [sectionHeight, setSectionHeight] = useState("220svh");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [progress01, setProgress01] = useState(0);
   const [cardMaxH, setCardMaxH] = useState(420);
+  const [entered, setEntered] = useState(reduced);
 
   const measureAndTick = useCallback(() => {
     const section = sectionRef.current;
@@ -213,9 +273,9 @@ export function LandingScrollDeck({
     const vh = window.innerHeight;
     const scale = scrollScale(vh);
     const n = cards.length;
-    // Tip 019 Standard throw — slightly longer hold so azure art settles (#46)
-    const throwDist = 440 * scale;
-    const hold = 280 * scale;
+    // Tip 019 §4 Standard throw + hold (scaled §8)
+    const throwDist = deckThrowDistance(scale);
+    const hold = deckHoldDistance(scale);
     const scrollSpan = throwDist * Math.max(0, n - 1) + hold;
     setSectionHeight(`calc(100svh + ${scrollSpan}px)`);
     // Tip 019 §8 — deck fits title + card in viewport
@@ -226,6 +286,8 @@ export function LandingScrollDeck({
     const progress = Math.max(0, (scrollY - start) / throwDist);
     const thrown = Math.min(n - 1, Math.floor(progress));
     setActiveIndex(Math.min(n - 1, thrown));
+    const maxP = Math.max(0.001, n - 1 + hold / throwDist);
+    setProgress01(Math.min(1, Math.max(0, progress / maxP)));
 
     cardRefs.current.forEach((el, i) => {
       if (!el) return;
@@ -235,21 +297,18 @@ export function LandingScrollDeck({
 
       if (t > 0.001) {
         const side = i % 2 === 0 ? 1 : -1;
-        // Ease-out-strong throw arc (tip 011 / #46) — quadratic settle
-        const e = t * t * (3 - 2 * t);
-        const x = side * e * e * 1080;
-        const y = e * (150 * e - 28);
-        const rotate = side * e * 14;
-        el.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotate}deg)`;
+        const arc = deckThrowTransform(t, side);
+        el.style.transform = `translate3d(${arc.x}px, ${arc.y}px, 0) rotate(${arc.rotate}deg)`;
         el.style.filter = "none";
-        el.style.opacity = e >= 0.97 ? "0" : "1";
-        el.style.visibility = e >= 0.99 ? "hidden" : "visible";
-        el.style.pointerEvents = e >= 0.97 ? "none" : "auto";
+        el.style.opacity = arc.hidden ? "0" : "1";
+        el.style.visibility = arc.hidden ? "hidden" : "visible";
+        el.style.pointerEvents = t >= 0.97 ? "none" : "auto";
         return;
       }
 
       // Still in the pile — depth relative to current top card
       const depth = Math.min(3, Math.max(0, i - thrown));
+      const pile = deckDepthTransform(depth);
       el.style.opacity = "1";
       el.style.visibility = "visible";
       el.style.pointerEvents = depth === 0 ? "auto" : "none";
@@ -257,8 +316,8 @@ export function LandingScrollDeck({
         el.style.transform = "translate3d(0, 0, 0) scale(1)";
         el.style.filter = "none";
       } else {
-        el.style.transform = `translate3d(0, ${depth * 16}px, 0) scale(${1 - depth * 0.045})`;
-        el.style.filter = `brightness(${1 - depth * 0.035})`;
+        el.style.transform = `translate3d(0, ${pile.y}px, 0) scale(${pile.scale})`;
+        el.style.filter = `brightness(${pile.brightness})`;
       }
     });
   }, [cards.length, pin]);
@@ -282,6 +341,26 @@ export function LandingScrollDeck({
     };
   }, [measureAndTick, pin]);
 
+  useEffect(() => {
+    if (!pin || reduced) {
+      setEntered(true);
+      return;
+    }
+    const section = sectionRef.current;
+    if (!section) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setEntered(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+    );
+    io.observe(section);
+    return () => io.disconnect();
+  }, [pin, reduced]);
+
   if (!pin) {
     return (
       <PlainHow
@@ -290,9 +369,25 @@ export function LandingScrollDeck({
         cards={cards}
         ctaLabel={ctaLabel}
         ctaHref={ctaHref}
+        offlineNotice={offlineNotice}
+        stepEyebrow={stepEyebrow}
       />
     );
   }
+
+  const reveal = (delayMs: number) =>
+    reduced
+      ? undefined
+      : {
+          animationDelay: `${delayMs}ms`,
+        };
+
+  const revealClass =
+    reduced || entered
+      ? reduced
+        ? ""
+        : "animate-rise"
+      : "opacity-0 translate-y-4";
 
   return (
     <section
@@ -320,7 +415,10 @@ export function LandingScrollDeck({
           height: `calc(100svh - ${HEADER_OFFSET_PX}px)`,
         }}
       >
-        <header className="mx-auto mb-8 w-full max-w-xl text-center md:mb-10">
+        <header
+          className={`mx-auto mb-6 w-full max-w-xl text-center md:mb-8 ${revealClass}`}
+          style={reveal(0)}
+        >
           <span
             aria-hidden
             className="mx-auto mb-4 block h-1 w-10 rounded-full bg-river"
@@ -334,92 +432,132 @@ export function LandingScrollDeck({
         </header>
 
         <div
-          className="relative mx-auto w-full max-w-[27rem]"
-          style={{ height: cardMaxH }}
+          className={`mb-5 w-full max-w-xl ${revealClass}`}
+          style={reveal(60)}
         >
-          {cards.map((card, i) => {
-            const tint = DECK_TINTS[i % DECK_TINTS.length] ?? DECK_TINTS[0];
-            const z = cards.length - i;
-            const isActive = activeIndex === i;
-            return (
-              <article
-                key={card.title}
-                ref={(el) => {
-                  cardRefs.current[i] = el;
-                }}
-                className="bp-scroll-deck__card absolute inset-x-0 top-0 overflow-hidden rounded-bp-xl"
-                style={{
-                  height: cardMaxH,
-                  zIndex: z,
-                  backgroundColor: tint.bg,
-                  transformOrigin: "bottom center",
-                  willChange: "transform, opacity",
-                  boxShadow:
-                    isActive
+          <SoftFailNotice open={!online} compact>
+            {offlineNotice}
+          </SoftFailNotice>
+        </div>
+
+        <div
+          className={`relative mx-auto w-full max-w-[27rem] ${revealClass}`}
+          style={reveal(100)}
+        >
+          <div className="relative" style={{ height: cardMaxH }}>
+            {cards.map((card, i) => {
+              const tint = DECK_TINTS[i % DECK_TINTS.length] ?? DECK_TINTS[0];
+              const z = cards.length - i;
+              const isActive = activeIndex === i;
+              return (
+                <article
+                  key={card.title}
+                  ref={(el) => {
+                    cardRefs.current[i] = el;
+                  }}
+                  className="bp-scroll-deck__card absolute inset-x-0 top-0 overflow-hidden rounded-bp-xl"
+                  style={{
+                    height: cardMaxH,
+                    zIndex: z,
+                    backgroundColor: tint.bg,
+                    transformOrigin: "bottom center",
+                    willChange: "transform, opacity",
+                    boxShadow: isActive
                       ? i === cards.length - 1
                         ? "0 20px 44px rgba(15, 23, 42, 0.24)"
-                        : "0 18px 40px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(47, 107, 255, 0.1)"
+                        : "0 18px 40px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(47, 107, 255, 0.12)"
                       : "0 10px 28px rgba(15, 23, 42, 0.06)",
-                }}
-              >
-                <div
-                  className="m-2 overflow-hidden rounded-bp-lg"
-                  style={{
-                    height: "44%",
-                    background:
-                      i === cards.length - 1
-                        ? "linear-gradient(160deg, #1e293b, #0f172a)"
-                        : "linear-gradient(160deg, rgba(255,255,255,0.7), rgba(47,107,255,0.12))",
                   }}
                 >
-                  <DeckArt index={i} accent={tint.accent} active={isActive} />
-                </div>
-                <div className="flex flex-col px-6 pb-6 pt-3">
-                  <p
+                  {/* Azure lead rail on the live card — hierarchy without card soup */}
+                  <span
                     aria-hidden
-                    className="font-display text-sm font-bold tabular-nums tracking-[-0.03em]"
-                    style={{ color: tint.accent, opacity: 0.85 }}
+                    className="pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-full transition duration-bp ease-bp-out-strong"
+                    style={{
+                      backgroundColor: tint.accent,
+                      opacity: isActive ? 0.9 : 0,
+                      transform: isActive ? "scaleY(1)" : "scaleY(0.4)",
+                    }}
+                  />
+                  <div
+                    className="m-2 overflow-hidden rounded-bp-lg"
+                    style={{
+                      height: "44%",
+                      background:
+                        i === cards.length - 1
+                          ? "linear-gradient(160deg, #1e293b, #0f172a)"
+                          : "linear-gradient(160deg, rgba(255,255,255,0.7), rgba(47,107,255,0.12))",
+                    }}
                   >
-                    {String(i + 1).padStart(2, "0")}
-                  </p>
-                  <h3
-                    className="mt-1.5 font-display text-[clamp(1.35rem,3.5vw,1.75rem)] font-bold tracking-[-0.02em]"
-                    style={{ color: tint.ink }}
-                  >
-                    {card.title}
-                  </h3>
-                  <p
-                    className="mt-2 text-sm leading-relaxed"
-                    style={{ color: tint.soft }}
-                  >
-                    {card.body}
-                  </p>
-                </div>
-              </article>
-            );
-          })}
+                    <DeckArt
+                      index={i}
+                      accent={tint.accent}
+                      active={isActive && entered}
+                    />
+                  </div>
+                  <div className="flex flex-col px-6 pb-6 pt-3">
+                    <p
+                      className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+                      style={{ color: tint.accent, opacity: 0.9 }}
+                    >
+                      {stepEyebrow} · {String(i + 1).padStart(2, "0")}
+                    </p>
+                    <h3
+                      className="mt-1.5 font-display text-[clamp(1.35rem,3.5vw,1.75rem)] font-bold tracking-[-0.02em]"
+                      style={{ color: tint.ink }}
+                    >
+                      {card.title}
+                    </h3>
+                    <p
+                      className="mt-2 text-sm leading-relaxed"
+                      style={{ color: tint.soft }}
+                    >
+                      {card.body}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
 
-        <div aria-hidden className="mt-7 flex justify-center gap-1.5 md:mt-8">
-          {cards.map((card, i) => (
-            <span
-              key={card.title}
-              className="h-1 rounded-full transition-[background-color,width] duration-bp ease-bp-out-strong"
-              style={{
-                width: activeIndex === i ? "1.35rem" : "0.7rem",
-                backgroundColor:
-                  activeIndex === i
-                    ? "var(--bp-river)"
-                    : "rgba(15, 23, 42, 0.14)",
-              }}
+        {/* Tip 019 §2 — quiet progress: thin bar + dots (tip-011 settle on chrome) */}
+        <div
+          className={`mt-7 w-full max-w-[14rem] md:mt-8 ${revealClass}`}
+          style={reveal(140)}
+          role="group"
+          aria-label={progressLabel}
+        >
+          <div
+            className="mx-auto h-0.5 overflow-hidden rounded-full bg-ink/10"
+            aria-hidden
+          >
+            <div
+              className="h-full rounded-full bg-river transition-[width] duration-bp ease-bp-out-strong"
+              style={{ width: `${Math.round(progress01 * 100)}%` }}
             />
-          ))}
+          </div>
+          <div className="mt-3 flex justify-center gap-1.5" aria-hidden>
+            {cards.map((card, i) => (
+              <span
+                key={card.title}
+                className="h-1 rounded-full transition-[background-color,width] duration-bp ease-bp-out-strong"
+                style={{
+                  width: activeIndex === i ? "1.35rem" : "0.7rem",
+                  backgroundColor:
+                    activeIndex === i
+                      ? "var(--bp-river)"
+                      : "rgba(15, 23, 42, 0.14)",
+                }}
+              />
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8 md:mt-9">
+        <div className={`mt-8 md:mt-9 ${revealClass}`} style={reveal(180)}>
           <Link
             href={ctaHref}
-            className="inline-flex rounded-bp bg-river px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp hover:bg-river-deep"
+            className="inline-flex rounded-bp bg-river px-6 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
           >
             {ctaLabel}
           </Link>
