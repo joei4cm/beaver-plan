@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/skeleton";
 import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
+import { DayTimelineScrub } from "./day-timeline-scrub";
 import { MapStage } from "./map-stage";
 import { PlaceIntel } from "./place-intel";
 import { StopReorderList } from "./stop-reorder-list";
@@ -965,8 +966,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             id="planner-day-panel"
             role="tabpanel"
             aria-labelledby={dayId ? `planner-day-tab-${dayId}` : undefined}
-            className="min-h-0 flex-1 overflow-y-auto"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
+          <DayTimelineScrub
+            locale={locale}
+            stops={dayStops}
+            selectedStopId={selectedStopId}
+            onSelectStop={setSelectedStopId}
+          />
+          <div className="min-h-0 flex-1 overflow-y-auto">
           <StopReorderList
             items={dayStops}
             onReorder={(orderedIds) => {
@@ -1166,6 +1174,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               );
             }}
           />
+          </div>
           </div>
 
           {error && !isPlannerNoiseError(new Error(error)) && (

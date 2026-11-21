@@ -282,6 +282,110 @@
     background-color: color-mix(in srgb, var(--bp-mist) 70%, transparent);
   }
 
+  /*
+   * Day timeline scrub — azure thumb/track (#46 tip 011 motion).
+   * Fill + thumb ride in-out while settling; press uses overshoot scale.
+   */
+  .bp-day-scrub__rail {
+    --bp-scrub-pad-y: 1.125rem;
+  }
+
+  .bp-day-scrub__rail:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--bp-focus);
+    border-radius: var(--bp-radius-sm);
+  }
+
+  .bp-day-scrub__track,
+  .bp-day-scrub__fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--bp-scrub-pad-y);
+    height: 6px;
+    border-radius: 999px;
+  }
+
+  .bp-day-scrub__track {
+    background: color-mix(in srgb, var(--bp-mist) 85%, var(--bp-river) 8%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bp-river) 12%, transparent);
+  }
+
+  .bp-day-scrub__fill {
+    right: auto;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--bp-river) 72%, #60a5fa) 0%,
+      var(--bp-river) 100%
+    );
+    transition: width var(--bp-duration) var(--bp-ease-in-out);
+    will-change: width;
+  }
+
+  .bp-day-scrub__tick {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, var(--bp-river) 28%, var(--bp-mist));
+    background: var(--bp-foam);
+    padding: 0;
+    transition:
+      transform var(--bp-duration-fast) var(--bp-ease-out),
+      background-color var(--bp-duration-fast) var(--bp-ease-out),
+      border-color var(--bp-duration-fast) var(--bp-ease-out),
+      box-shadow var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-day-scrub__tick--on {
+    border-color: var(--bp-river);
+    background: color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam));
+  }
+
+  .bp-day-scrub__tick--current {
+    transform: scale(1.15);
+    background: var(--bp-river);
+    border-color: var(--bp-river-deep);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bp-river) 22%, transparent);
+  }
+
+  .bp-day-scrub__tick:hover {
+    transform: scale(1.2);
+  }
+
+  .bp-day-scrub__thumb {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    margin-top: -9px;
+    border-radius: 999px;
+    background: var(--bp-river);
+    border: 2.5px solid var(--bp-foam);
+    box-shadow:
+      0 1px 2px var(--bp-shadow-deep),
+      0 0 0 3px color-mix(in srgb, var(--bp-river) 18%, transparent);
+    pointer-events: none;
+    transition:
+      left var(--bp-duration) var(--bp-ease-in-out),
+      transform 180ms var(--bp-ease-overshoot),
+      box-shadow var(--bp-duration-fast) var(--bp-ease-out);
+    will-change: left, transform;
+  }
+
+  .bp-day-scrub__thumb--active,
+  .bp-day-scrub__rail--active .bp-day-scrub__thumb {
+    transform: scale(1.12);
+    box-shadow:
+      0 2px 8px var(--bp-shadow-deep),
+      0 0 0 4px color-mix(in srgb, var(--bp-river) 24%, transparent);
+  }
+
   /* Tip 005 — drag-to-reorder (planner stops) */
   .bp-stop-drag-handle {
     display: inline-flex;
@@ -629,6 +733,12 @@
   }
 
   .bp-day-tab {
+    transition: none !important;
+  }
+
+  .bp-day-scrub__fill,
+  .bp-day-scrub__thumb,
+  .bp-day-scrub__tick {
     transition: none !important;
   }
 
