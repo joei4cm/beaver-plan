@@ -59,6 +59,14 @@ import { type } from "../../src/theme";
 const locale = "zh-CN" as const;
 const SEARCH_DEBOUNCE_MS = 220;
 
+function memberInitials(label: string): string {
+  const parts = label.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+  }
+  return label.slice(0, 2).toUpperCase() || "?";
+}
+
 function isNoiseError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return (
@@ -810,16 +818,43 @@ export default function TripDetailScreen() {
                 <Text style={styles.collabTitle}>
                   {t(locale, "collab.members")}
                 </Text>
+                <View style={styles.presenceRow}>
+                  {members.slice(0, 4).map((m) => (
+                    <View key={m.id} style={styles.presenceChip}>
+                      <View
+                        style={[
+                          styles.presenceAvatar,
+                          m.role === "viewer"
+                            ? styles.presenceAvatarMuted
+                            : null,
+                        ]}
+                      >
+                        <Text style={styles.presenceInitials}>
+                          {memberInitials(m.displayName ?? m.userId)}
+                        </Text>
+                      </View>
+                      <Text style={styles.presenceName} numberOfLines={1}>
+                        {(m.displayName ?? m.userId).split(/\s+/)[0]}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.presenceRole,
+                          m.role === "owner"
+                            ? styles.presenceRoleOwner
+                            : m.role === "editor"
+                              ? styles.presenceRoleEditor
+                              : styles.presenceRoleViewer,
+                        ]}
+                      >
+                        {t(locale, `collab.role.${m.role}`)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
                 <Text style={styles.collabMeta}>
-                  {members
-                    .map((m) => m.displayName ?? m.userId)
-                    .slice(0, 4)
-                    .join(" · ") || "—"}
-                  {yourRole
-                    ? ` · ${t(locale, `collab.role.${yourRole}`)}`
-                    : ""}
+                  {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
                   {collabSeeded
-                    ? ` · ${t(locale, "collab.demoBadge")}`
+                    ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
                     : ""}
                 </Text>
                 {collabSeeded ? (
@@ -866,9 +901,16 @@ export default function TripDetailScreen() {
                     </Text>
                     {activity.slice(0, 4).map((ev) => (
                       <View key={ev.id} style={styles.activityRail}>
-                        <Text style={styles.activityType}>
-                          {t(locale, `collab.activity.${ev.type}`)}
-                        </Text>
+                        <View style={styles.activityMeta}>
+                          <Text style={styles.activityType}>
+                            {t(locale, `collab.activity.${ev.type}`)}
+                          </Text>
+                          {ev.actorDisplayName ? (
+                            <Text style={styles.activityActor}>
+                              {ev.actorDisplayName}
+                            </Text>
+                          ) : null}
+                        </View>
                         <Text style={styles.activitySummary}>{ev.summary}</Text>
                       </View>
                     ))}
@@ -1231,7 +1273,68 @@ const styles = StyleSheet.create({
   },
   collabMeta: {
     ...type.body,
-    fontSize: 14,
+    fontSize: 13,
+    color: colors.inkSoft,
+  },
+  presenceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 2,
+  },
+  presenceChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    maxWidth: 148,
+    paddingVertical: 3,
+    paddingLeft: 3,
+    paddingRight: 8,
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+  },
+  presenceAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.river,
+  },
+  presenceAvatarMuted: {
+    backgroundColor: colors.inkSoft,
+  },
+  presenceInitials: {
+    color: colors.foam,
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  presenceName: {
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  presenceRole: {
+    fontSize: 10,
+    fontWeight: "700",
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  presenceRoleOwner: {
+    backgroundColor: colors.river,
+    color: colors.foam,
+  },
+  presenceRoleEditor: {
+    backgroundColor: "rgba(47,107,255,0.12)",
+    color: colors.riverDeep,
+  },
+  presenceRoleViewer: {
+    backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
   collabNotice: {
@@ -1284,17 +1387,35 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     gap: 2,
   },
+  activityMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
   activityType: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: colors.river,
+    color: colors.riverDeep,
+    backgroundColor: "rgba(47,107,255,0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  activityActor: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    color: colors.inkSoft,
   },
   activitySummary: {
     ...type.body,
     fontSize: 13,
+    fontWeight: "500",
     color: colors.ink,
   },
   inviteBtn: {

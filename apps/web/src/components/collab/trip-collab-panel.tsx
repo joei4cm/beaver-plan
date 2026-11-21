@@ -264,7 +264,7 @@ export function TripCollabPanel({
           </p>
         </div>
         <div
-          className="flex gap-1 border-b border-[color:var(--bp-line)]"
+          className="flex gap-0.5 rounded-bp-sm bg-mist/50 p-1"
           role="tablist"
           aria-label={t(locale, "collab.panel.title")}
         >
@@ -275,9 +275,9 @@ export function TripCollabPanel({
               role="tab"
               aria-selected={tab === key}
               onClick={() => setTab(key)}
-              className={`relative px-4 py-2.5 text-sm font-medium transition ${
+              className={`rounded-bp-xs px-4 py-2 text-sm font-medium transition duration-bp-fast ease-bp-out ${
                 tab === key
-                  ? "text-river after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-river"
+                  ? "bg-foam text-river shadow-bp-soft"
                   : "text-ink-soft hover:text-ink"
               }`}
             >
@@ -306,9 +306,9 @@ export function TripCollabPanel({
           <ul className="max-h-72 space-y-0 overflow-y-auto pr-1">
             {showLoading ? (
               <li className="space-y-3 py-2" aria-busy="true">
-                <div className="h-3 w-28 rounded bg-mist" />
-                <div className="h-4 w-full max-w-md rounded bg-mist/70" />
-                <div className="h-4 w-3/4 max-w-sm rounded bg-mist/50" />
+                <div className="h-3 w-28 rounded-bp-xs bg-mist" />
+                <div className="h-4 w-full max-w-md rounded-bp-xs bg-mist/70" />
+                <div className="h-4 w-3/4 max-w-sm rounded-bp-xs bg-mist/50" />
                 <p className="pt-2 text-sm text-ink-soft">
                   {t(locale, "collab.panel.loading")}
                 </p>
@@ -324,24 +324,30 @@ export function TripCollabPanel({
             {visibleComments.map((c, i) => (
               <li
                 key={c.id}
-                className="animate-rise border-l-2 border-river/40 py-3 pl-4"
+                className="animate-rise border-l-2 border-river/35 py-3.5 pl-4 first:pt-1"
                 style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
               >
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                  <span
+                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-river/90 text-[10px] font-semibold text-foam"
+                    aria-hidden
+                  >
+                    {commentInitials(c.authorDisplayName ?? c.authorUserId)}
+                  </span>
                   <span className="text-sm font-semibold text-ink">
                     {c.authorDisplayName ?? c.authorUserId}
                   </span>
-                  <time className="text-[11px] text-ink-soft/80">
+                  <time className="text-[11px] tabular-nums text-ink-soft/80">
                     {formatWhen(c.createdAt, locale)}
                   </time>
                   {c.stopId ? (
-                    <span className="text-[11px] font-medium text-river">
+                    <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[11px] font-medium text-river-deep">
                       {t(locale, "collab.panel.onStop")}
                       {stopLabel(c.stopId, selectedStopId, selectedStopName)}
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
+                <p className="mt-2 whitespace-pre-wrap pl-8 text-sm leading-relaxed text-ink-soft">
                   {renderBody(c.body, c.mentions)}
                 </p>
               </li>
@@ -360,16 +366,16 @@ export function TripCollabPanel({
                   onChange={(e) => setBody(e.target.value)}
                   rows={4}
                   placeholder={t(locale, "collab.panel.placeholder")}
-                  className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 focus:border-river focus:ring-2 focus:ring-focus/40"
+                  className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/40"
                 />
                 {mentionOpen && mentionCandidates.length > 0 ? (
-                  <ul className="absolute left-0 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-sm lg:left-6">
+                  <ul className="absolute left-0 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft lg:left-6">
                     {mentionCandidates.map((name) => (
                       <li key={name}>
                         <button
                           type="button"
                           onClick={() => insertMention(name)}
-                          className="block w-full px-3 py-2 text-left text-sm text-ink transition hover:bg-mist/60 hover:text-river"
+                          className="block w-full px-3 py-2 text-left text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
                         >
                           @{name}
                         </button>
@@ -401,7 +407,7 @@ export function TripCollabPanel({
                     type="button"
                     disabled={sending || !body.trim()}
                     onClick={() => void submitComment()}
-                    className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {sending
                       ? t(locale, "collab.panel.posting")
@@ -413,7 +419,7 @@ export function TripCollabPanel({
                 </p>
               </div>
             ) : (
-              <p className="border-l-2 border-mist px-3 py-2 text-sm text-ink-soft">
+              <p className="rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-mist/25 px-3 py-3 text-sm text-ink-soft">
                 {yourRole
                   ? t(locale, "collab.panel.viewerReadonly")
                   : showLoading
@@ -425,11 +431,11 @@ export function TripCollabPanel({
         </div>
       ) : (
         <div className="animate-sheet-in">
-          <ol className="relative max-h-80 space-y-0 overflow-y-auto border-l-2 border-river/30 pl-5">
+          <ol className="relative max-h-80 space-y-0 overflow-y-auto border-l-2 border-river/25 pl-6">
             {showLoading ? (
               <li className="space-y-3 py-1" aria-busy="true">
-                <div className="h-3 w-24 rounded bg-mist" />
-                <div className="h-4 w-64 max-w-full rounded bg-mist/70" />
+                <div className="h-3 w-24 rounded-bp-xs bg-mist" />
+                <div className="h-4 w-64 max-w-full rounded-bp-xs bg-mist/70" />
                 <p className="text-sm text-ink-soft">
                   {t(locale, "collab.panel.loading")}
                 </p>
@@ -447,18 +453,30 @@ export function TripCollabPanel({
                 style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
               >
                 <span
-                  className="absolute -left-[1.42rem] top-1.5 h-2.5 w-2.5 rounded-full bg-river ring-[3px] ring-paper"
+                  className="absolute -left-[1.7rem] top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-river text-[9px] font-bold text-foam ring-[3px] ring-paper"
                   aria-hidden
-                />
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-river">
+                  title={ev.actorDisplayName ?? undefined}
+                >
+                  {commentInitials(
+                    ev.actorDisplayName ?? ev.actorUserId ?? activityLabel(locale, ev.type),
+                  )}
+                </span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep">
                     {activityLabel(locale, ev.type)}
                   </span>
-                  <time className="text-[11px] text-ink-soft/75">
+                  {ev.actorDisplayName ? (
+                    <span className="text-[11px] font-medium text-ink-soft">
+                      {ev.actorDisplayName}
+                    </span>
+                  ) : null}
+                  <time className="text-[11px] tabular-nums text-ink-soft/70">
                     {formatWhen(ev.createdAt, locale)}
                   </time>
                 </div>
-                <p className="mt-1 text-sm leading-snug text-ink">{ev.summary}</p>
+                <p className="mt-1.5 text-sm font-medium leading-snug text-ink">
+                  {ev.summary}
+                </p>
               </li>
             ))}
           </ol>
@@ -474,7 +492,7 @@ export function TripCollabPanel({
                   setError(e instanceof Error ? e.message : "refresh_failed");
                 })
               }
-              className="mt-4 text-xs font-medium text-ink-soft transition hover:text-river"
+              className="mt-4 text-xs font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
             >
               {t(locale, "collab.panel.refresh")}
             </button>
@@ -487,6 +505,14 @@ export function TripCollabPanel({
 
 function activityLabel(locale: Locale, type: ActivityEventType): string {
   return t(locale, `collab.activity.${type}`);
+}
+
+function commentInitials(label: string): string {
+  const parts = label.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+  }
+  return label.slice(0, 2).toUpperCase() || "?";
 }
 
 function formatWhen(iso: string, locale: Locale): string {

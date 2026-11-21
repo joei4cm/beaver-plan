@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from "react";
 import type { TripInvite, TripMember, TripRole } from "@beaver/core";
 import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
@@ -18,6 +24,12 @@ type InvitePayload = {
   code: string;
   inviteUrl: string;
   path: string;
+};
+
+const ROLE_CHIP: Record<TripRole, string> = {
+  owner: "bg-river text-foam",
+  editor: "bg-river/12 text-river-deep",
+  viewer: "bg-mist text-ink-soft",
 };
 
 export function TripMembersBar({
@@ -40,16 +52,21 @@ export function TripMembersBar({
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
   const [demoSeeded, setDemoSeeded] = useState(false);
+  const [softOffline, setSoftOffline] = useState(false);
 
-  const applySeed = useCallback(() => {
-    if (tripId !== "sample-kyoto") return false;
-    const seed = sampleKyotoCollab();
-    setMembers(seed.members);
-    setYourRole(seed.yourRole);
-    setDemoSeeded(true);
-    setError(null);
-    return true;
-  }, [tripId]);
+  const applySeed = useCallback(
+    (opts?: { soft?: boolean }) => {
+      if (tripId !== "sample-kyoto") return false;
+      const seed = sampleKyotoCollab();
+      setMembers(seed.members);
+      setYourRole(seed.yourRole);
+      setDemoSeeded(true);
+      setSoftOffline(Boolean(opts?.soft));
+      setError(null);
+      return true;
+    },
+    [tripId],
+  );
 
   const refresh = useCallback(async () => {
     const data = await apiGet<MembersPayload>(`/v1/trips/${tripId}/members`);
@@ -60,6 +77,7 @@ export function TripMembersBar({
     setMembers(data.members);
     setYourRole(data.yourRole);
     setDemoSeeded(false);
+    setSoftOffline(false);
     onVersion?.(data.tripVersion);
   }, [applySeed, tripId, onVersion]);
 
@@ -67,7 +85,7 @@ export function TripMembersBar({
     startTransition(() => {
       void refresh().catch((e: unknown) => {
         if (isPlannerNoiseError(e)) {
-          if (!applySeed()) return;
+          if (!applySeed({ soft: true })) return;
           return;
         }
         setError(e instanceof Error ? e.message : "load_failed");
@@ -106,7 +124,7 @@ export function TripMembersBar({
       setOpen(true);
     } catch (e) {
       if (isPlannerNoiseError(e)) {
-        applySeed();
+        applySeed({ soft: true });
         setLastInvite({
           invite: {
             id: "invite-demo",
@@ -139,35 +157,60 @@ export function TripMembersBar({
   }
 
   const canInvite = yourRole === "owner" || yourRole === "editor";
+  const visible = members.slice(0, 5);
+  const overflow = Math.max(0, members.length - visible.length);
 
   return (
-    <div className="animate-fade border-y border-[color:var(--bp-line)] bg-foam/30 px-1 py-3 md:px-0">
+    <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
             {t(locale, "collab.members")}
           </span>
-          <div className="flex -space-x-2">
-            {members.slice(0, 5).map((m) => (
-              <span
+
+          <div
+            className="flex flex-wrap items-center gap-1.5"
+            role="list"
+            aria-label={t(locale, "collab.members")}
+          >
+            {visible.map((m, i) => (
+              <PresenceChip
                 key={m.id}
-                title={`${m.displayName ?? m.userId} · ${m.role}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-paper bg-river text-[11px] font-semibold text-foam"
-              >
-                {initials(m)}
-              </span>
+                member={m}
+                locale={locale}
+                style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}
+              />
             ))}
+            {overflow > 0 ? (
+              <span className="inline-flex h-8 items-center rounded-bp-xs bg-mist px-2 text-[11px] font-semibold text-ink-soft">
+                +{overflow}
+              </span>
+            ) : null}
             {pending && members.length === 0 ? (
-              <span className="inline-flex h-8 w-16 items-center text-xs text-ink-soft">
-                …
+              <span className="inline-flex h-8 items-center gap-1.5" aria-busy="true">
+                <span className="h-7 w-7 animate-pulse rounded-full bg-mist" />
+                <span className="h-6 w-20 animate-pulse rounded-bp-xs bg-mist/70" />
               </span>
             ) : null}
           </div>
-          <span className="truncate text-sm text-ink-soft">
-            {members.length} · v{tripVersion}
-            {yourRole ? ` · ${t(locale, `collab.role.${yourRole}`)}` : ""}
-            {demoSeeded ? ` · ${t(locale, "collab.demoBadge")}` : ""}
-          </span>
+
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-soft">
+            <span className="rounded-bp-xs bg-mist/80 px-2 py-0.5 font-medium tabular-nums">
+              v{tripVersion}
+            </span>
+            {yourRole ? (
+              <span
+                className={`rounded-bp-xs px-2 py-0.5 text-[11px] font-semibold ${ROLE_CHIP[yourRole]}`}
+              >
+                {t(locale, `collab.role.${yourRole}`)}
+              </span>
+            ) : null}
+            {demoSeeded ? (
+              <span className="rounded-bp-xs bg-river/12 px-2 py-0.5 text-[11px] font-semibold text-river-deep">
+                {t(locale, "collab.demoBadge")}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {canInvite ? (
@@ -177,7 +220,7 @@ export function TripMembersBar({
               onChange={(e) =>
                 setInviteRole(e.target.value as "editor" | "viewer")
               }
-              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/80 px-2 py-1.5 text-xs text-ink-soft outline-none focus:border-river"
+              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-2.5 py-1.5 text-xs text-ink-soft outline-none transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/35"
               aria-label={t(locale, "collab.inviteRole")}
             >
               <option value="editor">{t(locale, "collab.role.editor")}</option>
@@ -186,14 +229,14 @@ export function TripMembersBar({
             <button
               type="button"
               onClick={() => void createInvite()}
-              className="rounded-bp-sm bg-river px-3 py-1.5 text-sm font-medium text-foam transition hover:bg-river-deep"
+              className="rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep"
             >
               {t(locale, "collab.invite")}
             </button>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition hover:text-river"
+              className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
             >
               {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
             </button>
@@ -202,12 +245,14 @@ export function TripMembersBar({
       </div>
 
       {demoSeeded ? (
-        <SoftFailNotice className="mt-3" compact>
-          {t(locale, "collab.panel.softOffline")}
+        <SoftFailNotice className="mt-3">
+          {softOffline
+            ? t(locale, "collab.panel.softOffline")
+            : t(locale, "collab.panel.demoNotice")}
         </SoftFailNotice>
       ) : null}
 
-      {error && !demoSeeded ? (
+      {error ? (
         <p className="mt-2 text-sm text-timber" role="alert">
           {error}
         </p>
@@ -221,13 +266,13 @@ export function TripMembersBar({
                 {t(locale, "collab.shareHint")}
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <code className="rounded bg-river/10 px-2 py-1 font-mono text-sm tracking-wider text-river-deep">
+                <code className="rounded-bp-xs bg-river/10 px-2.5 py-1 font-mono text-sm tracking-wider text-river-deep">
                   {lastInvite.code}
                 </code>
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-1.5 text-xs text-ink-soft transition hover:border-river/40 hover:text-river"
+                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-1.5 text-xs font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river"
                 >
                   {copied
                     ? t(locale, "collab.copied")
@@ -240,16 +285,22 @@ export function TripMembersBar({
             </div>
           ) : null}
 
-          <ul className="space-y-2">
-            {members.map((m) => (
+          <ul className="space-y-1.5" role="list">
+            {members.map((m, i) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between gap-3 border-l-2 border-river/25 pl-3 text-sm"
+                className="animate-rise flex items-center justify-between gap-3 rounded-bp-sm px-1 py-1.5 transition duration-bp-fast ease-bp-out hover:bg-mist/40"
+                style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
               >
-                <span className="truncate text-ink">
-                  {m.displayName ?? m.userId}
-                </span>
-                <span className="shrink-0 text-ink-soft">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <PresenceAvatar member={m} size="md" />
+                  <span className="truncate text-sm font-medium text-ink">
+                    {m.displayName ?? m.userId}
+                  </span>
+                </div>
+                <span
+                  className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[11px] font-semibold ${ROLE_CHIP[m.role]}`}
+                >
                   {t(locale, `collab.role.${m.role}`)}
                 </span>
               </li>
@@ -264,6 +315,66 @@ export function TripMembersBar({
       ) : null}
     </div>
   );
+}
+
+function PresenceChip({
+  member,
+  locale,
+  style,
+}: {
+  member: TripMember;
+  locale: Locale;
+  style?: CSSProperties;
+}) {
+  return (
+    <span
+      role="listitem"
+      title={`${member.displayName ?? member.userId} · ${t(locale, `collab.role.${member.role}`)}`}
+      className="animate-rise inline-flex max-w-[11rem] items-center gap-1.5 rounded-bp border border-[color:var(--bp-line)] bg-foam py-0.5 pl-0.5 pr-2 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35"
+      style={style}
+    >
+      <PresenceAvatar member={member} size="sm" />
+      <span className="min-w-0 truncate text-xs font-semibold text-ink">
+        {shortName(member)}
+      </span>
+      <span
+        className={`shrink-0 rounded-bp-xs px-1.5 py-px text-[10px] font-semibold leading-4 ${ROLE_CHIP[member.role]}`}
+      >
+        {t(locale, `collab.role.${member.role}`)}
+      </span>
+    </span>
+  );
+}
+
+function PresenceAvatar({
+  member,
+  size,
+}: {
+  member: TripMember;
+  size: "sm" | "md";
+}) {
+  const dim = size === "sm" ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-[11px]";
+  const tone =
+    member.role === "owner"
+      ? "bg-river text-foam"
+      : member.role === "editor"
+        ? "bg-river/85 text-foam"
+        : "bg-ink-soft/80 text-foam";
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${dim} ${tone}`}
+      aria-hidden
+    >
+      {initials(member)}
+    </span>
+  );
+}
+
+function shortName(m: TripMember): string {
+  const label = (m.displayName ?? m.userId).trim();
+  const parts = label.split(/\s+/);
+  if (parts.length >= 2) return parts[0]!;
+  return label.length > 10 ? `${label.slice(0, 9)}…` : label;
 }
 
 function initials(m: TripMember): string {
