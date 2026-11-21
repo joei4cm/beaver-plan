@@ -886,55 +886,79 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-[color:var(--bp-line)] bg-foam/95 px-4 py-3 backdrop-blur-sm">
-            <div
-              className="flex overflow-hidden rounded-bp border border-[color:var(--bp-line)] shadow-bp-soft"
-              role="group"
-              aria-label={t(locale, "planner.mode.transit")}
-            >
-              {(["walk", "transit", "drive"] as const).map((m) => {
-                const on = travelMode === m;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setTravelMode(m)}
-                    className={`px-3.5 py-1.5 text-sm font-medium transition duration-bp-fast ease-bp-out ${
-                      on
-                        ? "bg-river text-foam shadow-bp-soft"
-                        : "bg-paper/40 text-ink-soft hover:bg-mist/50 hover:text-river"
-                    }`}
-                  >
-                    {t(locale, `planner.mode.${m}`)}
-                  </button>
-                );
-              })}
+          {/* Transit filter chips — mist-track · azure select · SoftFailNotice · #46 */}
+          <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-3 px-4 py-3">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                    {t(locale, "planner.mode.eyebrow")}
+                  </span>
+                  <span className="text-[11px] leading-snug text-ink-soft/80">
+                    {t(locale, "planner.mode.support")}
+                  </span>
+                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                    {t(locale, `planner.mode.${travelMode}`)} ·{" "}
+                    {t(locale, "planner.mode.selected")}
+                  </span>
+                </div>
+                <div
+                  className="inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                  role="group"
+                  aria-label={t(locale, "planner.mode.filterLabel")}
+                >
+                  {(["walk", "transit", "drive"] as const).map((m) => {
+                    const on = travelMode === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setTravelMode(m)}
+                        className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                          on
+                            ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                            : "text-ink-soft hover:text-river"
+                        }`}
+                      >
+                        {t(locale, `planner.mode.${m}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={routing || dayStops.length < 2}
+                onClick={() => void generateRoutes()}
+                className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {routing
+                  ? t(locale, "planner.routing")
+                  : t(locale, "planner.generateRoutes")}
+              </button>
+              {dayLegs.length > 0 && (
+                <p className="pb-1 text-sm tabular-nums text-ink-soft">
+                  {dayLegs
+                    .map(
+                      (l) =>
+                        `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                    )
+                    .join("  →  ")}
+                </p>
+              )}
+              {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
+                <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  {t(locale, "planner.transfer.demoBadge")}
+                </span>
+              )}
             </div>
-            <button
-              type="button"
-              disabled={routing || dayStops.length < 2}
-              onClick={() => void generateRoutes()}
-              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+            <SoftFailNotice
+              open={engineInfo?.mode !== "live" && dayLegs.length > 0}
+              compact
             >
-              {routing
-                ? t(locale, "planner.routing")
-                : t(locale, "planner.generateRoutes")}
-            </button>
-            {dayLegs.length > 0 && (
-              <p className="text-sm tabular-nums text-ink-soft">
-                {dayLegs
-                  .map(
-                    (l) =>
-                      `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
-                  )
-                  .join("  →  ")}
-              </p>
-            )}
-            {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
-              <span className="rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
-                {t(locale, "planner.transfer.demoBadge")}
-              </span>
-            )}
+              {t(locale, "planner.transfer.demoNotice")}
+            </SoftFailNotice>
           </div>
         </section>
 
