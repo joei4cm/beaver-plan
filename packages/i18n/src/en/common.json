@@ -139,6 +139,7 @@
   "trips.listDemo": "Demo",
   "trips.listLive": "Live",
   "trips.cardsSoftBadge": "Soft cards",
+  "trips.cardsSoftSupport": "Soft rows · SoftFail while the API is unreachable.",
   "trips.duplicate": "Duplicate",
   "trips.duplicating": "Duplicating…",
   "trips.copyJournal": "Also copy journal text (no photos)",
