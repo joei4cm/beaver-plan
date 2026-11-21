@@ -8,6 +8,7 @@ import type {
   JournalEntry,
   Leg,
   MapEngineId,
+  PlaceDetails,
   PlaceSummary,
   ShareTemplateId,
   ShareTemplateMeta,
@@ -219,6 +220,29 @@ export async function searchPlaces(input: {
   if (input.lng != null) params.set("lng", String(input.lng));
   if (input.timezone) params.set("timezone", input.timezone);
   return apiGet(`/v1/places/search?${params.toString()}`);
+}
+
+export type PlaceDetailsResponse = {
+  place: PlaceDetails;
+  engineId?: MapEngineId;
+  mode: "live" | "demo";
+};
+
+/** Soft-fetch Places intel — demo fixtures when keys / BFF absent. */
+export async function fetchPlaceDetails(input: {
+  placeId: string;
+  language?: string;
+  engine?: string;
+  timezone?: string;
+}): Promise<PlaceDetailsResponse> {
+  const params = new URLSearchParams({
+    engine: input.engine ?? "auto",
+    language: input.language ?? "zh-CN",
+  });
+  if (input.timezone) params.set("timezone", input.timezone);
+  return apiGet(
+    `/v1/places/${encodeURIComponent(input.placeId)}?${params.toString()}`,
+  );
 }
 
 export async function addTripStop(input: {

@@ -13,8 +13,10 @@ import {
   View,
 } from "react-native";
 import {
+  DEMO_PLACE_TAGS,
   DemoRoutingEngine,
   formatDuration,
+  getDemoPlaceDetails,
   normalizeStepMode,
   routeAdjacentStops,
   sampleKyotoCollab,
@@ -27,6 +29,7 @@ import {
   type BookingLinkKind,
   type Day,
   type Leg,
+  type PlaceDetails,
   type PlaceSummary,
   type Stop,
   type Trip,
@@ -41,6 +44,7 @@ import {
   createInvite,
   fetchJournal,
   fetchMembers,
+  fetchPlaceDetails,
   fetchTrip,
   isApiSoftFail,
   routeTripDay,
@@ -48,6 +52,7 @@ import {
 } from "../../src/api";
 import { BookingPanel } from "../../src/components/booking-panel";
 import { DayFillPanel } from "../../src/components/day-fill-panel";
+import { PlaceIntel } from "../../src/components/place-intel";
 import { SoftFailNotice } from "../../src/components/soft-fail-notice";
 import { TripMap } from "../../src/components/trip-map";
 import {
@@ -131,6 +136,11 @@ export default function TripDetailScreen() {
   const [pinBusy, setPinBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
+  const [placeDetailsMode, setPlaceDetailsMode] = useState<"live" | "demo">(
+    "demo",
+  );
+  const [placeDetailsLoading, setPlaceDetailsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlaceSummary[]>([]);
   const [searching, setSearching] = useState(false);
@@ -387,6 +397,57 @@ export default function TripDetailScreen() {
       useNativeDriver: true,
     }).start();
   }, [selectedStopId, stopPop]);
+
+  // Soft-fetch Places intel for the selected stop; demo fixtures when offline.
+  useEffect(() => {
+    if (!selectedStopId) {
+      setPlaceDetails(null);
+      setPlaceDetailsLoading(false);
+      return;
+    }
+    const stop = stops.find((s) => s.id === selectedStopId);
+    if (!stop) {
+      setPlaceDetails(null);
+      return;
+    }
+    const placeId = stop.place.enginePlaceId;
+    let cancelled = false;
+    setPlaceDetailsLoading(true);
+    setPlaceDetails(
+      getDemoPlaceDetails(placeId, locale, DEMO_PLACE_TAGS[placeId]),
+    );
+    setPlaceDetailsMode("demo");
+
+    void fetchPlaceDetails({
+      placeId,
+      language: locale,
+      engine: trip?.mapEngine === "auto" ? "auto" : trip?.mapEngine,
+      timezone: trip?.timezone,
+    })
+      .then((data) => {
+        if (cancelled) return;
+        setPlaceDetails(data.place);
+        setPlaceDetailsMode(data.mode);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setPlaceDetails(
+          getDemoPlaceDetails(placeId, locale, DEMO_PLACE_TAGS[placeId]),
+        );
+        setPlaceDetailsMode("demo");
+        if (isNoiseError(e) || isApiSoftFail(e)) {
+          setSoftNotice(t(locale, "planner.demoLocal"));
+          setError(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPlaceDetailsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStopId, stops, trip?.mapEngine, trip?.timezone]);
 
   useEffect(() => {
     if (!inviteOpen) {
@@ -1001,6 +1062,20 @@ export default function TripDetailScreen() {
                         <Text style={styles.stopAddr}>
                           {stop.place.address}
                         </Text>
+                      ) : null}
+                      {selected ? (
+                        <PlaceIntel
+                          details={
+                            placeDetails?.enginePlaceId ===
+                            stop.place.enginePlaceId
+                              ? placeDetails
+                              : null
+                          }
+                          loading={placeDetailsLoading}
+                          locale={locale}
+                          demoMode={placeDetailsMode === "demo"}
+                          userNote={stop.userNote}
+                        />
                       ) : null}
                       {leg ? (
                         <View style={styles.legBlock}>
