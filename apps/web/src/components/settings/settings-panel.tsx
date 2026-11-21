@@ -85,8 +85,10 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Settings section chrome (BEA-214): page hero · azure prefs sheet · SoftFailNotice
- * section-scoped under Maps · tip-011 (#46) chip/row settle · Lumen tokens.
+ * Settings section SoftFailNotice chrome (BEA-269 after #97/#162):
+ * azure prefs rail · Soft maps badge · compact SoftFail under rail ·
+ * tip-011 (#46) chip/row settle. Hero SoftFail yields while section owns
+ * (no double depth). Soft copy never timber / Failed to fetch.
  */
 export function SettingsPanel({ locale: initialLocale }: Props) {
   const router = useRouter();
@@ -144,7 +146,14 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
   }
 
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
-  const showSoftFail = Boolean(softNotice) && !pending;
+  /**
+   * Section owns SoftFail under azure prefs rail. Hero SoftFail yields while
+   * sectionOwnsSoft (no double depth) — map-resolve soft copy never timber.
+   */
+  const sectionOwnsSoft = Boolean(softNotice);
+  const sectionSoftOpen = sectionOwnsSoft && !pending;
+  const softCopy =
+    softNotice ?? t(locale, "settings.resolvedDemo");
   const statusCopy = pending
     ? t(locale, "settings.resolving")
     : resolve
@@ -179,13 +188,24 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         <p className="mt-2 text-sm text-ink-soft/80">
           {brandName} · {t(locale, "settings.localHint")}
         </p>
+        {/* Hero SoftFail yields while prefs section owns soft-fail (no double depth). */}
+        <SoftFailNotice
+          open={Boolean(softNotice) && !sectionOwnsSoft}
+          className="mt-6"
+        >
+          {softCopy}
+        </SoftFailNotice>
       </header>
 
-      {/* Prefs sheet — azure rail · SoftFail under Maps · tip-011 hierarchy */}
+      {/*
+        SoftFail chrome (BEA-269 after #97/#162):
+        azure prefs rail · Soft maps badge · compact SoftFailNotice ·
+        tip-011 rise — never timber / Failed to fetch.
+      */}
       <div
         className="animate-rise mt-12 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "40ms" }}
-        aria-label={t(locale, "settings.title")}
+        aria-label={t(locale, "settings.sheetEyebrow")}
       >
         <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -198,16 +218,25 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
           </div>
           <span
             className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              showSoftFail
+              sectionSoftOpen
                 ? "bg-mist text-ink-soft"
                 : "bg-river/12 text-river"
             }`}
           >
-            {showSoftFail
-              ? t(locale, "settings.demoBadge")
+            {sectionSoftOpen
+              ? t(locale, "settings.softBadge")
               : t(locale, "settings.localBadge")}
           </span>
         </header>
+
+        {/* Compact SoftFail under azure prefs rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={sectionSoftOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
+          {softCopy}
+        </SoftFailNotice>
 
         <div className="divide-y divide-[color:var(--bp-line)]">
           {/* Language */}
@@ -241,7 +270,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
             />
           </section>
 
-          {/* Map engine — SoftFailNotice section-scoped (rise in/out) */}
+          {/* Map engine — soft-fail owned by sheet rail above (yields Maps body SoftFail). */}
           <section
             className="animate-rise px-4 py-8 sm:px-5"
             style={{ animationDelay: "90ms" }}
@@ -262,10 +291,6 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
               </p>
             </header>
 
-            <SoftFailNotice open={showSoftFail} className="mb-6">
-              {softNotice ?? t(locale, "settings.resolvedDemo")}
-            </SoftFailNotice>
-
             <Segmented
               value={prefs.mapEngine}
               options={MAP_OPTS}
@@ -277,7 +302,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
             />
 
             {statusCopy ? (
-              <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              <p className="mt-4 animate-rise text-sm leading-relaxed text-ink-soft">
                 {statusCopy}
               </p>
             ) : null}
