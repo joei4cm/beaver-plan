@@ -13,8 +13,9 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Lumen Route sign-in depth (BEA-223): azure sheet rail · SoftFailNotice when
- * Clerk/API absent · tip-011 rise stagger · never timber for keys-missing /
+ * Sign-in SoftFailNotice chrome (BEA-274 after #115/#168/#190):
+ * azure sheet rail · Soft sign-in badge · compact SoftFail under rail ·
+ * tip-011 rise stagger — never timber / Failed to fetch for keys-missing /
  * transport noise.
  */
 export function SignInPanel({
@@ -45,10 +46,11 @@ export function SignInPanel({
     };
   }, []);
 
+  /** SoftFail owned by sign-in sheet — never timber / Failed to fetch. */
   const softCopy = !clerkReady
-    ? t(locale, "auth.demoNotice")
+    ? t(locale, "auth.signInSoftFail")
     : apiSoft
-      ? t(locale, "auth.softOffline")
+      ? t(locale, "auth.signInApiSoftFail")
       : null;
   const softOpen = Boolean(softCopy);
 
@@ -78,7 +80,11 @@ export function SignInPanel({
         </p>
       </header>
 
-      {/* Depth sheet — azure rail · SoftFail · tip-011 hierarchy */}
+      {/*
+        SoftFail sheet (BEA-274 after #115/#168/#190):
+        azure rail · Soft sign-in badge · compact SoftFailNotice · tip-011 —
+        never timber.
+      */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "60ms" }}
@@ -101,16 +107,21 @@ export function SignInPanel({
             }`}
           >
             {softOpen
-              ? t(locale, "auth.demoBadge")
+              ? t(locale, "auth.signInSoftBadge")
               : t(locale, "auth.liveBadge")}
           </span>
         </header>
 
-        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
-          <SoftFailNotice open={softOpen} className="max-w-xl">
-            {softCopy ?? ""}
-          </SoftFailNotice>
+        {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+        <SoftFailNotice
+          open={softOpen}
+          compact
+          className="border-b border-[color:var(--bp-line)]"
+        >
+          {softCopy ?? ""}
+        </SoftFailNotice>
 
+        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
           <div
             className="animate-rise grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
             style={{ animationDelay: "120ms" }}
