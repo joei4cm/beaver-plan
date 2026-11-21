@@ -155,6 +155,8 @@ export default function TranslateScreen() {
 
   const isDemo = !status || status.mode === "demo" || softNotice;
 
+  const camDenied = Boolean(camPermission && !camPermission.granted);
+
   /**
    * Expo Talk SoftFailNotice chrome after web #104 / Expo #116:
    * azure talk rail · compact SoftFailNotice · tip-011 (#46) ·
@@ -172,6 +174,26 @@ export default function TranslateScreen() {
         ? t(uiLocale, "translate.talkSoftFail")
         : error && isNoiseError(new Error(error))
           ? t(uiLocale, "translate.talkSoftFail")
+          : error
+            ? t(uiLocale, "translate.error")
+            : null;
+
+  /**
+   * Expo Lens SoftFailNotice chrome after web #52 / Expo #63:
+   * azure camera head · SoftFailNotice · tip-011 (#46) ·
+   * StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
+   * Hero SoftFailNotice yields while Lens owns soft-fail (no double depth).
+   */
+  const cameraSoftOpen =
+    tab === "camera" && (isDemo || camDenied || Boolean(error));
+  const cameraSoftCopy = camDenied
+    ? t(uiLocale, "translate.permissionCamera")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : isDemo
+        ? t(uiLocale, "translate.lensSoftFail")
+        : error && isNoiseError(new Error(error))
+          ? t(uiLocale, "translate.lensSoftFail")
           : error
             ? t(uiLocale, "translate.error")
             : null;
@@ -743,9 +765,9 @@ export default function TranslateScreen() {
               </>
             )}
           </View>
-          {/* Hero SoftFailNotice yields while Talk owns soft-fail — no double depth. */}
+          {/* Hero SoftFailNotice yields while Talk / Lens owns soft-fail — no double depth. */}
           <SoftFailNotice
-            open={isDemo && !talkSoftOpen}
+            open={isDemo && !talkSoftOpen && !cameraSoftOpen}
             style={styles.heroSoftNotice}
           >
             {softNotice && !online
@@ -1119,9 +1141,13 @@ export default function TranslateScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.cameraPanel}>
+          <Animated.View
+            style={StyleSheet.flatten([styles.cameraPanel, historyRiseStyle])}
+            accessibilityLabel={t(uiLocale, "translate.mode.camera")}
+          >
+            {/* Azure hierarchy — eyebrow · soft/live badge · SoftFailNotice */}
             <View style={styles.cameraHead}>
-              <View style={styles.cameraHeadCopy}>
+              <View style={styles.cameraHeadTitles}>
                 <Text style={styles.cameraModeLabel}>
                   {t(uiLocale, "translate.mode.camera")}
                 </Text>
@@ -1129,19 +1155,32 @@ export default function TranslateScreen() {
                   {t(uiLocale, "translate.dualHint")}
                 </Text>
               </View>
-              {camPermission && !camPermission.granted ? (
-                <View style={styles.softFailChip}>
-                  <Text style={styles.softFailChipText}>
-                    {t(uiLocale, "translate.permissionCamera")}
+              <View style={styles.cameraHeadBadges}>
+                {cameraSoftOpen ? (
+                  <Text style={styles.cameraSoftBadge}>
+                    {t(uiLocale, "translate.lensDemoBadge")}
                   </Text>
-                </View>
-              ) : null}
+                ) : (
+                  <Text style={styles.cameraLiveBadge}>
+                    {t(uiLocale, "translate.lensLiveBadge")}
+                  </Text>
+                )}
+              </View>
             </View>
+
+            <SoftFailNotice
+              open={Boolean(cameraSoftCopy)}
+              style={styles.cameraSoftFail}
+            >
+              {cameraSoftCopy ?? ""}
+            </SoftFailNotice>
 
             <View style={styles.dualFrame}>
               <View style={styles.dualStage}>
                 {/* Traveler lens */}
-                <View style={[styles.lensPane, styles.lensYou]}>
+                <View
+                  style={StyleSheet.flatten([styles.lensPane, styles.lensYou])}
+                >
                   <View style={styles.lensYouWash} />
                   <View style={styles.lensYouGlow} />
                   <View style={styles.lensBadgeWrap}>
@@ -1170,17 +1209,18 @@ export default function TranslateScreen() {
                     <View style={styles.cameraFallback}>
                       <View style={styles.cameraFallbackGlow} />
                       <Text style={styles.cameraFallbackText}>
-                        {camPermission && !camPermission.granted
+                        {camDenied
                           ? t(uiLocale, "translate.permissionCamera")
                           : t(uiLocale, "translate.cameraHint")}
                       </Text>
                       <Pressable
-                        style={styles.enableCamBtn}
+                        style={StyleSheet.flatten([styles.enableCamBtn])}
                         onPress={() => {
                           void requestCamPermission().then((next) => {
                             if (!next.granted) setSoftNotice(true);
                           });
                         }}
+                        accessibilityRole="button"
                       >
                         <Text style={styles.sendLabel}>
                           {t(uiLocale, "translate.enableCamera")}
@@ -1216,7 +1256,12 @@ export default function TranslateScreen() {
                         </Text>
                       ) : null}
                       {busy ? (
-                        <View style={[styles.skeletonLineSm, { marginTop: 8 }]} />
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.skeletonLineSm,
+                            { marginTop: 8 },
+                          ])}
+                        />
                       ) : null}
                     </View>
                   ) : null}
@@ -1226,10 +1271,11 @@ export default function TranslateScreen() {
               {/* Control chrome rail */}
               <View style={styles.controlChrome}>
                 <Pressable
-                  style={styles.facingBtn}
+                  style={StyleSheet.flatten([styles.facingBtn])}
                   onPress={() =>
                     setFacing((f) => (f === "back" ? "front" : "back"))
                   }
+                  accessibilityRole="button"
                 >
                   <Text style={styles.facingLabel}>
                     {facing === "back"
@@ -1238,9 +1284,13 @@ export default function TranslateScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.visionBtn, busy && styles.disabled]}
+                  style={StyleSheet.flatten([
+                    styles.visionBtn,
+                    busy ? styles.disabled : null,
+                  ])}
                   onPress={() => void onVision("ocr")}
                   disabled={busy}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.visionLabel}>
                     {busy
@@ -1249,9 +1299,13 @@ export default function TranslateScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.visionBtnAlt, busy && styles.disabled]}
+                  style={StyleSheet.flatten([
+                    styles.visionBtnAlt,
+                    busy ? styles.disabled : null,
+                  ])}
                   onPress={() => void onVision("caption")}
                   disabled={busy}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.visionLabelAlt}>
                     {t(uiLocale, "translate.caption")}
@@ -1260,13 +1314,13 @@ export default function TranslateScreen() {
                 <Text style={styles.controlMeta}>
                   {camPermission?.granted
                     ? t(uiLocale, "translate.lensWorld")
-                    : camPermission && !camPermission.granted
+                    : camDenied
                       ? t(uiLocale, "translate.demoBadge")
                       : t(uiLocale, "translate.loading")}
                 </Text>
               </View>
             </View>
-          </View>
+          </Animated.View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -2029,12 +2083,56 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingBottom: 16,
+    gap: 12,
   },
   cameraHead: {
-    marginBottom: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     gap: 10,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    backgroundColor: "rgba(244, 246, 250, 0.72)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  cameraHeadCopy: { gap: 4 },
+  cameraHeadTitles: { flex: 1, minWidth: 160, gap: 4 },
+  cameraHeadBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  cameraSoftBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  cameraLiveBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.riverDeep,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
   cameraModeLabel: {
     fontSize: 11,
     letterSpacing: 1.8,
@@ -2047,20 +2145,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  softFailChip: {
-    alignSelf: "flex-start",
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.22)",
-    backgroundColor: "rgba(47, 107, 255, 0.07)",
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  softFailChipText: {
-    color: colors.riverDeep,
-    fontSize: 12,
-    lineHeight: 17,
-    fontWeight: "500",
+  cameraSoftFail: {
+    marginBottom: 0,
   },
   dualFrame: {
     borderRadius: radius.lg,
