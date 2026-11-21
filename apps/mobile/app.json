@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#0f4339",
+      "backgroundColor": "#F4F6FA",
       "resizeMode": "contain"
     },
     "ios": {
@@ -21,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0f4339"
+        "backgroundColor": "#2F6BFF"
       },
       "package": "plan.beaver.app",
       "permissions": [
