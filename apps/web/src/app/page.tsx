@@ -1,6 +1,7 @@
 import { brand } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { getLocale } from "@/lib/locale";
+import { LandingFaq } from "@/components/landing/faq";
 import { LandingFeatures } from "@/components/landing/features";
 import { LandingFooterCta } from "@/components/landing/footer-cta";
 import { LandingHero } from "@/components/landing/hero";
@@ -45,6 +46,52 @@ const HOW_STEPS = [
   { title: "landing.how.step3.title", body: "landing.how.step3.body" },
 ] as const;
 
+const FAQ_TOPICS = [
+  { id: "all", label: "landing.faq.topic.all" },
+  { id: "plan", label: "landing.faq.topic.plan" },
+  { id: "maps", label: "landing.faq.topic.maps" },
+  { id: "road", label: "landing.faq.topic.road" },
+] as const;
+
+const FAQ_ITEMS = [
+  {
+    id: "what",
+    topic: "plan",
+    question: "landing.faq.q1.question",
+    answer: "landing.faq.q1.answer",
+  },
+  {
+    id: "roads",
+    topic: "maps",
+    question: "landing.faq.q2.question",
+    answer: "landing.faq.q2.answer",
+  },
+  {
+    id: "collab",
+    topic: "plan",
+    question: "landing.faq.q3.question",
+    answer: "landing.faq.q3.answer",
+  },
+  {
+    id: "engines",
+    topic: "maps",
+    question: "landing.faq.q4.question",
+    answer: "landing.faq.q4.answer",
+  },
+  {
+    id: "translate",
+    topic: "road",
+    question: "landing.faq.q5.question",
+    answer: "landing.faq.q5.answer",
+  },
+  {
+    id: "offline",
+    topic: "road",
+    question: "landing.faq.q6.question",
+    answer: "landing.faq.q6.answer",
+  },
+] as const;
+
 export default async function HomePage() {
   const locale = await getLocale();
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
@@ -64,6 +111,18 @@ export default async function HomePage() {
   const howCards = HOW_STEPS.map((step) => ({
     title: t(locale, step.title),
     body: t(locale, step.body),
+  }));
+
+  const faqTopics = FAQ_TOPICS.map((topic) => ({
+    id: topic.id,
+    label: t(locale, topic.label),
+  }));
+
+  const faqItems = FAQ_ITEMS.map((item) => ({
+    id: item.id,
+    topic: item.topic,
+    question: t(locale, item.question),
+    answer: t(locale, item.answer),
   }));
 
   return (
@@ -105,7 +164,17 @@ export default async function HomePage() {
         ctaHref="/trips"
       />
 
-      {/* Finale — CTA + quiet site footer (after features / how) */}
+      {/* Below fold — FAQ accordion (mist-track · azure select · SoftFail offline) */}
+      <LandingFaq
+        title={t(locale, "landing.faq.title")}
+        support={t(locale, "landing.faq.support")}
+        topics={faqTopics}
+        items={faqItems}
+        offlineNotice={t(locale, "landing.faq.softOffline")}
+        filterLabel={t(locale, "landing.faq.filterLabel")}
+      />
+
+      {/* Finale — CTA + quiet site footer (after features / how / faq) */}
       <LandingFooterCta
         brandPrimary={brandPrimary}
         brandSecondary={brandSecondary}
