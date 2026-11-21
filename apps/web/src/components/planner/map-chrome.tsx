@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import type { PlaceSummary } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
@@ -21,6 +27,8 @@ type Props = {
   /** Soft-fail when Directions/Places live keys or vendor JS map API are absent. */
   softFail: boolean;
   softFailMessage?: string | null;
+  /** Places search is demo / API-absent — badge + SoftFailNotice in results sheet. */
+  searchDemo?: boolean;
   query: string;
   results: PlaceSummary[];
   searching: boolean;
@@ -37,6 +45,7 @@ type Props = {
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
  * Hierarchy: engine chip (identity) → search (primary tool) → layers/locate rail.
+ * Search results: tip-009 popover + SheetPresence in/out, azure keyboard select.
  */
 export function MapChrome({
   locale,
@@ -45,6 +54,7 @@ export function MapChrome({
   tileLabel,
   softFail,
   softFailMessage,
+  searchDemo = false,
   query,
   results,
   searching,
@@ -58,10 +68,22 @@ export function MapChrome({
   hasRoute,
 }: Props) {
   const searchId = useId();
+  const listboxId = useId();
   const layersId = useId();
   const [layersOpen, setLayersOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const layersRef = useRef<HTMLDivElement | null>(null);
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const q = query.trim();
+  const hasResults = results.length > 0;
+  const showEmpty = q.length > 0 && !searching && !hasResults;
+  const sheetOpen = q.length > 0 && (hasResults || showEmpty || searching);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [results, q]);
 
   useEffect(() => {
     if (!layersOpen) return;
@@ -73,6 +95,13 @@ export function MapChrome({
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [layersOpen]);
+
+  useEffect(() => {
+    if (!hasResults) return;
+    optionRefs.current[activeIndex]?.scrollIntoView({
+      block: "nearest",
+    });
+  }, [activeIndex, hasResults]);
 
   function handleLocate() {
     if (hasRoute) {
@@ -93,9 +122,48 @@ export function MapChrome({
     );
   }
 
+  function pickActive() {
+    const place = results[activeIndex];
+    if (place) onPickPlace(place);
+  }
+
+  function onSearchKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (hasResults) {
+        pickActive();
+      } else {
+        onSearchCommit(query);
+      }
+      return;
+    }
+    if (e.key === "Escape") {
+      if (sheetOpen) {
+        e.preventDefault();
+        onQueryChange("");
+        onSearchCommit("");
+      }
+      return;
+    }
+    if (!hasResults) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, results.length - 1));
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    }
+  }
+
   const notice =
     softFailMessage?.trim() ||
     (softFail ? t(locale, "planner.map.softFail") : null);
+
+  const activeOptionId = hasResults
+    ? `${listboxId}-opt-${activeIndex}`
+    : undefined;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[2]">
@@ -126,15 +194,15 @@ export function MapChrome({
             <input
               id={searchId}
               data-bp-place-search
+              role="combobox"
+              aria-expanded={sheetOpen}
+              aria-controls={listboxId}
+              aria-autocomplete="list"
+              aria-activedescendant={activeOptionId}
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onCompositionEnd={(e) => onSearchCommit(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  onSearchCommit(query);
-                }
-              }}
+              onKeyDown={onSearchKeyDown}
               placeholder={t(locale, "planner.searchPlaceholder")}
               className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-ink outline-none ring-0 placeholder:text-ink-soft/45"
               autoComplete="off"
@@ -145,31 +213,125 @@ export function MapChrome({
               </span>
             ) : null}
           </div>
+
           <SheetPresence
-            open={results.length > 0}
-            as="ul"
-            role="listbox"
+            open={sheetOpen}
             variant="popover"
-            className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-64 overflow-auto rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+            className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
-            {results.map((place) => (
-              <li key={place.enginePlaceId} role="option">
-                <button
-                  type="button"
-                  onClick={() => onPickPlace(place)}
-                  className="flex w-full flex-col items-start gap-0.5 px-3.5 py-2.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/60"
-                >
-                  <span className="text-sm font-medium text-ink">
-                    {place.name}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                  {t(locale, "planner.search.eyebrow")}
+                </span>
+                {hasResults ? (
+                  <span className="text-[11px] font-medium text-ink-soft/80">
+                    {t(locale, "planner.search.resultsCount").replace(
+                      "{n}",
+                      String(results.length),
+                    )}
                   </span>
-                  {place.address ? (
-                    <span className="text-xs text-ink-soft">
-                      {place.address}
-                    </span>
-                  ) : null}
-                </button>
-              </li>
-            ))}
+                ) : null}
+              </div>
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  searchDemo
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river-deep"
+                }`}
+              >
+                {searchDemo
+                  ? t(locale, "planner.search.demoBadge")
+                  : t(locale, "planner.search.liveBadge")}
+              </span>
+            </div>
+
+            {hasResults ? (
+              <ul
+                id={listboxId}
+                role="listbox"
+                aria-label={t(locale, "planner.search.eyebrow")}
+                className="max-h-64 overflow-auto py-1"
+              >
+                {results.map((place, i) => {
+                  const selected = i === activeIndex;
+                  const optionId = `${listboxId}-opt-${i}`;
+                  return (
+                    <li key={place.enginePlaceId} role="presentation">
+                      <button
+                        ref={(el) => {
+                          optionRefs.current[i] = el;
+                        }}
+                        id={optionId}
+                        type="button"
+                        role="option"
+                        aria-selected={selected}
+                        onMouseEnter={() => setActiveIndex(i)}
+                        onClick={() => onPickPlace(place)}
+                        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition duration-bp-fast ease-bp-out ${
+                          selected
+                            ? "bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
+                            : "hover:bg-mist/50"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition duration-bp-fast ease-bp-out ${
+                            selected
+                              ? "bg-river text-foam shadow-bp-soft"
+                              : "bg-mist text-ink-soft"
+                          }`}
+                          aria-hidden
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="min-w-0 flex-1 space-y-0.5">
+                          <span className="block font-display text-sm font-semibold leading-snug tracking-tight text-ink">
+                            {place.name}
+                          </span>
+                          {place.address ? (
+                            <span className="block text-xs leading-relaxed text-ink-soft">
+                              {place.address}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span
+                          className={`mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] transition duration-bp-fast ease-bp-out ${
+                            selected ? "text-river" : "text-ink-soft/50"
+                          }`}
+                        >
+                          {t(locale, "planner.search.addHint")}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : showEmpty ? (
+              <div className="animate-fade space-y-1.5 px-3.5 py-4">
+                <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                  {t(locale, "planner.search.emptyTitle")}
+                </p>
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  {t(locale, "planner.search.emptyHint")}
+                </p>
+              </div>
+            ) : (
+              <div className="px-3.5 py-3 text-xs text-ink-soft" aria-busy>
+                {t(locale, "planner.search")}
+                …
+              </div>
+            )}
+
+            {searchDemo && hasResults ? (
+              <SoftFailNotice compact>
+                {t(locale, "planner.searchDemo")}
+              </SoftFailNotice>
+            ) : null}
+            {searchDemo && showEmpty ? (
+              <SoftFailNotice compact>
+                {t(locale, "planner.search.softFailEmpty")}
+              </SoftFailNotice>
+            ) : null}
           </SheetPresence>
         </div>
 

@@ -97,6 +97,7 @@ export function MapStage({
         tileLabel={tileLabel}
         softFail={softFail}
         softFailMessage={locateNotice}
+        searchDemo={mode !== "live"}
         query={query}
         results={results}
         searching={searching}
