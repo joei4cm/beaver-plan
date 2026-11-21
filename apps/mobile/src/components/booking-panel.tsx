@@ -114,11 +114,10 @@ async function searchLocal(
 }
 
 /**
- * Expo OTA booking sheet SoftFailNotice chrome (BEA-213 after web #160):
- * azure sheet eyebrow · Search · Results · Confirm · compact SoftFailNotice
- * footer, mist-track foam filters, tip-011 rise (#46), StyleSheet.flatten.
- * Save soft-fail stays section-scoped under Confirm — never timber /
- * Failed to fetch.
+ * Expo booking Confirm SoftFailNotice chrome (BEA-245 after web #184 / Expo #165):
+ * azure Confirm rail · soft badge · compact SoftFailNotice · SheetPresence
+ * pin body · tip-011 (#46). Confirm owns soft-fail so sheet footer yields
+ * (no double depth). Soft copy never timber / Failed to fetch.
  */
 export function BookingPanel({
   tripId,
@@ -357,6 +356,9 @@ export function BookingPanel({
       },
     ],
   };
+
+  const showConfirmSoftFail = confirmSoftFail;
+  const showSheetSoftFail = Boolean(softCopy) && !confirmSoftFail;
 
   return (
     <View
@@ -672,7 +674,11 @@ export function BookingPanel({
             ) : null}
           </SheetPresence>
 
-          {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
+          {/*
+            Confirm SoftFail chrome (BEA-245 after web #184 / Expo #165):
+            azure Confirm rail · soft badge · compact SoftFailNotice ·
+            SheetPresence pin body · tip-011 rise — never timber.
+          */}
           <SheetPresence
             open={open}
             delayMs={90}
@@ -704,6 +710,13 @@ export function BookingPanel({
                         </Text>
                       </View>
                     ) : null}
+                    {showConfirmSoftFail ? (
+                      <View style={styles.softBadge}>
+                        <Text style={styles.softBadgeLabel}>
+                          {t(locale, "planner.booking.confirmSoftBadge")}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
                   <Text style={styles.confirmTitle}>
                     {t(locale, "planner.booking.confirmTitle")}
@@ -731,19 +744,28 @@ export function BookingPanel({
                 ) : null}
               </View>
 
+              {/* Compact SoftFail under azure Confirm rail — never timber / Failed to fetch. */}
               <SoftFailNotice
-                open={confirmSoftFail}
+                open={showConfirmSoftFail}
                 compact
                 style={styles.confirmSoftFail}
               >
                 {t(locale, "planner.booking.confirmSoftFail")}
               </SoftFailNotice>
 
-              <View style={styles.draftList}>
+              <SheetPresence
+                open={open}
+                delayMs={40}
+                rise={8}
+                style={styles.draftList}
+                accessibilityLabel={t(locale, "planner.booking.confirmTitle")}
+              >
                 {!stop ? (
-                  <Text style={styles.sectionSupport}>
-                    {t(locale, "planner.booking.selectStop")}
-                  </Text>
+                  <SheetPresence open={open} delayMs={55} rise={6}>
+                    <Text style={styles.sectionSupport}>
+                      {t(locale, "planner.booking.selectStop")}
+                    </Text>
+                  </SheetPresence>
                 ) : (
                   drafts.map((row, i) => {
                     const filled = Boolean(row.url.trim());
@@ -751,8 +773,8 @@ export function BookingPanel({
                       <SheetPresence
                         key={row.kind}
                         open={open}
-                        delayMs={filled ? 40 + i * 35 : 0}
-                        rise={filled ? 8 : 0}
+                        delayMs={55 + i * 35}
+                        rise={8}
                         style={StyleSheet.flatten([
                           styles.draftCard,
                           filled ? styles.draftCardFilled : styles.draftCardEmpty,
@@ -764,7 +786,7 @@ export function BookingPanel({
                           </Text>
                           {filled ? (
                             <Pressable
-                              style={styles.openChip}
+                              style={StyleSheet.flatten([styles.openChip])}
                               onPress={() => openExternal(row.url.trim())}
                               accessibilityRole="button"
                             >
@@ -804,14 +826,14 @@ export function BookingPanel({
                     );
                   })
                 )}
-              </View>
+              </SheetPresence>
             </View>
           </SheetPresence>
 
           <Text style={styles.hint}>{t(locale, "planner.booking.hint")}</Text>
 
-          {/* SoftFailNotice owned by booking sheet footer — never timber. */}
-          <SoftFailNotice open={Boolean(softCopy)} compact>
+          {/* Sheet SoftFail yields while Confirm owns soft-fail — no double depth. */}
+          <SoftFailNotice open={showSheetSoftFail} compact>
             {softCopy ?? ""}
           </SoftFailNotice>
         </Animated.View>
@@ -1252,6 +1274,20 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
+  softBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  softBadgeLabel: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
   confirmTitle: {
     ...type.display,
     fontSize: 16,
@@ -1347,6 +1383,7 @@ const styles = StyleSheet.create({
     color: colors.foam,
     fontSize: 14,
     fontWeight: "700",
+    letterSpacing: 0.4,
   },
   hint: {
     ...type.body,
