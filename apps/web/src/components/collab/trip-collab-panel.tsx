@@ -11,6 +11,7 @@ import type {
 import { parseMentions, sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Tab = "comments" | "activity";
@@ -248,6 +249,18 @@ export function TripCollabPanel({
 
   const showLoading =
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
+  const softNoticeOpen = demoSeeded || softOffline;
+  const softNoticeCopy = softOffline
+    ? t(locale, "collab.panel.softOffline")
+    : t(locale, "collab.panel.demoNotice");
+  const threadCount = t(locale, "collab.panel.count").replace(
+    "{n}",
+    String(visibleComments.length),
+  );
+  const timelineCount = t(locale, "collab.panel.count").replace(
+    "{n}",
+    String(events.length),
+  );
 
   return (
     <section className="animate-rise border-t border-[color:var(--bp-line)] bg-gradient-to-b from-foam/80 to-transparent">
@@ -264,33 +277,42 @@ export function TripCollabPanel({
           </p>
         </div>
         <div
-          className="flex gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+          className="flex gap-1 border-b border-[color:var(--bp-line)]"
           role="tablist"
           aria-label={t(locale, "collab.panel.title")}
         >
-          {(["comments", "activity"] as const).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => setTab(key)}
-              className={`rounded-bp-xs px-4 py-2 text-sm font-medium transition duration-bp-fast ease-bp-out ${
-                tab === key
-                  ? "bg-foam text-river shadow-bp-soft"
-                  : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              {t(locale, `collab.panel.tab.${key}`)}
-            </button>
-          ))}
+          {(["comments", "activity"] as const).map((key) => {
+            const on = tab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                id={`collab-tab-${key}`}
+                aria-selected={on}
+                aria-controls={`collab-panel-${key}`}
+                onClick={() => setTab(key)}
+                className={`relative -mb-px px-3.5 pb-2.5 pt-1 text-sm font-medium transition duration-bp-fast ease-bp-out ${
+                  on
+                    ? "text-river"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                {t(locale, `collab.panel.tab.${key}`)}
+                {on ? (
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-1 bottom-0 h-0.5 rounded-full bg-river transition duration-bp ease-bp-out"
+                  />
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </header>
 
-      <SoftFailNotice open={demoSeeded} className="mb-4">
-        {softOffline
-          ? t(locale, "collab.panel.softOffline")
-          : t(locale, "collab.panel.demoNotice")}
+      <SoftFailNotice open={softNoticeOpen} className="mb-4">
+        {softNoticeCopy}
       </SoftFailNotice>
 
       {error ? (
@@ -299,204 +321,296 @@ export function TripCollabPanel({
         </p>
       ) : null}
 
-      {tab === "comments" ? (
-        <div className="animate-sheet-in grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]">
-          <ul className="max-h-72 space-y-0 overflow-y-auto pr-1">
-            {showLoading ? (
-              <li className="space-y-3 py-2" aria-busy="true">
-                <div className="h-3 w-28 rounded-bp-xs bg-mist" />
-                <div className="h-4 w-full max-w-md rounded-bp-xs bg-mist/70" />
-                <div className="h-4 w-3/4 max-w-sm rounded-bp-xs bg-mist/50" />
-                <p className="pt-2 text-sm text-ink-soft">
-                  {t(locale, "collab.panel.loading")}
-                </p>
-              </li>
-            ) : null}
-            {!showLoading && visibleComments.length === 0 ? (
-              <li className="animate-fade list-none py-4">
-                <p className="font-display text-lg font-semibold tracking-tight text-ink">
-                  {t(locale, "collab.panel.emptyComments")}
-                </p>
-              </li>
-            ) : null}
-            {visibleComments.map((c, i) => (
-              <li
-                key={c.id}
-                className="animate-rise border-l-2 border-river/35 py-3.5 pl-4 first:pt-1"
-                style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
-              >
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                  <span
-                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-river/90 text-[10px] font-semibold text-foam"
-                    aria-hidden
-                  >
-                    {commentInitials(c.authorDisplayName ?? c.authorUserId)}
-                  </span>
-                  <span className="text-sm font-semibold text-ink">
-                    {c.authorDisplayName ?? c.authorUserId}
-                  </span>
-                  <time className="text-[11px] tabular-nums text-ink-soft/80">
-                    {formatWhen(c.createdAt, locale)}
-                  </time>
-                  {c.stopId ? (
-                    <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[11px] font-medium text-river-deep">
-                      {t(locale, "collab.panel.onStop")}
-                      {stopLabel(c.stopId, selectedStopId, selectedStopName)}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-2 whitespace-pre-wrap pl-8 text-sm leading-relaxed text-ink-soft">
-                  {renderBody(c.body, c.mentions)}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          <div className="relative border-t border-[color:var(--bp-line)] pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            {canComment ? (
-              <div className="space-y-3">
-                <label className="sr-only" htmlFor="collab-comment">
-                  {t(locale, "collab.panel.compose")}
-                </label>
-                <textarea
-                  id="collab-comment"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={4}
-                  placeholder={t(locale, "collab.panel.placeholder")}
-                  className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/40"
-                />
-                {mentionOpen && mentionCandidates.length > 0 ? (
-                  <ul className="absolute left-0 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft lg:left-6">
-                    {mentionCandidates.map((name) => (
-                      <li key={name}>
-                        <button
-                          type="button"
-                          onClick={() => insertMention(name)}
-                          className="block w-full px-3 py-2 text-left text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
-                        >
-                          @{name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label
-                    className={`flex items-center gap-2 text-xs text-ink-soft ${
-                      selectedStopId ? "cursor-pointer" : "opacity-40"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      disabled={!selectedStopId}
-                      checked={Boolean(scopeStop && selectedStopId)}
-                      onChange={(e) => setScopeStop(e.target.checked)}
-                      className="accent-[color:var(--bp-river,#2F6BFF)]"
-                    />
-                    {selectedStopName
-                      ? t(locale, "collab.panel.attachStopNamed").replace(
-                          "{name}",
-                          selectedStopName,
-                        )
-                      : t(locale, "collab.panel.attachStop")}
-                  </label>
-                  <button
-                    type="button"
-                    disabled={sending || !body.trim()}
-                    onClick={() => void submitComment()}
-                    className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {sending
-                      ? t(locale, "collab.panel.posting")
-                      : t(locale, "collab.panel.post")}
-                  </button>
-                </div>
-                <p className="text-[11px] text-ink-soft/70">
-                  {t(locale, "collab.panel.mentionHint")}
-                </p>
+      {/* Tab sheets share one cell so SheetPresence in/out (#46) doesn’t stack. */}
+      <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+      {/* Comments — list + compose sheet hierarchy */}
+      <SheetPresence
+        open={tab === "comments"}
+        id="collab-panel-comments"
+        role="tabpanel"
+        aria-label={t(locale, "collab.panel.tab.comments")}
+        className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+        style={{ animationDelay: "40ms" }}
+      >
+        <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)]">
+          <div className="min-w-0">
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "collab.panel.threadEyebrow")}
+                </span>
+                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                  {threadCount}
+                </span>
               </div>
-            ) : (
-              <p className="rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-mist/25 px-3 py-3 text-sm text-ink-soft">
-                {yourRole
-                  ? t(locale, "collab.panel.viewerReadonly")
-                  : showLoading
-                    ? t(locale, "collab.panel.loading")
-                    : t(locale, "collab.panel.viewerReadonly")}
-              </p>
-            )}
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  softNoticeOpen
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river-deep"
+                }`}
+              >
+                {softNoticeOpen
+                  ? t(locale, "collab.demoBadge")
+                  : t(locale, "collab.panel.liveBadge")}
+              </span>
+            </header>
+
+            <ul className="max-h-72 space-y-0 overflow-y-auto px-3 py-2">
+              {showLoading ? (
+                <li className="space-y-3 px-1 py-3" aria-busy="true">
+                  <div className="h-3 w-28 rounded-bp-xs bg-mist" />
+                  <div className="h-4 w-full max-w-md rounded-bp-xs bg-mist/70" />
+                  <div className="h-4 w-3/4 max-w-sm rounded-bp-xs bg-mist/50" />
+                  <p className="pt-1 text-sm text-ink-soft">
+                    {t(locale, "collab.panel.loading")}
+                  </p>
+                </li>
+              ) : null}
+              {!showLoading && visibleComments.length === 0 ? (
+                <li className="animate-fade list-none px-1 py-5">
+                  <p className="font-display text-base font-semibold tracking-tight text-ink">
+                    {t(locale, "collab.panel.emptyComments")}
+                  </p>
+                </li>
+              ) : null}
+              {visibleComments.map((c, i) => (
+                <li
+                  key={c.id}
+                  className="animate-rise group relative border-l-2 border-river/40 py-3.5 pl-4 transition duration-bp-fast ease-bp-out hover:border-river hover:bg-mist/35"
+                  style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
+                >
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span
+                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-river/90 text-[10px] font-semibold text-foam shadow-[0_0_0_3px_rgba(47,107,255,0.12)]"
+                      aria-hidden
+                    >
+                      {commentInitials(c.authorDisplayName ?? c.authorUserId)}
+                    </span>
+                    <span className="text-sm font-semibold text-ink">
+                      {c.authorDisplayName ?? c.authorUserId}
+                    </span>
+                    <time className="text-[11px] tabular-nums text-ink-soft/80">
+                      {formatWhen(c.createdAt, locale)}
+                    </time>
+                    {c.stopId ? (
+                      <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[11px] font-medium text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                        {t(locale, "collab.panel.onStop")}
+                        {stopLabel(c.stopId, selectedStopId, selectedStopName)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap pl-8 text-sm leading-relaxed text-ink-soft">
+                    {renderBody(c.body, c.mentions)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative border-t border-[color:var(--bp-line)] bg-mist/20 lg:border-l lg:border-t-0">
+            <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/50 px-4 py-2.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                {t(locale, "collab.panel.composeEyebrow")}
+              </span>
+            </header>
+            <div className="relative px-4 py-4">
+              {canComment ? (
+                <div className="space-y-3">
+                  <label className="sr-only" htmlFor="collab-comment">
+                    {t(locale, "collab.panel.compose")}
+                  </label>
+                  <textarea
+                    id="collab-comment"
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    rows={4}
+                    placeholder={t(locale, "collab.panel.placeholder")}
+                    className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/40"
+                  />
+                  {mentionOpen && mentionCandidates.length > 0 ? (
+                    <ul className="absolute left-4 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+                      {mentionCandidates.map((name) => (
+                        <li key={name}>
+                          <button
+                            type="button"
+                            onClick={() => insertMention(name)}
+                            className="block w-full px-3 py-2 text-left text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
+                          >
+                            @{name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label
+                      className={`flex items-center gap-2 text-xs text-ink-soft ${
+                        selectedStopId ? "cursor-pointer" : "opacity-40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!selectedStopId}
+                        checked={Boolean(scopeStop && selectedStopId)}
+                        onChange={(e) => setScopeStop(e.target.checked)}
+                        className="accent-[color:var(--bp-river,#2F6BFF)]"
+                      />
+                      {selectedStopName
+                        ? t(locale, "collab.panel.attachStopNamed").replace(
+                            "{name}",
+                            selectedStopName,
+                          )
+                        : t(locale, "collab.panel.attachStop")}
+                    </label>
+                    <button
+                      type="button"
+                      disabled={sending || !body.trim()}
+                      onClick={() => void submitComment()}
+                      className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {sending
+                        ? t(locale, "collab.panel.posting")
+                        : t(locale, "collab.panel.post")}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-ink-soft/70">
+                    {t(locale, "collab.panel.mentionHint")}
+                  </p>
+                </div>
+              ) : (
+                <p className="rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-mist/40 px-3 py-3 text-sm text-ink-soft">
+                  {yourRole
+                    ? t(locale, "collab.panel.viewerReadonly")
+                    : showLoading
+                      ? t(locale, "collab.panel.loading")
+                      : t(locale, "collab.panel.viewerReadonly")}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="animate-sheet-in">
-          <ol className="relative max-h-80 space-y-0 overflow-y-auto border-l-2 border-river/25 pl-6">
-            {showLoading ? (
-              <li className="space-y-3 py-1" aria-busy="true">
-                <div className="h-3 w-24 rounded-bp-xs bg-mist" />
-                <div className="h-4 w-64 max-w-full rounded-bp-xs bg-mist/70" />
-                <p className="text-sm text-ink-soft">
-                  {t(locale, "collab.panel.loading")}
-                </p>
-              </li>
-            ) : null}
-            {!showLoading && events.length === 0 ? (
-              <li className="py-2 text-sm text-ink-soft">
-                {t(locale, "collab.panel.emptyActivity")}
-              </li>
-            ) : null}
-            {events.map((ev, i) => (
-              <li
-                key={ev.id}
-                className="animate-rise relative pb-5 last:pb-1"
-                style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
-              >
-                <span
-                  className="absolute -left-[1.7rem] top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-river text-[9px] font-bold text-foam ring-[3px] ring-paper"
-                  aria-hidden
-                  title={ev.actorDisplayName ?? undefined}
-                >
-                  {commentInitials(
-                    ev.actorDisplayName ?? ev.actorUserId ?? activityLabel(locale, ev.type),
-                  )}
-                </span>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep">
-                    {activityLabel(locale, ev.type)}
-                  </span>
-                  {ev.actorDisplayName ? (
-                    <span className="text-[11px] font-medium text-ink-soft">
-                      {ev.actorDisplayName}
-                    </span>
-                  ) : null}
-                  <time className="text-[11px] tabular-nums text-ink-soft/70">
-                    {formatWhen(ev.createdAt, locale)}
-                  </time>
-                </div>
-                <p className="mt-1.5 text-sm font-medium leading-snug text-ink">
-                  {ev.summary}
-                </p>
-              </li>
-            ))}
-          </ol>
-          {liveApi && !demoSeeded ? (
-            <button
-              type="button"
-              onClick={() =>
-                void refresh().catch((e: unknown) => {
-                  if (isPlannerNoiseError(e)) {
-                    applySeed({ soft: true });
-                    return;
-                  }
-                  setError(e instanceof Error ? e.message : "refresh_failed");
-                })
-              }
-              className="mt-4 text-xs font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+        <SoftFailNotice open={softNoticeOpen} compact>
+          {softNoticeCopy}
+        </SoftFailNotice>
+      </SheetPresence>
+
+      {/* Activity — azure nodes on mist track */}
+      <SheetPresence
+        open={tab === "activity"}
+        id="collab-panel-activity"
+        role="tabpanel"
+        aria-label={t(locale, "collab.panel.tab.activity")}
+        className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
+        style={{ animationDelay: "40ms" }}
+      >
+        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              {t(locale, "collab.panel.timelineEyebrow")}
+            </span>
+            <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+              {timelineCount}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                softNoticeOpen
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river-deep"
+              }`}
             >
-              {t(locale, "collab.panel.refresh")}
-            </button>
+              {softNoticeOpen
+                ? t(locale, "collab.demoBadge")
+                : t(locale, "collab.panel.liveBadge")}
+            </span>
+            {liveApi && !demoSeeded ? (
+              <button
+                type="button"
+                onClick={() =>
+                  void refresh().catch((e: unknown) => {
+                    if (isPlannerNoiseError(e)) {
+                      applySeed({ soft: true });
+                      return;
+                    }
+                    setError(e instanceof Error ? e.message : "refresh_failed");
+                  })
+                }
+                className="text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+              >
+                {t(locale, "collab.panel.refresh")}
+              </button>
+            ) : null}
+          </div>
+        </header>
+
+        <ol className="relative m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5">
+          {/* Mist track — continuous spine behind azure nodes */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-4 left-[1.55rem] top-4 w-1 rounded-full bg-mist"
+          />
+          {showLoading ? (
+            <li className="relative space-y-3 py-1 pl-8" aria-busy="true">
+              <div className="h-3 w-24 rounded-bp-xs bg-mist" />
+              <div className="h-4 w-64 max-w-full rounded-bp-xs bg-mist/70" />
+              <p className="text-sm text-ink-soft">
+                {t(locale, "collab.panel.loading")}
+              </p>
+            </li>
           ) : null}
-        </div>
-      )}
+          {!showLoading && events.length === 0 ? (
+            <li className="animate-fade relative space-y-1.5 py-3 pl-8">
+              <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                {t(locale, "collab.panel.emptyActivity")}
+              </p>
+              <p className="text-xs leading-relaxed text-ink-soft">
+                {t(locale, "collab.panel.emptyActivityHint")}
+              </p>
+            </li>
+          ) : null}
+          {events.map((ev, i) => (
+            <li
+              key={ev.id}
+              className="animate-rise relative pb-5 pl-8 last:pb-1"
+              style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
+            >
+              <span
+                className="absolute left-0 top-0.5 z-[1] inline-flex h-5 w-5 items-center justify-center rounded-full bg-river text-[9px] font-bold text-foam shadow-[0_0_0_3px_rgba(47,107,255,0.14)] ring-[3px] ring-foam"
+                aria-hidden
+                title={ev.actorDisplayName ?? undefined}
+              >
+                {commentInitials(
+                  ev.actorDisplayName ??
+                    ev.actorUserId ??
+                    activityLabel(locale, ev.type),
+                )}
+              </span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                  {activityLabel(locale, ev.type)}
+                </span>
+                {ev.actorDisplayName ? (
+                  <span className="text-[11px] font-medium text-ink-soft">
+                    {ev.actorDisplayName}
+                  </span>
+                ) : null}
+                <time className="text-[11px] tabular-nums text-ink-soft/70">
+                  {formatWhen(ev.createdAt, locale)}
+                </time>
+              </div>
+              <p className="mt-1.5 text-sm font-medium leading-snug text-ink">
+                {ev.summary}
+              </p>
+            </li>
+          ))}
+        </ol>
+        <SoftFailNotice open={softNoticeOpen} compact>
+          {softNoticeCopy}
+        </SoftFailNotice>
+      </SheetPresence>
+      </div>
     </section>
   );
 }
