@@ -218,6 +218,8 @@
   "planner.searchDemo": "Showing curated demo places (API offline).",
   "planner.place.loading": "Loading place details…",
   "planner.place.eyebrow": "Place intel",
+  "planner.place.pinEyebrow": "Map pin",
+  "planner.place.pinSupport": "Selected stop on the map · place details below.",
   "planner.place.snapshotEyebrow": "Snapshot",
   "planner.place.aboutEyebrow": "About",
   "planner.place.rating": "Rating",

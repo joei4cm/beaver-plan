@@ -218,6 +218,8 @@
   "planner.searchDemo": "正在显示精选演示地点（API 离线）。",
   "planner.place.loading": "加载地点详情…",
   "planner.place.eyebrow": "地点情报",
+  "planner.place.pinEyebrow": "地图图钉",
+  "planner.place.pinSupport": "地图上选中的站点 · 下方为地点详情。",
   "planner.place.snapshotEyebrow": "速览",
   "planner.place.aboutEyebrow": "简介",
   "planner.place.rating": "评分",
