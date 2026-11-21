@@ -980,10 +980,36 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
         </section>
 
+        {/*
+          Stop drawer chrome (BEA-233): azure Itinerary rail · Demo/Live ·
+          SoftFailNotice under Stops · tip-011 sheet-in / rise — never timber.
+        */}
         <aside
           className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
           style={{ animationDelay: "100ms" }}
+          aria-label={t(locale, "planner.drawer.eyebrow")}
         >
+          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.drawer.eyebrow")}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "planner.drawer.support")}
+              </span>
+            </div>
+            <span
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                demoShell
+                  ? "bg-mist text-ink-soft"
+                  : "bg-river/12 text-river"
+              }`}
+            >
+              {demoShell
+                ? t(locale, "planner.drawer.demoBadge")
+                : t(locale, "planner.drawer.liveBadge")}
+            </span>
+          </header>
           <div
             ref={dayTabsRef}
             role="tablist"
@@ -1288,59 +1314,101 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             {stop.place.address}
                           </div>
                         )}
-                        {selected && (
-                          <PlaceIntel
-                            details={
-                              placeDetails?.enginePlaceId ===
-                              stop.place.enginePlaceId
-                                ? placeDetails
-                                : null
-                            }
-                            loading={placeDetailsLoading}
-                            locale={locale}
-                            demoMode={placeDetailsMode === "demo"}
-                            userNote={stop.userNote}
-                          />
-                        )}
-                        {(leg ||
-                          (selected &&
-                            !routing &&
-                            ctx.index < dayStops.length - 1)) && (
-                          <TransferSteps
-                            leg={leg ?? null}
-                            locale={locale}
-                            variant="inline"
-                            demoMode={engineInfo?.mode !== "live"}
-                            showSoftFail={selected && Boolean(leg)}
-                            showEmpty={
-                              selected &&
-                              !routing &&
-                              !leg &&
-                              ctx.index < dayStops.length - 1
-                            }
-                          />
-                        )}
-                        {routing &&
-                          !leg &&
-                          ctx.index < dayStops.length - 1 &&
-                          selected && (
-                            <div
-                              className="animate-fade"
-                              aria-label={t(
-                                locale,
-                                "planner.transfer.loadingHint",
-                              )}
+                        {selected ? (
+                          <SheetPresence
+                            open
+                            className="mt-3 overflow-hidden rounded-bp-sm border border-river/20 bg-paper/50 shadow-[inset_3px_0_0_var(--bp-river)]"
+                            style={{ animationDelay: "40ms" }}
+                            aria-label={t(
+                              locale,
+                              "planner.drawer.detailEyebrow",
+                            )}
+                          >
+                            <header
+                              className="animate-rise flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-foam/80 px-3 py-2"
+                              style={{ animationDelay: "50ms" }}
                             >
-                              <TransferStepsSkeleton />
-                              <p className="mt-1.5 text-xs text-ink-soft">
-                                {t(locale, "planner.transfer.loadingHint")}
-                              </p>
+                              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                                  {t(locale, "planner.drawer.detailEyebrow")}
+                                </span>
+                                <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                                  {t(locale, "planner.stops.chip").replace(
+                                    "{n}",
+                                    String(ctx.index + 1),
+                                  )}
+                                </span>
+                                <span className="text-[11px] leading-snug text-ink-soft/80">
+                                  {t(locale, "planner.drawer.detailSupport")}
+                                </span>
+                              </div>
+                              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                                {t(locale, "planner.stops.selected")}
+                              </span>
+                            </header>
+                            <div
+                              className="animate-rise space-y-0 px-2.5 pb-2.5 pt-0.5 [&>*]:!mt-2 [&>*:first-child]:!mt-1.5"
+                              style={{ animationDelay: "70ms" }}
+                            >
+                              <PlaceIntel
+                                details={
+                                  placeDetails?.enginePlaceId ===
+                                  stop.place.enginePlaceId
+                                    ? placeDetails
+                                    : null
+                                }
+                                loading={placeDetailsLoading}
+                                locale={locale}
+                                demoMode={placeDetailsMode === "demo"}
+                                userNote={stop.userNote}
+                              />
+                              {(leg ||
+                                (!routing &&
+                                  ctx.index < dayStops.length - 1)) && (
+                                <TransferSteps
+                                  leg={leg ?? null}
+                                  locale={locale}
+                                  variant="inline"
+                                  demoMode={engineInfo?.mode !== "live"}
+                                  showSoftFail={Boolean(leg)}
+                                  showEmpty={
+                                    !routing &&
+                                    !leg &&
+                                    ctx.index < dayStops.length - 1
+                                  }
+                                />
+                              )}
+                              {routing &&
+                                !leg &&
+                                ctx.index < dayStops.length - 1 && (
+                                  <div
+                                    className="animate-fade mt-2"
+                                    aria-label={t(
+                                      locale,
+                                      "planner.transfer.loadingHint",
+                                    )}
+                                  >
+                                    <TransferStepsSkeleton />
+                                    <p className="mt-1.5 text-xs text-ink-soft">
+                                      {t(
+                                        locale,
+                                        "planner.transfer.loadingHint",
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
+                              <BookingLinkChips
+                                links={stop.bookingLinks}
+                                locale={locale}
+                              />
                             </div>
-                          )}
-                        <BookingLinkChips
-                          links={stop.bookingLinks}
-                          locale={locale}
-                        />
+                          </SheetPresence>
+                        ) : (
+                          <BookingLinkChips
+                            links={stop.bookingLinks}
+                            locale={locale}
+                          />
+                        )}
                       </div>
                       <div
                         className={`flex shrink-0 flex-col gap-0.5 rounded-bp-xs bg-mist/45 p-0.5 transition duration-bp-fast ease-bp-out ${
@@ -1396,9 +1464,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
-          <p className="border-t border-[color:var(--bp-line)] px-4 py-3 text-xs leading-relaxed text-ink-soft/75">
-            {t(locale, "planner.hint")}
-          </p>
+          <footer className="border-t border-[color:var(--bp-line)] bg-paper/40 px-4 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <p className="text-[11px] leading-snug text-ink-soft/80">
+              <span className="font-semibold uppercase tracking-[0.14em] text-river">
+                {t(locale, "planner.drawer.hintEyebrow")}
+              </span>
+              <span className="mx-1.5 text-ink-soft/40" aria-hidden>
+                ·
+              </span>
+              {t(locale, "planner.hint")}
+            </p>
+          </footer>
         </aside>
       </div>
 
