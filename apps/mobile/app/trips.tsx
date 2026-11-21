@@ -151,8 +151,11 @@ function TripRow({
   );
 }
 
-/** Azure inset seed rail — Soft seed badge when SoftFail owns (web #201). */
-function SeedRail({ soft }: { soft: boolean }) {
+/**
+ * Azure inset Start rail — Soft empty badge when SoftFail owns
+ * (BEA-307 after web #224 / Expo #96).
+ */
+function EmptyRail({ soft }: { soft: boolean }) {
   return (
     <View style={styles.listRail}>
       <View style={styles.listRailCopy}>
@@ -160,7 +163,7 @@ function SeedRail({ soft }: { soft: boolean }) {
           {t(locale, "trips.seedRail")}
         </Text>
         <Text style={styles.listRailCount}>
-          {t(locale, "trips.seedSupport")}
+          {t(locale, "trips.emptySupport")}
         </Text>
       </View>
       <View
@@ -176,7 +179,7 @@ function SeedRail({ soft }: { soft: boolean }) {
           ])}
         >
           {soft
-            ? t(locale, "trips.seedSoftBadge")
+            ? t(locale, "trips.emptySoftBadge")
             : t(locale, "trips.seedReady")}
         </Text>
       </View>
@@ -246,11 +249,11 @@ function TripsListSkeleton() {
 }
 
 /**
- * Expo home trip cards SoftFailNotice chrome (BEA-281 after #176/#193/#201):
- * azure seed / cards rail · Soft seed / Soft cards badge · compact SoftFail
- * under rail · tip-011 SheetPresence · StyleSheet.flatten · Lumen tokens.
- * SoftFail never timber / Failed to fetch. Seed SoftFail yields while cards
- * own (no double depth).
+ * Expo trips empty SoftFailNotice depth (BEA-307 after web #224 / Expo #96):
+ * azure Start rail · Soft empty badge · emptySupport · emptySoftFail copy
+ * (never inherit list softNotice) · tip-011 SheetPresence CTAs ·
+ * StyleSheet.flatten · Lumen tokens. SoftFail never timber / Failed to fetch.
+ * Cards SoftFail yields while empty owns (no double depth).
  */
 export default function TripsScreen() {
   const router = useRouter();
@@ -363,18 +366,18 @@ export default function TripsScreen() {
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
   /**
-   * Trip cards SoftFail ownership (BEA-281 after web #201 seed / #176 Expo):
-   * seed sheet owns SoftFail while empty invite; cards sheet owns SoftFail when
-   * trips exist. SoftFail yields across sheets (no double depth). Soft copy
-   * never timber / Failed to fetch.
+   * Empty SoftFail ownership (BEA-307 after web #224 / Expo #96 / #281):
+   * empty sheet owns SoftFail while empty invite; cards sheet owns SoftFail
+   * when trips exist. SoftFail yields across sheets (no double depth). Empty
+   * SoftFail copy is always trips.emptySoftFail — never inherit list
+   * softNotice. Soft copy never timber / Failed to fetch.
    */
-  const seedOwnsSoft = showEmptyInvite;
+  const emptyOwnsSoft = showEmptyInvite;
   const cardsOwnsSoft = hydrated && !showEmptyInvite;
-  const seedSoftOpen = seedOwnsSoft;
+  const emptySoftOpen = emptyOwnsSoft;
   const cardsSoftOpen =
     cardsOwnsSoft && !error && Boolean(softNotice);
-  const seedSoftCopy =
-    softNotice ?? t(locale, "trips.seedSoftFail");
+  const emptySoftCopy = t(locale, "trips.emptySoftFail");
   const cardsSoftCopy =
     softNotice ?? t(locale, "trips.softOffline");
   /** Timber banner — scrub soft-fail transport noise (Failed to fetch). */
@@ -477,7 +480,7 @@ export default function TripsScreen() {
             </Text>
           </View>
 
-          {/* SoftFailNotice stays sheet-scoped — seed / cards, never page hero. */}
+          {/* SoftFailNotice stays sheet-scoped — empty / cards, never page hero. */}
           {!hydrated ? (
             <SheetPresence open rise={10} delayMs={40}>
               <TripsListSkeleton />
@@ -490,19 +493,20 @@ export default function TripsScreen() {
               accessibilityLabel={t(locale, "trips.seedRail")}
             >
               {/*
-                Seed SoftFail chrome (BEA-281 after #176/#201):
-                azure seed rail · Soft seed badge · compact SoftFailNotice ·
-                tip-011 SheetPresence CTAs / sample cards — never timber.
+                Empty SoftFail depth (BEA-307 after web #224 / Expo #96):
+                azure Start rail · Soft empty badge · emptySupport ·
+                compact SoftFailNotice · tip-011 SheetPresence CTAs /
+                sample cards — never timber / Failed to fetch.
               */}
               <View style={styles.listSheet}>
-                <SeedRail soft={seedSoftOpen} />
-                {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+                <EmptyRail soft={emptySoftOpen} />
+                {/* Compact SoftFail under azure rail — empty owns emptySoftFail; never timber / Failed to fetch. */}
                 <SoftFailNotice
-                  open={!hardError && seedSoftOpen}
+                  open={!hardError && emptySoftOpen}
                   compact
                   style={styles.listSoftFail}
                 >
-                  {seedSoftCopy}
+                  {emptySoftCopy}
                 </SoftFailNotice>
                 <SheetPresence
                   open
@@ -571,13 +575,13 @@ export default function TripsScreen() {
                 Trip cards SoftFail chrome (BEA-281 after #176/#193):
                 azure cards rail · Soft cards badge · compact SoftFailNotice ·
                 tip-011 SheetPresence body — never timber / Failed to fetch.
-                Seed SoftFail yields while cards own (no double depth).
+                Empty SoftFail yields while cards own (no double depth).
               */}
               <View style={styles.listSheet}>
                 <TripsListRail count={trips.length} soft={cardsSoftOpen} />
-                {/* Compact SoftFail under azure cards rail — never timber / Failed to fetch. */}
+                {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
                 <SoftFailNotice
-                  open={cardsSoftOpen}
+                  open={cardsSoftOpen && !emptyOwnsSoft}
                   compact
                   style={styles.listSoftFail}
                 >
@@ -891,7 +895,7 @@ const styles = StyleSheet.create({
   statusChipTextLive: {
     color: colors.river,
   },
-  /** Mist SoftFail strip under azure cards / seed rail — border-b before body. */
+  /** Mist SoftFail strip under azure cards / empty Start rail — border-b before body. */
   listSoftFail: {
     marginBottom: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
