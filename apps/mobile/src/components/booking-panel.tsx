@@ -136,7 +136,19 @@ export function BookingPanel({
   const [statusMode, setStatusMode] = useState<"demo" | "configured">("demo");
   const [softDemo, setSoftDemo] = useState(false);
   /** Save soft-fail stays under the Confirm rail — never timber Failed to fetch. */
-  const [confirmSoftFail, setConfirmSoftFail] = useState(false);
+  const [confirmSoftFail, setConfirmSoftFail] = useState(() => {
+    // Craft preview: /trips/…?confirmSoftFail=1 — mirrors web booking-preview SoftFail.
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("confirmSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  const stopIdRef = useRef(stop?.id);
   const [searched, setSearched] = useState(false);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [city, setCity] = useState(destinationHint ?? "");
@@ -150,9 +162,11 @@ export function BookingPanel({
     if (stop) setOpen(true);
   }, [stop]);
 
-  // Clear Confirm SoftFail when switching stops — keep it after soft-fail local apply
-  // (same stop identity) so SoftFailNotice stays under the azure Confirm rail.
+  // Clear Confirm SoftFail only when stop *identity* changes — keep it after
+  // soft-fail local apply (same id) and craft `?confirmSoftFail=1` preview.
   useEffect(() => {
+    if (stopIdRef.current === stop?.id) return;
+    stopIdRef.current = stop?.id;
     setConfirmSoftFail(false);
   }, [stop?.id]);
 
@@ -275,12 +289,11 @@ export function BookingPanel({
       });
       setConfirmSoftFail(false);
       onSaved(res.stop);
-    } catch (e) {
-      if (isNoiseError(e)) {
-        // Confirm-rail SoftFailNotice only — never surface timber "Failed to fetch".
-        setConfirmSoftFail(true);
-        applyLocalStop(bookingLinks);
-      }
+    } catch {
+      // Confirm-rail SoftFailNotice only — never surface timber "Failed to fetch".
+      // Any save failure soft-fails under azure Confirm rail (noise / refused / CORS).
+      setConfirmSoftFail(true);
+      applyLocalStop(bookingLinks);
     } finally {
       setSaving(false);
     }
