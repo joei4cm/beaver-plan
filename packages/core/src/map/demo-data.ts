@@ -290,26 +290,14 @@ function placeHaystack(p: DemoPlace): string {
 }
 
 /**
- * Substring search over curated POIs. Empty / no-hit queries still return
- * the catalog head so the planner never shows an empty stub.
+ * Substring search over curated POIs.
+ * No-hit queries return [] so the planner can soft-fail empty (not a silent stub).
  */
 export function searchDemoPlaces(text: string, limit = 8): PlaceSummary[] {
   const q = text.trim().toLowerCase();
-  if (!q) {
-    return DEMO_PLACES.slice(0, limit).map(stripKeywords);
-  }
+  if (!q) return [];
   const hits = DEMO_PLACES.filter((p) => placeHaystack(p).includes(q));
-  // Prefer Kyoto-ish hits when the query looks Japanese / Kyoto-related.
-  const ranked =
-    hits.length > 0
-      ? hits
-      : DEMO_PLACES.filter((p) =>
-          /kyoto|京都|清水|伏见|岚山|祇园|锦|金阁|二条|哲学|东福|inari|kiyomizu|gion|arashiyama/.test(
-            placeHaystack(p),
-          ),
-        );
-  const pool = ranked.length > 0 ? ranked : DEMO_PLACES;
-  return pool.slice(0, limit).map(stripKeywords);
+  return hits.slice(0, limit).map(stripKeywords);
 }
 
 function stripKeywords(p: DemoPlace): PlaceSummary {
