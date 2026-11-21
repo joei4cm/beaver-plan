@@ -115,3 +115,38 @@ export function JournalSkeleton() {
     </div>
   );
 }
+
+export function ShareStudioSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8"
+    >
+      <div className="space-y-3 border-b border-[color:var(--bp-line)] pb-8">
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="h-10 w-72 max-w-full" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
+      <div className="mt-6 flex gap-2 border-b border-[color:var(--bp-line)] pb-0">
+        <Skeleton className="h-14 w-28 rounded-none" />
+        <Skeleton className="h-14 w-28 rounded-none" />
+        <Skeleton className="h-14 w-28 rounded-none" />
+      </div>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
+        <div className="flex flex-col items-center">
+          <Skeleton className="aspect-[9/16] w-full max-w-[420px] rounded-bp-lg" />
+          <Skeleton className="mt-4 h-4 w-56" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-7 w-36" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[4.5rem] w-full rounded-bp" />
+          ))}
+          <Skeleton className="mt-4 h-11 w-full rounded-bp" />
+          <Skeleton className="h-11 w-full rounded-bp" />
+        </div>
+      </div>
+    </div>
+  );
+}
