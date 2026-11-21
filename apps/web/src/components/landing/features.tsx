@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { usePrefersReducedMotion } from "./scroll-motion";
@@ -19,8 +26,9 @@ type Props = {
   leadEyebrow: string;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
-  liveBadge: string;
+  softSupport: string;
+  softBadge: string;
+  softLiveBadge: string;
 };
 
 function useSectionReveal(reduced: boolean) {
@@ -141,10 +149,92 @@ function LeadRouteArt({ active }: { active: boolean }) {
 }
 
 /**
- * Landing features SoftFailNotice chrome (BEA-263 after #153/#191):
- * azure pillars sheet rail · Offline/Live badge · compact SoftFailNotice under
- * rail · mist-track focus · tip-011 rise stagger — SoftFail owned by the sheet
- * (no floating notice). Never timber / Failed to fetch.
+ * Pillars SoftFail sheet — azure section rail · Soft/Live badge · softSupport ·
+ * compact SoftFailNotice mist band (`border-b`) · tip-011 mist-wash
+ * SheetPresence body (focus chips · lead route · rows). SoftFail owned by the
+ * sheet; FAQ/footer/how SoftFails stay on their rails (yield if overlapping).
+ * Never timber / Failed to fetch.
+ */
+function PillarsSoftFailSheet({
+  softOpen,
+  sheetEyebrow,
+  sheetSupport,
+  softSupport,
+  softBadge,
+  softLiveBadge,
+  offlineNotice,
+  bodyLabel,
+  className,
+  style,
+  children,
+}: {
+  softOpen: boolean;
+  sheetEyebrow: string;
+  sheetSupport: string;
+  softSupport: string;
+  softBadge: string;
+  softLiveBadge: string;
+  offlineNotice: string;
+  bodyLabel: string;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft ${className ?? ""}`}
+      style={style}
+      aria-label={sheetEyebrow}
+    >
+      <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            {sheetEyebrow}
+          </span>
+          <span className="text-[11px] leading-snug text-ink-soft/80">
+            {softOpen ? softSupport : sheetSupport}
+          </span>
+        </div>
+        <span
+          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+            softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
+          }`}
+        >
+          {softOpen ? softBadge : softLiveBadge}
+        </span>
+      </header>
+      {/* Compact SoftFail under azure rail — mist band + border-b depth. */}
+      <SoftFailNotice
+        open={softOpen}
+        compact
+        className="border-b border-[color:var(--bp-line)]"
+      >
+        {offlineNotice}
+      </SoftFailNotice>
+
+      <SheetPresence
+        open
+        role="group"
+        className={`px-4 py-5 sm:px-5 sm:py-6 ${
+          softOpen
+            ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+            : ""
+        }`}
+        style={{ animationDelay: "40ms" }}
+        aria-label={bodyLabel}
+      >
+        {children}
+      </SheetPresence>
+    </div>
+  );
+}
+
+/**
+ * Landing features SoftFailNotice depth (BEA-330 after #197):
+ * azure pillars SoftFail sheet · Soft/Live badge · softSupport · compact
+ * SoftFailNotice mist band under rail · tip-011 mist-wash body · azure inset
+ * on mist-track focus while SoftFail open — SoftFail owned by the sheet
+ * (FAQ/footer/how yield). Never timber / Failed to fetch.
  */
 export function LandingFeatures({
   title,
@@ -155,8 +245,9 @@ export function LandingFeatures({
   leadEyebrow,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
-  liveBadge,
+  softSupport,
+  softBadge,
+  softLiveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
@@ -210,165 +301,145 @@ export function LandingFeatures({
         </header>
 
         {/*
-          Features SoftFail chrome (BEA-263 after #153/#191):
-          azure pillars rail · Offline/Live badge · compact SoftFailNotice ·
-          mist-track focus · tip-011 lead/rows — never timber.
+          Features SoftFail depth (BEA-330 after #197):
+          azure rail · Soft badge · softSupport · mist SoftFail band ·
+          tip-011 mist-wash pillars — never timber.
         */}
-        <div
-          className={`mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft ${revealClass(visible, reduced)}`}
+        <PillarsSoftFailSheet
+          softOpen={softOpen}
+          sheetEyebrow={sheetEyebrow}
+          sheetSupport={sheetSupport}
+          softSupport={softSupport}
+          softBadge={softBadge}
+          softLiveBadge={softLiveBadge}
+          offlineNotice={offlineNotice}
+          bodyLabel={focusLabel}
+          className={`mt-10 ${revealClass(visible, reduced)}`}
           style={reduced ? undefined : { animationDelay: "100ms" }}
-          aria-label={sheetEyebrow}
         >
-          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-                {sheetEyebrow}
-              </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {sheetSupport}
-              </span>
-            </div>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                softOpen
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river"
-              }`}
-            >
-              {softOpen ? offlineBadge : liveBadge}
-            </span>
-          </header>
-
-          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-          <SoftFailNotice open={softOpen} compact>
-            {offlineNotice}
-          </SoftFailNotice>
-
-          <SheetPresence
-            open
-            role="group"
-            className="px-4 py-5 sm:px-5 sm:py-6"
-            style={{ animationDelay: "40ms" }}
-            aria-label={focusLabel}
+          {/* Pillar focus rail — mist-track · azure select (#46 / tip-011) */}
+          <div
+            className={`animate-rise ${
+              softOpen
+                ? "rounded-bp-sm shadow-[inset_3px_0_0_var(--bp-river)]"
+                : ""
+            }`}
+            style={reduced ? undefined : { animationDelay: "55ms" }}
           >
-            {/* Pillar focus rail — mist-track · azure select (#46 / tip-011) */}
             <div
-              className="animate-rise"
-              style={reduced ? undefined : { animationDelay: "55ms" }}
+              className={`inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1 ${
+                softOpen ? "ml-0.5" : ""
+              }`}
+              role="group"
+              aria-label={focusLabel}
             >
-              <div
-                className="inline-flex max-w-full flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
-                role="group"
-                aria-label={focusLabel}
+              {items.map((item, index) => {
+                const on = focus === index;
+                return (
+                  <button
+                    key={item.title}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setFocus(index)}
+                    className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      on
+                        ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                        : "text-ink-soft hover:text-river"
+                    }`}
+                  >
+                    {item.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Lead feature — one composition, azure route plane */}
+          <div
+            key={focusKey}
+            className="mt-8 grid items-center gap-8 md:mt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-12"
+          >
+            <div
+              className={`relative pl-4 shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp ease-bp-out-strong md:pl-5 ${
+                reduced ? "" : "animate-rise"
+              }`}
+              style={reduced ? undefined : { animationDelay: "85ms" }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river">
+                {leadEyebrow} · {String(focus + 1).padStart(2, "0")}
+              </p>
+              <p
+                aria-hidden
+                className="mt-3 font-display text-4xl font-extrabold leading-none tracking-[-0.05em] text-river/30 md:text-5xl"
               >
-                {items.map((item, index) => {
-                  const on = focus === index;
-                  return (
+                {String(focus + 1).padStart(2, "0")}
+              </p>
+              <h3 className="mt-4 font-display text-[clamp(1.65rem,3.5vw,2.35rem)] font-bold tracking-[-0.03em] text-ink">
+                {lead.title}
+              </h3>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-soft md:text-base">
+                {lead.body}
+              </p>
+            </div>
+            <div
+              aria-hidden
+              className={`relative aspect-[13/8] overflow-hidden rounded-bp-lg bg-mist/60 ring-1 ring-river/15 shadow-bp-soft md:aspect-auto md:min-h-[16rem] ${
+                reduced ? "" : "animate-rise"
+              }`}
+              style={reduced ? undefined : { animationDelay: "120ms" }}
+            >
+              <LeadRouteArt active={visible && !reduced} />
+            </div>
+          </div>
+
+          {/* Secondary pillars — editorial rows with azure focus rail */}
+          {items.length > 1 ? (
+            <ul className="mt-10 border-t border-ink/8 md:mt-12">
+              {items.map((item, index) => {
+                const n = index + 1;
+                const delay = 145 + index * 45;
+                const on = focus === index;
+                return (
+                  <li
+                    key={item.title}
+                    className={`animate-rise border-b border-ink/8`}
+                    style={
+                      reduced ? undefined : { animationDelay: `${delay}ms` }
+                    }
+                  >
                     <button
-                      key={item.title}
                       type="button"
                       aria-pressed={on}
                       onClick={() => setFocus(index)}
-                      className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`group grid w-full gap-2 py-6 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,15rem)_1fr] md:items-baseline md:gap-8 md:py-7 ${
                         on
-                          ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                          : "text-ink-soft hover:text-river"
+                          ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : "hover:bg-mist/30"
                       }`}
                     >
-                      {item.title}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Lead feature — one composition, azure route plane */}
-            <div
-              key={focusKey}
-              className="mt-8 grid items-center gap-8 md:mt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-12"
-            >
-              <div
-                className={`relative pl-4 shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp ease-bp-out-strong md:pl-5 ${
-                  reduced ? "" : "animate-rise"
-                }`}
-                style={reduced ? undefined : { animationDelay: "85ms" }}
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-river">
-                  {leadEyebrow} · {String(focus + 1).padStart(2, "0")}
-                </p>
-                <p
-                  aria-hidden
-                  className="mt-3 font-display text-4xl font-extrabold leading-none tracking-[-0.05em] text-river/30 md:text-5xl"
-                >
-                  {String(focus + 1).padStart(2, "0")}
-                </p>
-                <h3 className="mt-4 font-display text-[clamp(1.65rem,3.5vw,2.35rem)] font-bold tracking-[-0.03em] text-ink">
-                  {lead.title}
-                </h3>
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-soft md:text-base">
-                  {lead.body}
-                </p>
-              </div>
-              <div
-                aria-hidden
-                className={`relative aspect-[13/8] overflow-hidden rounded-bp-lg bg-mist/60 ring-1 ring-river/15 shadow-bp-soft md:aspect-auto md:min-h-[16rem] ${
-                  reduced ? "" : "animate-rise"
-                }`}
-                style={reduced ? undefined : { animationDelay: "120ms" }}
-              >
-                <LeadRouteArt active={visible && !reduced} />
-              </div>
-            </div>
-
-            {/* Secondary pillars — editorial rows with azure focus rail */}
-            {items.length > 1 ? (
-              <ul className="mt-10 border-t border-ink/8 md:mt-12">
-                {items.map((item, index) => {
-                  const n = index + 1;
-                  const delay = 145 + index * 45;
-                  const on = focus === index;
-                  return (
-                    <li
-                      key={item.title}
-                      className={`animate-rise border-b border-ink/8`}
-                      style={
-                        reduced ? undefined : { animationDelay: `${delay}ms` }
-                      }
-                    >
-                      <button
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => setFocus(index)}
-                        className={`group grid w-full gap-2 py-6 text-left transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-inset md:grid-cols-[4.5rem_minmax(10rem,15rem)_1fr] md:items-baseline md:gap-8 md:py-7 ${
+                      <span
+                        aria-hidden
+                        className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
                           on
-                            ? "animate-stop-select bg-mist/25 shadow-[inset_3px_0_0_var(--bp-river)]"
-                            : "hover:bg-mist/30"
+                            ? "text-river"
+                            : "text-river/70 group-hover:text-river"
                         }`}
                       >
-                        <span
-                          aria-hidden
-                          className={`pl-1 font-display text-lg font-bold tabular-nums tracking-[-0.03em] md:pl-2 md:text-xl ${
-                            on
-                              ? "text-river"
-                              : "text-river/70 group-hover:text-river"
-                          }`}
-                        >
-                          {String(n).padStart(2, "0")}
-                        </span>
-                        <span className="font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
-                          {item.title}
-                        </span>
-                        <span className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
-                          {item.body}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
-          </SheetPresence>
-        </div>
+                        {String(n).padStart(2, "0")}
+                      </span>
+                      <span className="font-display text-lg font-semibold tracking-[-0.02em] text-ink md:text-xl">
+                        {item.title}
+                      </span>
+                      <span className="pr-1 text-sm leading-relaxed text-ink-soft md:pr-2 md:text-base">
+                        {item.body}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </PillarsSoftFailSheet>
       </div>
     </section>
   );

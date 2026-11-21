@@ -148,7 +148,7 @@ export default async function HomePage() {
         signals={trustSignals}
       />
 
-      {/* Below fold — features SoftFail sheet (azure rail · Offline/Live · tip-011) */}
+      {/* Below fold — features SoftFail depth (BEA-330 · Soft badge · mist SoftFail band · tip-011) */}
       <LandingFeatures
         title={t(locale, "landing.pillars.title")}
         support={t(locale, "landing.pillars.support")}
@@ -158,8 +158,9 @@ export default async function HomePage() {
         leadEyebrow={t(locale, "landing.pillars.leadEyebrow")}
         sheetEyebrow={t(locale, "landing.pillars.sheetEyebrow")}
         sheetSupport={t(locale, "landing.pillars.sheetSupport")}
-        offlineBadge={t(locale, "landing.pillars.offlineBadge")}
-        liveBadge={t(locale, "landing.pillars.liveBadge")}
+        softSupport={t(locale, "landing.pillars.softSupport")}
+        softBadge={t(locale, "landing.pillars.softBadge")}
+        softLiveBadge={t(locale, "landing.pillars.softLiveBadge")}
       />
 
       {/* Below fold — how-it-works SoftFail depth (BEA-317 · Soft badge · mist SoftFail band · tip-011) */}
