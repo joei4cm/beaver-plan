@@ -204,13 +204,13 @@ export function TripsHome({ locale }: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/trips/new"
-            className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+            className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
           >
             {t(locale, "trips.new")}
           </Link>
           <Link
             href="/trips/sample-kyoto"
-            className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-river hover:text-foam"
+            className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
           >
             {t(locale, "trips.openSample")}
           </Link>
@@ -225,74 +225,82 @@ export function TripsHome({ locale }: Props) {
           {error}
         </p>
       ) : null}
-      <SoftFailNotice open={!error && Boolean(softNotice)} className="mt-6">
-        {softNotice ?? ""}
-      </SoftFailNotice>
 
       <section className="mt-16" aria-labelledby="trips-yours-heading">
-        <header className="animate-rise mb-8">
+        <header className="animate-rise mb-6">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+            {t(locale, "trips.yoursEyebrow")}
+          </p>
           <h2
             id="trips-yours-heading"
-            className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+            className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
           >
-            {t(locale, "trips.yours")}
+            {showEmptyInvite && !loading
+              ? t(locale, "trips.empty")
+              : t(locale, "trips.yours")}
           </h2>
-          <p className="mt-2 max-w-xl text-sm text-ink-soft">
-            {t(locale, "trips.yoursSupport")}
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
+            {showEmptyInvite && !loading
+              ? t(locale, "trips.emptyCta")
+              : t(locale, "trips.yoursSupport")}
           </p>
         </header>
+
+        <SoftFailNotice
+          open={!error && Boolean(softNotice) && !loading}
+          className="mb-6"
+        >
+          {softNotice ?? ""}
+        </SoftFailNotice>
 
         {loading ? (
           <TripsListSkeleton />
         ) : showEmptyInvite ? (
           <div className="animate-fade">
-            <div className="max-w-lg">
-              <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-                {t(locale, "trips.empty")}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-                {t(locale, "trips.emptyCta")}
-              </p>
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/trips/new"
-                  className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
-                >
-                  {t(locale, "trips.new")}
-                </Link>
-                <Link
-                  href="/trips/sample-kyoto"
-                  className="text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:text-river-deep"
-                >
-                  {t(locale, "trips.openSample")} →
-                </Link>
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/trips/new"
+                className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              >
+                {t(locale, "trips.new")}
+              </Link>
+              <Link
+                href="/trips/sample-kyoto"
+                className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              >
+                {t(locale, "trips.openSample")}
+              </Link>
             </div>
 
-            {sampleTrips.length > 0 && (
-              <ul className="mt-12">
-                {sampleTrips.map((trip, index) => (
-                  <li
-                    key={trip.id}
-                    className="animate-rise group border-t border-[color:var(--bp-line)] last:border-b"
-                    style={{ animationDelay: `${index * 50 + 40}ms` }}
-                  >
-                    <Link
-                      href={`/trips/${trip.id}`}
-                      className="flex items-baseline gap-4 py-6 transition duration-bp-fast ease-bp-out sm:gap-6"
+            {sampleTrips.length > 0 ? (
+              <div className="mt-12">
+                <p className="mb-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80">
+                  {t(locale, "trips.sampleEyebrow")}
+                </p>
+                <ul>
+                  {sampleTrips.map((trip, index) => (
+                    <li
+                      key={trip.id}
+                      className="animate-rise group border-t border-[color:var(--bp-line)] last:border-b"
+                      style={{ animationDelay: `${index * 50 + 40}ms` }}
                     >
-                      <IndexMark n={index + 1} />
-                      <div className="min-w-0">
-                        <TripTitle tripId={trip.id} title={trip.title} />
-                        <span className="mt-1 block text-sm text-ink-soft">
-                          {formatTripMeta(trip, locale)}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <Link
+                        href={`/trips/${trip.id}`}
+                        className="flex items-baseline gap-4 py-6 bp-transition sm:gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                      >
+                        <IndexMark n={index + 1} />
+                        <div className="min-w-0">
+                          <TripTitle tripId={trip.id} title={trip.title} />
+                          <span className="mt-1 block text-sm text-ink-soft">
+                            {formatTripMeta(trip, locale)}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         ) : (
           <ul>
@@ -308,7 +316,7 @@ export function TripsHome({ locale }: Props) {
                   <div className="flex flex-wrap items-center gap-4 py-6 sm:flex-nowrap sm:gap-6">
                     <Link
                       href={`/trips/${trip.id}`}
-                      className="flex min-w-0 flex-1 items-baseline gap-4 transition duration-bp-fast ease-bp-out sm:gap-6"
+                      className="flex min-w-0 flex-1 items-baseline gap-4 bp-transition sm:gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                     >
                       <IndexMark n={index + 1} />
                       <div className="min-w-0">
@@ -337,7 +345,7 @@ export function TripsHome({ locale }: Props) {
                         type="button"
                         disabled={busy || Boolean(dupBusyId)}
                         onClick={() => void duplicateTrip(trip.id)}
-                        className="rounded-bp border border-river/40 px-3 py-1.5 text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-bp border border-river/40 px-3 py-1.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                       >
                         {busy
                           ? t(locale, "trips.duplicating")
@@ -375,7 +383,7 @@ export function TripsHome({ locale }: Props) {
         {loading ? (
           <TemplatesListSkeleton />
         ) : showTemplatesEmpty ? (
-          <div className="animate-fade max-w-lg py-4">
+          <div className="animate-fade max-w-lg py-2">
             <p className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
               {t(locale, "trips.templatesEmpty")}
             </p>
@@ -384,7 +392,7 @@ export function TripsHome({ locale }: Props) {
             </p>
             <Link
               href="/trips/new"
-              className="mt-7 inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep"
+              className="mt-7 inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "trips.new")}
             </Link>
@@ -428,7 +436,7 @@ export function TripsHome({ locale }: Props) {
                       type="button"
                       disabled={busy || Boolean(creatingId)}
                       onClick={() => void createFromTemplate(tpl.id)}
-                      className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                     >
                       {busy
                         ? t(locale, "trips.creating")
@@ -436,7 +444,7 @@ export function TripsHome({ locale }: Props) {
                     </button>
                     <Link
                       href={`/trips/new?template=${tpl.id}`}
-                      className="rounded-bp border border-river/40 px-3 py-2.5 text-center text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-river hover:text-foam"
+                      className="rounded-bp border border-river/40 px-3 py-2.5 text-center text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                     >
                       {t(locale, "trips.customize")}
                     </Link>
