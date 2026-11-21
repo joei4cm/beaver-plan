@@ -334,19 +334,28 @@ export function BookingPanel({
   );
 
   /**
-   * OTA SoftFailNotice chrome (BEA-264 after #160/#184):
-   * azure OTA sheet rail · soft badge · compact SoftFailNotice under rail ·
-   * tip-011 (#46). Confirm owns save soft-fail so OTA SoftFail yields
-   * (no double depth). Soft copy never timber / Failed to fetch.
+   * OTA SoftFailNotice depth (BEA-327 after #198):
+   * azure OTA sheet rail · Soft OTA badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · mist tip-011 body while soft · Confirm owns
+   * save soft-fail so OTA SoftFail yields (no double depth) · Expo booking
+   * SoftFail (#220) stays out of scope. Soft copy never timber / Failed to fetch.
    */
   const showConfirmSoftFail = confirmSoftFail;
   const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
+  const sheetSupportCopy = showOtaSoftFail
+    ? t(locale, "planner.booking.softSupport")
+    : stop
+      ? t(locale, "planner.booking.forStop").replace(
+          "{name}",
+          stop.place.name,
+        )
+      : t(locale, "planner.booking.support");
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        OTA SoftFail chrome (BEA-264 after #160/#184):
-        azure sheet rail · Demo/Keys badge · soft OTA badge · tip-011 —
-        never timber / Failed to fetch.
+        OTA SoftFail depth (BEA-327 after #198):
+        azure sheet rail · Demo/Keys badge · Soft OTA badge · softSupport ·
+        tip-011 — never timber / Failed to fetch.
       */}
       <button
         type="button"
@@ -390,12 +399,7 @@ export function BookingPanel({
             ) : null}
           </div>
           <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
-            {stop
-              ? t(locale, "planner.booking.forStop").replace(
-                  "{name}",
-                  stop.place.name,
-                )
-              : t(locale, "planner.booking.support")}
+            {sheetSupportCopy}
           </p>
         </div>
         <span
@@ -411,7 +415,7 @@ export function BookingPanel({
         style={{ animationDelay: "40ms" }}
         aria-label={t(locale, "planner.booking.title")}
       >
-        {/* Compact SoftFail under azure OTA rail — never timber / Failed to fetch. */}
+        {/* Compact SoftFail mist band under azure OTA rail — Confirm SoftFail yields. */}
         <SoftFailNotice
           open={showOtaSoftFail}
           compact
@@ -420,7 +424,13 @@ export function BookingPanel({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div className="divide-y divide-[color:var(--bp-line)]">
+        <div
+          className={`divide-y divide-[color:var(--bp-line)] ${
+            showOtaSoftFail
+              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+              : ""
+          }`}
+        >
           {/* Search — mist-track filters · city / dates · azure CTA */}
           <section
             className="animate-rise space-y-3 px-4 py-4"

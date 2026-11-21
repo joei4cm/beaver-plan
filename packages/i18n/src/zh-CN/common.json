@@ -682,6 +682,7 @@
   "planner.booking.title": "预订",
   "planner.booking.sheetEyebrow": "预订",
   "planner.booking.support": "搜索住宿与门票，打开外部渠道，或把深链接钉在站点上。",
+  "planner.booking.softSupport": "柔和预订 — 未配置预订 API / 密钥时用演示目录。",
   "planner.booking.forStop": "「{name}」的预订链接",
   "planner.booking.selectStop": "先在列表中选中一个站点，再把预订链接钉上去。",
   "planner.booking.savedCount": "已存 {n} 条",

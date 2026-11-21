@@ -682,6 +682,7 @@
   "planner.booking.title": "Bookings",
   "planner.booking.sheetEyebrow": "OTA",
   "planner.booking.support": "Search stays & tickets, open the provider, or pin a deep link on a stop.",
+  "planner.booking.softSupport": "Soft OTA — demo catalog while booking API / keys are unset.",
   "planner.booking.forStop": "Links for {name}",
   "planner.booking.selectStop": "Select a stop in the list to pin booking links on it.",
   "planner.booking.savedCount": "{n} saved",
