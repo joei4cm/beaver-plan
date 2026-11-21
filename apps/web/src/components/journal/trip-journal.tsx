@@ -21,6 +21,7 @@ import {
 import { brand } from "@beaver/ui-tokens";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { JournalDayScrub } from "@/components/journal/journal-day-scrub";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { JournalSkeleton } from "@/components/ui/skeleton";
@@ -699,6 +700,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           })}
         </div>
 
+        <JournalDayScrub
+          locale={locale}
+          stops={dayStops}
+          selectedStopId={stopId || null}
+          onSelectStop={setStopId}
+        />
+
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
           <section
             id="journal-day-panel"
@@ -781,10 +789,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             >
               {visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
+                const scrubMatch = Boolean(stopId && entry.stopId === stopId);
                 return (
                   <li key={entry.id}>
                     <article
-                      className="animate-entry-in group flex gap-4 py-7 first:pt-6 sm:gap-5"
+                      className={`animate-entry-in group flex gap-4 py-7 first:pt-6 sm:gap-5 bp-transition ${
+                        scrubMatch
+                          ? "rounded-bp-sm bg-river/[0.04] ring-1 ring-river/25"
+                          : ""
+                      }`}
                       style={{ animationDelay: `${index * 55 + 40}ms` }}
                     >
                       <EntryIndexMark n={index + 1} />
