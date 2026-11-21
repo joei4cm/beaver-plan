@@ -65,9 +65,9 @@ export default function BookingPreviewPage() {
         预订
       </h1>
       <p className="relative mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
-        OTA sheet hierarchy: Search → Results → Confirm. Mist-track filters,
-        tip-011 rise, compact SoftFailNotice footer when API offline; pin save
-        soft-fails under the azure confirm rail. No checkout in Beaver Plan.
+        Confirm SoftFailNotice under azure rail · soft badge · tip-011 rise.
+        Sheet footer SoftFail yields when Confirm owns soft-fail. No checkout
+        in Beaver Plan.
       </p>
       <div className="relative mt-8 animate-rise">
         <BookingPanel

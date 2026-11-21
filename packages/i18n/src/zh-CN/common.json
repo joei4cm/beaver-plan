@@ -632,6 +632,7 @@
   "planner.booking.confirmTitle": "钉住并保存",
   "planner.booking.confirmSupport": "核对已钉深链，再保存到站点。API 离线时软失败留在本地。",
   "planner.booking.confirmSoftFail": "无法连上 API 保存 — 钉链先留在本地，等 Neon/API 可用。绝不抛出 Failed to fetch。",
+  "planner.booking.confirmSoftBadge": "柔和保存",
   "planner.booking.confirmPending": "已钉 {n}",
   "planner.booking.confirmDirty": "未保存",
   "planner.booking.demoNotice": "演示目录 — 未配置预订密钥时使用京都精选住宿与门票。",

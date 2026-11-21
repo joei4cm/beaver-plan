@@ -334,11 +334,13 @@ export function BookingPanel({
   );
 
   /**
-   * Booking OTA sheet (BEA-206 after #128/#151):
-   * azure sheet eyebrow · Search · Results · Confirm · compact SoftFailNotice
-   * footer, SheetPresence + tip-011 rise. Save soft-fail stays section-scoped
-   * under Confirm — never timber / Failed to fetch.
+   * Confirm SoftFailNotice chrome (BEA-239 after #128/#160):
+   * azure Confirm rail · soft badge · compact SoftFailNotice · SheetPresence
+   * pin body · tip-011 (#46). Confirm owns soft-fail so sheet footer yields
+   * (no double depth). Soft copy never timber / Failed to fetch.
    */
+  const showConfirmSoftFail = confirmSoftFail;
+  const showSheetSoftFail = Boolean(softCopy) && !confirmSoftFail;
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       <button
@@ -641,7 +643,11 @@ export function BookingPanel({
             )}
           </section>
 
-          {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
+          {/*
+            Confirm SoftFail chrome (BEA-239 after #128/#160):
+            azure Confirm rail · soft badge · compact SoftFailNotice ·
+            SheetPresence pin body · tip-011 rise — never timber.
+          */}
           <section
             className="animate-rise px-4 py-4"
             style={{ animationDelay: "90ms" }}
@@ -667,6 +673,11 @@ export function BookingPanel({
                         {t(locale, "planner.booking.confirmDirty")}
                       </span>
                     ) : null}
+                    {showConfirmSoftFail ? (
+                      <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                        {t(locale, "planner.booking.confirmSoftBadge")}
+                      </span>
+                    ) : null}
                   </div>
                   <h3 className="mt-1 font-display text-base tracking-tight text-ink">
                     {t(locale, "planner.booking.confirmTitle")}
@@ -680,7 +691,7 @@ export function BookingPanel({
                     type="button"
                     disabled={saving || !isDirty}
                     onClick={() => void save()}
-                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {saving
                       ? t(locale, "planner.booking.saving")
@@ -689,17 +700,26 @@ export function BookingPanel({
                 ) : null}
               </div>
 
+              {/* Compact SoftFail under azure Confirm rail — never timber / Failed to fetch. */}
               <SoftFailNotice
-                open={confirmSoftFail}
+                open={showConfirmSoftFail}
                 compact
                 className="border-b border-[color:var(--bp-line)]"
               >
                 {t(locale, "planner.booking.confirmSoftFail")}
               </SoftFailNotice>
 
-              <div className="space-y-3 px-3 py-3">
+              <SheetPresence
+                open
+                className="space-y-3 px-3 py-3"
+                style={{ animationDelay: "40ms" }}
+                aria-label={t(locale, "planner.booking.confirmTitle")}
+              >
                 {!stop ? (
-                  <p className="text-sm leading-relaxed text-ink-soft">
+                  <p
+                    className="animate-rise text-sm leading-relaxed text-ink-soft"
+                    style={{ animationDelay: "55ms" }}
+                  >
                     {t(locale, "planner.booking.selectStop")}
                   </p>
                 ) : (
@@ -711,13 +731,9 @@ export function BookingPanel({
                         className={`space-y-1.5 rounded-bp-sm border px-3 py-3 transition duration-bp-fast ease-bp-out ${
                           filled
                             ? "animate-stop-select border-river/30 bg-river/[0.04] shadow-[inset_3px_0_0_var(--bp-river)]"
-                            : "border-[color:var(--bp-line)]/70 bg-paper/50 hover:border-river/25"
+                            : "animate-rise border-[color:var(--bp-line)]/70 bg-paper/50 hover:border-river/25"
                         }`}
-                        style={
-                          filled
-                            ? { animationDelay: `${40 + i * 35}ms` }
-                            : undefined
-                        }
+                        style={{ animationDelay: `${55 + i * 35}ms` }}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
@@ -761,7 +777,7 @@ export function BookingPanel({
                     );
                   })
                 )}
-              </div>
+              </SheetPresence>
             </div>
           </section>
         </div>
@@ -770,8 +786,8 @@ export function BookingPanel({
           {t(locale, "planner.booking.hint")}
         </p>
 
-        {/* SoftFailNotice owned by booking sheet footer — never timber / Failed to fetch. */}
-        <SoftFailNotice open={Boolean(softCopy)} compact>
+        {/* Sheet SoftFail yields while Confirm owns soft-fail — no double depth. */}
+        <SoftFailNotice open={showSheetSoftFail} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
       </SheetPresence>
