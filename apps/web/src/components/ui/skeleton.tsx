@@ -113,12 +113,19 @@ export function PlannerSkeleton() {
           </div>
         </div>
         <aside className="flex flex-col border-t border-[color:var(--bp-line)] lg:border-l lg:border-t-0">
+          {/* Stop drawer chrome — Itinerary rail · day tabs · Stops · SoftFail (tip 017) */}
+          <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex items-baseline gap-2">
+              <Skeleton className="h-2.5 w-16" />
+              <Skeleton className="h-2.5 w-40" />
+            </div>
+            <Skeleton className="h-5 w-12 rounded-bp-xs" />
+          </div>
           <div className="flex gap-0 border-b border-[color:var(--bp-line)] bg-paper/60 px-2 py-3">
             <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
             <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
             <Skeleton className="mx-1 h-12 w-24 rounded-bp-sm" />
           </div>
-          {/* Stops chrome — azure rail · Open badge · SoftFailNotice · empty body (tip 017) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex items-center justify-between gap-2 px-4 py-2.5">
               <div className="flex items-baseline gap-2">
