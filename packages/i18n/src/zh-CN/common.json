@@ -270,6 +270,7 @@
   "planner.map.layersEyebrow": "叠加",
   "planner.map.layersTitle": "地图图层",
   "planner.map.layersSupport": "切换路线、站点与换乘图例的显示。",
+  "planner.map.layersActiveCount": "{n} 开",
   "planner.map.layer.routes": "路线",
   "planner.map.layer.stops": "站点",
   "planner.map.layer.legend": "图例",
