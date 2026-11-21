@@ -548,13 +548,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     role="option"
                     aria-selected={selected}
                     onClick={() => pickTemplate(tpl.id)}
-                    className={`group flex flex-col overflow-hidden rounded-bp border text-left transition duration-bp ease-bp-out ${
+                    className={`group flex flex-col overflow-hidden rounded-bp border text-left will-change-transform ${
                       selected
-                        ? "animate-stop-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
-                        : "border-[color:var(--bp-line)] bg-foam/80 hover:border-river/45 hover:bg-foam hover:shadow-bp-soft"
+                        ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
+                        : "border-[color:var(--bp-line)] bg-foam/80 transition duration-bp ease-bp-out hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
                     }`}
                   >
-                    {/* Aspect thumbnail — azure wash silhouette (#46 radii) */}
+                    {/* Aspect thumbnail — azure wash + thumb pop on select (#46) */}
                     <div
                       className={`relative flex items-end justify-center px-3 pt-3 transition duration-bp-fast ease-bp-out ${
                         selected
@@ -566,7 +566,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       <div
                         className={`relative w-[42%] overflow-hidden rounded-bp-xs shadow-bp-soft transition duration-bp ease-bp-out ${
                           selected
-                            ? "bg-gradient-to-b from-river to-river-deep"
+                            ? "animate-template-thumb bg-gradient-to-b from-river to-river-deep"
                             : "bg-gradient-to-b from-river/55 to-ink/70 group-hover:from-river/75"
                         }`}
                         style={{
@@ -600,7 +600,21 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                           {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
                         </span>
                         {selected ? (
-                          <span className="shrink-0 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                          <span className="animate-rise inline-flex shrink-0 items-center gap-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                            <svg
+                              viewBox="0 0 12 12"
+                              className="h-3 w-3"
+                              aria-hidden
+                            >
+                              <path
+                                d="M2.2 6.2 4.8 8.7 9.8 3.4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                             {t(locale, "share.selected")}
                           </span>
                         ) : null}
