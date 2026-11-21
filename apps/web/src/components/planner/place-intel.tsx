@@ -57,10 +57,10 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Map place intel sheet (BEA-216 after #85/#120):
- * azure inset rail · Place intel sheet eyebrow · Snapshot mist · mist-track
- * Categories · About · Note · compact SoftFailNotice footer,
- * SheetPresence + tip-011 (#46) rise stagger — never timber / Failed to fetch.
+ * Map place intel SoftFailNotice chrome (BEA-265 after #161/#216):
+ * azure inset rail · soft badge · compact SoftFail under rail · tip-011 (#46)
+ * Snapshot / Categories / About / Note rise stagger — never timber /
+ * Failed to fetch. SoftFail owned by place intel sheet (no footer double depth).
  */
 export function PlaceIntel({
   details,
@@ -93,7 +93,7 @@ export function PlaceIntel({
   const snap = snapRef.current;
   const view = snap?.details;
   const note = snap?.userNote;
-  const demo = snap?.demoMode;
+  const demo = Boolean(snap?.demoMode);
   const hours = view?.openingHours?.[0];
   const extraHours = view?.openingHours?.slice(1, 3) ?? [];
   const tags = view?.tags?.slice(0, 4) ?? [];
@@ -101,6 +101,7 @@ export function PlaceIntel({
   const showTags = tags.length > 0;
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
+  const softOpen = open && demo;
   const tagCountLabel = t(locale, "planner.place.tagCount").replace(
     "{n}",
     String(tags.length),
@@ -115,7 +116,10 @@ export function PlaceIntel({
     >
       {view ? (
         <>
-          {/* Sheet chrome — azure inset rail · Place intel eyebrow · pin glyph */}
+          {/*
+            SoftFail chrome (BEA-265): azure Place intel rail · soft/live badge ·
+            tip-011 rise — SoftFail sits under rail, not footer.
+          */}
           <header
             className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
             style={{ animationDelay: "50ms" }}
@@ -128,7 +132,7 @@ export function PlaceIntel({
                   </span>
                   <span
                     className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                      demo
+                      softOpen
                         ? "bg-mist text-ink-soft"
                         : "bg-river/12 text-river-deep"
                     }`}
@@ -137,6 +141,11 @@ export function PlaceIntel({
                       ? t(locale, "planner.place.demoBadge")
                       : t(locale, "planner.place.liveBadge")}
                   </span>
+                  {softOpen ? (
+                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                      {t(locale, "planner.place.softBadge")}
+                    </span>
+                  ) : null}
                   {showTags ? (
                     <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
                       {tagCountLabel}
@@ -163,6 +172,15 @@ export function PlaceIntel({
               <PinGlyph className="mt-0.5 shrink-0 text-river" />
             </div>
           </header>
+
+          {/* Compact SoftFail under azure Place intel rail — never timber / Failed to fetch. */}
+          <SoftFailNotice
+            open={softOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {t(locale, "planner.place.softFail")}
+          </SoftFailNotice>
 
           <div className="divide-y divide-[color:var(--bp-line)]">
             {showSnapshot ? (
@@ -267,11 +285,6 @@ export function PlaceIntel({
               </section>
             ) : null}
           </div>
-
-          {/* SoftFailNotice owned by place intel footer — never doubles stage chrome */}
-          <SoftFailNotice open={demo} compact>
-            {t(locale, "planner.place.softFail")}
-          </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>

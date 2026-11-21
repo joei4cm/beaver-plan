@@ -344,7 +344,7 @@ export function DualCameraSkeleton() {
 }
 
 /** Tip 017 — nested place intel sheet while Places soft-fetches. */
-/** Layout-matched map place intel (azure inset · mist Snapshot · mist-track Categories). */
+/** Layout-matched map place intel SoftFail chrome (azure inset · SoftFail slot · mist Snapshot). */
 export function PlaceIntelSkeleton() {
   return (
     <div
@@ -358,6 +358,7 @@ export function PlaceIntelSkeleton() {
             <div className="flex items-center gap-2">
               <Skeleton className="h-2.5 w-16" />
               <Skeleton className="h-4 w-16 rounded-bp-xs" />
+              <Skeleton className="h-4 w-14 rounded-bp-xs" />
               <Skeleton className="h-3 w-14" />
             </div>
             <Skeleton className="h-4 w-36 max-w-full" />
@@ -365,6 +366,10 @@ export function PlaceIntelSkeleton() {
           </div>
           <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
         </div>
+      </div>
+      {/* SoftFailNotice slot under azure rail (BEA-265) */}
+      <div className="border-b border-[color:var(--bp-line)] bg-mist/40 px-4 py-2">
+        <Skeleton className="h-3 w-full max-w-[92%]" />
       </div>
       <div className="divide-y divide-[color:var(--bp-line)]">
         <div className="space-y-2 bg-mist/25 px-3 py-3">
