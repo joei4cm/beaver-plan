@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { Link, Stack, useRouter } from "expo-router";
 import {
@@ -89,10 +88,16 @@ function TripRow({
   showCta?: boolean;
   last?: boolean;
 }) {
+  // Single style object — Link asChild + style arrays crash RN Web
+  // (CSSStyleDeclaration indexed setter).
+  const rowStyle = last
+    ? StyleSheet.flatten([styles.row, styles.rowLast])
+    : styles.row;
+
   return (
     <Link href={`/trips/${trip.id}`} asChild>
       <Pressable
-        style={[styles.row, last && styles.rowLast]}
+        style={rowStyle}
         accessibilityRole="link"
         accessibilityLabel={`${trip.title}. ${formatTripMeta(trip)}`}
       >
@@ -111,50 +116,6 @@ function TripRow({
   );
 }
 
-function RiseIn({
-  children,
-  delayMs = 0,
-  style,
-}: {
-  children: ReactNode;
-  delayMs?: number;
-  style?: object;
-}) {
-  const rise = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    rise.setValue(0);
-    Animated.timing(rise, {
-      toValue: 1,
-      duration: motion.durationMdMs,
-      delay: delayMs,
-      easing: easeRise,
-      useNativeDriver: true,
-    }).start();
-  }, [rise, delayMs]);
-
-  return (
-    <Animated.View
-      style={[
-        style,
-        {
-          opacity: rise,
-          transform: [
-            {
-              translateY: rise.interpolate({
-                inputRange: [0, 1],
-                outputRange: [14, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      {children}
-    </Animated.View>
-  );
-}
-
 export default function TripsScreen() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -166,6 +127,8 @@ export default function TripsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [creatingId, setCreatingId] = useState<string | null>(null);
+
+  const rise = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
     let remoteFailed = false;
@@ -221,6 +184,17 @@ export default function TripsScreen() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    rise.setValue(0);
+    Animated.timing(rise, {
+      toValue: 1,
+      duration: motion.durationMdMs,
+      easing: easeRise,
+      useNativeDriver: true,
+    }).start();
+  }, [hydrated, rise]);
+
   async function useTemplate(id: string) {
     setCreatingId(id);
     setError(null);
@@ -246,6 +220,18 @@ export default function TripsScreen() {
   const showEmptyInvite = hydrated && ownTrips.length === 0;
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
 
+  const riseStyle = {
+    opacity: rise,
+    transform: [
+      {
+        translateY: rise.interpolate({
+          inputRange: [0, 1],
+          outputRange: [14, 0],
+        }),
+      },
+    ],
+  };
+
   return (
     <ScrollView
       style={styles.root}
@@ -262,7 +248,7 @@ export default function TripsScreen() {
 
       <View style={styles.topo} pointerEvents="none" />
 
-      <RiseIn>
+      <Animated.View style={riseStyle}>
         <View style={styles.hero}>
           <Text style={styles.brand}>Beaver Plan · 海狸旅行</Text>
           <Text style={styles.title}>{t(locale, "trips.title")}</Text>
@@ -277,97 +263,103 @@ export default function TripsScreen() {
             </Link>
           </View>
         </View>
-      </RiseIn>
 
-      {error ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
-      {!error && softNotice ? (
-        <View style={styles.softBanner}>
-          <Text style={styles.softText}>{softNotice}</Text>
-        </View>
-      ) : null}
+        {error ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+        {!error && softNotice ? (
+          <View style={styles.softBanner}>
+            <Text style={styles.softText}>{softNotice}</Text>
+          </View>
+        ) : null}
 
-      <View style={styles.section}>
-        <RiseIn delayMs={40}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t(locale, "trips.yours")}</Text>
           <Text style={styles.sectionSupport}>
             {t(locale, "trips.yoursSupport")}
           </Text>
-        </RiseIn>
 
-        {!hydrated ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={colors.river} />
-            <Text style={styles.loadingText}>{t(locale, "trips.loading")}</Text>
-          </View>
-        ) : showEmptyInvite ? (
-          <RiseIn delayMs={80}>
-            <View style={styles.emptyInvite}>
-              <Text style={styles.emptyTitle}>{t(locale, "trips.empty")}</Text>
-              <Text style={styles.emptyBody}>{t(locale, "trips.emptyCta")}</Text>
-              <Link href="/trips/sample-kyoto" asChild>
-                <Pressable style={styles.emptyLink}>
-                  <Text style={styles.emptyLinkText}>
-                    {t(locale, "trips.openSample")} →
-                  </Text>
-                </Pressable>
-              </Link>
+          {!hydrated ? (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator color={colors.river} />
+              <Text style={styles.loadingText}>
+                {t(locale, "trips.loading")}
+              </Text>
             </View>
-            {sampleTrips.map((trip, index) => (
-              <RiseIn key={trip.id} delayMs={120 + index * 50}>
+          ) : showEmptyInvite ? (
+            <View>
+              <View style={styles.emptyInvite}>
+                <Text style={styles.emptyTitle}>
+                  {t(locale, "trips.empty")}
+                </Text>
+                <Text style={styles.emptyBody}>
+                  {t(locale, "trips.emptyCta")}
+                </Text>
+                <Link href="/trips/sample-kyoto" asChild>
+                  <Pressable style={styles.emptyLink}>
+                    <Text style={styles.emptyLinkText}>
+                      {t(locale, "trips.openSample")} →
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+              {sampleTrips.map((trip, index) => (
                 <TripRow
+                  key={trip.id}
                   trip={trip}
                   index={index}
                   showCta
                   last={index === sampleTrips.length - 1}
                 />
-              </RiseIn>
-            ))}
-          </RiseIn>
-        ) : (
-          trips.map((trip, index) => (
-            <RiseIn key={trip.id} delayMs={80 + index * 50}>
+              ))}
+            </View>
+          ) : (
+            trips.map((trip, index) => (
               <TripRow
+                key={trip.id}
                 trip={trip}
                 index={index}
                 showCta
                 last={index === trips.length - 1}
               />
-            </RiseIn>
-          ))
-        )}
-      </View>
+            ))
+          )}
+        </View>
 
-      <View style={[styles.section, styles.sectionSpaced]}>
-        <RiseIn delayMs={120}>
+        <View style={[styles.section, styles.sectionSpaced]}>
           <Text style={styles.templatesEyebrow}>
             {t(locale, "trips.templatesEyebrow")}
           </Text>
-          <Text style={styles.sectionTitle}>{t(locale, "trips.templates")}</Text>
+          <Text style={styles.sectionTitle}>
+            {t(locale, "trips.templates")}
+          </Text>
           <Text style={styles.sectionSupport}>
             {t(locale, "trips.templatesSupport")}
           </Text>
-        </RiseIn>
 
-        {templatesSoft && hydrated ? (
-          <View style={styles.softBanner}>
-            <Text style={styles.softText}>
-              {t(locale, "trips.templatesSoftOffline")}
-            </Text>
-          </View>
-        ) : null}
+          {templatesSoft && hydrated ? (
+            <View style={[styles.softBanner, styles.softBannerInSection]}>
+              <Text style={styles.softText}>
+                {t(locale, "trips.templatesSoftOffline")}
+              </Text>
+            </View>
+          ) : null}
 
-        {templates.map((tpl, index) => {
-          const title = tpl.title[locale] ?? tpl.title["zh-CN"];
-          const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
-          const busy = creatingId === tpl.id;
-          const last = index === templates.length - 1;
-          return (
-            <RiseIn key={tpl.id} delayMs={140 + index * 55}>
-              <View style={[styles.templateRow, last && styles.rowLast]}>
+          {templates.map((tpl, index) => {
+            const title = tpl.title[locale] ?? tpl.title["zh-CN"];
+            const desc = tpl.description[locale] ?? tpl.description["zh-CN"];
+            const busy = creatingId === tpl.id;
+            const last = index === templates.length - 1;
+            const tplRowStyle = last
+              ? StyleSheet.flatten([styles.templateRow, styles.rowLast])
+              : styles.templateRow;
+            const useStyle = busy
+              ? StyleSheet.flatten([styles.useTpl, styles.useTplBusy])
+              : styles.useTpl;
+            return (
+              <View key={tpl.id} style={tplRowStyle}>
                 <IndexMark n={index + 1} />
                 <View style={styles.rowBody}>
                   <Text style={styles.templateTitle}>{title}</Text>
@@ -378,7 +370,7 @@ export default function TripsScreen() {
                     {t(locale, "trips.stopUnit")}
                   </Text>
                   <Pressable
-                    style={[styles.useTpl, busy && styles.useTplBusy]}
+                    style={useStyle}
                     disabled={busy || Boolean(creatingId)}
                     onPress={() => void useTemplate(tpl.id)}
                   >
@@ -390,10 +382,10 @@ export default function TripsScreen() {
                   </Pressable>
                 </View>
               </View>
-            </RiseIn>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -478,6 +470,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(230, 236, 245, 0.55)",
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  softBannerInSection: {
+    marginTop: 0,
+    marginBottom: 12,
   },
   softText: {
     ...type.body,
