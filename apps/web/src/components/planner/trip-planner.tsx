@@ -169,10 +169,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           plannerNoise ||
           (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
       );
-  /** Empty day SoftFail is section-scoped — never borrow transfer / drag softNotice. */
+  /**
+   * SoftFailNotice copy ownership:
+   * - Empty day → empty SoftFail (BEA-222); never borrow transfer / drag softNotice.
+   * - Day with stops → always drag SoftFail (BEA-255). Transfer soft-fail stays
+   *   on the transit SoftFailNotice — softNotice must not pollute this slot.
+   */
   const listSoftCopy = emptyOwnsSoft
     ? t(locale, "planner.emptySoftFail")
-    : (softNotice ?? t(locale, "planner.stops.dragSoftFail"));
+    : t(locale, "planner.stops.dragSoftFail");
   const shareSoftOpen =
     !emptyOwnsSoft && !dragOwnsSoft && (demoShell || plannerNoise);
 
