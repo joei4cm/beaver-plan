@@ -208,6 +208,13 @@ export function TripsHome({ locale }: Props) {
   const showTemplatesEmpty = hydrated && templates.length === 0;
   const loading = pending && !hydrated;
   const listSoft = Boolean(softNotice);
+  /**
+   * Empty SoftFailNotice chrome (BEA-230 after #94/#142/#171): empty owns
+   * compact SoftFail under azure seed rail · SheetPresence body · tip-011
+   * (#46). Soft copy never timber / Failed to fetch.
+   */
+  const emptySoftOpen = showEmptyInvite;
+  const emptySoftCopy = softNotice ?? t(locale, "trips.emptySoftFail");
 
   return (
     <div className="relative mx-auto max-w-5xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
@@ -287,7 +294,11 @@ export function TripsHome({ locale }: Props) {
           <TripsListSkeleton />
         ) : showEmptyInvite ? (
           <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
-            {/* Seed CTA chrome — azure rail · SoftFailNotice · primary/secondary hierarchy */}
+            {/*
+              Empty SoftFail chrome (BEA-230 after #94/#142/#171):
+              azure seed rail · Seeded badge · compact SoftFailNotice ·
+              SheetPresence body · tip-011 rise — never timber.
+            */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
@@ -298,63 +309,76 @@ export function TripsHome({ locale }: Props) {
                 </span>
               </div>
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  listSoft
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                  emptySoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {listSoft
+                {emptySoftOpen
                   ? t(locale, "trips.seedDemo")
                   : t(locale, "trips.seedReady")}
               </span>
             </header>
 
-            <SoftFailNotice
-              open={!error && Boolean(softNotice)}
-              compact
-            >
-              {softNotice ?? ""}
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            <SoftFailNotice open={!error && emptySoftOpen} compact>
+              {emptySoftCopy}
             </SoftFailNotice>
 
-            <div
+            <SheetPresence
+              open
               role="group"
-              aria-label={t(locale, "trips.seedActions")}
               className="flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5"
+              style={{ animationDelay: "40ms" }}
+              aria-label={t(locale, "trips.seedActions")}
             >
               <Link
                 href="/trips/new"
-                className="rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                style={{ animationDelay: "55ms" }}
               >
                 {t(locale, "trips.new")}
               </Link>
               <Link
                 href="/trips/sample-kyoto"
-                className="rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                style={{ animationDelay: "85ms" }}
               >
                 {t(locale, "trips.openSample")}
               </Link>
               <a
                 href="#trips-templates-heading"
-                className="rounded-bp-xs px-2.5 py-2 text-sm font-medium text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                className="animate-rise rounded-bp-xs px-2.5 py-2 text-sm font-medium text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                style={{ animationDelay: "115ms" }}
               >
                 {t(locale, "trips.seedPlaybooks")}
               </a>
-            </div>
+            </SheetPresence>
 
             {sampleTrips.length > 0 ? (
               <div className="border-t border-[color:var(--bp-line)]">
-                <p className="px-4 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80 sm:px-5">
+                <p
+                  className="animate-rise px-4 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80 sm:px-5"
+                  style={{ animationDelay: "85ms" }}
+                >
                   {t(locale, "trips.sampleEyebrow")}
                 </p>
-                <ul role="list" aria-label={t(locale, "trips.sampleEyebrow")}>
+                <SheetPresence
+                  open
+                  as="ul"
+                  role="list"
+                  className="space-y-0"
+                  style={{ animationDelay: "100ms" }}
+                  aria-label={t(locale, "trips.sampleEyebrow")}
+                >
                   {sampleTrips.map((trip, index) => {
                     const badge = tripBadge(trip);
                     return (
                       <li
                         key={trip.id}
                         className="animate-rise group border-t border-[color:var(--bp-line)] first:border-t-0"
-                        style={{ animationDelay: `${index * 50 + 40}ms` }}
+                        style={{ animationDelay: `${index * 50 + 115}ms` }}
                       >
                         <Link
                           href={`/trips/${trip.id}`}
@@ -376,7 +400,7 @@ export function TripsHome({ locale }: Props) {
                       </li>
                     );
                   })}
-                </ul>
+                </SheetPresence>
               </div>
             ) : null}
           </div>

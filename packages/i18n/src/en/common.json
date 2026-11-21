@@ -75,6 +75,7 @@
   "trips.support": "A map-first trip space — playbooks, samples, or days you shaped yourself.",
   "trips.empty": "Your trips start here.",
   "trips.emptyCta": "Sketch a new route, borrow a city playbook, or open the Kyoto sample.",
+  "trips.emptySoftFail": "Demo shell — no trips yet. New, Kyoto sample, or city playbooks stay local until Neon/API is available. Never a Failed to fetch crash.",
   "trips.new": "New trip",
   "trips.openSample": "Open Kyoto sample",
   "trips.loading": "Loading trips…",
