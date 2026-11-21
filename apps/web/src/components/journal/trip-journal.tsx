@@ -691,29 +691,32 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
   /**
-   * Photo strip SoftFailNotice depth (BEA-325 after #217):
-   * compose media rail owns compact SoftFail under azure strip rail · Soft
-   * strip badge · softSupport · mist SoftFail band (`border-b`) · mist tip-011
-   * body while soft · tip-011 (#46). Yield journal empty SoftFail (#231) and
-   * compose SoftFail while strip owns (no double depth). Soft copy never
-   * timber / Failed to fetch.
+   * Compose SoftFailNotice depth (BEA-356 after #110/#156):
+   * azure Compose rail · Soft media badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash SheetPresence body · tip-011 (#46).
+   * Compose owns soft-fail while entries exist; empty SoftFail (#231) and
+   * photo strip SoftFail (#244) yield while compose owns (no double depth).
+   * Soft copy never timber / Failed to fetch. Expo compose SoftFail (#247) out of scope.
    */
-  const photoStripOwnsSoft = composeSoftFail && !emptyOwnsSoft;
-  const photoStripSoftOpen = photoStripOwnsSoft;
+  const composeOwnsSoft = composeSoftFail && !emptyOwnsSoft;
+  const showComposeSoftFail = composeOwnsSoft;
+  const composeSoftCopy = t(locale, "journal.composeSoftFail");
+  const composeSupportCopy = showComposeSoftFail
+    ? t(locale, "journal.composeSoftSupport")
+    : t(locale, "journal.composeHint");
+  /**
+   * Photo strip SoftFailNotice depth (BEA-325 after #217):
+   * SoftFail under azure strip rail yields while empty (#231) or compose
+   * SoftFail (BEA-356) owns (no double depth). Soft copy never timber.
+   */
+  const photoStripSoftOpen = false;
   const photoStripSoftCopy = t(locale, "journal.photoStripSoftFail");
-  const photoStripSupportCopy = photoStripSoftOpen
-    ? t(locale, "journal.photoStripSoftSupport").replace(
-        "{max}",
-        String(PHOTO_SLOT_MAX),
-      )
-    : t(locale, "journal.photoStripSupport").replace(
-        "{max}",
-        String(PHOTO_SLOT_MAX),
-      );
-  const showComposeSoftFail =
-    composeSoftFail && !emptyOwnsSoft && !photoStripOwnsSoft;
+  const photoStripSupportCopy = t(locale, "journal.photoStripSupport").replace(
+    "{max}",
+    String(PHOTO_SLOT_MAX),
+  );
   const showListSoftFail =
-    !emptyOwnsSoft && (demoSeeded || softNotice);
+    !emptyOwnsSoft && !composeOwnsSoft && (demoSeeded || softNotice);
   const listSoftOpen = showListSoftFail;
   const listSoftCopy =
     softNotice && !online
@@ -1115,7 +1118,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             className="flex flex-col border-t border-[color:var(--bp-line)] bg-paper/55 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-t-0"
             aria-label={t(locale, "journal.compose")}
           >
-            {/* Azure hierarchy — eyebrow · title · soft badge · hint (#46) */}
+            {/*
+              Compose SoftFail depth (BEA-356 after #110/#156):
+              azure Compose rail · Soft media badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash body — empty SoftFail
+              (#231) + photo strip SoftFail (#244) yield while compose owns;
+              never timber / Failed to fetch.
+            */}
             <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
               <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -1133,19 +1142,27 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 ) : null}
               </div>
               <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                {t(locale, "journal.composeHint")}
+                {composeSupportCopy}
               </p>
             </header>
 
-            {/* Compose SoftFail yields while photo strip owns (no double depth). */}
-            <SoftFailNotice open={showComposeSoftFail} compact>
-              {t(locale, "journal.composeSoftFail")}
+            {/* Compact SoftFail mist band under azure Compose rail — photo strip SoftFail yields. */}
+            <SoftFailNotice
+              open={showComposeSoftFail}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {composeSoftCopy}
             </SoftFailNotice>
 
             <SheetPresence
               key={`compose-body-${dayId ?? "all"}`}
               open
-              className="flex flex-col p-5 md:p-6"
+              className={`flex flex-col p-5 md:p-6 ${
+                showComposeSoftFail
+                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  : ""
+              }`}
               style={{ animationDelay: "80ms" }}
               aria-label={t(locale, "journal.compose")}
             >
@@ -1181,10 +1198,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
 
               {/*
                 Photo strip SoftFail depth (BEA-325 after #217):
-                azure strip rail · Soft strip badge · softSupport ·
-                compact SoftFail mist band (`border-b`) · mist tip-011 body
-                while soft · tip-011 rise — never timber / Failed to fetch.
-                Yield empty SoftFail (#231) + compose SoftFail while strip owns.
+                azure strip rail chrome kept; SoftFailNotice yields while
+                compose SoftFail (BEA-356) or empty SoftFail (#231) owns —
+                no double depth. tip-011 rise on frames; never timber.
               */}
               <section
                 className="animate-rise mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
@@ -1202,22 +1218,18 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   </div>
                   <span
                     className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                      photoStripSoftOpen
-                        ? "bg-mist text-ink-soft"
-                        : stripMedia.length > 0
-                          ? "bg-river/12 text-river-deep tabular-nums normal-case tracking-normal"
-                          : "bg-mist text-ink-soft tabular-nums normal-case tracking-normal"
+                      stripMedia.length > 0
+                        ? "bg-river/12 text-river-deep tabular-nums normal-case tracking-normal"
+                        : "bg-mist text-ink-soft tabular-nums normal-case tracking-normal"
                     }`}
                   >
-                    {photoStripSoftOpen
-                      ? t(locale, "journal.photoStripSoftBadge")
-                      : t(locale, "journal.photoCount")
-                          .replace("{n}", String(stripMedia.length))
-                          .replace("{max}", String(PHOTO_SLOT_MAX))}
+                    {t(locale, "journal.photoCount")
+                      .replace("{n}", String(stripMedia.length))
+                      .replace("{max}", String(PHOTO_SLOT_MAX))}
                   </span>
                 </header>
 
-                {/* Compact SoftFail under azure strip rail — yields while empty owns. */}
+                {/* SoftFail under strip rail — yields while compose SoftFail owns. */}
                 <SoftFailNotice
                   open={photoStripSoftOpen}
                   compact
@@ -1227,11 +1239,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 </SoftFailNotice>
 
                 <div
-                  className={`animate-rise ${
-                    photoStripSoftOpen
-                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                      : ""
-                  }`}
+                  className="animate-rise"
                   style={{ animationDelay: "70ms" }}
                 >
                   <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
