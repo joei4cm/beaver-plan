@@ -130,6 +130,7 @@
   "planner.shareSupport": "分享工作室 · 朋友圈 / 小红书卡片",
   "planner.shareCta": "生成分享图",
   "planner.shareActions": "行程分享与工具",
+  "planner.shareSoftFail": "分享工作室在 Share API / R2 未配置时柔和回退到本地 SVG — 导出仍可预览，不会出现 Failed to fetch。",
   "auth.eyebrow": "账号",
   "auth.support": "登录后创建行程、邀请同伴，一起在同一张地图上排日程。",
   "auth.providersEyebrow": "登录方式",

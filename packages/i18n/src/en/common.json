@@ -130,6 +130,7 @@
   "planner.shareSupport": "Share studio · Moments / Xiaohongshu card",
   "planner.shareCta": "Share card",
   "planner.shareActions": "Trip share and tools",
+  "planner.shareSoftFail": "Share studio soft-falls to local SVG when Share API / R2 are unset — export stays previewable; never a Failed to fetch crash.",
   "auth.eyebrow": "Account",
   "auth.support": "Sign in to create trips, invite companions, and co-edit the same map.",
   "auth.providersEyebrow": "Providers",
