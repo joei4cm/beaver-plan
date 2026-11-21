@@ -399,26 +399,26 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * SoftFail ownership (BEA-256 after #149/#169/#183/#240):
+   * SoftFail ownership (BEA-279 after #149/#183/#192):
    * empty canvas owns SoftFail under azure canvas rail ·
-   * Export owns softDemo / exportSoftFail under azure Export rail ·
-   * sheet SoftFail yields (no double depth). Soft copy never timber /
-   * Failed to fetch.
+   * Studio sheet owns softDemo under azure Studio rail ·
+   * Export owns exportSoftFail under azure Export rail ·
+   * no double depth. Soft copy never timber / Failed to fetch.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
-  const exportOwnsSoft =
-    !emptyOwnsSoft && (softDemo || exportSoftFail);
+  const exportOwnsSoft = !emptyOwnsSoft && exportSoftFail;
+  const sheetOwnsSoft = !emptyOwnsSoft && !exportOwnsSoft && softDemo;
   const emptySoftOpen =
     emptyOwnsSoft && (softDemo || exportSoftFail || !busy);
-  /** Sheet SoftFail yields while empty / Export owns (no double depth). */
-  const sheetSoftOpen =
-    !emptyOwnsSoft && !exportOwnsSoft && (softDemo || exportSoftFail);
+  /** Studio SoftFail under azure sheet rail — yields while empty / Export owns. */
+  const sheetSoftOpen = sheetOwnsSoft;
   const emptySoftCopy = exportSoftFail
     ? t(locale, "share.exportSoftFail")
     : softDemo || emptyOwnsSoft
       ? t(locale, "share.emptySoftFail")
       : t(locale, "share.demoNotice");
+  const sheetSoftCopy = t(locale, "share.softFail");
   const exportSoftCopy = exportSoftFail
     ? t(locale, "share.exportSoftFail")
     : t(locale, "share.demoNotice");
@@ -643,14 +643,19 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           </p>
         </section>
 
-        {/* Control sheet — azure rail · SoftFail yields while empty owns · tip-011 */}
+        {/*
+          Studio SoftFail chrome (BEA-279 after #149/#183/#192):
+          azure Studio rail · Soft studio badge · compact SoftFailNotice ·
+          tip-011 rise — never timber / Failed to fetch. Empty + Export yield
+          while sheet owns softDemo (no double depth).
+        */}
         <SheetPresence
           open
           className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
           style={{ animationDelay: "80ms" }}
-          aria-label={t(locale, "share.title")}
+          aria-label={t(locale, "share.sheetEyebrow")}
         >
-          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "share.sheetEyebrow")}
@@ -660,21 +665,27 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </span>
             </div>
             <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                softDemo || exportSoftFail || emptyOwnsSoft
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                sheetSoftOpen || softDemo || exportSoftFail || emptyOwnsSoft
                   ? "bg-mist text-ink-soft"
                   : "bg-river/12 text-river"
               }`}
             >
-              {softDemo || exportSoftFail || emptyOwnsSoft
-                ? t(locale, "share.demoBadge")
-                : t(locale, "share.liveBadge")}
+              {sheetSoftOpen
+                ? t(locale, "share.softBadge")
+                : softDemo || exportSoftFail || emptyOwnsSoft
+                  ? t(locale, "share.demoBadge")
+                  : t(locale, "share.liveBadge")}
             </span>
           </header>
 
-          {/* Sheet SoftFail yields while empty / Export owns soft-fail. */}
-          <SoftFailNotice open={sheetSoftOpen} compact>
-            {exportSoftCopy}
+          {/* Compact SoftFail under azure Studio rail — never timber / Failed to fetch. */}
+          <SoftFailNotice
+            open={sheetSoftOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {sheetSoftCopy}
           </SoftFailNotice>
 
           <div className="space-y-5 px-4 py-4">
@@ -940,13 +951,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     </p>
                   </div>
                   <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                      softDemo || exportSoftFail
+                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                      exportOwnsSoft
                         ? "bg-mist text-ink-soft"
                         : "bg-river/12 text-river"
                     }`}
                   >
-                    {softDemo || exportSoftFail
+                    {exportOwnsSoft
                       ? t(locale, "share.demoBadge")
                       : t(locale, "share.liveBadge")}
                   </span>
