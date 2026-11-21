@@ -418,6 +418,8 @@
   "journal.mediaPlaceholder": "Photo frame",
   "journal.photoSlots": "Photo frames",
   "journal.photoStrip": "Photo strip",
+  "journal.photoStripSupport": "Lead frame · up to {max}",
+  "journal.photoLead": "Lead",
   "journal.photoCount": "{n} / {max}",
   "journal.save": "Save to journal",
   "journal.saving": "Saving…",
