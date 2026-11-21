@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocalSearchParams, Stack } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -7,6 +14,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -45,6 +53,22 @@ const DEFAULT_ACCENT = SHARE_ACCENT_PRESETS[0];
 const SHARE_EXPORT_SCALE = 2;
 
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
+
+/** RN Web: embed SVG markup (Image data:svg is blank on many browsers). */
+function WebSvgPreview({ svg, label }: { svg: string; label: string }) {
+  const body = svg.trim().replace(/^<\?xml[^>]*>\s*/i, "");
+  const markup = `<style>.share-svg-preview svg{width:100%;height:100%;display:block}</style>${body}`;
+  return createElement("div", {
+    className: "share-svg-preview",
+    style: {
+      width: "100%",
+      height: "100%",
+    },
+    dangerouslySetInnerHTML: { __html: markup },
+    role: "img",
+    "aria-label": label,
+  });
+}
 
 export default function ShareScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -327,7 +351,16 @@ export default function ShareScreen() {
                   { aspectRatio: active.width / active.height },
                 ])}
               >
-                {previewUrl ? (
+                {Platform.OS === "web" && svg ? (
+                  <View style={styles.previewImage}>
+                    <WebSvgPreview
+                      svg={svg}
+                      label={
+                        locale === "zh-CN" ? active.nameZh : active.nameEn
+                      }
+                    />
+                  </View>
+                ) : previewUrl ? (
                   <Image
                     source={{ uri: previewUrl }}
                     style={styles.previewImage}
