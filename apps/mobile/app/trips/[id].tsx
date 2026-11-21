@@ -620,6 +620,14 @@ export default function TripDetailScreen() {
     () => (dayId ? stopsForDay(stops, dayId) : []),
     [stops, dayId],
   );
+  /** Per-day stop counts for day-tab meta (BEA-258 / web #188). */
+  const dayStopCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const day of days) {
+      map.set(day.id, stopsForDay(stops, day.id).length);
+    }
+    return map;
+  }, [days, stops]);
   const dayLegs = useMemo(() => {
     const ids = new Set(dayStops.map((s) => s.id));
     return legs.filter((l) => ids.has(l.fromStopId) && ids.has(l.toStopId));
@@ -926,6 +934,10 @@ export default function TripDetailScreen() {
     !online || fromCache
       ? (softNotice ?? t(locale, "planner.demoLocal"))
       : (softNotice ?? "");
+  /** SoftFail stays under Stops — Days chrome never owns SoftFail (BEA-258). */
+  const selectedDayIndex = dayId
+    ? Math.max(1, days.findIndex((d) => d.id === dayId) + 1)
+    : 0;
   const selectedStop = selectedStopId
     ? dayStops.find((s) => s.id === selectedStopId)
     : undefined;
@@ -1088,73 +1100,132 @@ export default function TripDetailScreen() {
             />
 
             <View style={styles.sheet}>
-              {/* Day tabs — underline select + tip-011 settle (web #117 / tip 015). */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.dayRow}
-                contentContainerStyle={styles.dayRowContent}
-                accessibilityRole="tablist"
-                accessibilityLabel={t(locale, "planner.dayFill.days")}
+              {/*
+                Day tabs SoftFail chrome (BEA-258 after web #188 / Expo #127):
+                azure Days rail · mist underline select · tip-011 settle ·
+                per-day stop meta · SoftFailNotice stays under Stops ·
+                StyleSheet.flatten. Soft-fail never timber / Failed to fetch.
+              */}
+              <SheetPresence
+                open
+                delayMs={40}
+                rise={8}
+                style={styles.daysChrome}
+                accessibilityLabel={t(locale, "planner.days.eyebrow")}
               >
-                <View style={styles.dayRailInner}>
-                  {dayUnderlineVisible ? (
-                    <Animated.View
-                      pointerEvents="none"
-                      accessibilityElementsHidden
-                      importantForAccessibility="no"
-                      style={StyleSheet.flatten([
-                        styles.dayUnderline,
-                        {
-                          left: dayUnderlineLeft,
-                          width: dayUnderlineWidth,
-                          opacity: dayUnderlineOpacity,
-                          transform: [{ scaleY: dayUnderlineSettle }],
-                        },
-                      ])}
-                    />
-                  ) : null}
-                  {days.map((day, i) => {
-                    const active = dayId === day.id;
-                    return (
-                      <Pressable
-                        key={day.id}
-                        onPress={() => selectDay(day.id)}
-                        onLayout={(e) => {
-                          const { x, width } = e.nativeEvent.layout;
-                          dayTabLayouts.current.set(day.id, { x, width });
-                          if (day.id === dayId) {
-                            applyDayUnderline(day.id, dayUnderlineReady.current);
-                          }
-                        }}
-                        style={StyleSheet.flatten([
-                          styles.dayChip,
-                          active ? styles.dayChipActive : null,
-                        ])}
-                        accessibilityRole="tab"
-                        accessibilityState={{ selected: active }}
-                      >
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.dayChipEyebrow,
-                            active ? styles.dayChipEyebrowActive : null,
-                          ])}
-                        >
-                          {t(locale, "planner.day")} {i + 1}
-                        </Text>
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.dayChipDate,
-                            active ? styles.dayChipDateActive : null,
-                          ])}
-                        >
-                          {day.date}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                <View style={styles.daysRail}>
+                  <View style={styles.daysRailCopy}>
+                    <Text style={styles.daysEyebrow}>
+                      {t(locale, "planner.days.eyebrow")}
+                    </Text>
+                    <Text style={styles.daysCount}>
+                      {t(locale, "planner.days.count").replace(
+                        "{n}",
+                        String(days.length),
+                      )}
+                    </Text>
+                    <Text style={styles.daysSupport} numberOfLines={1}>
+                      {t(locale, "planner.days.support")}
+                    </Text>
+                  </View>
+                  {dayId ? (
+                    <View style={styles.daysSelectedBadge}>
+                      <Text style={styles.daysSelectedBadgeText}>
+                        {t(locale, "planner.day")} {selectedDayIndex} ·{" "}
+                        {t(locale, "planner.days.selected")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.daysListHint}>
+                      {t(locale, "planner.dayFill.days")}
+                    </Text>
+                  )}
                 </View>
-              </ScrollView>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.dayRow}
+                  contentContainerStyle={styles.dayRowContent}
+                  accessibilityRole="tablist"
+                  accessibilityLabel={t(locale, "planner.days.eyebrow")}
+                >
+                  <View style={styles.dayRailInner}>
+                    {dayUnderlineVisible ? (
+                      <Animated.View
+                        pointerEvents="none"
+                        accessibilityElementsHidden
+                        importantForAccessibility="no"
+                        style={StyleSheet.flatten([
+                          styles.dayUnderline,
+                          {
+                            left: dayUnderlineLeft,
+                            width: dayUnderlineWidth,
+                            opacity: dayUnderlineOpacity,
+                            transform: [{ scaleY: dayUnderlineSettle }],
+                          },
+                        ])}
+                      />
+                    ) : null}
+                    {days.map((day, i) => {
+                      const active = dayId === day.id;
+                      const stopCount = dayStopCounts.get(day.id) ?? 0;
+                      return (
+                        <Pressable
+                          key={day.id}
+                          onPress={() => selectDay(day.id)}
+                          onLayout={(e) => {
+                            const { x, width } = e.nativeEvent.layout;
+                            dayTabLayouts.current.set(day.id, { x, width });
+                            if (day.id === dayId) {
+                              applyDayUnderline(
+                                day.id,
+                                dayUnderlineReady.current,
+                              );
+                            }
+                          }}
+                          style={StyleSheet.flatten([
+                            styles.dayChip,
+                            active ? styles.dayChipActive : null,
+                          ])}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected: active }}
+                        >
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.dayChipEyebrow,
+                              active ? styles.dayChipEyebrowActive : null,
+                            ])}
+                          >
+                            {t(locale, "planner.day")} {i + 1}
+                          </Text>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.dayChipDate,
+                              active ? styles.dayChipDateActive : null,
+                            ])}
+                          >
+                            {day.date}
+                          </Text>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.dayChipMeta,
+                              active ? styles.dayChipMetaActive : null,
+                            ])}
+                          >
+                            {stopCount > 0
+                              ? t(locale, "planner.days.stopsMeta").replace(
+                                  "{n}",
+                                  String(stopCount),
+                                )
+                              : t(locale, "planner.days.stopsMetaEmpty")}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </SheetPresence>
 
               {/*
                 Transit SoftFail chrome (BEA-242 after #139 filters):
@@ -1426,9 +1497,10 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Map-stop SoftFail chrome (BEA-253 after web #189 / Expo #158):
-                azure Stops rail · soft/selected badge · compact SoftFailNotice ·
-                tip-011 chip rise — never timber / Failed to fetch.
+                SoftFailNotice under azure Stops rail (BEA-253 + BEA-258):
+                SoftFail stays under Stops — Days chrome never owns SoftFail
+                (web #188 / #189). tip-011 · StyleSheet.flatten · never timber /
+                Failed to fetch.
               */}
               <View style={styles.stopsChrome}>
                 <View style={styles.stopsRail}>
@@ -1448,7 +1520,11 @@ export default function TripDetailScreen() {
                       <Text style={styles.stopsSupport} numberOfLines={1}>
                         {t(locale, "planner.stops.support")}
                       </Text>
-                    ) : null}
+                    ) : (
+                      <Text style={styles.stopsSupport} numberOfLines={1}>
+                        {t(locale, "planner.emptySupport")}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.stopsRailBadges}>
                     {dayEmpty ? (
@@ -1560,7 +1636,7 @@ export default function TripDetailScreen() {
                   </SheetPresence>
                 ) : null}
 
-                {/* Compact SoftFail under azure Stops rail — never timber. */}
+                {/* Compact SoftFail under Stops — Days chrome never owns SoftFail. */}
                 <SoftFailNotice open={stopsSoftOpen} compact>
                   {stopsSoftCopy}
                 </SoftFailNotice>
@@ -2288,14 +2364,84 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
     overflow: "hidden",
   },
-  dayRow: {
+  /* Azure Days chrome — web .bp-day-tabs-chrome (BEA-258 / #188). */
+  daysChrome: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  daysRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+    rowGap: 6,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  daysRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: 8,
+    rowGap: 2,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  daysEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  daysCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100, 116, 139, 0.8)",
+  },
+  daysSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(100, 116, 139, 0.8)",
+    flexShrink: 1,
+  },
+  daysSelectedBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  daysSelectedBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  daysListHint: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: "rgba(100, 116, 139, 0.55)",
+  },
+  dayRow: {
     /* Mist wash rail — not full pill (web .bp-day-tab-rail--underline). */
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    backgroundColor: "rgba(230, 236, 245, 0.62)",
   },
   dayRowContent: {
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     paddingTop: 2,
     paddingBottom: 0,
     minWidth: "100%",
@@ -2312,11 +2458,11 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 999,
     backgroundColor: colors.river,
-    /* Soft azure edge — matches web gradient underline. */
+    /* Soft azure edge + depth — matches web underline shadow. */
     shadowColor: colors.river,
-    shadowOpacity: 0.18,
-    shadowRadius: 1,
-    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
     zIndex: 0,
   },
   dayChip: {
@@ -2330,7 +2476,8 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   dayChipActive: {
-    backgroundColor: "rgba(47, 107, 255, 0.08)",
+    /* Foam / river wash — web selected tab. */
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
   },
   dayChipEyebrow: {
     ...type.body,
@@ -2356,6 +2503,20 @@ const styles = StyleSheet.create({
   dayChipDateActive: {
     color: colors.ink,
     fontWeight: "700",
+  },
+  dayChipMeta: {
+    ...type.body,
+    marginTop: 3,
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+    fontVariant: ["tabular-nums"],
+    color: colors.inkSoft,
+    opacity: 0.72,
+  },
+  dayChipMetaActive: {
+    color: colors.river,
+    opacity: 0.9,
   },
   /* Transit filter chips — mist-track · azure select (web #129). */
   modeFilter: {
