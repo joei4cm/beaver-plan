@@ -45,7 +45,7 @@ export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-/** Layout-matched city playbooks (azure rail · soft-notice · number · title · Use / Customize). */
+/** Layout-matched city playbooks (azure rail · SoftFailNotice · dense number · title · Use / Customize). */
 export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite">
@@ -57,20 +57,20 @@ export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
           </div>
           <Skeleton className="h-5 w-14 rounded-bp-xs" />
         </div>
-        <Skeleton className="mx-4 my-3 h-10 w-[calc(100%-2rem)] rounded-bp-sm" />
+        <Skeleton className="h-9 w-full rounded-none" />
         <ul className="space-y-0">
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}
-              className="grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] px-4 py-7 last:border-b-0 sm:grid-cols-[auto_1fr_auto] sm:gap-8 sm:px-5"
+              className="grid grid-cols-[auto_1fr] items-start gap-3 border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:px-5 sm:py-[1.125rem]"
             >
-              <Skeleton className="h-8 w-10 shrink-0 md:h-9 md:w-12" />
-              <div className="min-w-0 space-y-2.5">
-                <Skeleton className="h-7 w-52 max-w-[80%]" />
-                <Skeleton className="h-3.5 w-full max-w-md" />
+              <Skeleton className="h-6 w-8 shrink-0 md:h-7 md:w-10" />
+              <div className="min-w-0 space-y-1.5">
+                <Skeleton className="h-5 w-44 max-w-[70%]" />
+                <Skeleton className="h-3 w-full max-w-md" />
                 <Skeleton className="h-3 w-36" />
               </div>
-              <div className="col-span-2 flex flex-col gap-2 sm:col-span-1 sm:items-stretch md:flex-row md:items-center">
+              <div className="col-span-2 flex flex-col gap-2 sm:col-span-1 sm:flex-row sm:items-center">
                 <Skeleton className="h-10 w-full rounded-bp sm:w-28" />
                 <Skeleton className="h-10 w-full rounded-bp sm:w-24" />
               </div>

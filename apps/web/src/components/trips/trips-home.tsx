@@ -7,6 +7,7 @@ import type { Trip } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   getLocalTrip,
@@ -44,19 +45,7 @@ function formatTripMeta(trip: Trip): string {
   return parts.join(" · ") || "—";
 }
 
-/** Playbooks editorial index. */
-function IndexMark({ n }: { n: number }) {
-  return (
-    <span
-      aria-hidden
-      className="w-10 shrink-0 font-display text-2xl font-bold tabular-nums leading-none text-mist md:w-12 md:text-3xl"
-    >
-      {String(n).padStart(2, "0")}
-    </span>
-  );
-}
-
-/** Trips list density — quieter mark, title leads hierarchy. */
+/** Trips / playbooks density — quieter mark, title leads hierarchy. */
 function DenseIndexMark({ n }: { n: number }) {
   return (
     <span
@@ -513,20 +502,48 @@ export function TripsHome({ locale }: Props) {
         {loading ? (
           <TemplatesListSkeleton />
         ) : showTemplatesEmpty ? (
-          <div className="animate-fade">
-            <SoftFailNotice open={templatesSoft} className="mb-6">
+          <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+            {/* Empty playbooks chrome — azure rail · SoftFailNotice · New (seed parity) */}
+            <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  {t(locale, "trips.templatesRail")}
+                </span>
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "trips.templatesEmptySupport")}
+                </span>
+              </div>
+              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                {t(locale, "trips.templatesEmptyBadge")}
+              </span>
+            </header>
+
+            <SoftFailNotice open={templatesSoft} compact>
               {t(locale, "trips.templatesSoftOffline")}
             </SoftFailNotice>
-            <Link
-              href="/trips/new"
-              className="inline-flex rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+
+            <SheetPresence
+              open
+              className="flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5"
+              style={{ animationDelay: "40ms" }}
+              aria-label={t(locale, "trips.templatesActions")}
             >
-              {t(locale, "trips.new")}
-            </Link>
+              <Link
+                href="/trips/new"
+                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                style={{ animationDelay: "55ms" }}
+              >
+                {t(locale, "trips.new")}
+              </Link>
+            </SheetPresence>
           </div>
         ) : (
           <div className="animate-fade overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
-            {/* Playbooks chrome — azure rail · count · SoftFailNotice · #46 */}
+            {/*
+              Playbooks chrome (BEA-217 after #114/#136/#142):
+              azure rail · count · Seeded/Catalog · SoftFailNotice compact ·
+              SheetPresence body · tip-011 rise · denser marks · Use/Customize.
+            */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
@@ -540,7 +557,7 @@ export function TripsHome({ locale }: Props) {
                 </span>
               </div>
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
                   templatesSoft
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
@@ -552,13 +569,17 @@ export function TripsHome({ locale }: Props) {
               </span>
             </header>
 
+            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
             <SoftFailNotice open={templatesSoft} compact>
               {t(locale, "trips.templatesSoftOffline")}
             </SoftFailNotice>
 
-            <ul
-              className="space-y-0"
+            <SheetPresence
+              open
+              as="ul"
               role="list"
+              className="space-y-0"
+              style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "trips.templates")}
             >
               {templates.map((tpl, index) => {
@@ -569,18 +590,18 @@ export function TripsHome({ locale }: Props) {
                 return (
                   <li
                     key={tpl.id}
-                    className="animate-rise group grid grid-cols-[auto_1fr] items-center gap-4 border-t border-[color:var(--bp-line)] px-4 py-6 bp-transition first:border-t-0 hover:bg-mist/25 sm:grid-cols-[auto_1fr_auto] sm:gap-8 sm:px-5 sm:py-7"
-                    style={{ animationDelay: `${index * 55 + 40}ms` }}
+                    className="animate-rise group grid grid-cols-[auto_1fr] items-start gap-3 border-t border-[color:var(--bp-line)] px-4 py-4 bp-transition first:border-t-0 hover:bg-mist/25 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:px-5 sm:py-[1.125rem]"
+                    style={{ animationDelay: `${index * 50 + 55}ms` }}
                   >
-                    <IndexMark n={index + 1} />
+                    <DenseIndexMark n={index + 1} />
                     <div className="min-w-0">
-                      <span className="font-display text-xl font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-2xl">
+                      <span className="font-display text-lg font-semibold tracking-tight text-ink transition duration-bp-fast ease-bp-out group-hover:text-river md:text-xl">
                         {title}
                       </span>
-                      <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                      <p className="mt-0.5 text-xs leading-snug text-ink-soft/90">
                         {desc}
                       </p>
-                      <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
+                      <p className="mt-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
                         {tpl.destination} · {tpl.dayCount}{" "}
                         {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
                         {t(locale, "trips.stopUnit")}
@@ -595,7 +616,7 @@ export function TripsHome({ locale }: Props) {
                         type="button"
                         disabled={busy || Boolean(creatingId)}
                         onClick={() => void createFromTemplate(tpl.id)}
-                        className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                       >
                         {busy
                           ? t(locale, "trips.creating")
@@ -611,7 +632,7 @@ export function TripsHome({ locale }: Props) {
                   </li>
                 );
               })}
-            </ul>
+            </SheetPresence>
           </div>
         )}
       </section>
