@@ -192,9 +192,19 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     void apiGet<EngineResponse>(
       `/v1/maps/engine?preference=${encodeURIComponent(preference)}&timezone=${encodeURIComponent(trip?.timezone ?? "")}`,
     )
-      .then(setEngineInfo)
-      .catch(() => setEngineInfo(null));
-  }, [preference, trip?.timezone]);
+      .then((info) => {
+        setEngineInfo(info);
+        if (info.mode === "demo") {
+          setSoftNotice((prev) => prev ?? t(locale, "planner.transfer.demoNotice"));
+        }
+      })
+      .catch(() => {
+        // Keys/API absent — treat as demo shell; mute timber noise.
+        setEngineInfo(null);
+        setSoftNotice((prev) => prev ?? t(locale, "planner.transfer.demoNotice"));
+        setError(null);
+      });
+  }, [preference, trip?.timezone, locale]);
 
   useEffect(() => {
     return () => {
@@ -749,7 +759,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   .join("  →  ")}
               </p>
             )}
-            {(engineInfo?.mode === "demo" || softNotice) && dayLegs.length > 0 && (
+            {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
               <span className="rounded-md bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
                 {t(locale, "planner.transfer.demoBadge")}
               </span>
@@ -931,10 +941,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                               leg={leg}
                               locale={locale}
                               variant="inline"
-                              demoMode={
-                                engineInfo?.mode === "demo" ||
-                                Boolean(softNotice)
-                              }
+                              demoMode={engineInfo?.mode !== "live"}
                             />
                           )}
                         </>
