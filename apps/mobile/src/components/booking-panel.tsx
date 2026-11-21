@@ -114,10 +114,11 @@ async function searchLocal(
 }
 
 /**
- * Expo OTA booking sheet — confirm chrome after web #78 / #95 / #128.
- * Azure header · SoftFailNotice · Search · Results · Confirm rail.
- * SheetPresence (#46) + StyleSheet.flatten (RN Web). Save soft-fail stays
- * section-scoped under the Confirm azure header.
+ * Expo OTA booking sheet SoftFailNotice chrome (BEA-213 after web #160):
+ * azure sheet eyebrow · Search · Results · Confirm · compact SoftFailNotice
+ * footer, mist-track foam filters, tip-011 rise (#46), StyleSheet.flatten.
+ * Save soft-fail stays section-scoped under Confirm — never timber /
+ * Failed to fetch.
  */
 export function BookingPanel({
   tripId,
@@ -340,6 +341,10 @@ export function BookingPanel({
   const badge = isConfigured
     ? t(locale, "planner.booking.configuredBadge")
     : t(locale, "planner.booking.demoBadge");
+  const offerCountLabel = t(locale, "planner.booking.offerCount").replace(
+    "{n}",
+    String(suggestions.length),
+  );
 
   const bodyStyle = {
     opacity: bodyAnim,
@@ -367,7 +372,7 @@ export function BookingPanel({
         <View style={styles.headerText}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.headerEyebrow}>
-              {t(locale, "planner.booking.suggestEyebrow")}
+              {t(locale, "planner.booking.sheetEyebrow")}
             </Text>
             <Text style={styles.headerTitle}>
               {t(locale, "planner.booking.title")}
@@ -387,6 +392,16 @@ export function BookingPanel({
                 {badge}
               </Text>
             </View>
+            {suggestions.length > 0 ? (
+              <Text style={styles.headerCount}>{offerCountLabel}</Text>
+            ) : savedCount > 0 ? (
+              <Text style={styles.headerCount}>
+                {t(locale, "planner.booking.savedCount").replace(
+                  "{n}",
+                  String(savedCount),
+                )}
+              </Text>
+            ) : null}
           </View>
           <Text style={styles.headerSupport}>
             {stop
@@ -395,12 +410,6 @@ export function BookingPanel({
                   stop.place.name,
                 )
               : t(locale, "planner.booking.support")}
-            {savedCount > 0
-              ? ` · ${t(locale, "planner.booking.savedCount").replace(
-                  "{n}",
-                  String(savedCount),
-                )}`
-              : ""}
           </Text>
         </View>
         <Text style={StyleSheet.flatten([styles.chevron, open && styles.chevronOpen])}>
@@ -410,15 +419,11 @@ export function BookingPanel({
 
       {open ? (
         <Animated.View style={StyleSheet.flatten([styles.body, bodyStyle])}>
-          <SoftFailNotice
-            open={Boolean(softCopy)}
-            style={styles.softFail}
-          >
-            {softCopy ?? ""}
-          </SoftFailNotice>
-
-          {/* Search */}
-          <View
+          {/* Search — mist-track filters · city / dates · azure CTA · tip-011 */}
+          <SheetPresence
+            open={open}
+            delayMs={50}
+            rise={10}
             style={styles.section}
             accessibilityLabel={t(locale, "planner.booking.searchEyebrow")}
           >
@@ -432,35 +437,40 @@ export function BookingPanel({
               {t(locale, "planner.booking.suggestSupport")}
             </Text>
 
-            <View
-              style={styles.filterRow}
-              accessibilityRole="tablist"
-              accessibilityLabel={t(locale, "planner.booking.filterLabel")}
-            >
-              {KIND_FILTERS.map((id) => {
-                const on = kindFilter === id;
-                return (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: on }}
-                    onPress={() => setKindFilter(id)}
-                    style={StyleSheet.flatten([
-                      styles.filterChip,
-                      on ? styles.filterChipOn : styles.filterChipOff,
-                    ])}
-                  >
-                    <Text
+            <View style={styles.filterBlock}>
+              <Text style={styles.fieldLabel}>
+                {t(locale, "planner.booking.filterLabel")}
+              </Text>
+              <View
+                style={styles.mistTrack}
+                accessibilityRole="tablist"
+                accessibilityLabel={t(locale, "planner.booking.filterLabel")}
+              >
+                {KIND_FILTERS.map((id) => {
+                  const on = kindFilter === id;
+                  return (
+                    <Pressable
+                      key={id}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: on }}
+                      onPress={() => setKindFilter(id)}
                       style={StyleSheet.flatten([
-                        styles.filterChipText,
-                        on ? styles.filterChipTextOn : styles.filterChipTextOff,
+                        styles.filterChip,
+                        on ? styles.filterChipOn : null,
                       ])}
                     >
-                      {filterLabel(locale, id)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.filterChipText,
+                          on ? styles.filterChipTextOn : styles.filterChipTextOff,
+                        ])}
+                      >
+                        {filterLabel(locale, id)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             <View style={styles.fieldGrid}>
@@ -523,43 +533,79 @@ export function BookingPanel({
                   : t(locale, "planner.booking.search")}
               </Text>
             </Pressable>
-          </View>
+          </SheetPresence>
 
-          {/* Results */}
-          <View
+          {/* Results — ranked offers · empty ladder · tip-011 */}
+          <SheetPresence
+            open={open}
+            delayMs={70}
+            rise={10}
             style={styles.section}
             accessibilityLabel={t(locale, "planner.booking.resultsEyebrow")}
           >
-            <Text style={styles.sectionEyebrow}>
-              {t(locale, "planner.booking.resultsEyebrow")}
-            </Text>
+            <View style={styles.resultsHead}>
+              <Text style={styles.sectionEyebrow}>
+                {t(locale, "planner.booking.resultsEyebrow")}
+              </Text>
+              {suggestions.length > 0 && !searching ? (
+                <>
+                  <Text style={styles.sectionTitle}>
+                    {t(locale, "planner.booking.resultsTitle").replace(
+                      "{n}",
+                      String(suggestions.length),
+                    )}
+                  </Text>
+                  <Text style={styles.sectionSupport}>
+                    {t(locale, "planner.booking.resultsSupport")}
+                  </Text>
+                </>
+              ) : null}
+            </View>
 
             {searching ? (
-              <View style={styles.loadingBlock} accessibilityState={{ busy: true }}>
+              <SheetPresence
+                open={open}
+                delayMs={60}
+                rise={8}
+                style={styles.loadingBlock}
+              >
                 <View style={styles.skeletonCard} />
                 <View style={styles.skeletonCard} />
                 <Text style={styles.loadingHint}>
                   {t(locale, "planner.booking.loadingHint")}
                 </Text>
-              </View>
+              </SheetPresence>
             ) : null}
 
             {!searching && searched && suggestions.length === 0 ? (
-              <Text style={styles.emptyResults}>
-                {t(locale, "planner.booking.emptyResults")}
-              </Text>
+              <SheetPresence
+                open={open}
+                delayMs={70}
+                rise={8}
+                style={styles.emptyLadder}
+              >
+                <Text style={styles.emptyEyebrow}>
+                  {t(locale, "planner.booking.emptyEyebrow")}
+                </Text>
+                <Text style={styles.emptyResults}>
+                  {t(locale, "planner.booking.emptyResults")}
+                </Text>
+                <Text style={styles.emptyHint}>
+                  {t(locale, "planner.booking.emptyHint")}
+                </Text>
+              </SheetPresence>
             ) : null}
 
             {!searching && suggestions.length > 0 ? (
               <View style={styles.resultsList}>
-                <Text style={styles.resultsCount}>
-                  {t(locale, "planner.booking.resultsTitle").replace(
-                    "{n}",
-                    String(suggestions.length),
-                  )}
-                </Text>
-                {suggestions.map((s) => (
-                  <View key={s.id} style={styles.offerCard}>
+                {suggestions.map((s, i) => (
+                  <SheetPresence
+                    key={s.id}
+                    open={open}
+                    delayMs={80 + i * 40}
+                    rise={8}
+                    style={styles.offerCard}
+                  >
                     <View style={styles.offerBody}>
                       <Text style={styles.kindChip}>
                         {suggestionKindLabel(locale, s.kind)}
@@ -592,33 +638,39 @@ export function BookingPanel({
                           {t(locale, "planner.booking.openExternal")}
                         </Text>
                       </Pressable>
-                      <Pressable
-                        style={styles.pinBtn}
-                        onPress={() => applySuggestion(s)}
-                        accessibilityRole="button"
-                        disabled={!stop}
-                      >
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.pinBtnLabel,
-                            !stop ? styles.pinBtnLabelMuted : null,
-                          ])}
+                      {stop ? (
+                        <Pressable
+                          style={styles.pinBtn}
+                          onPress={() => applySuggestion(s)}
+                          accessibilityRole="button"
                         >
-                          {t(locale, "planner.booking.useLink")}
-                        </Text>
-                      </Pressable>
+                          <Text style={styles.pinBtnLabel}>
+                            {t(locale, "planner.booking.useLink")}
+                          </Text>
+                        </Pressable>
+                      ) : null}
                     </View>
-                  </View>
+                  </SheetPresence>
                 ))}
               </View>
             ) : null}
 
             {!searching && !searched ? (
-              <Text style={styles.sectionSupport}>
-                {t(locale, "planner.booking.suggestSupport")}
-              </Text>
+              <SheetPresence
+                open={open}
+                delayMs={70}
+                rise={8}
+                style={styles.emptyLadder}
+              >
+                <Text style={styles.emptyEyebrow}>
+                  {t(locale, "planner.booking.emptyEyebrow")}
+                </Text>
+                <Text style={styles.sectionSupport}>
+                  {t(locale, "planner.booking.suggestSupport")}
+                </Text>
+              </SheetPresence>
             ) : null}
-          </View>
+          </SheetPresence>
 
           {/* Confirm — pin deep links · azure rail · SoftFailNotice */}
           <SheetPresence
@@ -757,6 +809,11 @@ export function BookingPanel({
           </SheetPresence>
 
           <Text style={styles.hint}>{t(locale, "planner.booking.hint")}</Text>
+
+          {/* SoftFailNotice owned by booking sheet footer — never timber. */}
+          <SoftFailNotice open={Boolean(softCopy)} compact>
+            {softCopy ?? ""}
+          </SoftFailNotice>
         </Animated.View>
       ) : null}
     </View>
@@ -836,6 +893,13 @@ const styles = StyleSheet.create({
   badgeTextLive: {
     color: colors.riverDeep,
   },
+  headerCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100,116,139,0.8)",
+  },
   headerSupport: {
     ...type.body,
     fontSize: 12,
@@ -852,10 +916,6 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: 0,
-  },
-  softFail: {
-    marginHorizontal: 14,
-    marginTop: 14,
   },
   section: {
     paddingHorizontal: 14,
@@ -885,32 +945,39 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.inkSoft,
   },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  filterBlock: {
     gap: 8,
     marginTop: 4,
   },
-  filterChip: {
+  mistTrack: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 2,
     borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    padding: 4,
+  },
+  filterChip: {
+    borderRadius: radius.xs,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterChipOn: {
-    backgroundColor: colors.river,
-  },
-  filterChipOff: {
+    backgroundColor: colors.foam,
+    shadowColor: colors.river,
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.2)",
-    backgroundColor: "rgba(47,107,255,0.05)",
+    borderColor: "rgba(47,107,255,0.25)",
   },
   filterChipText: {
     ...type.body,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   filterChipTextOn: {
-    color: colors.foam,
+    color: colors.river,
   },
   filterChipTextOff: {
     color: colors.inkSoft,
@@ -962,6 +1029,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  resultsHead: {
+    gap: 4,
+  },
   loadingBlock: {
     gap: 8,
     marginTop: 4,
@@ -976,24 +1046,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inkSoft,
   },
+  emptyLadder: {
+    gap: 6,
+    marginTop: 4,
+    maxWidth: 360,
+  },
+  emptyEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: "rgba(47,107,255,0.8)",
+  },
   emptyResults: {
     ...type.display,
-    marginTop: 4,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "700",
+    letterSpacing: -0.2,
     color: colors.ink,
+  },
+  emptyHint: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
   },
   resultsList: {
     gap: 10,
     marginTop: 4,
-  },
-  resultsCount: {
-    ...type.body,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
   },
   offerCard: {
     borderRadius: radius.sm,
@@ -1092,7 +1173,7 @@ const styles = StyleSheet.create({
   pinBtn: {
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
+    borderColor: "rgba(47,107,255,0.35)",
     backgroundColor: colors.foam,
     paddingHorizontal: 12,
     paddingVertical: 9,
@@ -1101,11 +1182,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "600",
-    color: colors.ink,
-  },
-  pinBtnLabelMuted: {
-    color: colors.inkSoft,
-    opacity: 0.55,
+    color: colors.river,
   },
   confirmSection: {
     paddingHorizontal: 14,
@@ -1276,7 +1353,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
     fontSize: 11,
     lineHeight: 16,
     color: "rgba(71,85,105,0.8)",
