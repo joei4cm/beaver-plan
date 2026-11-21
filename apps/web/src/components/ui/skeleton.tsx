@@ -188,3 +188,55 @@ export function ShareStudioSkeleton() {
     </div>
   );
 }
+
+/** Tip 017 — dual-lens stage placeholder while camera / vision warms. */
+export function DualCameraSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
+    >
+      <div className="grid md:grid-cols-2">
+        <div className="relative min-h-[220px] border-b border-[color:var(--bp-line)] bg-[#EAF0F8] md:min-h-[320px] md:border-b-0 md:border-r">
+          <Skeleton className="absolute inset-0 rounded-none" />
+          <div className="absolute left-3 top-3">
+            <Skeleton className="h-6 w-28 rounded-bp-xs" />
+          </div>
+        </div>
+        <div className="relative min-h-[220px] bg-[#EAF0F8] md:min-h-[320px]">
+          <Skeleton className="absolute inset-0 rounded-none" />
+          <div className="absolute left-3 top-3">
+            <Skeleton className="h-6 w-32 rounded-bp-xs" />
+          </div>
+          <div className="absolute inset-x-3 bottom-3 space-y-2 rounded-bp bg-foam/70 p-3">
+            <Skeleton className="h-3 w-40 max-w-[70%]" />
+            <Skeleton className="h-5 w-56 max-w-full" />
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 border-t border-[color:var(--bp-line)] bg-paper/70 px-3 py-3">
+        <Skeleton className="h-10 w-24 rounded-bp-sm" />
+        <Skeleton className="h-10 w-28 rounded-bp-sm" />
+        <Skeleton className="h-10 w-32 rounded-bp-sm" />
+      </div>
+    </div>
+  );
+}
+
+/** Tip 017 — status chip placeholders while translation BFF warms. */
+export function TranslateStatusSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="mt-5 flex flex-wrap items-center gap-2"
+    >
+      <Skeleton className="h-7 w-24 rounded-bp-xs" />
+      <Skeleton className="h-7 w-28 rounded-bp-xs" />
+      <Skeleton className="h-7 w-20 rounded-bp-xs" />
+      <Skeleton className="h-7 w-28 rounded-bp-xs" />
+      <Skeleton className="h-7 w-24 rounded-bp-xs" />
+    </div>
+  );
+}

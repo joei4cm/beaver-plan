@@ -12,7 +12,7 @@ type Props = {
 export function SoftFailNotice({ children, className, compact }: Props) {
   const base = compact
     ? "border-t border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink-soft"
-    : "animate-sheet-in rounded-bp border border-[color:var(--bp-line)] bg-mist/50 px-4 py-3 text-sm leading-relaxed text-ink-soft";
+    : "animate-sheet-in rounded-bp-sm border border-[color:var(--bp-line)] bg-mist/50 px-4 py-3 text-sm leading-relaxed text-ink-soft";
 
   return (
     <p
