@@ -47,7 +47,7 @@ function hasPlaceMeta(details: PlaceDetails, userNote?: string): boolean {
   );
 }
 
-/** Azure section eyebrow — matches booking / settings depth chrome. */
+/** Azure section eyebrow — matches booking / map-chrome depth chrome. */
 function SectionEyebrow({ children }: { children: string }) {
   return (
     <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
@@ -57,9 +57,9 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Selected-stop place intel — deeper Lumen sheet hierarchy after #53/#69:
- * azure header rail · snapshot · categories · about · note sections,
- * SheetPresence in/out, SoftFailNotice when Places soft-fails.
+ * Map place pin sheet — deeper Lumen hierarchy after #85/#118:
+ * pin identity header · Snapshot · Categories · About · Note,
+ * absolute river rail, SoftFailNotice footer, SheetPresence + #46 rise.
  */
 export function PlaceIntel({
   details,
@@ -104,34 +104,58 @@ export function PlaceIntel({
   return (
     <SheetPresence
       open={open}
-      className="mt-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
+      className="mt-3 overflow-hidden rounded-bp-sm border border-river/25 bg-foam shadow-bp"
       style={{ animationDelay: "40ms" }}
-      aria-label={t(locale, "planner.place.eyebrow")}
+      aria-label={t(locale, "planner.place.pinEyebrow")}
     >
       {view ? (
         <>
-          <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "planner.place.eyebrow")}
-            </span>
+          {/* Pin identity — elevated over section stack */}
+          <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
             <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                demo
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river-deep"
-              }`}
-            >
-              {demo
-                ? t(locale, "planner.place.demoBadge")
-                : t(locale, "planner.place.liveBadge")}
-            </span>
-          </div>
+              className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
+              aria-hidden
+            />
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                    {t(locale, "planner.place.pinEyebrow")}
+                  </span>
+                  <span
+                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                      demo
+                        ? "bg-mist text-ink-soft"
+                        : "bg-river/12 text-river-deep"
+                    }`}
+                  >
+                    {demo
+                      ? t(locale, "planner.place.demoBadge")
+                      : t(locale, "planner.place.liveBadge")}
+                  </span>
+                </div>
+                <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                  {view.name}
+                </p>
+                {view.address ? (
+                  <p className="truncate text-[11px] leading-snug text-ink-soft">
+                    {view.address}
+                  </p>
+                ) : (
+                  <p className="text-[11px] leading-snug text-ink-soft/80">
+                    {t(locale, "planner.place.pinSupport")}
+                  </p>
+                )}
+              </div>
+              <PinGlyph className="mt-0.5 shrink-0 text-river" />
+            </div>
+          </header>
 
           <div className="divide-y divide-[color:var(--bp-line)]">
             {showSnapshot ? (
               <section
-                className="animate-fade space-y-2 px-3 py-3"
-                style={{ animationDelay: "50ms" }}
+                className="animate-rise space-y-2 bg-mist/20 px-3 py-3"
+                style={{ animationDelay: "55ms" }}
                 aria-label={t(locale, "planner.place.snapshotEyebrow")}
               >
                 <SectionEyebrow>
@@ -153,7 +177,7 @@ export function PlaceIntel({
                     </span>
                   )}
                   {hours && (
-                    <span className="text-xs leading-relaxed text-ink-soft">
+                    <span className="rounded-bp-xs border border-river/15 bg-foam/90 px-2 py-1 text-xs leading-relaxed text-ink-soft">
                       <span className="font-medium text-ink-soft/85">
                         {t(locale, "planner.place.hours")}
                       </span>{" "}
@@ -173,8 +197,8 @@ export function PlaceIntel({
 
             {showTags ? (
               <section
-                className="animate-fade space-y-2 px-3 py-3"
-                style={{ animationDelay: "70ms" }}
+                className="animate-rise space-y-2 px-3 py-3"
+                style={{ animationDelay: "75ms" }}
                 aria-label={t(locale, "planner.place.tags")}
               >
                 <SectionEyebrow>
@@ -184,7 +208,7 @@ export function PlaceIntel({
                   {tags.map((tag) => (
                     <li
                       key={tag}
-                      className="rounded-bp-xs border border-river/20 bg-river/10 px-2 py-0.5 text-[11px] font-medium text-river-deep transition duration-bp-fast ease-bp-out"
+                      className="rounded-bp-xs border border-river/20 bg-river/10 px-2 py-0.5 text-[11px] font-medium text-river-deep bp-transition"
                     >
                       {interestLabel(locale, tag)}
                     </li>
@@ -195,8 +219,8 @@ export function PlaceIntel({
 
             {showAbout ? (
               <section
-                className="animate-fade space-y-2 px-3 py-3"
-                style={{ animationDelay: "90ms" }}
+                className="animate-rise space-y-2 px-3 py-3"
+                style={{ animationDelay: "95ms" }}
                 aria-label={t(locale, "planner.place.aboutEyebrow")}
               >
                 <SectionEyebrow>
@@ -210,10 +234,14 @@ export function PlaceIntel({
 
             {showNote ? (
               <section
-                className="animate-fade space-y-1.5 bg-paper/40 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]"
-                style={{ animationDelay: "110ms" }}
+                className="animate-rise relative space-y-1.5 bg-paper/50 px-3 py-3 pl-3.5"
+                style={{ animationDelay: "115ms" }}
                 aria-label={t(locale, "planner.place.note")}
               >
+                <span
+                  className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river/70"
+                  aria-hidden
+                />
                 <SectionEyebrow>
                   {t(locale, "planner.place.note")}
                 </SectionEyebrow>
@@ -222,11 +250,33 @@ export function PlaceIntel({
             ) : null}
           </div>
 
+          {/* SoftFailNotice owned by pin sheet footer — never doubles stage chrome */}
           <SoftFailNotice open={demo} compact>
             {t(locale, "planner.place.softFail")}
           </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>
+  );
+}
+
+function PinGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+      className={className}
+    >
+      <path
+        d="M8 1.5c-2.4 0-4.35 1.9-4.35 4.25 0 3.05 4.35 8.25 4.35 8.25s4.35-5.2 4.35-8.25C12.35 3.4 10.4 1.5 8 1.5Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="5.75" r="1.45" fill="currentColor" />
+    </svg>
   );
 }
