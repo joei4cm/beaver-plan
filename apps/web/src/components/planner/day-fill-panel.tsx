@@ -15,6 +15,7 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Props = {
@@ -262,11 +263,11 @@ export function DayFillPanel({
       : t(locale, "planner.dayFill.demoBadge");
 
   return (
-<div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
+    <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/55">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-mist/35"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35"
         aria-expanded={open}
       >
         <div className="min-w-0">
@@ -275,7 +276,7 @@ export function DayFillPanel({
               {t(locale, "planner.dayFill.title")}
             </span>
             <span
-              className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] ${
+              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${
                 mode === "live"
                   ? "bg-river/12 text-river-deep"
                   : "bg-mist text-ink-soft"
@@ -301,14 +302,7 @@ export function DayFillPanel({
           className="animate-sheet-in space-y-4 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-          {notice && (
-            <p
-              className="rounded-md bg-mist/60 px-3 py-2 text-xs leading-relaxed text-ink-soft"
-              role="status"
-            >
-              {notice}
-            </p>
-          )}
+          {notice && <SoftFailNotice>{notice}</SoftFailNotice>}
 
           <div>
             <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
@@ -322,7 +316,7 @@ export function DayFillPanel({
                     key={id}
                     type="button"
                     onClick={() => toggleInterest(id)}
-className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp ${
+                    className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-bp-out ${
                       on
                         ? "bg-river text-foam"
                         : "border border-[color:var(--bp-line)] bg-paper/70 text-ink-soft hover:border-river/40 hover:text-river"
@@ -416,15 +410,15 @@ className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-b
 
           {generating && (
             <div
-              className="animate-fade space-y-3 rounded-md border border-dashed border-river/25 bg-paper/40 px-3 py-4"
+              className="animate-fade space-y-3 rounded-bp-sm border border-dashed border-river/25 bg-paper/40 px-3 py-4"
               role="status"
               aria-live="polite"
             >
-              <div className="h-3 w-40 animate-pulse rounded bg-mist" />
+              <div className="bp-skeleton h-3 w-40" />
               <div className="space-y-2">
-                <div className="h-16 animate-pulse rounded-md bg-mist/80" />
-                <div className="h-16 animate-pulse rounded-md bg-mist/60" />
-                <div className="h-16 animate-pulse rounded-md bg-mist/40" />
+                <div className="bp-skeleton h-16 rounded-bp-sm" />
+                <div className="bp-skeleton h-16 rounded-bp-sm" />
+                <div className="bp-skeleton h-16 rounded-bp-sm" />
               </div>
               <p className="text-xs text-ink-soft">
                 {t(locale, "planner.dayFill.loadingHint")}
@@ -433,7 +427,7 @@ className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-b
           )}
 
           {!proposal && !generating && (
-            <div className="animate-fade rounded-md border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
+            <div className="animate-fade rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-paper/35 px-4 py-6 text-center">
               <p className="text-sm text-ink">{t(locale, "planner.dayFill.empty")}</p>
               <p className="mt-1 text-xs leading-relaxed text-ink-soft">
                 {t(locale, "planner.dayFill.emptyHint")}
@@ -458,7 +452,7 @@ className={`rounded-bp-sm px-3 py-1.5 text-sm transition duration-bp-fast ease-b
                   type="button"
                   disabled={applying}
                   onClick={() => void apply()}
-className="rounded-bp-sm bg-river px-4 py-2 text-sm font-medium text-foam transition hover:brightness-110 disabled:opacity-40"
+                  className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam transition duration-bp ease-bp hover:bg-river-deep disabled:opacity-40"
                 >
                   {applying
                     ? t(locale, "planner.dayFill.applying")
@@ -470,7 +464,7 @@ className="rounded-bp-sm bg-river px-4 py-2 text-sm font-medium text-foam transi
                 {proposal.days.map((day) => (
                   <li
                     key={day.dayIndex}
-className="animate-fade rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+                    className="animate-fade rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
                     style={{ animationDelay: `${day.dayIndex * 40}ms` }}
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
