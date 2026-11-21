@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.88)",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: radius.xs,
     overflow: "hidden",
     zIndex: 4,
   },
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.8)",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: radius.xs,
     zIndex: 4,
   },
   zoomCol: {
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   zoomBtn: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     backgroundColor: colors.foam,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
