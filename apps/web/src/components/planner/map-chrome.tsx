@@ -55,8 +55,9 @@ type Props = {
  * Floating SoftFailNotice depth (BEA-318 after #213):
  *   azure Map rail · Soft map badge · softSupport · compact SoftFail mist band
  *   (border-b) · tip-011 mist-wash · yields to search SoftFail (#226) when open.
- *   Basemap / legend SoftFail still own when open. Lumen tokens — never timber /
- *   Failed to fetch.
+ *   Basemap SoftFail still owns when open. Legend SoftFail depth (BEA-350 after
+ *   #133): Soft badge · softSupport · mist SoftFail under azure Transfer rail ·
+ *   tip-011 mist-wash strokes. Lumen tokens — never timber / Failed to fetch.
  */
 export function MapChrome({
   locale,
@@ -700,13 +701,19 @@ export function MapChrome({
           </div>
         </SheetPresence>
 
+        {/*
+          Legend SoftFail depth (BEA-350 after #133):
+          azure Transfer rail · Soft/Live badge · softSupport · compact SoftFail
+          mist band (border-b) · tip-011 mist-wash stroke body — yields to search
+          SoftFail (#226); floating SoftFail yields while legend owns; never
+          timber / Failed to fetch.
+        */}
         <SheetPresence
           open={legendOpen && !searchOwnsSoftFail}
           variant="popover"
           aria-label={t(locale, "planner.map.legendTitle")}
           className="pointer-events-none overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
         >
-          {/* Azure hierarchy — inset rail · eyebrow · title · demo/live · SoftFailNotice */}
           <div
             className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
             style={{ animationDelay: "40ms" }}
@@ -718,6 +725,11 @@ export function MapChrome({
               <span className="text-[11px] font-medium text-ink-soft/80">
                 {t(locale, "planner.map.legendTitle")}
               </span>
+              {softFail ? (
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "planner.map.legendSoftSupport")}
+                </span>
+              ) : null}
             </div>
             <span
               className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
@@ -727,13 +739,26 @@ export function MapChrome({
               }`}
             >
               {softFail
-                ? t(locale, "planner.map.legendDemoBadge")
+                ? t(locale, "planner.map.legendSoftBadge")
                 : t(locale, "planner.map.legendLiveBadge")}
             </span>
           </div>
 
+          {/* Compact SoftFail mist band under azure Transfer rail — never timber. */}
+          <SoftFailNotice
+            open={softFail}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {t(locale, "planner.map.legendSoftFail")}
+          </SoftFailNotice>
+
           <div
-            className="animate-rise flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft"
+            className={`animate-rise flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft ${
+              softFail
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
             style={{ animationDelay: "70ms" }}
           >
             <span className="inline-flex items-center gap-1.5">
@@ -758,10 +783,6 @@ export function MapChrome({
               {t(locale, "planner.transfer.change")}
             </span>
           </div>
-
-          <SoftFailNotice open={softFail} compact>
-            {t(locale, "planner.map.legendSoftFail")}
-          </SoftFailNotice>
         </SheetPresence>
       </div>
     </div>
