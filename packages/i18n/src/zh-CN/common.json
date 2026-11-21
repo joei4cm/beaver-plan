@@ -314,6 +314,8 @@
   "journal.uploadHint": "联网后同步；离线时先保存在本地图框。",
   "journal.mediaPlaceholder": "图框",
   "journal.photoSlots": "照片图框",
+  "journal.photoStrip": "照片条",
+  "journal.photoCount": "{n} / {max}",
   "journal.save": "写入日记",
   "journal.saving": "保存中…",
   "journal.remove": "删除",

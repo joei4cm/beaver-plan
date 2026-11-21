@@ -45,6 +45,9 @@ const COMPOSE_CONTROL =
 const COMPOSE_CTA =
   "rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40";
 
+/** Compose media rail shows three frame slots (Polarsteps-like strip). */
+const PHOTO_SLOT_MAX = 3;
+
 /** Editorial index mark — trips-index chrome for journal entries. */
 function EntryIndexMark({ n }: { n: number }) {
   return (
@@ -581,7 +584,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     ...pendingMedia.map((url) => ({ key: url, src: resolveMediaUrl(url) })),
     ...pendingLocalPhotos.map((p) => ({ key: p.id, src: p.preview })),
   ];
-  const emptySlots = Math.max(0, 3 - previewMedia.length);
+  const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
+  const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-8 md:pt-8">
@@ -836,30 +840,77 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                             {entry.body}
                           </p>
                         ) : null}
+                        {/* Entry photo strip — lead frame larger; empties quieter (#46). */}
                         {entry.media.length > 0 ? (
-                          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-                            {entry.media.map((url, mediaIndex) => (
-                              <MediaFrame
-                                key={`${entry.id}-${mediaIndex}`}
-                                src={resolveMediaUrl(url)}
-                                alt=""
-                                label={t(locale, "journal.mediaPlaceholder")}
-                                className="aspect-[3/4] w-full rounded-bp-sm object-cover ring-1 ring-[color:var(--bp-line)]"
-                              />
-                            ))}
+                          <div
+                            className="mt-5"
+                            role="group"
+                            aria-label={t(locale, "journal.photoStrip")}
+                          >
+                            <div className="flex items-baseline justify-between gap-2">
+                              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river/80">
+                                {t(locale, "journal.photoStrip")}
+                              </p>
+                              <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-river-deep">
+                                {t(locale, "journal.photoCount")
+                                  .replace("{n}", String(entry.media.length))
+                                  .replace(
+                                    "{max}",
+                                    String(
+                                      Math.max(
+                                        entry.media.length,
+                                        PHOTO_SLOT_MAX,
+                                      ),
+                                    ),
+                                  )}
+                              </span>
+                            </div>
+                            <div className="mt-2.5 flex gap-2.5 overflow-x-auto pb-0.5 [scrollbar-width:thin]">
+                              {entry.media.map((url, mediaIndex) => {
+                                const lead = mediaIndex === 0;
+                                return (
+                                  <MediaFrame
+                                    key={`${entry.id}-${mediaIndex}`}
+                                    src={resolveMediaUrl(url)}
+                                    alt=""
+                                    label={t(
+                                      locale,
+                                      "journal.mediaPlaceholder",
+                                    )}
+                                    className={`animate-stop-select shrink-0 rounded-bp-sm object-cover transition duration-bp ease-bp-out-strong ${
+                                      lead
+                                        ? "h-36 w-[6.75rem] shadow-bp ring-1 ring-river/35 sm:h-40 sm:w-28"
+                                        : "h-32 w-24 shadow-bp-soft ring-1 ring-[color:var(--bp-line)] sm:h-36 sm:w-[6.5rem]"
+                                    }`}
+                                    style={{
+                                      animationDelay: `${mediaIndex * 45}ms`,
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
                           </div>
                         ) : (
-                          <div className="mt-5 grid max-w-xs grid-cols-3 gap-2">
-                            {[0, 1].map((i) => (
-                              <div
-                                key={i}
-                                className="aspect-[3/4] rounded-bp-sm bg-gradient-to-br from-river/10 via-mist/60 to-foam"
-                                aria-label={t(
-                                  locale,
-                                  "journal.mediaPlaceholder",
-                                )}
-                              />
-                            ))}
+                          <div
+                            className="mt-5"
+                            role="group"
+                            aria-label={t(locale, "journal.photoStrip")}
+                          >
+                            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft/70">
+                              {t(locale, "journal.photoSlots")}
+                            </p>
+                            <div className="mt-2 flex gap-2">
+                              {[0, 1].map((i) => (
+                                <div
+                                  key={i}
+                                  className="aspect-[3/4] h-28 w-[5.25rem] rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/50 to-foam"
+                                  aria-label={t(
+                                    locale,
+                                    "journal.mediaPlaceholder",
+                                  )}
+                                />
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -929,48 +980,63 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 className={`mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
               />
 
-              <label className="mt-4 flex cursor-pointer flex-col items-start gap-2 rounded-bp-sm border border-dashed border-river/35 bg-mist/40 px-4 py-5 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
-                <span className="text-sm font-semibold text-river">
-                  {t(locale, "journal.addPhotos")}
-                </span>
-                <span className="text-xs text-ink-soft">
-                  {t(locale, "journal.uploadHint")}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="sr-only"
-                  onChange={(e) => void onPickFiles(e.target.files)}
-                />
-              </label>
+              {/* Media rail chrome — drop + strip hierarchy; SoftFailNotice above (#46). */}
+              <section
+                className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
+                aria-label={t(locale, "journal.photoSlots")}
+              >
+                <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/65 px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
+                    {t(locale, "journal.photoSlots")}
+                  </p>
+                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-river-deep">
+                    {t(locale, "journal.photoCount")
+                      .replace("{n}", String(stripMedia.length))
+                      .replace("{max}", String(PHOTO_SLOT_MAX))}
+                  </span>
+                </header>
 
-              <div className="mt-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-                  {t(locale, "journal.photoSlots")}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {previewMedia.map((item, i) => (
+                <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
+                  <span className="text-sm font-semibold text-river">
+                    {t(locale, "journal.addPhotos")}
+                  </span>
+                  <span className="text-xs leading-relaxed text-ink-soft">
+                    {t(locale, "journal.uploadHint")}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => void onPickFiles(e.target.files)}
+                  />
+                </label>
+
+                <div
+                  className="flex gap-2 overflow-x-auto px-3.5 py-3 [scrollbar-width:thin]"
+                  aria-label={t(locale, "journal.photoStrip")}
+                >
+                  {stripMedia.map((item, i) => (
                     <MediaFrame
                       key={item.key}
                       src={item.src}
                       alt=""
                       label={t(locale, "journal.mediaPlaceholder")}
-                      className="animate-stop-select h-20 w-14 rounded-bp-sm object-cover ring-1 ring-river/30"
+                      className="animate-stop-select h-[5.5rem] w-16 shrink-0 rounded-bp-sm object-cover shadow-bp-soft ring-1 ring-river/35"
                       style={{ animationDelay: `${i * 40}ms` }}
                     />
                   ))}
                   {Array.from({ length: emptySlots }).map((_, i) => (
                     <div
                       key={`slot-${i}`}
-                      className="flex h-20 w-14 items-center justify-center rounded-bp-sm border border-dashed border-river/30 bg-gradient-to-br from-river/12 via-mist/70 to-foam text-[10px] font-medium text-river/70 bp-transition"
+                      className="flex h-[5.5rem] w-16 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/25 bg-gradient-to-br from-river/[0.08] via-mist/60 to-foam text-[11px] font-medium text-river/55 transition duration-bp-fast ease-bp-out"
                       aria-hidden
                     >
                       +
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
               {info && (
                 <p className="mt-3 text-sm text-river" role="status">

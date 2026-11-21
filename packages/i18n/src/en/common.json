@@ -314,6 +314,8 @@
   "journal.uploadHint": "Photos sync when online; offline they stay in local frames.",
   "journal.mediaPlaceholder": "Photo frame",
   "journal.photoSlots": "Photo frames",
+  "journal.photoStrip": "Photo strip",
+  "journal.photoCount": "{n} / {max}",
   "journal.save": "Save to journal",
   "journal.saving": "Saving…",
   "journal.remove": "Remove",
