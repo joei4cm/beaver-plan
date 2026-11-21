@@ -818,7 +818,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </p>
             )}
             {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
-              <span className="rounded-md bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
+              <span className="rounded-bp-xs bg-river/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river/80">
                 {t(locale, "planner.transfer.demoBadge")}
               </span>
             )}

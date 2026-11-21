@@ -207,14 +207,17 @@ export function TripsHome({ locale }: Props) {
         </div>
       </div>
 
-      {error && (
-        <p className="mt-6 border-l-2 border-timber bg-timber/8 px-4 py-3 text-sm text-timber">
+      {error ? (
+        <p
+          className="mt-6 rounded-bp-sm border border-timber/25 bg-timber/8 px-4 py-3 text-sm text-timber"
+          role="alert"
+        >
           {error}
         </p>
-      )}
-      {!error && softNotice && (
+      ) : null}
+      {!error && softNotice ? (
         <SoftFailNotice className="mt-6">{softNotice}</SoftFailNotice>
-      )}
+      ) : null}
 
       <section className="mt-16" aria-labelledby="trips-yours-heading">
         <header className="animate-rise mb-8">

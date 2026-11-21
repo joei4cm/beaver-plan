@@ -61,7 +61,7 @@ export function SignInPanel({
           {clerkReady && wechatEnabled && (
             <Link
               href="/sign-in?strategy=oauth_wechat"
-              className="inline-flex rounded-md border border-river/40 bg-foam/80 px-3 py-2 text-river transition hover:border-river hover:bg-foam"
+              className="inline-flex rounded-bp-sm border border-river/40 bg-foam/80 px-3 py-2 text-river transition hover:border-river hover:bg-foam"
             >
               {t(locale, "auth.wechat")}
             </Link>
@@ -89,7 +89,7 @@ export function SignInPanel({
               />
             </>
           ) : (
-            <div className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 p-6">
+            <div className="rounded-bp border border-[color:var(--bp-line)] bg-foam/70 p-6">
               <p className="font-display text-xl text-ink">
                 {t(locale, "auth.demoTitle")}
               </p>
@@ -103,7 +103,7 @@ export function SignInPanel({
               </ol>
               <Link
                 href="/trips/sample-kyoto"
-                className="mt-6 inline-flex rounded-md bg-river px-4 py-2.5 text-sm text-foam transition hover:bg-river-deep"
+                className="mt-6 inline-flex rounded-bp bg-river px-4 py-2.5 text-sm text-foam transition hover:bg-river-deep"
               >
                 {t(locale, "trips.openSample")}
               </Link>

@@ -5,6 +5,7 @@ import type { Day, JournalEntry, Leg, Stop, Trip } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import type { OfflinePinStatus } from "@beaver/offline";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import {
   flushJournalQueue,
   getPinStatus,
@@ -122,7 +123,7 @@ export function OfflinePinControl({
           type="button"
           disabled={busy}
           onClick={() => void togglePin()}
-          className={`rounded-md px-3 py-1.5 text-sm transition disabled:opacity-40 ${
+          className={`rounded-bp-sm px-3 py-1.5 text-sm transition disabled:opacity-40 ${
             pinned
               ? "bg-river text-foam"
               : "border border-[color:var(--bp-line)] bg-foam/60 text-ink-soft hover:border-river/40 hover:text-river"
@@ -135,11 +136,7 @@ export function OfflinePinControl({
               ? t(locale, "offline.pinned")
               : t(locale, "offline.pin")}
         </button>
-        <span
-          className={`text-xs ${
-            online ? "text-ink-soft/70" : "text-timber"
-          }`}
-        >
+        <span className="text-xs text-ink-soft/70">
           {online ? t(locale, "offline.online") : t(locale, "offline.offline")}
           {pending > 0
             ? ` · ${t(locale, "offline.pending").replace("{n}", String(pending))}`
@@ -161,7 +158,11 @@ export function OfflinePinControl({
           {t(locale, "offline.statusHint")}
         </p>
       ) : null}
-      {error ? <p className="text-xs text-timber">{error}</p> : null}
+      {error ? (
+        <SoftFailNotice className="max-w-md text-xs">
+          {error}
+        </SoftFailNotice>
+      ) : null}
     </div>
   );
 }

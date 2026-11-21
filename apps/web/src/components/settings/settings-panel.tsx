@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { SHARE_TEMPLATES, type Trip } from "@beaver/core";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
-import { apiGet, isPlannerNoiseError } from "@/lib/api";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { apiGet } from "@/lib/api";
 import {
   type DistanceUnit,
   type UserPrefs,
@@ -89,13 +90,10 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         );
         setResolve(res);
         setSoftNotice(null);
-      } catch (err) {
+      } catch {
         setResolve(null);
-        if (isPlannerNoiseError(err)) {
-          setSoftNotice(t(locale, "settings.softOffline"));
-        } else {
-          setSoftNotice(t(locale, "settings.softOffline"));
-        }
+        // Soft inline notice for any resolve miss — prefs still persist locally.
+        setSoftNotice(t(locale, "settings.softOffline"));
       }
     },
     [locale],
@@ -154,14 +152,9 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         {brandName} · {t(locale, "settings.localHint")}
       </p>
 
-      {softNotice && (
-        <p
-          className="animate-fade mt-8 border-l-2 border-river/35 bg-mist/45 px-4 py-3 text-sm text-ink-soft"
-          role="status"
-        >
-          {softNotice}
-        </p>
-      )}
+      {softNotice ? (
+        <SoftFailNotice className="mt-8">{softNotice}</SoftFailNotice>
+      ) : null}
 
       <div className="mt-14 space-y-0">
         {/* Language */}
