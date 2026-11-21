@@ -40,6 +40,7 @@ import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   PlannerSkeleton,
   TransferStepsSkeleton,
@@ -140,16 +141,30 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
 
   const dayEmpty = dayStops.length === 0;
   const demoShell = engineInfo?.mode !== "live";
-  const listSoftOpen = Boolean(
-    softNotice ||
-      (error && isPlannerNoiseError(new Error(error))) ||
-      (demoShell && (dayEmpty || dayLegs.length > 0 || dayStops.length > 0)),
+  const plannerNoise = Boolean(
+    error && isPlannerNoiseError(new Error(error)),
   );
+  /**
+   * Empty-day SoftFailNotice chrome (BEA-222 after #122): empty owns compact
+   * SoftFail under azure Stops rail · SheetPresence body · tip-011 (#46).
+   * Title-rail SoftFail yields (no double depth). Soft copy never timber /
+   * Failed to fetch.
+   */
+  const emptyOwnsSoft = dayEmpty;
+  const listSoftOpen = emptyOwnsSoft
+    ? Boolean(softNotice || plannerNoise || demoShell)
+    : Boolean(
+        softNotice ||
+          plannerNoise ||
+          (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
+      );
   const listSoftCopy =
     softNotice ??
     (dayEmpty
       ? t(locale, "planner.emptySoftFail")
       : t(locale, "planner.transfer.demoNotice"));
+  const shareSoftOpen =
+    !emptyOwnsSoft && (demoShell || plannerNoise);
 
   useEffect(() => {
     if (!dayId) {
@@ -832,11 +847,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </Link>
             </div>
           </div>
+          {/* Title SoftFail yields while empty-day stop rail owns soft-fail. */}
           <SoftFailNotice
-            open={
-              (engineInfo?.mode ?? "demo") === "demo" ||
-              Boolean(error && isPlannerNoiseError(new Error(error)))
-            }
+            open={shareSoftOpen}
             compact
             className="w-full sm:max-w-md"
           >
@@ -1033,7 +1046,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             onSelectStop={setSelectedStopId}
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Stop list chip hierarchy — mist-track · azure select · SoftFailNotice · #46 */}
+            {/*
+              Empty SoftFail chrome (BEA-222 after #122/#137/#157):
+              azure Stops rail · Open badge · compact SoftFailNotice ·
+              SheetPresence empty body · tip-011 rise — never timber.
+            */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -1048,14 +1065,24 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           String(dayStops.length),
                         )}
                   </span>
-                  {!dayEmpty ? (
+                  {dayEmpty ? (
+                    <span className="text-[11px] leading-snug text-ink-soft/80">
+                      {t(locale, "planner.emptySupport")}
+                    </span>
+                  ) : (
                     <span className="text-[11px] leading-snug text-ink-soft/80">
                       {t(locale, "planner.stops.support")}
                     </span>
-                  ) : null}
+                  )}
                 </div>
                 {dayEmpty ? (
-                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  <span
+                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                      listSoftOpen
+                        ? "bg-mist text-ink-soft"
+                        : "bg-river/12 text-river"
+                    }`}
+                  >
                     {t(locale, "planner.emptyBadge")}
                   </span>
                 ) : selectedStopId ? (
@@ -1112,6 +1139,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </div>
               ) : null}
 
+              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
               <SoftFailNotice open={listSoftOpen} compact>
                 {listSoftCopy}
               </SoftFailNotice>
@@ -1140,16 +1168,30 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 empty={
                   <li
                     key={`empty-${dayId ?? "none"}`}
-                    className="animate-sheet-in list-none px-5 py-10"
+                    className="list-none px-5 py-10"
                   >
-                    <div className="max-w-sm">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                    <SheetPresence
+                      open
+                      className="max-w-sm"
+                      style={{ animationDelay: "40ms" }}
+                      aria-label={t(locale, "planner.emptyDay")}
+                    >
+                      <p
+                        className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                        style={{ animationDelay: "40ms" }}
+                      >
                         {t(locale, "planner.stops.eyebrow")}
                       </p>
-                      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]">
+                      <p
+                        className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]"
+                        style={{ animationDelay: "70ms" }}
+                      >
                         {t(locale, "planner.emptyDay")}
                       </p>
-                      <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                      <p
+                        className="animate-rise mt-2 text-sm leading-relaxed text-ink-soft"
+                        style={{ animationDelay: "100ms" }}
+                      >
                         {t(locale, "planner.emptyDayHint")}
                       </p>
                       <button
@@ -1164,11 +1206,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             block: "nearest",
                           });
                         }}
-                        className="mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        style={{ animationDelay: "130ms" }}
                       >
                         {t(locale, "planner.emptyDayCta")}
                       </button>
-                    </div>
+                    </SheetPresence>
                   </li>
                 }
                 renderItem={(stop, ctx) => {

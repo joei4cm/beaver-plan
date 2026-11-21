@@ -270,6 +270,7 @@
   "planner.emptyDayHint": "Search the map and pin a place — list and route light up together.",
   "planner.emptyDayCta": "Search the map",
   "planner.emptyBadge": "Open",
+  "planner.emptySupport": "Pin from map search — list and route light together.",
   "planner.emptySoftFail": "Demo shell — no stops on this day yet. Pin from map search; updates stay local until Neon/API is available. Never a Failed to fetch crash.",
   "planner.map.layers": "Layers",
   "planner.map.layersEyebrow": "Overlay",
