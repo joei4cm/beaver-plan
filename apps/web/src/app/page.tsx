@@ -162,7 +162,7 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.pillars.liveBadge")}
       />
 
-      {/* Below fold — tip 019 how-it-works depth (mist-track · SoftFail · tip-011) */}
+      {/* Below fold — how-it-works SoftFail chrome (azure rail · Offline/Live · tip-011) */}
       <LandingScrollDeck
         title={t(locale, "landing.how.title")}
         support={t(locale, "landing.how.support")}
@@ -174,6 +174,10 @@ export default async function HomePage() {
         progressLabel={t(locale, "landing.how.progressLabel")}
         focusLabel={t(locale, "landing.how.focusLabel")}
         liveBadge={t(locale, "landing.how.liveBadge")}
+        sheetEyebrow={t(locale, "landing.how.sheetEyebrow")}
+        sheetSupport={t(locale, "landing.how.sheetSupport")}
+        offlineBadge={t(locale, "landing.how.offlineBadge")}
+        softLiveBadge={t(locale, "landing.how.softLiveBadge")}
       />
 
       {/* Below fold — FAQ SoftFail sheet (azure rail · Offline/Live · tip-011) */}
