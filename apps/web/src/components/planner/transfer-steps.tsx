@@ -125,7 +125,7 @@ function StepRow({
 
         {kind === "transit" && step.lineName ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex max-w-full items-center rounded-md bg-river/10 px-2 py-0.5 text-xs font-semibold text-river">
+            <span className="inline-flex max-w-full items-center rounded-bp-xs bg-river/10 px-2 py-0.5 text-xs font-semibold text-river">
               <span className="truncate">{step.lineName}</span>
             </span>
             {step.fromStopName && step.toStopName && (

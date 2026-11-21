@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import type { TripInvite, TripMember, TripRole } from "@beaver/core";
 import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type MembersPayload = {
@@ -176,7 +177,7 @@ export function TripMembersBar({
               onChange={(e) =>
                 setInviteRole(e.target.value as "editor" | "viewer")
               }
-              className="rounded-md border border-[color:var(--bp-line)] bg-foam/80 px-2 py-1.5 text-xs text-ink-soft outline-none focus:border-river"
+              className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/80 px-2 py-1.5 text-xs text-ink-soft outline-none focus:border-river"
               aria-label={t(locale, "collab.inviteRole")}
             >
               <option value="editor">{t(locale, "collab.role.editor")}</option>
@@ -185,14 +186,14 @@ export function TripMembersBar({
             <button
               type="button"
               onClick={() => void createInvite()}
-              className="rounded-md bg-river px-3 py-1.5 text-sm font-medium text-foam transition hover:bg-river-deep"
+              className="rounded-bp-sm bg-river px-3 py-1.5 text-sm font-medium text-foam transition hover:bg-river-deep"
             >
               {t(locale, "collab.invite")}
             </button>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="rounded-md px-3 py-1.5 text-sm text-ink-soft transition hover:text-river"
+              className="rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition hover:text-river"
             >
               {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
             </button>
@@ -200,7 +201,13 @@ export function TripMembersBar({
         ) : null}
       </div>
 
-      {error ? (
+      {demoSeeded ? (
+        <SoftFailNotice className="mt-3" compact>
+          {t(locale, "collab.panel.softOffline")}
+        </SoftFailNotice>
+      ) : null}
+
+      {error && !demoSeeded ? (
         <p className="mt-2 text-sm text-timber" role="alert">
           {error}
         </p>
@@ -220,7 +227,7 @@ export function TripMembersBar({
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-md border border-[color:var(--bp-line)] px-3 py-1.5 text-xs text-ink-soft transition hover:border-river/40 hover:text-river"
+                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-1.5 text-xs text-ink-soft transition hover:border-river/40 hover:text-river"
                 >
                   {copied
                     ? t(locale, "collab.copied")

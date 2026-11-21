@@ -16,7 +16,7 @@ export function AuthControls({ locale }: { locale: Locale }) {
     return (
       <Link
         href="/sign-in"
-        className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
+        className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
         title="Clerk keys unset — demo identity"
       >
         {t(locale, "nav.signIn")}
@@ -30,7 +30,7 @@ export function AuthControls({ locale }: { locale: Locale }) {
         <SignInButton mode="modal">
           <button
             type="button"
-            className="rounded-md border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
+            className="rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/70 px-3 py-1.5 text-ink-soft transition hover:border-river/40 hover:text-river"
           >
             {t(locale, "nav.signIn")}
           </button>

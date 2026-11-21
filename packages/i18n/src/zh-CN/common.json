@@ -132,6 +132,7 @@
   "invite.join": "加入行程",
   "invite.joining": "加入中…",
   "invite.demoNote": "无 Clerk 密钥时，演示身份（X-Beaver-User-Id）即可加入。",
+  "invite.softOffline": "邀请接口暂时不可达 — 将以京都示例行程柔和演示加入。",
   "mobile.splash": "海狸旅行",
   "mobile.homeHint": "在路上：今日 · 下一站 · 记一笔 · 翻译",
   "mobile.homeTagline": "地图上认真规划的一次旅行",

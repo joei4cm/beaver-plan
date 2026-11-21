@@ -250,14 +250,14 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
           </label>
         </div>
 
-        {error && (
-          <p className="border-l-2 border-timber bg-timber/8 px-4 py-3 text-sm text-timber">
+        {error ? (
+          <p className="rounded-bp-sm border border-timber/25 bg-timber/8 px-4 py-3 text-sm text-timber" role="alert">
             {error}
           </p>
-        )}
-        {!error && softNotice && (
+        ) : null}
+        {!error && softNotice ? (
           <SoftFailNotice>{softNotice}</SoftFailNotice>
-        )}
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-4 pt-2">
           <button

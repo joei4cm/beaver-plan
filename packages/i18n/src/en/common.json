@@ -132,6 +132,7 @@
   "invite.join": "Join trip",
   "invite.joining": "Joining…",
   "invite.demoNote": "Without Clerk keys, the demo identity (X-Beaver-User-Id) can accept invites.",
+  "invite.softOffline": "Invite API unreachable — opening the Kyoto sample as a soft demo join.",
   "mobile.splash": "Beaver Plan",
   "mobile.homeHint": "On the road: Today · Next stop · Journal · Translate",
   "mobile.homeTagline": "Plan a trip worth walking",
