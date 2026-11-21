@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type KeyboardEvent,
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -140,22 +141,78 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       setDayTabIndicator(null);
       return;
     }
+    const INSET_X = 4;
     const measure = () => {
       const tab = dayTabRefs.current.get(dayId);
       if (!tab) return;
+      const width = Math.max(tab.offsetWidth - INSET_X * 2, 0);
       setDayTabIndicator({
-        left: tab.offsetLeft,
-        width: tab.offsetWidth,
+        left: tab.offsetLeft + INSET_X,
+        width,
       });
     };
     measure();
     const frame = requestAnimationFrame(measure);
+    const tab = dayTabRefs.current.get(dayId);
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    tab?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      inline: "nearest",
+      block: "nearest",
+    });
+    const rail = dayTabsRef.current;
+    const ro =
+      typeof ResizeObserver !== "undefined" && rail
+        ? new ResizeObserver(measure)
+        : null;
+    if (rail) ro?.observe(rail);
     window.addEventListener("resize", measure);
+    rail?.addEventListener("scroll", measure, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
+      ro?.disconnect();
       window.removeEventListener("resize", measure);
+      rail?.removeEventListener("scroll", measure);
     };
   }, [dayId, days]);
+
+  const selectDay = useCallback(
+    (nextId: string) => {
+      setDayId(nextId);
+      setSelectedStopId(null);
+    },
+    [],
+  );
+
+  const onDayTabsKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (!days.length || !dayId) return;
+      const idx = days.findIndex((d) => d.id === dayId);
+      if (idx < 0) return;
+      let next = idx;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        next = (idx + 1) % days.length;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        next = (idx - 1 + days.length) % days.length;
+      } else if (e.key === "Home") {
+        next = 0;
+      } else if (e.key === "End") {
+        next = days.length - 1;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      const id = days[next]?.id;
+      if (!id) return;
+      selectDay(id);
+      requestAnimationFrame(() => {
+        dayTabRefs.current.get(id)?.focus();
+      });
+    },
+    [dayId, days, selectDay],
+  );
 
   const applySoftOrHard = useCallback((err: unknown, hardFallback: string) => {
     if (isPlannerNoiseError(err)) {
@@ -855,13 +912,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         >
           <div
             ref={dayTabsRef}
-            className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60"
+            role="tablist"
+            aria-label={t(locale, "planner.dayFill.days")}
+            onKeyDown={onDayTabsKeyDown}
+            className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60 p-1"
           >
             {/* Tip 015 — sliding day indicator (pattern g) */}
             {dayTabIndicator && (
               <span
                 aria-hidden
-                className="animate-tab-indicator pointer-events-none absolute inset-y-0 z-0 bg-river"
+                className="animate-tab-indicator pointer-events-none absolute top-1 bottom-1 z-0 rounded-bp-sm bg-river shadow-bp-soft"
                 style={{
                   left: dayTabIndicator.left,
                   width: dayTabIndicator.width,
@@ -874,29 +934,39 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 <button
                   key={day.id}
                   type="button"
+                  role="tab"
+                  id={`planner-day-tab-${day.id}`}
+                  aria-selected={active}
+                  aria-controls="planner-day-panel"
+                  tabIndex={active ? 0 : -1}
                   ref={(el) => {
                     if (el) dayTabRefs.current.set(day.id, el);
                     else dayTabRefs.current.delete(day.id);
                   }}
-                  onClick={() => {
-                    setDayId(day.id);
-                    setSelectedStopId(null);
-                  }}
-                  className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
-                    active
-                      ? "text-foam"
-                      : "text-ink-soft hover:bg-mist/70 hover:text-ink"
-                  }`}
+                  onClick={() => selectDay(day.id)}
+                  className="bp-day-tab relative z-[1] shrink-0 rounded-bp-sm px-5 py-3 text-left"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
+                  <div
+                    className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                      active ? "opacity-90" : "opacity-70"
+                    }`}
+                  >
                     {t(locale, "planner.day")} {i + 1}
                   </div>
-                  <div className="mt-0.5 text-sm font-semibold">{day.date}</div>
+                  <div className="mt-0.5 text-sm font-semibold tabular-nums">
+                    {day.date}
+                  </div>
                 </button>
               );
             })}
           </div>
 
+          <div
+            id="planner-day-panel"
+            role="tabpanel"
+            aria-labelledby={dayId ? `planner-day-tab-${dayId}` : undefined}
+            className="min-h-0 flex-1 overflow-y-auto"
+          >
           <StopReorderList
             items={dayStops}
             onReorder={(orderedIds) => {
@@ -1096,6 +1166,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               );
             }}
           />
+          </div>
 
           {error && !isPlannerNoiseError(new Error(error)) && (
             <p className="px-4 py-2 text-sm text-timber" role="alert">
