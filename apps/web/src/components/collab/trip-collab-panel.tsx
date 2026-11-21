@@ -490,9 +490,6 @@ export function TripCollabPanel({
             </div>
           </div>
         </div>
-        <SoftFailNotice open={softNoticeOpen} compact>
-          {softNoticeCopy}
-        </SoftFailNotice>
       </SheetPresence>
 
       {/* Activity — azure nodes on mist track */}
@@ -606,9 +603,6 @@ export function TripCollabPanel({
             </li>
           ))}
         </ol>
-        <SoftFailNotice open={softNoticeOpen} compact>
-          {softNoticeCopy}
-        </SoftFailNotice>
       </SheetPresence>
       </div>
     </section>
