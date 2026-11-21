@@ -158,7 +158,7 @@ export default async function HomePage() {
         leadEyebrow={t(locale, "landing.pillars.leadEyebrow")}
       />
 
-      {/* Below fold — tip 019 card deck (how it works · SoftFail · tip-011) */}
+      {/* Below fold — tip 019 how-it-works depth (mist-track · SoftFail · tip-011) */}
       <LandingScrollDeck
         title={t(locale, "landing.how.title")}
         support={t(locale, "landing.how.support")}
@@ -168,6 +168,8 @@ export default async function HomePage() {
         offlineNotice={t(locale, "landing.how.softOffline")}
         stepEyebrow={t(locale, "landing.how.stepEyebrow")}
         progressLabel={t(locale, "landing.how.progressLabel")}
+        focusLabel={t(locale, "landing.how.focusLabel")}
+        liveBadge={t(locale, "landing.how.liveBadge")}
       />
 
       {/* Below fold — FAQ accordion (mist-track · azure select · SoftFail offline) */}
