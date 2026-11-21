@@ -154,14 +154,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * Map-stop SoftFailNotice chrome (BEA-249 after #122/#171/#177):
-   * Stops rail owns compact SoftFail when the day has map stops · soft badge ·
-   * tip-011 (#46). Empty day still owns SoftFail (BEA-222). Title SoftFail
-   * yields while Stops owns soft-fail (no double depth). Soft copy never
-   * timber / Failed to fetch.
+   * Drag SoftFailNotice chrome (BEA-255 after #157/#189):
+   * Stops rail owns compact SoftFail when the day has stops · soft reorder
+   * badge · tip-011 (#46). Empty day still owns SoftFail (BEA-222). Title
+   * SoftFail yields while Stops owns soft-fail (no double depth). Soft copy
+   * never timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
-  const stopsOwnsSoft = !dayEmpty;
+  const dragOwnsSoft = !dayEmpty;
   const listSoftOpen = emptyOwnsSoft
     ? Boolean(softNotice || plannerNoise || demoShell)
     : Boolean(
@@ -173,9 +173,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     softNotice ??
     (dayEmpty
       ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.stops.softFail"));
+      : t(locale, "planner.stops.dragSoftFail"));
   const shareSoftOpen =
-    !emptyOwnsSoft && !stopsOwnsSoft && (demoShell || plannerNoise);
+    !emptyOwnsSoft && !dragOwnsSoft && (demoShell || plannerNoise);
 
   useEffect(() => {
     if (!dayId) {
@@ -698,8 +698,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         stopsForDay(payload?.stops ?? nextStops, dayId),
       );
     } catch (e) {
-      // Soft-fail: keep optimistic order when API is down.
-      applySoftOrHard(e, "reorder_failed");
+      // Soft-fail: keep optimistic order; SoftFailNotice owns drag copy.
+      if (isPlannerNoiseError(e)) {
+        setSoftNotice(t(locale, "planner.stops.dragSoftFail"));
+        setError(null);
+      } else {
+        applySoftOrHard(e, "reorder_failed");
+      }
       await routeDayStops(dayId, stopsForDay(nextStops, dayId));
     }
   }
@@ -1129,9 +1134,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Map-stop SoftFail chrome (BEA-249 after #122/#171/#177):
-              azure Stops rail · soft/selected badge · compact SoftFailNotice ·
-              tip-011 chip rise — never timber / Failed to fetch.
+              Drag SoftFail chrome (BEA-255 after #157/#189):
+              azure Stops rail · soft reorder badge · compact SoftFailNotice ·
+              tip-011 Reorder rise — never timber / Failed to fetch.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
@@ -1179,9 +1184,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       {t(locale, "planner.stopsList")}
                     </span>
                   )}
-                  {stopsOwnsSoft && listSoftOpen ? (
+                  {dragOwnsSoft && listSoftOpen ? (
                     <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                      {t(locale, "planner.stops.softBadge")}
+                      {t(locale, "planner.stops.dragSoftBadge")}
                     </span>
                   ) : null}
                 </div>
@@ -1231,13 +1236,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </div>
               ) : null}
 
-              {/* Compact SoftFail under azure Stops rail — never timber / Failed to fetch. */}
+              {/* Compact SoftFail under azure Stops rail — drag soft-fail; never timber. */}
               <SoftFailNotice open={listSoftOpen} compact>
                 {listSoftCopy}
               </SoftFailNotice>
 
               {!dayEmpty ? (
-                <p className="animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80">
+                <p
+                  className="animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80"
+                  style={{ animationDelay: "55ms" }}
+                >
                   <span className="font-semibold uppercase tracking-[0.14em] text-river">
                     {t(locale, "planner.stops.dragEyebrow")}
                   </span>
