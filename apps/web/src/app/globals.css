@@ -159,6 +159,14 @@
     animation: bp-presence-pulse 1.8s var(--bp-ease-in-out) infinite;
   }
 
+  /*
+   * Talk hold-to-talk — azure listen halo (tip 011 in-out, #46 motion).
+   * Ring breathes while mic is down; core button stays put.
+   */
+  .animate-hold-listen {
+    animation: bp-hold-listen 1.5s var(--bp-ease-in-out) infinite;
+  }
+
   .bp-presence-dot {
     position: absolute;
     right: -1px;
@@ -646,6 +654,23 @@
   }
 }
 
+/* Talk hold-to-talk listen halo — tip 011 in-out (#46) */
+@keyframes bp-hold-listen {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(47, 107, 255, 0.42),
+      0 8px 24px rgba(15, 23, 42, 0.12);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(47, 107, 255, 0),
+      0 8px 24px rgba(15, 23, 42, 0.12);
+    transform: scale(1.015);
+  }
+}
+
 @keyframes bp-entry-in {
   from {
     opacity: 0;
@@ -770,6 +795,7 @@
   .animate-turn-in,
   .animate-lens-breathe,
   .animate-presence-pulse,
+  .animate-hold-listen,
   .animate-entry-in,
   .animate-route-draw,
   .animate-marker-pop,
