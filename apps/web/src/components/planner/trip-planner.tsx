@@ -759,70 +759,76 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </h1>
         </div>
         <div className="flex min-w-0 flex-col items-stretch gap-2 sm:max-w-xl sm:items-end">
-          <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "planner.shareEyebrow")}
-            </span>
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {t(locale, "planner.shareSupport")}
-            </span>
-          </div>
-          <div
-            role="group"
-            aria-label={t(locale, "planner.shareActions")}
-            className="flex flex-wrap items-center justify-end gap-2 text-sm"
-          >
-            <OfflinePinControl
-              tripId={tripId}
-              locale={locale}
-              trip={trip}
-              days={days}
-              stops={stops}
-              legs={legs}
-              compact
-            />
-            <Link
-              href={`/trips/${tripId}/journal`}
-              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+          <div className="flex w-full flex-col items-end gap-1.5">
+            <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.shareEyebrow")}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "planner.shareSupport")}
+              </span>
+            </div>
+            <div
+              role="group"
+              aria-label={t(locale, "planner.shareActions")}
+              className="flex flex-wrap items-center justify-end gap-2 text-sm"
             >
-              {t(locale, "nav.journal")}
-            </Link>
-            <Link
-              href={`/trips/${tripId}/share`}
-              className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-            >
-              {t(locale, "planner.shareCta")}
-            </Link>
-            <div className="flex flex-wrap items-center gap-1 border-l border-[color:var(--bp-line)] pl-2">
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-bp-xs px-2 py-1.5 text-ink-soft bp-transition hover:text-river focus-within:ring-2 focus-within:ring-focus/40">
-                <input
-                  type="checkbox"
-                  checked={copyJournal}
-                  onChange={(e) => setCopyJournal(e.target.checked)}
-                  className="accent-[color:var(--bp-river)]"
-                />
-                <span className="hidden sm:inline">
-                  {t(locale, "planner.copyJournal")}
-                </span>
-              </label>
-              <button
-                type="button"
-                disabled={duplicating}
-                onClick={() => void duplicateTrip()}
-                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+              <OfflinePinControl
+                tripId={tripId}
+                locale={locale}
+                trip={trip}
+                days={days}
+                stops={stops}
+                legs={legs}
+                compact
+              />
+              <div className="flex flex-wrap items-center gap-1 border-l border-[color:var(--bp-line)] pl-2">
+                <label className="flex cursor-pointer items-center gap-1.5 rounded-bp-xs px-2 py-1.5 text-ink-soft bp-transition hover:text-river focus-within:ring-2 focus-within:ring-focus/40">
+                  <input
+                    type="checkbox"
+                    checked={copyJournal}
+                    onChange={(e) => setCopyJournal(e.target.checked)}
+                    className="accent-[color:var(--bp-river)]"
+                  />
+                  <span className="hidden sm:inline">
+                    {t(locale, "planner.copyJournal")}
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  disabled={duplicating}
+                  onClick={() => void duplicateTrip()}
+                  className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                >
+                  {duplicating
+                    ? t(locale, "planner.duplicating")
+                    : t(locale, "planner.duplicate")}
+                </button>
+              </div>
+              <Link
+                href={`/trips/${tripId}/journal`}
+                className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
               >
-                {duplicating
-                  ? t(locale, "planner.duplicating")
-                  : t(locale, "planner.duplicate")}
-              </button>
+                {t(locale, "nav.journal")}
+              </Link>
+              <Link
+                href={`/trips/${tripId}/share`}
+                className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              >
+                {t(locale, "planner.shareCta")}
+              </Link>
             </div>
           </div>
           <SoftFailNotice
-            open={Boolean(softNotice)}
+            open={
+              Boolean(softNotice) ||
+              engineInfo?.mode === "demo" ||
+              Boolean(error && isPlannerNoiseError(new Error(error)))
+            }
             compact
             className="w-full sm:max-w-md"
           >
-            {softNotice ?? t(locale, "planner.demoLocal")}
+            {softNotice ?? t(locale, "planner.shareSoftFail")}
           </SoftFailNotice>
         </div>
       </header>
