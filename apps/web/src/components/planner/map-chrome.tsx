@@ -52,10 +52,11 @@ type Props = {
  * Depth ladder (BEA-224 after #56/#98/#118):
  *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
  *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
- * Floating SoftFailNotice (BEA-278 after #170/#179/#189):
- *   azure Map rail · Soft map badge · compact SoftFail under rail · tip-011 (#46).
- *   Hero SoftFail yields while floating owns (no double depth). Search / basemap /
- *   legend SoftFail still own when open. Lumen tokens — never timber / Failed to fetch.
+ * Floating SoftFailNotice depth (BEA-318 after #213):
+ *   azure Map rail · Soft map badge · softSupport · compact SoftFail mist band
+ *   (border-b) · tip-011 mist-wash · yields to search SoftFail (#226) when open.
+ *   Basemap / legend SoftFail still own when open. Lumen tokens — never timber /
+ *   Failed to fetch.
  */
 export function MapChrome({
   locale,
@@ -196,9 +197,10 @@ export function MapChrome({
     ? t(locale, "planner.search.softFailEmpty")
     : t(locale, "planner.search.softFail");
   /**
-   * Floating SoftFailNotice chrome (BEA-278 after #170/#179/#189):
+   * Floating SoftFailNotice depth (BEA-318 after #213):
    * locate always; vendor soft-fail only when basemap / search / legend are
-   * closed (each owns SoftFail — no double depth). Soft copy never timber.
+   * closed. Yields to search SoftFail (#226) while Places owns (no double
+   * depth). Soft copy never timber / Failed to fetch.
    */
   const floatingOwnsSoft =
     Boolean(locateNotice) ||
@@ -653,12 +655,13 @@ export function MapChrome({
         </div>
       </div>
 
-      {/* Field tools — floating SoftFail chrome + transfer legend (under chrome) */}
+      {/* Field tools — floating SoftFail depth + transfer legend (under chrome) */}
       <div className="absolute bottom-4 left-3 z-[1] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
         {/*
-          Floating SoftFail chrome (BEA-278 after #170/#179/#189):
-          azure Map rail · Soft map badge · compact SoftFailNotice · tip-011 —
-          hero SoftFail yields while floating owns; never timber / Failed to fetch.
+          Floating SoftFail depth (BEA-318 after #213):
+          azure Map rail · Soft map badge · softSupport · compact SoftFailNotice
+          mist band (border-b) · tip-011 mist-wash — yields to search SoftFail
+          (#226); never timber / Failed to fetch.
         */}
         <SheetPresence
           open={floatingOwnsSoft}
@@ -667,14 +670,14 @@ export function MapChrome({
           className="pointer-events-auto overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
         >
           <header
-            className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+            className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
             style={{ animationDelay: "40ms" }}
           >
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.map.softEyebrow")}
               </span>
-              <span className="text-[11px] font-medium text-ink-soft/80">
+              <span className="text-[11px] leading-snug text-ink-soft/80">
                 {t(locale, "planner.map.softSupport")}
               </span>
             </div>
@@ -682,10 +685,19 @@ export function MapChrome({
               {t(locale, "planner.map.softBadge")}
             </span>
           </header>
-          {/* Compact SoftFail under azure Map rail — never timber / Failed to fetch. */}
-          <SoftFailNotice open={floatingOwnsSoft} compact>
-            {floatingSoftCopy ?? ""}
-          </SoftFailNotice>
+          {/* Compact SoftFail mist band under azure Map rail · tip-011 mist-wash. */}
+          <div
+            className="animate-rise bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+            style={{ animationDelay: "70ms" }}
+          >
+            <SoftFailNotice
+              open={floatingOwnsSoft}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {floatingSoftCopy ?? ""}
+            </SoftFailNotice>
+          </div>
         </SheetPresence>
 
         <SheetPresence
