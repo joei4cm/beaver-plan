@@ -7,13 +7,25 @@ type Props = {
   style?: StyleProp<ViewStyle>;
   /** Tighter strip for nested panels. */
   compact?: boolean;
+  /**
+   * Presence gate — when false, unmounts. Default true.
+   * Parity with web SoftFailNotice open (#88 share export soft-fail).
+   */
+  open?: boolean;
 };
 
 /**
  * One muted Lumen Route notice for demo / keys-missing / API-absent soft-fail.
- * Mist wash + ink-soft copy — parity with web SoftFailNotice (#55 / #72).
+ * Mist wash + ink-soft copy — parity with web SoftFailNotice (#55 / #72 / #88).
  */
-export function SoftFailNotice({ children, style, compact }: Props) {
+export function SoftFailNotice({
+  children,
+  style,
+  compact,
+  open = true,
+}: Props) {
+  if (!open) return null;
+
   return (
     <View
       accessibilityRole="text"
