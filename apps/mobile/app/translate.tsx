@@ -538,33 +538,43 @@ export default function TranslateScreen() {
           <Text style={styles.title}>{t(uiLocale, "mobile.translate")}</Text>
           <Text style={styles.support}>{t(uiLocale, "translate.support")}</Text>
           <View style={styles.badgeRow}>
-            <View
-              style={[
-                styles.badge,
-                isDemo ? styles.badgeDemo : styles.badgeLive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.badgeText,
-                  isDemo ? styles.badgeTextDemo : styles.badgeTextLive,
-                ]}
-              >
-                {isDemo
-                  ? t(uiLocale, "translate.demoBadge")
-                  : t(uiLocale, "translate.liveBadge")}
-              </Text>
-            </View>
-            <View style={styles.badgeSoft}>
-              <Text style={styles.badgeSoftText}>
-                {t(uiLocale, "translate.asrReady")} · {status?.asr ?? "…"}
-              </Text>
-            </View>
-            <View style={styles.badgeSoft}>
-              <Text style={styles.badgeSoftText}>
-                {t(uiLocale, "translate.ttsReady")} · {status?.tts ?? "…"}
-              </Text>
-            </View>
+            {!status ? (
+              <>
+                <View style={[styles.badgeSoft, styles.statusSkeleton]} />
+                <View style={[styles.badgeSoft, styles.statusSkeletonWide]} />
+                <View style={[styles.badgeSoft, styles.statusSkeleton]} />
+              </>
+            ) : (
+              <>
+                <View
+                  style={[
+                    styles.badge,
+                    isDemo ? styles.badgeDemo : styles.badgeLive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      isDemo ? styles.badgeTextDemo : styles.badgeTextLive,
+                    ]}
+                  >
+                    {isDemo
+                      ? t(uiLocale, "translate.demoBadge")
+                      : t(uiLocale, "translate.liveBadge")}
+                  </Text>
+                </View>
+                <View style={styles.badgeSoft}>
+                  <Text style={styles.badgeSoftText}>
+                    {t(uiLocale, "translate.asrReady")} · {status.asr}
+                  </Text>
+                </View>
+                <View style={styles.badgeSoft}>
+                  <Text style={styles.badgeSoftText}>
+                    {t(uiLocale, "translate.ttsReady")} · {status.tts}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
           {isDemo ? (
             <View style={styles.notice}>
@@ -807,92 +817,151 @@ export default function TranslateScreen() {
           </View>
         ) : (
           <View style={styles.cameraPanel}>
-            <Text style={styles.dualHint}>
-              {t(uiLocale, "translate.dualHint")}
-            </Text>
-            <View style={styles.dualStage}>
-              <View style={[styles.lensPane, styles.lensYou]}>
-                <View style={styles.lensBadgeWrap}>
-                  <Text style={styles.lensBadgeText}>
-                    {t(uiLocale, "translate.lensYou")} ·{" "}
-                    {t(uiLocale, "translate.cameraFront")}
+            <View style={styles.cameraHead}>
+              <View style={styles.cameraHeadCopy}>
+                <Text style={styles.cameraModeLabel}>
+                  {t(uiLocale, "translate.mode.camera")}
+                </Text>
+                <Text style={styles.dualHint}>
+                  {t(uiLocale, "translate.dualHint")}
+                </Text>
+              </View>
+              {camPermission && !camPermission.granted ? (
+                <View style={styles.softFailChip}>
+                  <Text style={styles.softFailChipText}>
+                    {t(uiLocale, "translate.permissionCamera")}
                   </Text>
                 </View>
-                <View style={styles.avatarRing} />
-              </View>
-              <View style={styles.lensPane}>
-                {camPermission?.granted ? (
-                  <CameraView
-                    ref={cameraRef}
-                    style={StyleSheet.absoluteFill}
-                    facing={facing}
-                  />
-                ) : (
-                  <View style={styles.cameraFallback}>
-                    <Text style={styles.cameraFallbackText}>
-                      {t(uiLocale, "translate.cameraHint")}
-                    </Text>
-                    <Pressable
-                      style={styles.sendBtn}
-                      onPress={() => void requestCamPermission()}
-                    >
-                      <Text style={styles.sendLabel}>
-                        {t(uiLocale, "translate.enableCamera")}
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
-                <View style={styles.lensBadgeWrap}>
-                  <Text style={styles.lensBadgeText}>
-                    {t(uiLocale, "translate.lensWorld")} ·{" "}
-                    {facing === "back"
-                      ? t(uiLocale, "translate.cameraBack")
-                      : t(uiLocale, "translate.cameraFront")}
-                  </Text>
-                </View>
-                {overlay ? (
-                  <View style={styles.subtitle}>
-                    <Text style={styles.subtitleSource}>{overlay.source}</Text>
-                    {overlay.translated ? (
-                      <Text style={styles.subtitleTarget}>
-                        {overlay.translated}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
+              ) : null}
             </View>
-            <View style={styles.cameraActions}>
-              <Pressable
-                style={styles.facingBtn}
-                onPress={() =>
-                  setFacing((f) => (f === "back" ? "front" : "back"))
-                }
-              >
-                <Text style={styles.facingLabel}>
-                  {facing === "back"
-                    ? t(uiLocale, "translate.cameraFront")
-                    : t(uiLocale, "translate.cameraBack")}
+
+            <View style={styles.dualFrame}>
+              <View style={styles.dualStage}>
+                {/* Traveler lens */}
+                <View style={[styles.lensPane, styles.lensYou]}>
+                  <View style={styles.lensYouWash} />
+                  <View style={styles.lensYouGlow} />
+                  <View style={styles.lensBadgeWrap}>
+                    <Text style={styles.lensBadgeText}>
+                      {t(uiLocale, "translate.lensYou")} ·{" "}
+                      {t(uiLocale, "translate.cameraFront")}
+                    </Text>
+                  </View>
+                  <View style={styles.avatarOuter}>
+                    <View style={styles.avatarInner} />
+                  </View>
+                  <Text style={styles.lensFooterLabel}>
+                    {t(uiLocale, "translate.source")}
+                  </Text>
+                </View>
+
+                {/* World lens */}
+                <View style={styles.lensPane}>
+                  {camPermission?.granted ? (
+                    <CameraView
+                      ref={cameraRef}
+                      style={StyleSheet.absoluteFill}
+                      facing={facing}
+                    />
+                  ) : (
+                    <View style={styles.cameraFallback}>
+                      <View style={styles.cameraFallbackGlow} />
+                      <Text style={styles.cameraFallbackText}>
+                        {camPermission && !camPermission.granted
+                          ? t(uiLocale, "translate.permissionCamera")
+                          : t(uiLocale, "translate.cameraHint")}
+                      </Text>
+                      <Pressable
+                        style={styles.enableCamBtn}
+                        onPress={() => {
+                          void requestCamPermission().then((next) => {
+                            if (!next.granted) setSoftNotice(true);
+                          });
+                        }}
+                      >
+                        <Text style={styles.sendLabel}>
+                          {t(uiLocale, "translate.enableCamera")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  <View style={styles.lensBadgeWrap}>
+                    <Text style={styles.lensBadgeText}>
+                      {t(uiLocale, "translate.lensWorld")} ·{" "}
+                      {facing === "back"
+                        ? t(uiLocale, "translate.cameraBack")
+                        : t(uiLocale, "translate.cameraFront")}
+                    </Text>
+                  </View>
+                  {busy && tab === "camera" && !overlay ? (
+                    <View style={styles.visionBusy}>
+                      <View style={styles.skeletonLineSm} />
+                      <View style={styles.skeletonLineLg} />
+                    </View>
+                  ) : null}
+                  {overlay ? (
+                    <View style={styles.subtitle}>
+                      <Text style={styles.subtitleMeta}>
+                        {t(uiLocale, "translate.target")}
+                      </Text>
+                      <Text style={styles.subtitleSource}>
+                        {overlay.source}
+                      </Text>
+                      {overlay.translated ? (
+                        <Text style={styles.subtitleTarget}>
+                          {overlay.translated}
+                        </Text>
+                      ) : null}
+                      {busy ? (
+                        <View style={[styles.skeletonLineSm, { marginTop: 8 }]} />
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+
+              {/* Control chrome rail */}
+              <View style={styles.controlChrome}>
+                <Pressable
+                  style={styles.facingBtn}
+                  onPress={() =>
+                    setFacing((f) => (f === "back" ? "front" : "back"))
+                  }
+                >
+                  <Text style={styles.facingLabel}>
+                    {facing === "back"
+                      ? t(uiLocale, "translate.cameraFront")
+                      : t(uiLocale, "translate.cameraBack")}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.visionBtn, busy && styles.disabled]}
+                  onPress={() => void onVision("ocr")}
+                  disabled={busy}
+                >
+                  <Text style={styles.visionLabel}>
+                    {busy
+                      ? t(uiLocale, "translate.translating")
+                      : t(uiLocale, "translate.ocr")}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.visionBtnAlt, busy && styles.disabled]}
+                  onPress={() => void onVision("caption")}
+                  disabled={busy}
+                >
+                  <Text style={styles.visionLabelAlt}>
+                    {t(uiLocale, "translate.caption")}
+                  </Text>
+                </Pressable>
+                <Text style={styles.controlMeta}>
+                  {camPermission?.granted
+                    ? t(uiLocale, "translate.lensWorld")
+                    : camPermission && !camPermission.granted
+                      ? t(uiLocale, "translate.demoBadge")
+                      : t(uiLocale, "translate.loading")}
                 </Text>
-              </Pressable>
-              <Pressable
-                style={[styles.visionBtn, busy && styles.disabled]}
-                onPress={() => void onVision("ocr")}
-                disabled={busy}
-              >
-                <Text style={styles.visionLabel}>
-                  {t(uiLocale, "translate.ocr")}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[styles.visionBtnAlt, busy && styles.disabled]}
-                onPress={() => void onVision("caption")}
-                disabled={busy}
-              >
-                <Text style={styles.visionLabelAlt}>
-                  {t(uiLocale, "translate.caption")}
-                </Text>
-              </Pressable>
+              </View>
             </View>
           </View>
         )}
@@ -1016,12 +1085,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
   },
   badgeSoftText: { color: colors.inkSoft, fontSize: 11, fontWeight: "600" },
+  statusSkeleton: {
+    width: 72,
+    height: 22,
+    backgroundColor: colors.mist,
+  },
+  statusSkeletonWide: {
+    width: 110,
+    height: 22,
+    backgroundColor: colors.mist,
+  },
   notice: {
     marginTop: 12,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.2)",
-    backgroundColor: "rgba(47, 107, 255, 0.06)",
+    borderColor: "rgba(47, 107, 255, 0.22)",
+    backgroundColor: "rgba(47, 107, 255, 0.07)",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -1214,41 +1293,93 @@ const styles = StyleSheet.create({
   demoNextLabel: { color: colors.river, fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.55 },
   cameraPanel: {
-    marginTop: 8,
+    marginTop: 10,
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  cameraHead: {
+    marginBottom: 12,
+    gap: 10,
+  },
+  cameraHeadCopy: { gap: 4 },
+  cameraModeLabel: {
+    fontSize: 11,
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
   },
   dualHint: {
     color: colors.inkSoft,
     fontSize: 13,
-    marginBottom: 10,
     lineHeight: 18,
   },
-  dualStage: {
+  softFailChip: {
+    alignSelf: "flex-start",
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.22)",
+    backgroundColor: "rgba(47, 107, 255, 0.07)",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  softFailChipText: {
+    color: colors.riverDeep,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "500",
+  },
+  dualFrame: {
     borderRadius: radius.lg,
     overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  dualStage: {
     backgroundColor: colors.ink,
     minHeight: 360,
   },
   lensPane: {
-    flex: 1,
     minHeight: 180,
     position: "relative",
+    overflow: "hidden",
   },
   lensYou: {
-    backgroundColor: colors.riverDeep,
+    backgroundColor: colors.ink,
     alignItems: "center",
     justifyContent: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.12)",
+    borderBottomColor: colors.line,
+  },
+  lensYouWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.riverDeep,
+    opacity: 0.92,
+  },
+  lensYouGlow: {
+    position: "absolute",
+    width: 220,
+    height: 160,
+    borderRadius: 110,
+    top: 18,
+    left: "18%",
+    backgroundColor: "rgba(47, 107, 255, 0.42)",
   },
   lensBadgeWrap: {
     position: "absolute",
     left: 12,
     top: 12,
     zIndex: 2,
-    borderRadius: radius.sm,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.15)",
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
@@ -1259,36 +1390,88 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
-  avatarRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  avatarOuter: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
+    borderColor: "rgba(255,255,255,0.3)",
     backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  avatarInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(47, 107, 255, 0.35)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  lensFooterLabel: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    textAlign: "center",
+    color: "rgba(255,255,255,0.65)",
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.6,
+    zIndex: 1,
   },
   cameraFallback: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
     gap: 14,
-    backgroundColor: "#1e293b",
+    backgroundColor: colors.ink,
+  },
+  cameraFallbackGlow: {
+    position: "absolute",
+    width: 200,
+    height: 140,
+    borderRadius: 100,
+    backgroundColor: "rgba(96, 165, 250, 0.28)",
+    top: "28%",
+    right: "12%",
   },
   cameraFallbackText: {
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.8)",
     textAlign: "center",
     lineHeight: 20,
+    fontSize: 14,
+    maxWidth: 280,
+    zIndex: 1,
+  },
+  enableCamBtn: {
+    borderRadius: radius.sm,
+    backgroundColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    zIndex: 1,
   },
   subtitle: {
     position: "absolute",
     left: 12,
     right: 12,
-    bottom: 16,
+    bottom: 14,
     borderRadius: radius.md,
     backgroundColor: "rgba(15, 23, 42, 0.78)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 12,
     gap: 4,
+    zIndex: 3,
+  },
+  subtitleMeta: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   subtitleSource: {
     color: "rgba(255,255,255,0.7)",
@@ -1300,40 +1483,78 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     lineHeight: 22,
+    letterSpacing: -0.2,
   },
-  cameraActions: {
-    flexDirection: "row",
+  visionBusy: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 14,
+    borderRadius: radius.md,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    padding: 12,
     gap: 8,
-    marginTop: 12,
+    zIndex: 3,
+  },
+  skeletonLineSm: {
+    height: 10,
+    width: "42%",
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  skeletonLineLg: {
+    height: 16,
+    width: "68%",
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  controlChrome: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.92)",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   facingBtn: {
-    borderRadius: 10,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     justifyContent: "center",
   },
   facingLabel: { color: colors.inkSoft, fontWeight: "600", fontSize: 13 },
   visionBtn: {
-    flex: 1,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.river,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   visionBtnAlt: {
-    flex: 1,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.riverDeep,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   visionLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
   visionLabelAlt: { color: colors.foam, fontWeight: "600", fontSize: 13 },
+  controlMeta: {
+    marginLeft: "auto",
+    color: "rgba(100, 116, 139, 0.7)",
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
   partial: {
     marginHorizontal: 16,
     marginBottom: 8,
