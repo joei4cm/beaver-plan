@@ -14,6 +14,7 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
 type Props = {
@@ -225,9 +226,9 @@ export function BookingPanel({
       await onSaved();
     } catch (e) {
       if (isPlannerNoiseError(e)) {
+        // Soft demo banner only — never surface timber "Failed to fetch".
         setSoftDemo(true);
-        // Planner maps transport noise → soft demo notice (not a red error).
-        onError("Failed to fetch");
+        onError("");
         await onSaved();
       } else {
         onError(e instanceof Error ? e.message : "booking_save_failed");
@@ -334,13 +335,10 @@ export function BookingPanel({
           className="animate-fade space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
           style={{ animationDelay: "40ms" }}
         >
-          {softDemo && (
-            <p
-              className="rounded-md border border-river/20 bg-river/5 px-3 py-2 text-xs leading-relaxed text-river"
-              role="status"
-            >
+          {(softDemo || status?.mode === "demo") && (
+            <SoftFailNotice>
               {t(locale, "planner.booking.demoNotice")}
-            </p>
+            </SoftFailNotice>
           )}
 
           {/* Primary flow: search → results → deep-link out */}

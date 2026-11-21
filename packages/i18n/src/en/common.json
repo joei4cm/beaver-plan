@@ -250,6 +250,7 @@
   "share.toJournal": "Edit journal",
   "share.photos": "photos",
   "share.demoHint": "API returns SVG → browser canvas exports PNG. Photos load from R2 (S3 API); set S3_* / R2_* env on the API. Edits apply to this export only.",
+  "share.demoNotice": "Local SVG preview — soft fallback while the share API / R2 are unset.",
   "mobile.journal": "Journal",
   "mobile.share": "Share card",
   "mobile.capture": "Camera / library",

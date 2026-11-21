@@ -14,6 +14,7 @@ import { brand } from "@beaver/ui-tokens";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { fileToBase64, resolveMediaUrl, uploadJournalPhoto } from "@/lib/media-url";
 import {
@@ -513,11 +514,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         </div>
 
         {demoSeeded ? (
-          <p className="animate-sheet-in mt-4 rounded-md border border-river/15 bg-river/[0.06] px-4 py-3 text-sm leading-relaxed text-river-deep">
+          <SoftFailNotice className="mt-4">
             {softNotice && !online
               ? t(locale, "journal.softOffline")
               : t(locale, "journal.demoNotice")}
-          </p>
+          </SoftFailNotice>
         ) : null}
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
@@ -752,7 +753,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           </div>
 
           {info && <p className="mt-3 text-sm text-river">{info}</p>}
-          {error && <p className="mt-3 text-sm text-timber">{error}</p>}
+          {error && !isPlannerNoiseError(new Error(error)) && (
+            <p className="mt-3 text-sm text-timber" role="alert">
+              {error}
+            </p>
+          )}
 
           <button
             type="button"

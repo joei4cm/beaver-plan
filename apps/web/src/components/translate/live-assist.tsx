@@ -24,6 +24,7 @@ import {
 } from "@beaver/core";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   createWebOfflineQueueStore,
@@ -757,11 +758,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </div>
 
         {isDemo ? (
-          <p className="animate-sheet-in mt-4 rounded-md border border-river/15 bg-river/[0.06] px-4 py-3 text-sm leading-relaxed text-river-deep">
+          <SoftFailNotice className="mt-4">
             {softNotice && !online
               ? t(locale, "translate.softOffline")
               : t(locale, "translate.demoNotice")}
-          </p>
+          </SoftFailNotice>
         ) : null}
       </header>
 
@@ -893,7 +894,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     </div>
                   </div>
                   {row.mode === "offline" ? (
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-timber">
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-ink-soft">
                       {t(locale, "translate.offlineBadge")}
                     </p>
                   ) : null}

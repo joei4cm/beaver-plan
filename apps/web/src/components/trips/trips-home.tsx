@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Trip } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SoftFailNotice } from "@/components/soft-fail-notice";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import {
   getLocalTrip,
@@ -183,12 +184,7 @@ export function TripsHome({ locale }: Props) {
         </p>
       )}
       {!error && softNotice && (
-        <p
-          className="mt-6 border-l-2 border-river/35 bg-mist/45 px-4 py-3 text-sm text-ink-soft"
-          role="status"
-        >
-          {softNotice}
-        </p>
+        <SoftFailNotice className="mt-6">{softNotice}</SoftFailNotice>
       )}
 
       <section className="mt-16">
