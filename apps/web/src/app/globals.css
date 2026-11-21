@@ -126,6 +126,18 @@
     animation: bp-sheet-in var(--bp-duration) var(--bp-ease-out) both;
   }
 
+  /* Tip 011 — exits use ease-in (paired with .animate-sheet-in) */
+  .animate-sheet-out {
+    animation: bp-sheet-out var(--bp-duration) var(--bp-ease-in) both;
+    pointer-events: none;
+  }
+
+  .bp-popover-out {
+    transform-origin: top center;
+    animation: bp-popover-out var(--bp-duration) var(--bp-ease-in) both;
+    pointer-events: none;
+  }
+
   .animate-turn-in {
     animation: bp-turn-in var(--bp-duration) var(--bp-ease-out) both;
   }
@@ -404,6 +416,17 @@
   }
 }
 
+@keyframes bp-sheet-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
 @keyframes bp-turn-in {
   from {
     opacity: 0;
@@ -498,6 +521,17 @@
   }
 }
 
+@keyframes bp-popover-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
 @keyframes bp-drop-line-in {
   from {
     transform: scaleX(0);
@@ -522,12 +556,14 @@
   .animate-preview-in,
   .animate-template-swap,
   .animate-sheet-in,
+  .animate-sheet-out,
   .animate-turn-in,
   .animate-lens-breathe,
   .animate-entry-in,
   .animate-route-draw,
   .animate-marker-pop,
-  .bp-popover {
+  .bp-popover,
+  .bp-popover-out {
     animation: none !important;
   }
 

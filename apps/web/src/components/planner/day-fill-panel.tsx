@@ -16,6 +16,7 @@ import {
 import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { DayFillSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
@@ -321,11 +322,11 @@ export function DayFillPanel({
         </span>
       </button>
 
-      {open && (
-        <div
-          className="animate-sheet-in space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
-          style={{ animationDelay: "40ms" }}
-        >
+      <SheetPresence
+        open={open}
+        className="space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
+        style={{ animationDelay: "40ms" }}
+      >
           {softCopy ? <SoftFailNotice>{softCopy}</SoftFailNotice> : null}
 
           <section className="space-y-3" aria-label={t(locale, "planner.dayFill.interests")}>
@@ -555,8 +556,7 @@ export function DayFillPanel({
                 </ol>
               </section>
             )}
-        </div>
-      )}
+      </SheetPresence>
     </div>
   );
 }

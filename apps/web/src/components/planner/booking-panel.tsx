@@ -15,6 +15,7 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { BookingOffersSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
@@ -338,11 +339,11 @@ export function BookingPanel({
         </span>
       </button>
 
-      {open && (
-        <div
-          className="animate-sheet-in space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
-          style={{ animationDelay: "40ms" }}
-        >
+      <SheetPresence
+        open={open}
+        className="space-y-5 border-t border-[color:var(--bp-line)] px-4 py-4"
+        style={{ animationDelay: "40ms" }}
+      >
           {showSoftFail && (
             <SoftFailNotice>
               {t(locale, "planner.booking.demoNotice")}
@@ -596,8 +597,7 @@ export function BookingPanel({
           <p className="text-[11px] leading-relaxed text-ink-soft/80">
             {t(locale, "planner.booking.hint")}
           </p>
-        </div>
-      )}
+      </SheetPresence>
     </div>
   );
 }
