@@ -29,6 +29,11 @@ const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
+/** River uppercase eyebrow — 0.28em tracking parity with web #97. */
+function SectionEyebrow({ children }: { children: string }) {
+  return <Text style={styles.sectionEyebrow}>{children}</Text>;
+}
+
 /** Mist-track segmented control — nested #46 radii, foam/river active. */
 function Segmented<T extends string>({
   value,
@@ -154,15 +159,16 @@ export default function SettingsScreen() {
     ],
   };
 
-  const resolveLine =
-    pending && !resolve
-      ? t(locale, "settings.resolving")
-      : resolve
-        ? t(locale, "settings.resolved")
-            .replace("{engine}", resolve.engineId)
-            .replace("{mode}", resolve.mode)
-            .replace("{region}", resolve.region)
-        : t(locale, "settings.resolvedDemo");
+  // SoftFailNotice under Maps only — hide while resolving; drop plain demo line.
+  const showSoftFail = Boolean(softNotice) && !pending;
+  const statusCopy = pending
+    ? t(locale, "settings.resolving")
+    : resolve
+      ? t(locale, "settings.resolved")
+          .replace("{engine}", resolve.engineId)
+          .replace("{mode}", resolve.mode)
+          .replace("{region}", resolve.region)
+      : null;
 
   return (
     <ScrollView
@@ -182,26 +188,31 @@ export default function SettingsScreen() {
       <View style={styles.skyOrb} pointerEvents="none" />
 
       <Animated.View style={riseStyle}>
-        <Text style={styles.eyebrow}>{t(locale, "settings.eyebrow")}</Text>
-        <Text style={styles.title}>{t(locale, "settings.title")}</Text>
-        <Text style={styles.support}>{t(locale, "settings.support")}</Text>
-        <Text style={styles.localHint}>
-          {brandName} · {t(locale, "settings.localHint")}
-        </Text>
-
-        <SoftFailNotice open={Boolean(softNotice)} style={styles.softNotice}>
-          {softNotice ?? ""}
-        </SoftFailNotice>
+        <View style={styles.pageHeader}>
+          <Text style={styles.eyebrow}>{t(locale, "settings.eyebrow")}</Text>
+          <Text style={styles.title}>{t(locale, "settings.title")}</Text>
+          <Text style={styles.support}>{t(locale, "settings.support")}</Text>
+          <Text style={styles.localHint}>
+            {brandName} · {t(locale, "settings.localHint")}
+          </Text>
+        </View>
 
         {/* Language */}
-        <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>
-            {t(locale, "settings.localeEyebrow")}
-          </Text>
-          <Text style={styles.sectionTitle}>{t(locale, "settings.locale")}</Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "settings.localeSupport")}
-          </Text>
+        <View
+          style={styles.section}
+          accessibilityLabelledBy="settings-locale-heading"
+        >
+          <View style={styles.sectionHeader}>
+            <SectionEyebrow>
+              {t(locale, "settings.localeEyebrow")}
+            </SectionEyebrow>
+            <Text nativeID="settings-locale-heading" style={styles.sectionTitle}>
+              {t(locale, "settings.locale")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {t(locale, "settings.localeSupport")}
+            </Text>
+          </View>
           <Segmented
             value={prefs.locale}
             options={LOCALE_OPTS}
@@ -213,17 +224,25 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* Map engine */}
-        <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>
-            {t(locale, "settings.mapEyebrow")}
-          </Text>
-          <Text style={styles.sectionTitle}>
-            {t(locale, "settings.mapEngine")}
-          </Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "settings.mapEngineSupport")}
-          </Text>
+        {/* Map engine — SoftFailNotice stack lives here (section-scoped, rise in/out) */}
+        <View
+          style={styles.section}
+          accessibilityLabelledBy="settings-map-heading"
+        >
+          <View style={styles.sectionHeader}>
+            <SectionEyebrow>{t(locale, "settings.mapEyebrow")}</SectionEyebrow>
+            <Text nativeID="settings-map-heading" style={styles.sectionTitle}>
+              {t(locale, "settings.mapEngine")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {t(locale, "settings.mapEngineSupport")}
+            </Text>
+          </View>
+
+          <SoftFailNotice open={showSoftFail} style={styles.mapSoftNotice}>
+            {softNotice ?? t(locale, "settings.resolvedDemo")}
+          </SoftFailNotice>
+
           <Segmented
             value={prefs.mapEngine}
             options={MAP_OPTS}
@@ -231,20 +250,31 @@ export default function SettingsScreen() {
             labelFor={(opt) => t(locale, `planner.pref.${opt}` as MessageKey)}
             onChange={(next) => void applyPatch({ mapEngine: next })}
           />
-          <Text style={styles.resolveLine}>{resolveLine}</Text>
+
+          {statusCopy ? (
+            <Text style={styles.resolveLine}>{statusCopy}</Text>
+          ) : null}
         </View>
 
         {/* Distance */}
-        <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>
-            {t(locale, "settings.distanceEyebrow")}
-          </Text>
-          <Text style={styles.sectionTitle}>
-            {t(locale, "settings.distance")}
-          </Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "settings.distanceSupport")}
-          </Text>
+        <View
+          style={styles.section}
+          accessibilityLabelledBy="settings-distance-heading"
+        >
+          <View style={styles.sectionHeader}>
+            <SectionEyebrow>
+              {t(locale, "settings.distanceEyebrow")}
+            </SectionEyebrow>
+            <Text
+              nativeID="settings-distance-heading"
+              style={styles.sectionTitle}
+            >
+              {t(locale, "settings.distance")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {t(locale, "settings.distanceSupport")}
+            </Text>
+          </View>
           <Segmented
             value={prefs.distanceUnit}
             options={DISTANCE_OPTS}
@@ -257,16 +287,21 @@ export default function SettingsScreen() {
         </View>
 
         {/* Share template */}
-        <View style={[styles.section, styles.sectionLast]}>
-          <Text style={styles.sectionEyebrow}>
-            {t(locale, "settings.shareEyebrow")}
-          </Text>
-          <Text style={styles.sectionTitle}>
-            {t(locale, "settings.shareTemplate")}
-          </Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "settings.shareTemplateSupport")}
-          </Text>
+        <View
+          style={StyleSheet.flatten([styles.section, styles.sectionLast])}
+          accessibilityLabelledBy="settings-share-heading"
+        >
+          <View style={styles.sectionHeader}>
+            <SectionEyebrow>
+              {t(locale, "settings.shareEyebrow")}
+            </SectionEyebrow>
+            <Text nativeID="settings-share-heading" style={styles.sectionTitle}>
+              {t(locale, "settings.shareTemplate")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {t(locale, "settings.shareTemplateSupport")}
+            </Text>
+          </View>
           {SHARE_TEMPLATES.map((tpl, index) => {
             const selected = prefs.shareImageTemplateId === tpl.id;
             const name = locale === "zh-CN" ? tpl.nameZh : tpl.nameEn;
@@ -356,6 +391,9 @@ const styles = StyleSheet.create({
     borderRadius: 110,
     backgroundColor: "rgba(96, 165, 250, 0.18)",
   },
+  pageHeader: {
+    marginBottom: 8,
+  },
   eyebrow: {
     ...type.body,
     fontSize: 11,
@@ -387,9 +425,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "rgba(100, 116, 139, 0.85)",
   },
-  softNotice: {
-    marginTop: 24,
-  },
   section: {
     marginTop: 36,
     paddingTop: 28,
@@ -400,17 +435,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingBottom: 8,
   },
+  sectionHeader: {
+    marginBottom: 24,
+  },
   sectionEyebrow: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 2.8,
     textTransform: "uppercase",
     color: colors.river,
-    marginBottom: 8,
   },
   sectionTitle: {
     ...type.display,
+    marginTop: 12,
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
@@ -419,11 +457,13 @@ const styles = StyleSheet.create({
   sectionSupport: {
     ...type.body,
     marginTop: 8,
-    marginBottom: 18,
     fontSize: 13,
     lineHeight: 20,
     color: colors.inkSoft,
     maxWidth: 400,
+  },
+  mapSoftNotice: {
+    marginBottom: 24,
   },
   track: {
     flexDirection: "row",
