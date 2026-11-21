@@ -162,7 +162,7 @@ export default async function HomePage() {
         liveBadge={t(locale, "landing.pillars.liveBadge")}
       />
 
-      {/* Below fold — how-it-works SoftFail chrome (azure rail · Offline/Live · tip-011) */}
+      {/* Below fold — how-it-works SoftFail sheet (azure rail · Offline/Live · tip-011) */}
       <LandingScrollDeck
         title={t(locale, "landing.how.title")}
         support={t(locale, "landing.how.support")}
