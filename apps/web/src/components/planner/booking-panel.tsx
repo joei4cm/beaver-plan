@@ -334,11 +334,12 @@ export function BookingPanel({
   );
 
   /**
-   * OTA SoftFailNotice depth (BEA-327 after #198):
-   * azure OTA sheet rail · Soft OTA badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · mist tip-011 body while soft · Confirm owns
-   * save soft-fail so OTA SoftFail yields (no double depth) · Expo booking
-   * SoftFail (#220) stays out of scope. Soft copy never timber / Failed to fetch.
+   * Confirm SoftFailNotice depth (BEA-345 after #184):
+   * azure Confirm rail · Soft/Live badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash pin body while soft · Confirm
+   * owns save soft-fail so OTA SoftFail (#246) yields (no double depth) ·
+   * Expo booking confirm SoftFail (BEA-340) stays out of scope. Soft copy
+   * never timber / Failed to fetch.
    */
   const showConfirmSoftFail = confirmSoftFail;
   const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
@@ -350,12 +351,15 @@ export function BookingPanel({
           stop.place.name,
         )
       : t(locale, "planner.booking.support");
+  const confirmSupportCopy = showConfirmSoftFail
+    ? t(locale, "planner.booking.confirmSoftSupport")
+    : t(locale, "planner.booking.confirmSupport");
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
         OTA SoftFail depth (BEA-327 after #198):
         azure sheet rail · Demo/Keys badge · Soft OTA badge · softSupport ·
-        tip-011 — never timber / Failed to fetch.
+        tip-011 — Confirm SoftFail (#184/#345) still owns save soft-fail.
       */}
       <button
         type="button"
@@ -673,9 +677,10 @@ export function BookingPanel({
           </section>
 
           {/*
-            Confirm SoftFail chrome (BEA-239 after #128/#160):
-            azure Confirm rail · soft badge · compact SoftFailNotice ·
-            SheetPresence pin body · tip-011 rise — never timber.
+            Confirm SoftFail depth (BEA-345 after #184):
+            azure Confirm rail · Soft/Live badge · softSupport · compact
+            SoftFail mist band · tip-011 mist-wash pin body — OTA SoftFail
+            (#246) yields while Confirm owns; never timber.
           */}
           <section
             className="animate-rise px-4 py-4"
@@ -702,17 +707,23 @@ export function BookingPanel({
                         {t(locale, "planner.booking.confirmDirty")}
                       </span>
                     ) : null}
-                    {showConfirmSoftFail ? (
-                      <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                        {t(locale, "planner.booking.confirmSoftBadge")}
-                      </span>
-                    ) : null}
+                    <span
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                        showConfirmSoftFail
+                          ? "bg-mist text-ink-soft"
+                          : "bg-river/12 text-river"
+                      }`}
+                    >
+                      {showConfirmSoftFail
+                        ? t(locale, "planner.booking.confirmSoftBadge")
+                        : t(locale, "planner.booking.confirmSoftLiveBadge")}
+                    </span>
                   </div>
                   <h3 className="mt-1 font-display text-base tracking-tight text-ink">
                     {t(locale, "planner.booking.confirmTitle")}
                   </h3>
                   <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-                    {t(locale, "planner.booking.confirmSupport")}
+                    {confirmSupportCopy}
                   </p>
                 </div>
                 {stop ? (
@@ -729,7 +740,7 @@ export function BookingPanel({
                 ) : null}
               </div>
 
-              {/* Compact SoftFail under azure Confirm rail — never timber / Failed to fetch. */}
+              {/* Compact SoftFail mist band under azure Confirm rail — OTA SoftFail yields. */}
               <SoftFailNotice
                 open={showConfirmSoftFail}
                 compact
@@ -740,7 +751,11 @@ export function BookingPanel({
 
               <SheetPresence
                 open
-                className="space-y-3 px-3 py-3"
+                className={`space-y-3 px-3 py-3 ${
+                  showConfirmSoftFail
+                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                    : ""
+                }`}
                 style={{ animationDelay: "40ms" }}
                 aria-label={t(locale, "planner.booking.confirmTitle")}
               >
