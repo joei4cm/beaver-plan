@@ -179,6 +179,8 @@
   "planner.searchDemo": "Showing curated demo places (API offline).",
   "planner.place.loading": "Loading place details…",
   "planner.place.eyebrow": "Place intel",
+  "planner.place.snapshotEyebrow": "Snapshot",
+  "planner.place.aboutEyebrow": "About",
   "planner.place.rating": "Rating",
   "planner.place.hours": "Hours",
   "planner.place.tags": "Categories",
