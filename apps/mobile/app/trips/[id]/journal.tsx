@@ -91,6 +91,9 @@ export default function JournalScreen() {
   const [fromCache, setFromCache] = useState(false);
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [softNotice, setSoftNotice] = useState(false);
+  /** Media / journal API soft-fail while composing (R2 / Neon absent) — web #110. */
+  const [composeSoftFail, setComposeSoftFail] = useState(false);
+  const [stopId, setStopId] = useState<string>("");
   const composeRef = useRef<TextInput | null>(null);
   const rise = useRef(new Animated.Value(0)).current;
 
@@ -105,6 +108,7 @@ export default function JournalScreen() {
       setDayId((prev) => prev ?? fixture.days[0]?.id ?? null);
       setDemoSeeded(true);
       setSoftNotice(Boolean(opts?.soft));
+      setComposeSoftFail(true);
       setFromCache(false);
       setError(null);
       return true;
@@ -141,6 +145,10 @@ export default function JournalScreen() {
           (!journal.entries || journal.entries.length === 0),
       );
       setSoftNotice(false);
+      setComposeSoftFail(
+        tripId === "sample-kyoto" &&
+          (!journal.entries || journal.entries.length === 0),
+      );
       setDayId((prev) => prev ?? tripData.days[0]?.id ?? null);
       setFromCache(false);
       setInfo(null);
@@ -163,6 +171,7 @@ export default function JournalScreen() {
           tripId === "sample-kyoto" && cached.journal.length === 0,
         );
         setSoftNotice(isNoiseError(e));
+        setComposeSoftFail(true);
         setInfo(t(locale, "offline.cachedRead"));
       } else if (!applySampleSeed({ soft: true })) {
         setError(e instanceof Error ? e.message : "load_failed");
@@ -175,6 +184,11 @@ export default function JournalScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  /** Clear stop bind when switching days — web #110 compose settle. */
+  useEffect(() => {
+    setStopId("");
+  }, [dayId]);
 
   useEffect(() => {
     if (loading) return;
@@ -252,6 +266,7 @@ export default function JournalScreen() {
           });
         }
         setPendingLocal((prev) => [...prev, ...locals].slice(0, 8));
+        setComposeSoftFail(true);
         return;
       }
       const urls: string[] = [];
@@ -284,6 +299,7 @@ export default function JournalScreen() {
             });
           }
           setPendingLocal((prev) => [...prev, ...locals].slice(0, 8));
+          setComposeSoftFail(true);
           setInfo(t(locale, "offline.savedLocal"));
           return;
         } catch {
@@ -307,6 +323,7 @@ export default function JournalScreen() {
         tripId,
         body: body.trim(),
         dayId: dayId ?? undefined,
+        stopId: stopId || undefined,
         mediaKeys: pendingMedia,
         pendingPhotos: pendingLocal.map((p) => ({
           id: p.id,
@@ -319,6 +336,7 @@ export default function JournalScreen() {
       setBody("");
       setPendingMedia([]);
       setPendingLocal([]);
+      setComposeSoftFail(true);
       setInfo(t(locale, "offline.savedLocal"));
     };
 
@@ -329,6 +347,7 @@ export default function JournalScreen() {
       }
       await createJournalEntry(tripId, {
         dayId: dayId ?? undefined,
+        stopId: stopId || undefined,
         body: body.trim(),
         media: pendingMedia,
         expectedVersion: trip?.version,
@@ -336,12 +355,14 @@ export default function JournalScreen() {
       setBody("");
       setPendingMedia([]);
       setPendingLocal([]);
+      setComposeSoftFail(false);
       const journal = await fetchJournal(tripId);
       setEntries(
         journal.entries.length > 0 ? journal.entries : sampleKyotoJournal(),
       );
     } catch (e) {
       if (isOfflineTransportError(e) || isNoiseError(e)) {
+        setComposeSoftFail(true);
         await finishLocal();
         return;
       }
@@ -356,7 +377,12 @@ export default function JournalScreen() {
     ...pendingLocal.map((p) => ({ key: p.id, uri: p.preview })),
   ];
   const emptySlots = Math.max(0, 3 - previewMedia.length);
-  const showSoftFail = demoSeeded || softNotice;
+  const showComposeSoftFail = demoSeeded || softNotice || composeSoftFail;
+  const composeSoftCopy = softNotice
+    ? t(locale, "journal.softOffline")
+    : composeSoftFail && !demoSeeded
+      ? t(locale, "journal.composeSoftFail")
+      : t(locale, "journal.demoNotice");
 
   return (
     <View style={styles.root}>
@@ -452,12 +478,6 @@ export default function JournalScreen() {
                 </Text>
               </View>
 
-              <SoftFailNotice open={showSoftFail} style={styles.softFail}>
-                {softNotice
-                  ? t(locale, "journal.softOffline")
-                  : t(locale, "journal.demoNotice")}
-              </SoftFailNotice>
-
               {visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
                 const isLast = index === visible.length - 1;
@@ -530,37 +550,165 @@ export default function JournalScreen() {
               ) : null}
             </View>
 
-            <View style={styles.compose}>
-              <Text style={styles.composeTitle}>
-                {t(locale, "journal.compose")}
-              </Text>
-              <Text style={styles.composeHint}>
-                {t(locale, "journal.composeHint")}
-              </Text>
-              <TextInput
-                ref={composeRef}
-                value={body}
-                onChangeText={setBody}
-                placeholder={t(locale, "journal.placeholder")}
-                placeholderTextColor={colors.inkSoft}
-                multiline
-                style={styles.input}
-              />
-              <View style={styles.row}>
-                <Pressable
-                  style={styles.secondary}
-                  onPress={() => void capture()}
+            {/* Azure hierarchy compose rail — web #110 SoftFailNotice + tip-011. */}
+            <View
+              style={styles.compose}
+              accessibilityLabel={t(locale, "journal.compose")}
+            >
+              <View style={styles.composeHeader}>
+                <View style={styles.composeHeaderTitleRow}>
+                  <Text style={styles.composeEyebrow}>
+                    {t(locale, "journal.composeEyebrow")}
+                  </Text>
+                  <Text style={styles.composeTitle}>
+                    {t(locale, "journal.compose")}
+                  </Text>
+                </View>
+                <Text style={styles.composeHint}>
+                  {t(locale, "journal.composeHint")}
+                </Text>
+              </View>
+
+              <View style={styles.composeBody}>
+                <SoftFailNotice
+                  open={showComposeSoftFail}
+                  style={styles.composeSoftFail}
                 >
-                  <Text style={styles.secondaryLabel}>
-                    {t(locale, "mobile.capture")}
+                  {composeSoftCopy}
+                </SoftFailNotice>
+
+                <Text style={styles.bindLabel}>
+                  {t(locale, "journal.bindStop")}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.bindRow}
+                  accessibilityRole="tablist"
+                  accessibilityLabel={t(locale, "journal.bindStop")}
+                >
+                  <Pressable
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: stopId === "" }}
+                    onPress={() => setStopId("")}
+                    style={StyleSheet.flatten([
+                      styles.bindChip,
+                      stopId === "" ? styles.bindChipOn : null,
+                    ])}
+                  >
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.bindChipLabel,
+                        stopId === "" ? styles.bindChipLabelOn : null,
+                      ])}
+                    >
+                      {t(locale, "journal.dayOnly")}
+                    </Text>
+                  </Pressable>
+                  {dayStops.map((s) => {
+                    const on = stopId === s.id;
+                    return (
+                      <Pressable
+                        key={s.id}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: on }}
+                        onPress={() => setStopId(s.id)}
+                        style={StyleSheet.flatten([
+                          styles.bindChip,
+                          on ? styles.bindChipOn : null,
+                        ])}
+                      >
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.bindChipLabel,
+                            on ? styles.bindChipLabelOn : null,
+                          ])}
+                          numberOfLines={1}
+                        >
+                          {s.place.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                <TextInput
+                  ref={composeRef}
+                  value={body}
+                  onChangeText={setBody}
+                  placeholder={t(locale, "journal.placeholder")}
+                  placeholderTextColor={colors.inkSoft}
+                  multiline
+                  style={styles.input}
+                />
+
+                <Pressable
+                  style={styles.photoDrop}
+                  onPress={() => void capture()}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(locale, "journal.addPhotos")}
+                >
+                  <Text style={styles.photoDropTitle}>
+                    {t(locale, "journal.addPhotos")}
+                  </Text>
+                  <Text style={styles.photoDropHint}>
+                    {t(locale, "journal.uploadHint")}
                   </Text>
                 </Pressable>
+
+                <Text style={styles.slotsLabel}>
+                  {t(locale, "journal.photoSlots")}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.previewRow}
+                >
+                  {previewMedia.map((item) => (
+                    <Image
+                      key={item.key}
+                      source={{ uri: item.uri }}
+                      style={StyleSheet.flatten([
+                        styles.thumb,
+                        styles.thumbCompose,
+                      ])}
+                    />
+                  ))}
+                  {Array.from({ length: emptySlots }).map((_, i) => (
+                    <View
+                      key={`slot-${i}`}
+                      style={StyleSheet.flatten([styles.slot, styles.slotCompose])}
+                    />
+                  ))}
+                </ScrollView>
+
+                {info ? (
+                  <Text style={styles.info} accessibilityRole="text">
+                    {info}
+                  </Text>
+                ) : null}
+                {error ? (
+                  <Text style={styles.error} accessibilityRole="alert">
+                    {error}
+                  </Text>
+                ) : null}
+
                 <Pressable
                   style={StyleSheet.flatten([
                     styles.primary,
-                    saving ? styles.disabled : null,
+                    saving ||
+                    (!body.trim() &&
+                      pendingMedia.length === 0 &&
+                      pendingLocal.length === 0)
+                      ? styles.disabled
+                      : null,
                   ])}
-                  disabled={saving}
+                  disabled={
+                    saving ||
+                    (!body.trim() &&
+                      pendingMedia.length === 0 &&
+                      pendingLocal.length === 0)
+                  }
                   onPress={() => void save()}
                 >
                   <Text style={styles.primaryLabel}>
@@ -570,23 +718,6 @@ export default function JournalScreen() {
                   </Text>
                 </Pressable>
               </View>
-              <Text style={styles.slotsLabel}>
-                {t(locale, "journal.photoSlots")}
-              </Text>
-              <ScrollView horizontal style={styles.previewRow}>
-                {previewMedia.map((item) => (
-                  <Image
-                    key={item.key}
-                    source={{ uri: item.uri }}
-                    style={styles.thumb}
-                  />
-                ))}
-                {Array.from({ length: emptySlots }).map((_, i) => (
-                  <View key={`slot-${i}`} style={styles.slot} />
-                ))}
-              </ScrollView>
-              {info ? <Text style={styles.info}>{info}</Text> : null}
-              {error ? <Text style={styles.error}>{error}</Text> : null}
             </View>
           </Animated.View>
         </ScrollView>
@@ -724,10 +855,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.inkSoft,
   },
-  softFail: {
-    marginTop: 14,
-    marginBottom: 4,
-  },
   entry: {
     flexDirection: "row",
     gap: 14,
@@ -820,29 +947,94 @@ const styles = StyleSheet.create({
   },
   compose: {
     marginTop: 4,
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 18,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.45)",
+    backgroundColor: "rgba(244, 246, 250, 0.55)",
+  },
+  composeHeader: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  composeHeaderTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  composeEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: colors.river,
   },
   composeTitle: {
     ...type.display,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
+    letterSpacing: -0.3,
     color: colors.ink,
   },
   composeHint: {
     ...type.body,
-    marginTop: 4,
-    marginBottom: 10,
+    marginTop: 6,
     fontSize: 13,
+    lineHeight: 19,
     color: colors.inkSoft,
+  },
+  composeBody: {
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 18,
+  },
+  composeSoftFail: {
+    marginBottom: 14,
+  },
+  bindLabel: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+    marginBottom: 8,
+  },
+  bindRow: {
+    gap: 8,
+    paddingBottom: 4,
+    marginBottom: 12,
+  },
+  bindChip: {
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxWidth: 180,
+  },
+  bindChipOn: {
+    borderColor: colors.river,
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
+  },
+  bindChipLabel: {
+    ...type.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.ink,
+  },
+  bindChipLabelOn: {
+    color: colors.riverDeep,
   },
   input: {
     ...type.body,
-    minHeight: 88,
+    minHeight: 96,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
@@ -852,31 +1044,44 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
     textAlignVertical: "top",
   },
-  row: { flexDirection: "row", gap: 10, marginTop: 12 },
-  primary: {
-    flex: 1,
-    backgroundColor: colors.river,
+  photoDrop: {
+    marginTop: 12,
     borderRadius: radius.sm,
-    paddingVertical: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: "dashed",
+    borderColor: "rgba(47, 107, 255, 0.35)",
+    backgroundColor: "rgba(230, 236, 245, 0.4)",
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    gap: 4,
+  },
+  photoDropTitle: {
+    ...type.body,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.river,
+  },
+  photoDropHint: {
+    ...type.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.inkSoft,
+  },
+  primary: {
+    marginTop: 16,
+    backgroundColor: colors.river,
+    borderRadius: radius.md,
+    paddingVertical: 13,
     alignItems: "center",
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   primaryLabel: {
     ...type.body,
     color: colors.foam,
-    fontWeight: "700",
-  },
-  secondary: {
-    flex: 1,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: colors.foam,
-  },
-  secondaryLabel: {
-    ...type.body,
-    color: colors.river,
+    fontSize: 14,
     fontWeight: "700",
   },
   slotsLabel: {
@@ -889,7 +1094,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   previewRow: { marginTop: 8 },
-  disabled: { opacity: 0.45 },
+  thumbCompose: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.3)",
+  },
+  slotCompose: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: "dashed",
+    borderColor: "rgba(47, 107, 255, 0.3)",
+  },
+  disabled: { opacity: 0.4 },
   error: {
     ...type.body,
     marginTop: 10,
