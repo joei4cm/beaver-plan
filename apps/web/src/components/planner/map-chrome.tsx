@@ -52,9 +52,10 @@ type Props = {
  * Depth ladder (BEA-224 after #56/#98/#118):
  *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
  *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
- * Search SoftFailNotice (BEA-238): azure Places rail · compact SoftFail under
- * rail · tip-011 (#46) · stage/legend yield while search owns soft-fail.
- * Lumen tokens — never timber / Failed to fetch.
+ * Floating SoftFailNotice (BEA-278 after #170/#179/#189):
+ *   azure Map rail · Soft map badge · compact SoftFail under rail · tip-011 (#46).
+ *   Hero SoftFail yields while floating owns (no double depth). Search / basemap /
+ *   legend SoftFail still own when open. Lumen tokens — never timber / Failed to fetch.
  */
 export function MapChrome({
   locale,
@@ -194,13 +195,17 @@ export function MapChrome({
   const searchSoftCopy = showEmpty
     ? t(locale, "planner.search.softFailEmpty")
     : t(locale, "planner.search.softFail");
-  // Stage SoftFailNotice: locate always; vendor soft-fail only when basemap
-  // popover, search sheet, and transfer legend are closed (each owns SoftFailNotice — no double depth).
-  const stageNotice =
+  /**
+   * Floating SoftFailNotice chrome (BEA-278 after #170/#179/#189):
+   * locate always; vendor soft-fail only when basemap / search / legend are
+   * closed (each owns SoftFail — no double depth). Soft copy never timber.
+   */
+  const floatingOwnsSoft =
+    Boolean(locateNotice) ||
+    (softFail && !engineOpen && !legendOpen && !searchOwnsSoftFail);
+  const floatingSoftCopy =
     locateNotice ||
-    (softFail && !engineOpen && !legendOpen && !searchOwnsSoftFail
-      ? t(locale, "planner.map.softFail")
-      : null);
+    (floatingOwnsSoft ? t(locale, "planner.map.softFail") : null);
 
   const layersActive = (["routes", "stops", "legend"] as const).filter(
     (key) => layers[key],
@@ -624,16 +629,40 @@ export function MapChrome({
         </div>
       </div>
 
-      {/* Field tools — SoftFailNotice + transfer legend sheet (under chrome) */}
+      {/* Field tools — floating SoftFail chrome + transfer legend (under chrome) */}
       <div className="absolute bottom-4 left-3 z-[1] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
-        <div className="pointer-events-auto">
-          <SoftFailNotice
-            open={Boolean(stageNotice)}
-            className="shadow-bp-soft backdrop-blur-md"
+        {/*
+          Floating SoftFail chrome (BEA-278 after #170/#179/#189):
+          azure Map rail · Soft map badge · compact SoftFailNotice · tip-011 —
+          hero SoftFail yields while floating owns; never timber / Failed to fetch.
+        */}
+        <SheetPresence
+          open={floatingOwnsSoft}
+          variant="popover"
+          aria-label={t(locale, "planner.map.softEyebrow")}
+          className="pointer-events-auto overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 shadow-bp-soft backdrop-blur-md"
+        >
+          <header
+            className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+            style={{ animationDelay: "40ms" }}
           >
-            {stageNotice ?? ""}
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.map.softEyebrow")}
+              </span>
+              <span className="text-[11px] font-medium text-ink-soft/80">
+                {t(locale, "planner.map.softSupport")}
+              </span>
+            </div>
+            <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
+              {t(locale, "planner.map.softBadge")}
+            </span>
+          </header>
+          {/* Compact SoftFail under azure Map rail — never timber / Failed to fetch. */}
+          <SoftFailNotice open={floatingOwnsSoft} compact>
+            {floatingSoftCopy ?? ""}
           </SoftFailNotice>
-        </div>
+        </SheetPresence>
 
         <SheetPresence
           open={legendOpen && !searchOwnsSoftFail}
