@@ -35,10 +35,10 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Invite SoftFailNotice chrome (BEA-283 after #130/#174):
- * azure sheet rail · Soft invite badge · compact SoftFail under rail ·
- * mist-track trip preview · tip-011 rise stagger — never timber /
- * Failed to fetch for transport / demo soft-fail.
+ * Invite SoftFailNotice depth (BEA-319 after #216):
+ * azure sheet rail · Soft invite badge · softSupport · compact SoftFail
+ * under rail (border-b) · mist-wash tip-011 SheetPresence trip preview —
+ * never timber / Failed to fetch for transport / demo soft-fail.
  */
 export function InviteAccept({
   code,
@@ -148,9 +148,10 @@ export function InviteAccept({
       ) : null}
 
       {/*
-        SoftFail sheet (BEA-283 after #130/#174):
-        azure rail · Soft invite badge · compact SoftFailNotice · tip-011 —
-        never timber.
+        SoftFail depth (BEA-319 after #216):
+        azure rail · Soft invite badge · softSupport · compact SoftFailNotice
+        (border-b) · mist-wash tip-011 SheetPresence trip preview —
+        never timber / Failed to fetch.
       */}
       <SheetPresence
         open={sheetOpen}
@@ -165,7 +166,9 @@ export function InviteAccept({
                 {t(locale, "invite.sheetEyebrow")}
               </span>
               <span className="text-[11px] leading-snug text-ink-soft/80">
-                {t(locale, "invite.sheetSupport")}
+                {softOpen
+                  ? t(locale, "invite.softSupport")
+                  : t(locale, "invite.sheetSupport")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -189,7 +192,7 @@ export function InviteAccept({
           </div>
         </header>
 
-        {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+        {/* Compact SoftFail under azure invite rail — never timber / Failed to fetch. */}
         <SoftFailNotice
           open={softOpen}
           compact
@@ -198,7 +201,13 @@ export function InviteAccept({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div className="space-y-5 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-5 py-5">
+        <div
+          className={`space-y-5 px-5 py-5 ${
+            softOpen
+              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+          }`}
+        >
           {hardError ? (
             <p className="animate-rise text-sm text-ink-soft" role="alert">
               {hardError}
@@ -207,9 +216,15 @@ export function InviteAccept({
 
           {preview ? (
             <>
-              <div
-                className="animate-rise overflow-hidden rounded-bp-sm bg-gradient-to-br from-mist/45 via-mist/20 to-transparent p-4 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-5"
+              <SheetPresence
+                open
+                className={`overflow-hidden rounded-bp-sm p-4 shadow-[inset_3px_0_0_var(--bp-river)] sm:p-5 ${
+                  softOpen
+                    ? "bg-gradient-to-br from-mist/55 via-mist/28 to-transparent"
+                    : "bg-gradient-to-br from-mist/45 via-mist/20 to-transparent"
+                }`}
                 style={{ animationDelay: "40ms" }}
+                aria-label={t(locale, "invite.previewEyebrow")}
               >
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
                   {t(locale, "invite.previewEyebrow")}
@@ -239,7 +254,7 @@ export function InviteAccept({
                     {preview.code}
                   </code>
                 </p>
-              </div>
+              </SheetPresence>
 
               <div
                 className="animate-rise flex flex-wrap items-center gap-3"
