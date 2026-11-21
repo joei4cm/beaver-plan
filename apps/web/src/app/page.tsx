@@ -2,6 +2,8 @@ import Link from "next/link";
 import { brand } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { getLocale } from "@/lib/locale";
+import { LandingScrollDeck } from "@/components/landing/scroll-deck";
+import { LandingScrollStack } from "@/components/landing/scroll-stack";
 
 const PILLARS = [
   { title: "landing.pillars.map.title", body: "landing.pillars.map.body" },
@@ -31,6 +33,16 @@ export default async function HomePage() {
   const brandPrimary = locale === "zh-CN" ? brand.zh : brand.en;
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const headline = locale === "zh-CN" ? brand.taglineZh : brand.taglineEn;
+
+  const pillarCards = PILLARS.map((pillar) => ({
+    title: t(locale, pillar.title),
+    body: t(locale, pillar.body),
+  }));
+
+  const howCards = HOW_STEPS.map((step) => ({
+    title: t(locale, step.title),
+    body: t(locale, step.body),
+  }));
 
   return (
     <>
@@ -142,86 +154,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Below fold — pillars: one job, editorial rows, no card soup */}
-      <section className="border-t border-ink/8 bg-foam">
-        <div className="mx-auto max-w-6xl px-6 py-20 md:px-10 md:py-28">
-          <h2 className="animate-rise font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">
-            {t(locale, "landing.pillars.title")}
-          </h2>
-          <p
-            className="animate-rise mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base"
-            style={{ animationDelay: "60ms" }}
-          >
-            {t(locale, "landing.pillars.support")}
-          </p>
-          <ul className="mt-12 divide-y divide-ink/8 border-y border-ink/8">
-            {PILLARS.map((pillar, index) => (
-              <li
-                key={pillar.title}
-                className="animate-rise grid gap-2 py-6 md:grid-cols-[minmax(10rem,14rem)_1fr] md:gap-10 md:py-7"
-                style={{ animationDelay: `${100 + index * 50}ms` }}
-              >
-                <span className="font-display text-lg font-semibold tracking-[-0.02em] text-ink">
-                  {t(locale, pillar.title)}
-                </span>
-                <span className="text-sm leading-relaxed text-ink-soft md:text-base">
-                  {t(locale, pillar.body)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {/* Below fold — tip 019 stacked cards (pillars) */}
+      <LandingScrollStack
+        title={t(locale, "landing.pillars.title")}
+        support={t(locale, "landing.pillars.support")}
+        cards={pillarCards}
+      />
 
-      {/* Below fold — how it works: three steps, one job */}
-      <section className="border-t border-ink/8 bg-paper">
-        <div className="mx-auto max-w-6xl px-6 py-20 md:px-10 md:py-28">
-          <h2 className="animate-rise font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">
-            {t(locale, "landing.how.title")}
-          </h2>
-          <p
-            className="animate-rise mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base"
-            style={{ animationDelay: "60ms" }}
-          >
-            {t(locale, "landing.how.support")}
-          </p>
-          <ol className="mt-12 space-y-10 md:space-y-12">
-            {HOW_STEPS.map((step, index) => (
-              <li
-                key={step.title}
-                className="animate-rise flex gap-5 md:gap-8"
-                style={{ animationDelay: `${100 + index * 70}ms` }}
-              >
-                <span
-                  aria-hidden
-                  className="font-display text-3xl font-extrabold leading-none tracking-[-0.04em] text-river/35 md:text-4xl"
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="pt-1">
-                  <h3 className="font-display text-xl font-semibold tracking-[-0.02em] text-ink md:text-2xl">
-                    {t(locale, step.title)}
-                  </h3>
-                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-soft md:text-base">
-                    {t(locale, step.body)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div
-            className="animate-rise mt-14"
-            style={{ animationDelay: "320ms" }}
-          >
-            <Link
-              href="/trips"
-              className="inline-flex rounded-bp bg-ink px-6 py-3.5 text-sm font-semibold tracking-wide text-foam transition duration-bp ease-bp hover:bg-river"
-            >
-              {t(locale, "cta.viewTrips")}
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Below fold — tip 019 card deck (how it works) */}
+      <LandingScrollDeck
+        title={t(locale, "landing.how.title")}
+        support={t(locale, "landing.how.support")}
+        cards={howCards}
+        ctaLabel={t(locale, "cta.viewTrips")}
+        ctaHref="/trips"
+      />
     </>
   );
 }
