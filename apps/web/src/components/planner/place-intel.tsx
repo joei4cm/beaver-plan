@@ -57,9 +57,10 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Map place pin sheet — deeper Lumen hierarchy after #85/#118:
- * pin identity header · Snapshot · Categories · About · Note,
- * absolute river rail, SoftFailNotice footer, SheetPresence + #46 rise.
+ * Map place intel sheet (BEA-216 after #85/#120):
+ * azure inset rail · Place intel sheet eyebrow · Snapshot mist · mist-track
+ * Categories · About · Note · compact SoftFailNotice footer,
+ * SheetPresence + tip-011 (#46) rise stagger — never timber / Failed to fetch.
  */
 export function PlaceIntel({
   details,
@@ -100,27 +101,30 @@ export function PlaceIntel({
   const showTags = tags.length > 0;
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
+  const tagCountLabel = t(locale, "planner.place.tagCount").replace(
+    "{n}",
+    String(tags.length),
+  );
 
   return (
     <SheetPresence
       open={open}
       className="mt-3 overflow-hidden rounded-bp-sm border border-river/25 bg-foam shadow-bp"
       style={{ animationDelay: "40ms" }}
-      aria-label={t(locale, "planner.place.pinEyebrow")}
+      aria-label={t(locale, "planner.place.sheetEyebrow")}
     >
       {view ? (
         <>
-          {/* Pin identity — elevated over section stack */}
-          <header className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
-            <span
-              className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
-              aria-hidden
-            />
+          {/* Sheet chrome — azure inset rail · Place intel eyebrow · pin glyph */}
+          <header
+            className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
+            style={{ animationDelay: "50ms" }}
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-                    {t(locale, "planner.place.pinEyebrow")}
+                    {t(locale, "planner.place.sheetEyebrow")}
                   </span>
                   <span
                     className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
@@ -133,6 +137,15 @@ export function PlaceIntel({
                       ? t(locale, "planner.place.demoBadge")
                       : t(locale, "planner.place.liveBadge")}
                   </span>
+                  {showTags ? (
+                    <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                      {tagCountLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70">
+                      {t(locale, "planner.place.pinEyebrow")}
+                    </span>
+                  )}
                 </div>
                 <p className="font-display text-sm font-semibold tracking-tight text-ink">
                   {view.name}
@@ -154,16 +167,20 @@ export function PlaceIntel({
           <div className="divide-y divide-[color:var(--bp-line)]">
             {showSnapshot ? (
               <section
-                className="animate-rise space-y-2 bg-mist/20 px-3 py-3"
-                style={{ animationDelay: "55ms" }}
+                className="animate-rise space-y-2 bg-mist/25 px-3 py-3"
+                style={{ animationDelay: "70ms" }}
                 aria-label={t(locale, "planner.place.snapshotEyebrow")}
               >
                 <SectionEyebrow>
                   {t(locale, "planner.place.snapshotEyebrow")}
                 </SectionEyebrow>
-                <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className="flex flex-wrap items-center gap-1.5 rounded-bp-sm bg-mist/50 p-1"
+                  role="group"
+                  aria-label={t(locale, "planner.place.snapshotEyebrow")}
+                >
                   {view.rating != null && (
-                    <span className="inline-flex items-baseline gap-1 rounded-bp-xs bg-river/10 px-2 py-1 font-display text-sm font-bold tracking-tight text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                    <span className="inline-flex items-baseline gap-1 rounded-bp-xs bg-foam px-2 py-1 font-display text-sm font-bold tracking-tight text-river shadow-bp-soft ring-1 ring-river/20">
                       <span
                         aria-hidden
                         className="text-[0.7rem] font-bold tracking-wide text-river/80"
@@ -177,7 +194,7 @@ export function PlaceIntel({
                     </span>
                   )}
                   {hours && (
-                    <span className="rounded-bp-xs border border-river/15 bg-foam/90 px-2 py-1 text-xs leading-relaxed text-ink-soft">
+                    <span className="rounded-bp-xs bg-foam/95 px-2 py-1 text-xs leading-relaxed text-ink-soft ring-1 ring-[color:var(--bp-line)]">
                       <span className="font-medium text-ink-soft/85">
                         {t(locale, "planner.place.hours")}
                       </span>{" "}
@@ -198,29 +215,34 @@ export function PlaceIntel({
             {showTags ? (
               <section
                 className="animate-rise space-y-2 px-3 py-3"
-                style={{ animationDelay: "75ms" }}
+                style={{ animationDelay: "90ms" }}
                 aria-label={t(locale, "planner.place.tags")}
               >
                 <SectionEyebrow>
                   {t(locale, "planner.place.tags")}
                 </SectionEyebrow>
-                <ul className="flex flex-wrap gap-1.5">
+                <div
+                  className="flex flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                  role="list"
+                  aria-label={t(locale, "planner.place.tags")}
+                >
                   {tags.map((tag) => (
-                    <li
+                    <span
                       key={tag}
-                      className="rounded-bp-xs border border-river/20 bg-river/10 px-2 py-0.5 text-[11px] font-medium text-river-deep bp-transition"
+                      role="listitem"
+                      className="rounded-bp-xs bg-foam px-2.5 py-1 text-[11px] font-semibold text-river shadow-bp-soft ring-1 ring-river/20 bp-transition"
                     >
                       {interestLabel(locale, tag)}
-                    </li>
+                    </span>
                   ))}
-                </ul>
+                </div>
               </section>
             ) : null}
 
             {showAbout ? (
               <section
                 className="animate-rise space-y-2 px-3 py-3"
-                style={{ animationDelay: "95ms" }}
+                style={{ animationDelay: "110ms" }}
                 aria-label={t(locale, "planner.place.aboutEyebrow")}
               >
                 <SectionEyebrow>
@@ -234,14 +256,10 @@ export function PlaceIntel({
 
             {showNote ? (
               <section
-                className="animate-rise relative space-y-1.5 bg-paper/50 px-3 py-3 pl-3.5"
-                style={{ animationDelay: "115ms" }}
+                className="animate-rise relative space-y-1.5 bg-paper/50 px-3 py-3 pl-3.5 shadow-[inset_2px_0_0_var(--bp-river)]"
+                style={{ animationDelay: "130ms" }}
                 aria-label={t(locale, "planner.place.note")}
               >
-                <span
-                  className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river/70"
-                  aria-hidden
-                />
                 <SectionEyebrow>
                   {t(locale, "planner.place.note")}
                 </SectionEyebrow>
@@ -250,7 +268,7 @@ export function PlaceIntel({
             ) : null}
           </div>
 
-          {/* SoftFailNotice owned by pin sheet footer — never doubles stage chrome */}
+          {/* SoftFailNotice owned by place intel footer — never doubles stage chrome */}
           <SoftFailNotice open={demo} compact>
             {t(locale, "planner.place.softFail")}
           </SoftFailNotice>

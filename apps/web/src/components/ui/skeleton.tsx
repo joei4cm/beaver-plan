@@ -337,6 +337,7 @@ export function DualCameraSkeleton() {
 }
 
 /** Tip 017 — nested place intel sheet while Places soft-fetches. */
+/** Layout-matched map place intel (azure inset · mist Snapshot · mist-track Categories). */
 export function PlaceIntelSkeleton() {
   return (
     <div
@@ -344,16 +345,13 @@ export function PlaceIntelSkeleton() {
       aria-live="polite"
       className="mt-3 overflow-hidden rounded-bp-sm border border-river/25 bg-foam shadow-bp"
     >
-      <div className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5">
-        <span
-          className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-river"
-          aria-hidden
-        />
+      <div className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 space-y-1.5">
             <div className="flex items-center gap-2">
-              <Skeleton className="h-2.5 w-14" />
+              <Skeleton className="h-2.5 w-16" />
               <Skeleton className="h-4 w-16 rounded-bp-xs" />
+              <Skeleton className="h-3 w-14" />
             </div>
             <Skeleton className="h-4 w-36 max-w-full" />
             <Skeleton className="h-3 w-48 max-w-full" />
@@ -362,19 +360,19 @@ export function PlaceIntelSkeleton() {
         </div>
       </div>
       <div className="divide-y divide-[color:var(--bp-line)]">
-        <div className="space-y-2 bg-mist/20 px-3 py-3">
+        <div className="space-y-2 bg-mist/25 px-3 py-3">
           <Skeleton className="h-2.5 w-14" />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-bp-sm bg-mist/50 p-1">
             <Skeleton className="h-7 w-14 rounded-bp-xs" />
             <Skeleton className="h-7 w-36 max-w-full rounded-bp-xs" />
           </div>
         </div>
         <div className="space-y-2 px-3 py-3">
           <Skeleton className="h-2.5 w-16" />
-          <div className="flex gap-1.5">
-            <Skeleton className="h-5 w-14 rounded-bp-xs" />
-            <Skeleton className="h-5 w-16 rounded-bp-xs" />
-            <Skeleton className="h-5 w-12 rounded-bp-xs" />
+          <div className="flex gap-0.5 rounded-bp-sm bg-mist/50 p-1">
+            <Skeleton className="h-6 w-14 rounded-bp-xs" />
+            <Skeleton className="h-6 w-16 rounded-bp-xs" />
+            <Skeleton className="h-6 w-12 rounded-bp-xs" />
           </div>
         </div>
         <div className="space-y-2 px-3 py-3">
