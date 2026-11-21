@@ -7,7 +7,6 @@ import {
 } from "react";
 import { Link, Stack, useRouter } from "expo-router";
 import {
-  ActivityIndicator,
   Animated,
   Easing,
   Pressable,
@@ -31,6 +30,7 @@ import {
   listTrips,
   type MobileTemplateCard,
 } from "../src/api";
+import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { type } from "../src/theme";
 
 const locale = "zh-CN" as const;
@@ -113,6 +113,22 @@ function TripRow({
         </View>
       </Pressable>
     </Link>
+  );
+}
+
+/** Tip 017 — soft-notice slot + rows while hydrating (web TripsListSkeleton parity). */
+function TripsListSkeleton() {
+  return (
+    <View accessibilityState={{ busy: true }}>
+      <View style={styles.skeletonNotice} />
+      <View style={StyleSheet.flatten([styles.row, styles.rowLast])}>
+        <View style={styles.skeletonIndex} />
+        <View style={styles.rowBody}>
+          <View style={styles.skeletonTitle} />
+          <View style={styles.skeletonMeta} />
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -213,6 +229,12 @@ export default function TripsScreen() {
     }
   }
 
+  /** Mobile has no /trips/new form — solid New soft-creates via first playbook. */
+  function startNewTrip() {
+    const first = templates[0]?.id ?? "kyoto-3day";
+    void useTemplate(first);
+  }
+
   const ownTrips = useMemo(
     () => trips.filter((x) => x.id !== "sample-kyoto"),
     [trips],
@@ -231,6 +253,8 @@ export default function TripsScreen() {
       },
     ],
   };
+
+  const newBusy = Boolean(creatingId);
 
   return (
     <ScrollView
@@ -254,15 +278,35 @@ export default function TripsScreen() {
           <Text style={styles.title}>{t(locale, "trips.title")}</Text>
           <Text style={styles.body}>{t(locale, "trips.support")}</Text>
           <View style={styles.ctaRow}>
+            <Pressable
+              style={StyleSheet.flatten([
+                styles.solidCta,
+                newBusy ? styles.ctaBusy : null,
+              ])}
+              disabled={newBusy}
+              onPress={startNewTrip}
+              accessibilityRole="button"
+              accessibilityLabel={t(locale, "trips.new")}
+            >
+              <Text style={styles.solidCtaText}>{t(locale, "trips.new")}</Text>
+            </Pressable>
             <Link href="/trips/sample-kyoto" asChild>
-              <Pressable style={styles.outlineCta}>
+              <Pressable
+                style={styles.outlineCta}
+                accessibilityRole="link"
+                accessibilityLabel={t(locale, "trips.openSample")}
+              >
                 <Text style={styles.outlineCtaText}>
                   {t(locale, "trips.openSample")}
                 </Text>
               </Pressable>
             </Link>
             <Link href="/settings" asChild>
-              <Pressable style={styles.ghostCta}>
+              <Pressable
+                style={styles.ghostCta}
+                accessibilityRole="link"
+                accessibilityLabel={t(locale, "nav.settings")}
+              >
                 <Text style={styles.ghostCtaText}>
                   {t(locale, "nav.settings")}
                 </Text>
@@ -276,51 +320,79 @@ export default function TripsScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
-        {!error && softNotice ? (
-          <View style={styles.softBanner}>
-            <Text style={styles.softText}>{softNotice}</Text>
-          </View>
-        ) : null}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t(locale, "trips.yours")}</Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "trips.yoursSupport")}
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionEyebrow}>
+              {t(locale, "trips.yoursEyebrow")}
+            </Text>
+            <Text style={styles.sectionTitle}>
+              {showEmptyInvite
+                ? t(locale, "trips.empty")
+                : t(locale, "trips.yours")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {showEmptyInvite
+                ? t(locale, "trips.emptyCta")
+                : t(locale, "trips.yoursSupport")}
+            </Text>
+          </View>
+
+          <SoftFailNotice
+            open={!error && Boolean(softNotice) && hydrated}
+            style={styles.sectionSoftFail}
+          >
+            {softNotice ?? ""}
+          </SoftFailNotice>
 
           {!hydrated ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={colors.river} />
-              <Text style={styles.loadingText}>
-                {t(locale, "trips.loading")}
-              </Text>
-            </View>
+            <TripsListSkeleton />
           ) : showEmptyInvite ? (
             <View>
-              <View style={styles.emptyInvite}>
-                <Text style={styles.emptyTitle}>
-                  {t(locale, "trips.empty")}
-                </Text>
-                <Text style={styles.emptyBody}>
-                  {t(locale, "trips.emptyCta")}
-                </Text>
+              <View style={styles.emptyCtaRow}>
+                <Pressable
+                  style={StyleSheet.flatten([
+                    styles.solidCta,
+                    newBusy ? styles.ctaBusy : null,
+                  ])}
+                  disabled={newBusy}
+                  onPress={startNewTrip}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(locale, "trips.new")}
+                >
+                  <Text style={styles.solidCtaText}>
+                    {t(locale, "trips.new")}
+                  </Text>
+                </Pressable>
                 <Link href="/trips/sample-kyoto" asChild>
-                  <Pressable style={styles.emptyLink}>
-                    <Text style={styles.emptyLinkText}>
-                      {t(locale, "trips.openSample")} →
+                  <Pressable
+                    style={styles.outlineCta}
+                    accessibilityRole="link"
+                    accessibilityLabel={t(locale, "trips.openSample")}
+                  >
+                    <Text style={styles.outlineCtaText}>
+                      {t(locale, "trips.openSample")}
                     </Text>
                   </Pressable>
                 </Link>
               </View>
-              {sampleTrips.map((trip, index) => (
-                <TripRow
-                  key={trip.id}
-                  trip={trip}
-                  index={index}
-                  showCta
-                  last={index === sampleTrips.length - 1}
-                />
-              ))}
+
+              {sampleTrips.length > 0 ? (
+                <View style={styles.sampleBlock}>
+                  <Text style={styles.sampleEyebrow}>
+                    {t(locale, "trips.sampleEyebrow")}
+                  </Text>
+                  {sampleTrips.map((trip, index) => (
+                    <TripRow
+                      key={trip.id}
+                      trip={trip}
+                      index={index}
+                      showCta
+                      last={index === sampleTrips.length - 1}
+                    />
+                  ))}
+                </View>
+              ) : null}
             </View>
           ) : (
             trips.map((trip, index) => (
@@ -335,24 +407,27 @@ export default function TripsScreen() {
           )}
         </View>
 
-        <View style={[styles.section, styles.sectionSpaced]}>
-          <Text style={styles.templatesEyebrow}>
-            {t(locale, "trips.templatesEyebrow")}
-          </Text>
-          <Text style={styles.sectionTitle}>
-            {t(locale, "trips.templates")}
-          </Text>
-          <Text style={styles.sectionSupport}>
-            {t(locale, "trips.templatesSupport")}
-          </Text>
+        <View
+          style={StyleSheet.flatten([styles.section, styles.sectionSpaced])}
+        >
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionEyebrow}>
+              {t(locale, "trips.templatesEyebrow")}
+            </Text>
+            <Text style={styles.sectionTitle}>
+              {t(locale, "trips.templates")}
+            </Text>
+            <Text style={styles.sectionSupport}>
+              {t(locale, "trips.templatesSupport")}
+            </Text>
+          </View>
 
-          {templatesSoft && hydrated ? (
-            <View style={[styles.softBanner, styles.softBannerInSection]}>
-              <Text style={styles.softText}>
-                {t(locale, "trips.templatesSoftOffline")}
-              </Text>
-            </View>
-          ) : null}
+          <SoftFailNotice
+            open={templatesSoft && hydrated}
+            style={styles.sectionSoftFail}
+          >
+            {t(locale, "trips.templatesSoftOffline")}
+          </SoftFailNotice>
 
           {templates.map((tpl, index) => {
             const title = tpl.title[locale] ?? tpl.title["zh-CN"];
@@ -454,9 +529,27 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
   },
+  emptyCtaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 4,
+  },
+  solidCta: {
+    backgroundColor: colors.river,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+  },
+  solidCtaText: {
+    ...type.body,
+    color: colors.foam,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   outlineCta: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.4)",
+    borderColor: "rgba(47, 107, 255, 0.35)",
     backgroundColor: colors.foam,
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -479,25 +572,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  softBanner: {
-    marginTop: 16,
-    marginBottom: 4,
-    borderRadius: radius.sm,
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(47, 107, 255, 0.35)",
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  softBannerInSection: {
-    marginTop: 0,
-    marginBottom: 12,
-  },
-  softText: {
-    ...type.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.inkSoft,
+  ctaBusy: {
+    opacity: 0.45,
   },
   errorBanner: {
     marginTop: 16,
@@ -519,7 +595,10 @@ const styles = StyleSheet.create({
   sectionSpaced: {
     marginTop: 44,
   },
-  templatesEyebrow: {
+  sectionHeader: {
+    marginBottom: 6,
+  },
+  sectionEyebrow: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
@@ -541,51 +620,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: colors.inkSoft,
-    marginBottom: 18,
+    marginBottom: 12,
     maxWidth: 360,
   },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 20,
-  },
-  loadingText: {
-    ...type.body,
-    color: colors.inkSoft,
-    fontSize: 14,
-  },
-  emptyInvite: {
-    paddingTop: 4,
-    paddingBottom: 8,
-    alignItems: "flex-start",
-    maxWidth: 360,
-  },
-  emptyTitle: {
-    ...type.display,
-    fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: -0.4,
-    color: colors.ink,
-  },
-  emptyBody: {
-    ...type.body,
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.inkSoft,
-    maxWidth: 320,
+  sectionSoftFail: {
     marginBottom: 16,
   },
-  emptyLink: {
-    paddingVertical: 4,
+  sampleBlock: {
+    marginTop: 28,
+  },
+  sampleEyebrow: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: "rgba(47, 107, 255, 0.8)",
     marginBottom: 12,
   },
-  emptyLinkText: {
-    ...type.body,
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.river,
+  skeletonNotice: {
+    height: 48,
+    width: "100%",
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.7)",
+    marginBottom: 16,
+  },
+  skeletonIndex: {
+    width: 40,
+    height: 28,
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(230, 236, 245, 0.9)",
+  },
+  skeletonTitle: {
+    height: 20,
+    width: "55%",
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(230, 236, 245, 0.9)",
+    marginBottom: 10,
+  },
+  skeletonMeta: {
+    height: 14,
+    width: "75%",
+    borderRadius: radius.xs,
+    backgroundColor: "rgba(230, 236, 245, 0.7)",
   },
   row: {
     flexDirection: "row",
