@@ -27,8 +27,9 @@ export function SignInPanel({
         className="animate-drift pointer-events-none absolute inset-0 -z-10 opacity-80"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 70% 50% at 20% 20%, rgba(31,107,92,0.2), transparent 55%),
-            radial-gradient(ellipse 50% 40% at 90% 10%, rgba(184,107,60,0.12), transparent 50%)
+            radial-gradient(ellipse 70% 50% at 20% 20%, rgba(47,107,255,0.16), transparent 55%),
+            radial-gradient(ellipse 50% 40% at 90% 10%, rgba(96,165,250,0.12), transparent 50%),
+            linear-gradient(180deg, #dbe8ff 0%, transparent 65%)
           `,
         }}
       />
