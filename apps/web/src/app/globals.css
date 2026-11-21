@@ -446,6 +446,103 @@
   }
 
   /*
+   * Collab activity timeline depth (BEA-215).
+   * Mist-track spine · azure node stack · tip-011 hover settle.
+   * SoftFailNotice stays under collab tabs (trip-collab-panel); never timber.
+   */
+  .bp-collab-timeline {
+    position: relative;
+  }
+
+  .bp-collab-timeline__track {
+    pointer-events: none;
+    position: absolute;
+    top: 1rem;
+    bottom: 1rem;
+    left: 1.55rem;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bp-river) 42%, transparent) 0%,
+      color-mix(in srgb, var(--bp-mist) 90%, var(--bp-river)) 38%,
+      color-mix(in srgb, var(--bp-mist) 85%, transparent) 100%
+    );
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--bp-river) 12%, transparent),
+      0 0 12px color-mix(in srgb, var(--bp-river) 10%, transparent);
+  }
+
+  .bp-collab-timeline__item {
+    position: relative;
+    padding-bottom: 1.25rem;
+    padding-left: 2rem;
+    border-radius: var(--bp-radius-sm);
+    margin-left: -0.25rem;
+    padding-right: 0.35rem;
+    transition:
+      background-color var(--bp-duration-fast) var(--bp-ease-out),
+      transform var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-collab-timeline__item:last-child {
+    padding-bottom: 0.25rem;
+  }
+
+  .bp-collab-timeline__item:hover {
+    background-color: color-mix(in srgb, var(--bp-mist) 45%, transparent);
+  }
+
+  .bp-collab-timeline__node {
+    position: absolute;
+    left: 0;
+    top: 0.125rem;
+    z-index: 1;
+    display: inline-flex;
+    height: 1.25rem;
+    width: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--bp-river);
+    color: var(--bp-foam);
+    font-size: 9px;
+    font-weight: 700;
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--bp-river) 16%, transparent),
+      0 1px 4px color-mix(in srgb, var(--bp-ink) 12%, transparent);
+    outline: 3px solid var(--bp-foam);
+    transition:
+      transform var(--bp-duration-fast) var(--bp-ease-out-strong),
+      box-shadow var(--bp-duration-fast) var(--bp-ease-out);
+  }
+
+  .bp-collab-timeline__item:hover .bp-collab-timeline__node {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--bp-river) 22%, transparent),
+      0 2px 8px color-mix(in srgb, var(--bp-ink) 14%, transparent);
+  }
+
+  .bp-collab-timeline__node--head {
+    background: var(--bp-river-deep, #1d4ed8);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--bp-river) 22%, transparent),
+      0 2px 8px color-mix(in srgb, var(--bp-river) 28%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bp-collab-timeline__item,
+    .bp-collab-timeline__node {
+      transition: none;
+    }
+
+    .bp-collab-timeline__item:hover .bp-collab-timeline__node {
+      transform: none;
+    }
+  }
+
+  /*
    * Day timeline scrub — azure thumb/track (#46 tip 011 motion).
    * Fill + thumb ride in-out while settling; press uses overshoot scale.
    */

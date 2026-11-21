@@ -492,7 +492,7 @@ export function TripCollabPanel({
         </div>
       </SheetPresence>
 
-      {/* Activity — azure nodes on mist track */}
+      {/* Activity — mist-track depth · azure nodes · tip-011 (BEA-215) */}
       <SheetPresence
         open={tab === "activity"}
         id="collab-panel-activity"
@@ -501,55 +501,62 @@ export function TripCollabPanel({
         className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
         style={{ animationDelay: "40ms" }}
       >
-        <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-              {t(locale, "collab.panel.timelineEyebrow")}
-            </span>
-            <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
-              {timelineCount}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                softNoticeOpen
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river-deep"
-              }`}
-            >
-              {softNoticeOpen
-                ? t(locale, "collab.demoBadge")
-                : t(locale, "collab.panel.liveBadge")}
-            </span>
-            {liveApi && !demoSeeded ? (
-              <button
-                type="button"
-                onClick={() =>
-                  void refresh().catch((e: unknown) => {
-                    if (isPlannerNoiseError(e)) {
-                      applySeed({ soft: true });
-                      return;
-                    }
-                    setError(e instanceof Error ? e.message : "refresh_failed");
-                  })
-                }
-                className="text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+        <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "collab.panel.timelineEyebrow")}
+              </span>
+              <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
+                {timelineCount}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  softNoticeOpen
+                    ? "bg-mist text-ink-soft"
+                    : "bg-river/12 text-river-deep"
+                }`}
               >
-                {t(locale, "collab.panel.refresh")}
-              </button>
-            ) : null}
+                {softNoticeOpen
+                  ? t(locale, "collab.demoBadge")
+                  : t(locale, "collab.panel.liveBadge")}
+              </span>
+              {liveApi && !demoSeeded ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void refresh().catch((e: unknown) => {
+                      if (isPlannerNoiseError(e)) {
+                        applySeed({ soft: true });
+                        return;
+                      }
+                      setError(
+                        e instanceof Error ? e.message : "refresh_failed",
+                      );
+                    })
+                  }
+                  className="text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+                >
+                  {t(locale, "collab.panel.refresh")}
+                </button>
+              ) : null}
+            </div>
           </div>
+          <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft">
+            {t(locale, "collab.panel.timelineSupport")}
+          </p>
         </header>
 
-        <ol className="relative m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5">
-          {/* Mist track — continuous spine behind azure nodes */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute bottom-4 left-[1.55rem] top-4 w-1 rounded-full bg-mist"
-          />
+        <ol className="bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto bg-gradient-to-b from-mist/30 via-mist/10 to-transparent px-4 py-4 pl-5">
+          {/* Mist track — gradient spine behind azure nodes */}
+          <span aria-hidden className="bp-collab-timeline__track" />
           {showLoading ? (
-            <li className="relative space-y-3 py-1 pl-8" aria-busy="true">
+            <li
+              className="bp-collab-timeline__item space-y-3 py-1"
+              aria-busy="true"
+            >
               <div className="h-3 w-24 rounded-bp-xs bg-mist" />
               <div className="h-4 w-64 max-w-full rounded-bp-xs bg-mist/70" />
               <p className="text-sm text-ink-soft">
@@ -558,7 +565,7 @@ export function TripCollabPanel({
             </li>
           ) : null}
           {!showLoading && events.length === 0 ? (
-            <li className="animate-fade relative space-y-1.5 py-3 pl-8">
+            <li className="animate-fade bp-collab-timeline__item space-y-1.5 py-3">
               <p className="font-display text-sm font-semibold tracking-tight text-ink">
                 {t(locale, "collab.panel.emptyActivity")}
               </p>
@@ -570,11 +577,13 @@ export function TripCollabPanel({
           {events.map((ev, i) => (
             <li
               key={ev.id}
-              className="animate-rise relative pb-5 pl-8 last:pb-1"
+              className="animate-rise bp-collab-timeline__item"
               style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
             >
               <span
-                className="absolute left-0 top-0.5 z-[1] inline-flex h-5 w-5 items-center justify-center rounded-full bg-river text-[9px] font-bold text-foam shadow-[0_0_0_3px_rgba(47,107,255,0.14)] ring-[3px] ring-foam"
+                className={`bp-collab-timeline__node${
+                  i === 0 ? " bp-collab-timeline__node--head" : ""
+                }`}
                 aria-hidden
                 title={ev.actorDisplayName ?? undefined}
               >
@@ -585,6 +594,11 @@ export function TripCollabPanel({
                 )}
               </span>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {i === 0 ? (
+                  <span className="rounded-bp-xs bg-river/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                    {t(locale, "collab.panel.timelineNow")}
+                  </span>
+                ) : null}
                 <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {activityLabel(locale, ev.type)}
                 </span>
