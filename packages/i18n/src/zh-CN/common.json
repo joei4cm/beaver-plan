@@ -260,6 +260,8 @@
   "journal.softOffline": "助手段暂时不可达，正在阅读本机示例手记。",
   "journal.demoBadge": "示例手记",
   "journal.daySection": "第 {n} 天",
+  "journal.listEyebrow": "手记索引",
+  "journal.entryCount": "{n} 条",
   "share.eyebrow": "社交分享",
   "share.title": "分享图工作室",
   "share.support": "从今日足迹选出模板，导出适合朋友圈 / 小红书的竖图或方图。",

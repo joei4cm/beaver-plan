@@ -120,24 +120,32 @@ export function JournalSkeleton() {
         </div>
       </div>
       <div className="mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp">
-        <div className="flex gap-2 border-b border-[color:var(--bp-line)] bg-paper/60 px-3 py-3">
+        <div className="flex gap-1 border-b border-[color:var(--bp-line)] bg-paper/60 p-1">
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
         </div>
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
-          <div className="space-y-6 px-5 py-6 md:px-6">
+          <div className="space-y-0 px-5 py-6 md:px-7">
+            <div className="space-y-2 border-b border-[color:var(--bp-line)] pb-5">
+              <Skeleton className="h-3 w-36" />
+              <Skeleton className="h-9 w-56 max-w-[80%]" />
+              <Skeleton className="h-3.5 w-40" />
+            </div>
+            <Skeleton className="mt-5 h-12 w-full rounded-bp-sm" />
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="space-y-3 border-b border-[color:var(--bp-line)] pb-6 last:border-b-0"
+                className="flex gap-4 border-b border-[color:var(--bp-line)] py-7 last:border-b-0 sm:gap-5"
               >
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-3.5 w-full max-w-lg" />
-                <div className="grid grid-cols-3 gap-2 pt-2">
-                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
-                  <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                <Skeleton className="h-8 w-9 shrink-0 md:h-9 md:w-10" />
+                <div className="min-w-0 flex-1 space-y-3">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-7 w-full max-w-md" />
+                  <div className="grid max-w-xs grid-cols-3 gap-2 pt-1">
+                    <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                    <Skeleton className="aspect-[3/4] rounded-bp-sm" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -146,9 +154,9 @@ export function JournalSkeleton() {
             <Skeleton className="h-3 w-20" />
             <Skeleton className="mt-2 h-7 w-36" />
             <Skeleton className="mt-2 h-3.5 w-full" />
-            <Skeleton className="mt-4 h-12 w-full rounded-bp-sm" />
             <Skeleton className="mt-5 h-9 w-full rounded-bp-sm" />
             <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
+            <Skeleton className="mt-4 h-20 w-full rounded-bp-sm" />
             <Skeleton className="mt-4 h-11 w-full rounded-bp" />
           </div>
         </div>
