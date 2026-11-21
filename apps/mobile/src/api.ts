@@ -1,4 +1,7 @@
 import type {
+  BookingLink,
+  BookingSearchResult,
+  BookingSuggestionKind,
   Day,
   DayFillInterest,
   DayFillProposal,
@@ -231,6 +234,41 @@ export async function addTripStop(input: {
     engine: input.engine,
     expectedVersion: input.expectedVersion,
   });
+}
+
+export type BookingStatusResponse = {
+  mode: "demo" | "configured";
+  provider: string;
+};
+
+export async function fetchBookingStatus(): Promise<BookingStatusResponse> {
+  return apiGet<BookingStatusResponse>("/v1/booking/status");
+}
+
+export async function searchBooking(input: {
+  city: string;
+  checkIn?: string;
+  checkOut?: string;
+  kind?: BookingSuggestionKind | "all";
+  locale?: "zh-CN" | "en";
+}): Promise<BookingSearchResult> {
+  return apiSend<BookingSearchResult>("/v1/booking/search", "POST", input);
+}
+
+export async function patchStopBookingLinks(input: {
+  tripId: string;
+  stopId: string;
+  bookingLinks: BookingLink[];
+  expectedVersion?: number;
+}): Promise<{ stop: Stop }> {
+  return apiSend<{ stop: Stop }>(
+    `/v1/trips/${input.tripId}/stops/${input.stopId}`,
+    "PATCH",
+    {
+      bookingLinks: input.bookingLinks,
+      expectedVersion: input.expectedVersion,
+    },
+  );
 }
 
 export async function routeTripDay(input: {
