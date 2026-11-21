@@ -15,7 +15,13 @@ export {
   haversineM,
   pointAlong,
 } from "./demo.js";
-export { DEMO_PLACES, searchDemoPlaces } from "./demo-data.js";
+export {
+  DEMO_PLACES,
+  DEMO_PLACE_INTEL,
+  getDemoPlaceDetails,
+  searchDemoPlaces,
+  type DemoPlaceIntel,
+} from "./demo-data.js";
 export {
   buildDemoTransitRoute,
   buildDemoWalkOrDrive,

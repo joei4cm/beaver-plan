@@ -10,7 +10,12 @@ import type {
   RouteResult,
   RoutingEngine,
 } from "../ports.js";
-import { DEMO_PLACES, searchDemoPlaces } from "./demo-data.js";
+import { DEMO_PLACE_TAGS } from "../day-fill/catalog.js";
+import {
+  DEMO_PLACES,
+  getDemoPlaceDetails,
+  searchDemoPlaces,
+} from "./demo-data.js";
 import {
   buildDemoTransitRoute,
   buildDemoWalkOrDrive,
@@ -44,22 +49,8 @@ export class DemoMapEngine implements MapEngine {
   }
 
   async getPlaceDetails(id: string): Promise<PlaceDetails> {
-    const found = DEMO_PLACES.find((p) => p.enginePlaceId === id);
-    if (found) {
-      return {
-        ...found,
-        rating: 4.6,
-        openingHours: ["09:00–17:00"],
-        raw: { demo: true },
-      };
-    }
-    return {
-      enginePlaceId: id,
-      name: "Demo place",
-      lat: 35.0116,
-      lng: 135.7681,
-      raw: { demo: true },
-    };
+    const tags = DEMO_PLACE_TAGS[id];
+    return getDemoPlaceDetails(id, undefined, tags);
   }
 
   async reverseGeocode(latLng: LatLng): Promise<Address> {

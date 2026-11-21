@@ -14,14 +14,17 @@ import type {
   Day,
   Leg,
   MapEngineId,
+  PlaceDetails,
   PlaceSummary,
   Stop,
   Trip,
 } from "@beaver/core";
 import {
+  DEMO_PLACE_TAGS,
   DemoRoutingEngine,
   formatDistance,
   formatDuration,
+  getDemoPlaceDetails,
   reorderStops as reorderStopsLocal,
   routeAdjacentStops,
   searchDemoPlaces,
@@ -38,7 +41,14 @@ import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import { BookingLinkChips, BookingPanel } from "./booking-panel";
 import { DayFillPanel } from "./day-fill-panel";
 import { MapStage } from "./map-stage";
+import { PlaceIntel } from "./place-intel";
 import { TransferSteps } from "./transfer-steps";
+
+type PlaceDetailsResponse = {
+  place: PlaceDetails;
+  engineId: MapEngineId;
+  mode: "live" | "demo";
+};
 
 type TripPayload = {
   trip: Trip;
@@ -81,6 +91,11 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     initial?.days[0]?.id ?? null,
   );
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
+  const [placeDetailsMode, setPlaceDetailsMode] = useState<"live" | "demo">(
+    "demo",
+  );
+  const [placeDetailsLoading, setPlaceDetailsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlaceSummary[]>([]);
   const [searching, setSearching] = useState(false);
@@ -157,6 +172,60 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
   }, []);
+
+  // Soft-fetch Places intel for the selected stop; demo fixtures when offline.
+  useEffect(() => {
+    if (!selectedStopId) {
+      setPlaceDetails(null);
+      setPlaceDetailsLoading(false);
+      return;
+    }
+    const stop = stops.find((s) => s.id === selectedStopId);
+    if (!stop) {
+      setPlaceDetails(null);
+      return;
+    }
+    const placeId = stop.place.enginePlaceId;
+    let cancelled = false;
+    setPlaceDetailsLoading(true);
+    // Paint curated intel immediately so the card never flashes empty.
+    setPlaceDetails(
+      getDemoPlaceDetails(placeId, locale, DEMO_PLACE_TAGS[placeId]),
+    );
+    setPlaceDetailsMode("demo");
+
+    const params = new URLSearchParams({
+      engine: preference,
+      language: locale,
+    });
+    if (trip?.timezone) params.set("timezone", trip.timezone);
+
+    void apiGet<PlaceDetailsResponse>(`/v1/places/${encodeURIComponent(placeId)}?${params}`)
+      .then((data) => {
+        if (cancelled) return;
+        setPlaceDetails(data.place);
+        setPlaceDetailsMode(data.mode);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        // Keep demo intel; soft-notice only for unexpected noise.
+        setPlaceDetails(
+          getDemoPlaceDetails(placeId, locale, DEMO_PLACE_TAGS[placeId]),
+        );
+        setPlaceDetailsMode("demo");
+        if (isPlannerNoiseError(e)) {
+          setSoftNotice(t(locale, "planner.demoLocal"));
+          setError(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPlaceDetailsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStopId, stops, locale, preference, trip?.timezone]);
 
   const applySearchResults = useCallback(
     (places: PlaceSummary[], meta?: Partial<SearchResponse>) => {
@@ -770,13 +839,33 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-semibold text-ink">
+                      <div
+                        className={`truncate text-ink ${
+                          selected
+                            ? "font-display text-base font-bold tracking-tight"
+                            : "font-semibold"
+                        }`}
+                      >
                         {stop.place.name}
                       </div>
                       {stop.place.address && (
                         <div className="mt-0.5 truncate text-xs text-ink-soft">
                           {stop.place.address}
                         </div>
+                      )}
+                      {selected && (
+                        <PlaceIntel
+                          details={
+                            placeDetails?.enginePlaceId ===
+                            stop.place.enginePlaceId
+                              ? placeDetails
+                              : null
+                          }
+                          loading={placeDetailsLoading}
+                          locale={locale}
+                          demoMode={placeDetailsMode === "demo"}
+                          userNote={stop.userNote}
+                        />
                       )}
                       {leg && (
                         <>
