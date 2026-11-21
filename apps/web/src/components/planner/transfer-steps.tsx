@@ -9,6 +9,7 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
 
 type Props = {
@@ -184,17 +185,17 @@ export function TransferSteps({
   demoMode = false,
   showSoftFail = false,
 }: Props) {
-  if (leg.transitSteps.length === 0) return null;
-
+  const open = leg.transitSteps.length > 0;
   const shell =
     variant === "panel"
-      ? "animate-preview-in overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft backdrop-blur-sm"
-      : "animate-preview-in mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft";
+      ? "overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft backdrop-blur-sm"
+      : "mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft";
 
   const notice = demoMode && (showSoftFail || variant === "panel");
 
   return (
-    <div
+    <SheetPresence
+      open={open}
       className={shell}
       style={{ animationDelay: "50ms" }}
       aria-label={t(locale, "planner.transfer.title")}
@@ -244,6 +245,6 @@ export function TransferSteps({
           {t(locale, "planner.transfer.demoNotice")}
         </SoftFailNotice>
       ) : null}
-    </div>
+    </SheetPresence>
   );
 }

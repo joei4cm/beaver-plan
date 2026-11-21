@@ -5,6 +5,7 @@ import type { PlaceSummary } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SoftFailNotice } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 
 export type MapLayerFlags = {
   routes: boolean;
@@ -144,31 +145,32 @@ export function MapChrome({
               </span>
             ) : null}
           </div>
-          {results.length > 0 ? (
-            <ul
-              role="listbox"
-              className="bp-popover absolute left-0 right-0 top-full z-20 mt-1.5 max-h-64 overflow-auto rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
-            >
-              {results.map((place) => (
-                <li key={place.enginePlaceId} role="option">
-                  <button
-                    type="button"
-                    onClick={() => onPickPlace(place)}
-                    className="flex w-full flex-col items-start gap-0.5 px-3.5 py-2.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/60"
-                  >
-                    <span className="text-sm font-medium text-ink">
-                      {place.name}
+          <SheetPresence
+            open={results.length > 0}
+            as="ul"
+            role="listbox"
+            variant="popover"
+            className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-64 overflow-auto rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+          >
+            {results.map((place) => (
+              <li key={place.enginePlaceId} role="option">
+                <button
+                  type="button"
+                  onClick={() => onPickPlace(place)}
+                  className="flex w-full flex-col items-start gap-0.5 px-3.5 py-2.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/60"
+                >
+                  <span className="text-sm font-medium text-ink">
+                    {place.name}
+                  </span>
+                  {place.address ? (
+                    <span className="text-xs text-ink-soft">
+                      {place.address}
                     </span>
-                    {place.address ? (
-                      <span className="text-xs text-ink-soft">
-                        {place.address}
-                      </span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </SheetPresence>
         </div>
 
         {/* Tool rail — layers + locate */}
@@ -203,40 +205,40 @@ export function MapChrome({
             </button>
           </div>
 
-          {layersOpen ? (
-            <div
-              id={layersId}
-              role="group"
-              aria-label={t(locale, "planner.map.layers")}
-              className="bp-popover absolute right-0 top-[calc(100%+6px)] z-20 w-44 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
-            >
-              <p className="border-b border-[color:var(--bp-line)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-                {t(locale, "planner.map.layers")}
-              </p>
-              {(
-                [
-                  ["routes", "planner.map.layer.routes"],
-                  ["stops", "planner.map.layer.stops"],
-                  ["legend", "planner.map.layer.legend"],
-                ] as const
-              ).map(([key, labelKey]) => (
-                <label
-                  key={key}
-                  className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={layers[key]}
-                    onChange={(e) =>
-                      onLayersChange({ ...layers, [key]: e.target.checked })
-                    }
-                    className="accent-[color:var(--bp-river)]"
-                  />
-                  {t(locale, labelKey)}
-                </label>
-              ))}
-            </div>
-          ) : null}
+          <SheetPresence
+            open={layersOpen}
+            id={layersId}
+            role="group"
+            variant="popover"
+            aria-label={t(locale, "planner.map.layers")}
+            className="absolute right-0 top-[calc(100%+6px)] z-20 w-44 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
+          >
+            <p className="border-b border-[color:var(--bp-line)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+              {t(locale, "planner.map.layers")}
+            </p>
+            {(
+              [
+                ["routes", "planner.map.layer.routes"],
+                ["stops", "planner.map.layer.stops"],
+                ["legend", "planner.map.layer.legend"],
+              ] as const
+            ).map(([key, labelKey]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/50"
+              >
+                <input
+                  type="checkbox"
+                  checked={layers[key]}
+                  onChange={(e) =>
+                    onLayersChange({ ...layers, [key]: e.target.checked })
+                  }
+                  className="accent-[color:var(--bp-river)]"
+                />
+                {t(locale, labelKey)}
+              </label>
+            ))}
+          </SheetPresence>
         </div>
       </div>
 
