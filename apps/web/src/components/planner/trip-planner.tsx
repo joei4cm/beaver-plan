@@ -992,9 +992,21 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           tripId={tripId}
           locale={locale}
           trip={trip}
+          days={days}
+          stops={stops}
           dayCountHint={days.length || 3}
           onApplied={async () => {
             await refresh();
+          }}
+          onLocalApplied={({ trip: nextTrip, days: nextDays, stops: nextStops }) => {
+            setTrip(nextTrip);
+            setDays(nextDays);
+            setStops(nextStops);
+            setLegs([]);
+            setDayId(nextDays[0]?.id ?? null);
+            setSelectedStopId(null);
+            setSoftNotice(t(locale, "planner.dayFill.appliedLocal"));
+            setError(null);
           }}
           onError={(message) => {
             if (!message) {
