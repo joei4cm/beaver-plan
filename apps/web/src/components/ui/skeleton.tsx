@@ -7,31 +7,40 @@ export function Skeleton({ className = "" }: SkeletonProps) {
   return <div aria-hidden className={`bp-skeleton ${className}`} />;
 }
 
-/** Layout-matched trips index (soft-notice slot + number · title · meta · azure action). */
+/** Layout-matched trips list (azure rail · soft-notice · dense number · title · meta · azure action). */
 export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite">
-      <Skeleton className="mb-6 h-12 w-full rounded-bp-sm" />
-      <ul className="space-y-0">
-        {Array.from({ length: rows }).map((_, i) => (
-          <li
-            key={i}
-            className="border-t border-[color:var(--bp-line)] py-6 last:border-b"
-          >
-            <div className="flex flex-wrap items-center gap-4 sm:flex-nowrap sm:gap-6">
-              <Skeleton className="h-8 w-10 shrink-0 md:h-9" />
-              <div className="min-w-0 flex-1 space-y-2.5">
-                <Skeleton className="h-6 w-48 max-w-[70%]" />
-                <Skeleton className="h-3.5 w-64 max-w-[90%]" />
+      <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft">
+        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex items-baseline gap-2">
+            <Skeleton className="h-2.5 w-12" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-5 w-12 rounded-bp-xs" />
+        </div>
+        <Skeleton className="h-9 w-full rounded-none" />
+        <ul className="space-y-0">
+          {Array.from({ length: rows }).map((_, i) => (
+            <li
+              key={i}
+              className="border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:px-5"
+            >
+              <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-5">
+                <Skeleton className="h-6 w-8 shrink-0 md:h-7 md:w-10" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Skeleton className="h-5 w-44 max-w-[70%]" />
+                  <Skeleton className="h-3 w-56 max-w-[85%]" />
+                </div>
+                <div className="flex w-full flex-col items-stretch gap-1.5 sm:w-auto sm:items-end">
+                  <Skeleton className="h-3 w-36" />
+                  <Skeleton className="h-6 w-20 rounded-bp-xs" />
+                </div>
               </div>
-              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-                <Skeleton className="h-3.5 w-40" />
-                <Skeleton className="h-8 w-24 rounded-bp" />
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
