@@ -154,12 +154,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     error && isPlannerNoiseError(new Error(error)),
   );
   /**
-   * Empty-day SoftFailNotice chrome (BEA-222 after #122): empty owns compact
-   * SoftFail under azure Stops rail · SheetPresence body · tip-011 (#46).
-   * Title-rail SoftFail yields (no double depth). Soft copy never timber /
-   * Failed to fetch.
+   * Map-stop SoftFailNotice chrome (BEA-249 after #122/#171/#177):
+   * Stops rail owns compact SoftFail when the day has map stops · soft badge ·
+   * tip-011 (#46). Empty day still owns SoftFail (BEA-222). Title SoftFail
+   * yields while Stops owns soft-fail (no double depth). Soft copy never
+   * timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
+  const stopsOwnsSoft = !dayEmpty;
   const listSoftOpen = emptyOwnsSoft
     ? Boolean(softNotice || plannerNoise || demoShell)
     : Boolean(
@@ -171,9 +173,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     softNotice ??
     (dayEmpty
       ? t(locale, "planner.emptySoftFail")
-      : t(locale, "planner.transfer.demoNotice"));
+      : t(locale, "planner.stops.softFail"));
   const shareSoftOpen =
-    !emptyOwnsSoft && (demoShell || plannerNoise);
+    !emptyOwnsSoft && !stopsOwnsSoft && (demoShell || plannerNoise);
 
   useEffect(() => {
     if (!dayId) {
@@ -856,7 +858,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </Link>
             </div>
           </div>
-          {/* Title SoftFail yields while empty-day stop rail owns soft-fail. */}
+          {/* Title SoftFail yields while Stops rail owns soft-fail. */}
           <SoftFailNotice
             open={shareSoftOpen}
             compact
@@ -1127,9 +1129,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Empty SoftFail chrome (BEA-222 after #122/#137/#157):
-              azure Stops rail · Open badge · compact SoftFailNotice ·
-              SheetPresence empty body · tip-011 rise — never timber.
+              Map-stop SoftFail chrome (BEA-249 after #122/#171/#177):
+              azure Stops rail · soft/selected badge · compact SoftFailNotice ·
+              tip-011 chip rise — never timber / Failed to fetch.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
@@ -1155,31 +1157,41 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     </span>
                   )}
                 </div>
-                {dayEmpty ? (
-                  <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                      listSoftOpen
-                        ? "bg-mist text-ink-soft"
-                        : "bg-river/12 text-river"
-                    }`}
-                  >
-                    {t(locale, "planner.emptyBadge")}
-                  </span>
-                ) : selectedStopId ? (
-                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
-                    {dayStops.find((s) => s.id === selectedStopId)?.place
-                      .name ?? t(locale, "planner.stops.selected")}{" "}
-                    · {t(locale, "planner.stops.selected")}
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/55">
-                    {t(locale, "planner.stopsList")}
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {dayEmpty ? (
+                    <span
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                        listSoftOpen
+                          ? "bg-mist text-ink-soft"
+                          : "bg-river/12 text-river"
+                      }`}
+                    >
+                      {t(locale, "planner.emptyBadge")}
+                    </span>
+                  ) : selectedStopId ? (
+                    <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+                      {dayStops.find((s) => s.id === selectedStopId)?.place
+                        .name ?? t(locale, "planner.stops.selected")}{" "}
+                      · {t(locale, "planner.stops.selected")}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/55">
+                      {t(locale, "planner.stopsList")}
+                    </span>
+                  )}
+                  {stopsOwnsSoft && listSoftOpen ? (
+                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                      {t(locale, "planner.stops.softBadge")}
+                    </span>
+                  ) : null}
+                </div>
               </header>
 
               {!dayEmpty ? (
-                <div className="px-4 pb-2.5">
+                <div
+                  className="animate-rise px-4 pb-2.5"
+                  style={{ animationDelay: "40ms" }}
+                >
                   <div
                     className="flex gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1"
                     role="group"
@@ -1219,7 +1231,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </div>
               ) : null}
 
-              {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+              {/* Compact SoftFail under azure Stops rail — never timber / Failed to fetch. */}
               <SoftFailNotice open={listSoftOpen} compact>
                 {listSoftCopy}
               </SoftFailNotice>
