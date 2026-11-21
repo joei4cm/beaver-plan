@@ -191,20 +191,20 @@ export function JournalSkeleton() {
         </div>
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
           <div className="space-y-0 px-5 py-6 md:px-7">
-            {/* Entry empty chrome — azure rail · Open badge · SoftFailNotice · empty body */}
+            {/* Entry empty SoftFail depth — azure rail · Soft empty badge · mist SoftFail band · empty body */}
             <div className="space-y-2 border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-baseline gap-2">
                   <Skeleton className="h-3 w-36" />
-                  <Skeleton className="h-2.5 w-40" />
+                  <Skeleton className="h-2.5 w-44" />
                 </div>
-                <Skeleton className="h-5 w-12 rounded-bp-xs" />
+                <Skeleton className="h-5 w-16 rounded-bp-xs" />
               </div>
               <Skeleton className="h-9 w-56 max-w-[80%]" />
               <Skeleton className="h-3.5 w-52" />
             </div>
-            <Skeleton className="mt-2 h-9 w-full rounded-none" />
-            <div className="mt-6 space-y-3 py-8">
+            <Skeleton className="h-9 w-full rounded-none border-b border-[color:var(--bp-line)]" />
+            <div className="mt-6 space-y-3 rounded-bp-sm bg-mist/25 px-3 py-8 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-4">
               <Skeleton className="h-2.5 w-16" />
               <Skeleton className="h-8 w-56 max-w-full" />
               <Skeleton className="h-4 w-72 max-w-full" />
