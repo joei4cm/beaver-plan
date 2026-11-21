@@ -34,7 +34,7 @@ import { ShareStudioSkeleton } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { downloadBlob, svgToPngBlob } from "@/lib/export-png";
 import { resolveMediaUrl } from "@/lib/media-url";
-import { readUserPrefs } from "@/lib/user-prefs";
+import { patchUserPrefs, readUserPrefs } from "@/lib/user-prefs";
 
 type TripPayload = {
   trip: Trip;
@@ -277,6 +277,8 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     if (id === templateId) return;
     setTemplateId(id);
     setSwapTick((n) => n + 1);
+    // Persist as default — multiple templates preference (settings + next open).
+    patchUserPrefs({ shareImageTemplateId: id });
   }
 
   async function downloadPng() {
@@ -478,52 +480,105 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           </p>
         </section>
 
-        {/* Control sheet */}
+        {/* Control sheet — template grid → light edit → SoftFailNotice + export */}
         <aside
           className="animate-sheet-in space-y-5"
           style={{ animationDelay: "80ms" }}
         >
-          <h2 className="font-display text-2xl tracking-tight text-ink">
-            {t(locale, "share.pickTemplate")}
-          </h2>
+          <section className="space-y-3" aria-labelledby="share-template-heading">
+            <div>
+              <h2
+                id="share-template-heading"
+                className="font-display text-2xl tracking-tight text-ink"
+              >
+                {t(locale, "share.pickTemplate")}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                {t(locale, "share.pickTemplateSupport")}
+              </p>
+            </div>
 
-          <div className="space-y-2" role="listbox" aria-label={t(locale, "share.pickTemplate")}>
-            {templates.map((tpl) => {
-              const selected = templateId === tpl.id;
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => pickTemplate(tpl.id)}
-                  className={`group w-full rounded-bp border px-4 py-3.5 text-left bp-transition ${
-                    selected
-                      ? "animate-stop-select border-river bg-river/10 shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : "border-[color:var(--bp-line)] bg-foam/70 hover:border-river/40 hover:bg-foam"
-                  }`}
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-display text-xl tracking-tight text-ink">
-                      {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
-                    </span>
-                    <span
-                      className={`rounded-bp-xs px-2 py-0.5 font-mono text-[11px] bp-transition ${
+            <div
+              className="grid grid-cols-2 gap-2.5"
+              role="listbox"
+              aria-label={t(locale, "share.pickTemplate")}
+            >
+              {templates.map((tpl) => {
+                const selected = templateId === tpl.id;
+                const portrait = tpl.aspect === "9:16";
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => pickTemplate(tpl.id)}
+                    className={`group flex flex-col overflow-hidden rounded-bp border text-left transition duration-bp ease-bp-out ${
+                      selected
+                        ? "animate-stop-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
+                        : "border-[color:var(--bp-line)] bg-foam/80 hover:border-river/45 hover:bg-foam hover:shadow-bp-soft"
+                    }`}
+                  >
+                    {/* Aspect thumbnail — azure wash silhouette (#46 radii) */}
+                    <div
+                      className={`relative flex items-end justify-center px-3 pt-3 transition duration-bp-fast ease-bp-out ${
                         selected
-                          ? "bg-river/15 text-river"
-                          : "bg-mist/80 text-ink-soft group-hover:text-river"
+                          ? "bg-river/[0.12]"
+                          : "bg-mist/55 group-hover:bg-mist/80"
                       }`}
+                      style={{ minHeight: portrait ? "5.75rem" : "4.25rem" }}
                     >
-                      {tpl.aspect}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
+                      <div
+                        className={`relative w-[42%] overflow-hidden rounded-bp-xs shadow-bp-soft transition duration-bp ease-bp-out ${
+                          selected
+                            ? "bg-gradient-to-b from-river to-river-deep"
+                            : "bg-gradient-to-b from-river/55 to-ink/70 group-hover:from-river/75"
+                        }`}
+                        style={{
+                          aspectRatio: `${tpl.width} / ${tpl.height}`,
+                          maxHeight: portrait ? "4.75rem" : "3.35rem",
+                        }}
+                        aria-hidden
+                      >
+                        <div className="mt-[18%] mx-[12%] h-[6%] rounded-full bg-foam/55" />
+                        <div className="mt-[10%] mx-[12%] h-[4%] w-[55%] rounded-full bg-foam/30" />
+                        <div className="absolute inset-x-[14%] bottom-[14%] h-[3%] rounded-full bg-foam/25" />
+                      </div>
+                      <span
+                        className={`absolute right-2 top-2 rounded-bp-xs px-1.5 py-0.5 font-mono text-[10px] tracking-wide transition duration-bp-fast ease-bp-out ${
+                          selected
+                            ? "bg-river text-foam"
+                            : "bg-foam/90 text-ink-soft ring-1 ring-[color:var(--bp-line)] group-hover:text-river"
+                        }`}
+                      >
+                        {tpl.aspect}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <span
+                          className={`font-display text-[0.95rem] font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
+                            selected ? "text-river" : "text-ink group-hover:text-river"
+                          }`}
+                        >
+                          {locale === "zh-CN" ? tpl.nameZh : tpl.nameEn}
+                        </span>
+                        {selected ? (
+                          <span className="shrink-0 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
+                            {t(locale, "share.selected")}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] leading-snug text-ink-soft">
+                        {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           <section className="space-y-3 border-t border-[color:var(--bp-line)] pt-5">
             <div className="flex items-baseline justify-between gap-2">
