@@ -7,6 +7,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -191,6 +192,53 @@ export default function ShareScreen() {
     void patchUserPrefs({ shareImageTemplateId: id });
   }
 
+  /** Soft-fail local SVG download — Expo has no 2× PNG canvas encode (#88 web). */
+  async function downloadExport() {
+    if (!svg) return;
+    setBusy(true);
+    setError(null);
+    setExportSoftFail(false);
+    try {
+      if (Platform.OS === "web" && typeof document !== "undefined") {
+        const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `beaver-share-${templateId}.svg`;
+        anchor.rel = "noopener";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        // Honest soft-fail: local SVG, not 2× PNG — SoftFailNotice, never timber.
+        setExportSoftFail(true);
+      } else {
+        const path = `${FileSystem.cacheDirectory}beaver-share-${templateId}.svg`;
+        await FileSystem.writeAsStringAsync(path, svg, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        const available = await Sharing.isAvailableAsync();
+        if (available) {
+          await Sharing.shareAsync(path, {
+            mimeType: "image/svg+xml",
+            dialogTitle: t(locale, "share.downloadPng"),
+            UTI: "public.svg-image",
+          });
+          setExportSoftFail(true);
+        } else {
+          setExportSoftFail(true);
+          if (!softDemo) setSoftDemo(true);
+        }
+      }
+    } catch {
+      setExportSoftFail(true);
+      setError(null);
+      if (!softDemo) setSoftDemo(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function shareOut() {
     if (!svg) return;
     setBusy(true);
@@ -205,7 +253,7 @@ export default function ShareScreen() {
       if (available) {
         await Sharing.shareAsync(path, {
           mimeType: "image/svg+xml",
-          dialogTitle: t(locale, "mobile.shareSheet"),
+          dialogTitle: t(locale, "share.systemShare"),
           UTI: "public.svg-image",
         });
       } else {
@@ -480,39 +528,86 @@ export default function ShareScreen() {
               })}
             </View>
 
-            <SoftFailNotice
-              open={softDemo || exportSoftFail}
-              style={styles.softNotice}
+            {/* Export — SoftFailNotice above CTAs; river primary / ink secondary (#62/#121) */}
+            <View
+              style={styles.exportSection}
+              accessibilityRole="summary"
+              accessibilityLabel={t(locale, "share.export")}
             >
-              {exportSoftFail
-                ? t(locale, "share.exportSoftFail")
-                : t(locale, "share.demoNotice")}
-            </SoftFailNotice>
+              <Text style={styles.exportTitle}>
+                {t(locale, "share.export")}
+              </Text>
+              <Text style={styles.exportSupport}>
+                {t(locale, "share.exportSupport")}
+              </Text>
 
-            <Pressable
-              style={StyleSheet.flatten([
-                styles.primary,
-                busy ? styles.disabled : null,
-              ])}
-              disabled={busy}
-              onPress={() => void shareOut()}
-              accessibilityRole="button"
-            >
-              <Text style={styles.primaryLabel}>
-                {t(locale, "mobile.shareSheet")}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={styles.secondary}
-              disabled={busy}
-              onPress={() => void refreshPreview()}
-              accessibilityRole="button"
-            >
-              <Text style={styles.secondaryLabel}>
-                {t(locale, "share.refresh")}
-              </Text>
-            </Pressable>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+              <SoftFailNotice
+                open={softDemo || exportSoftFail}
+                style={styles.softNotice}
+              >
+                {exportSoftFail
+                  ? t(locale, "share.exportSoftFail")
+                  : t(locale, "share.demoNotice")}
+              </SoftFailNotice>
+
+              <View
+                style={styles.exportActions}
+                accessibilityRole="toolbar"
+                accessibilityLabel={t(locale, "share.export")}
+              >
+                <Pressable
+                  style={StyleSheet.flatten([
+                    styles.primary,
+                    busy || !svg ? styles.disabled : null,
+                  ])}
+                  disabled={busy || !svg}
+                  onPress={() => void downloadExport()}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: busy || !svg }}
+                >
+                  <Text style={styles.primaryLabel}>
+                    {t(locale, "share.downloadPng")}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={StyleSheet.flatten([
+                    styles.secondaryInk,
+                    busy || !svg ? styles.disabled : null,
+                  ])}
+                  disabled={busy || !svg}
+                  onPress={() => void shareOut()}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: busy || !svg }}
+                >
+                  <Text style={styles.secondaryInkLabel}>
+                    {t(locale, "share.systemShare")}
+                  </Text>
+                </Pressable>
+                <View style={styles.exportTertiaryRow}>
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.refreshLink,
+                      busy ? styles.disabled : null,
+                    ])}
+                    disabled={busy}
+                    onPress={() => void refreshPreview()}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.refreshLinkLabel}>
+                      {t(locale, "share.refresh")}
+                    </Text>
+                  </Pressable>
+                  {!softDemo && !exportSoftFail ? (
+                    <Text style={styles.demoHint}>
+                      {t(locale, "share.demoHint")}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+            {error && !softDemo && !exportSoftFail ? (
+              <Text style={styles.error}>{error}</Text>
+            ) : null}
           </Animated.View>
         </ScrollView>
       )}
@@ -824,37 +919,94 @@ const styles = StyleSheet.create({
   },
   scaleChipLabel: { ...type.body, fontSize: 13, color: colors.inkSoft },
   scaleChipLabelActive: { color: colors.foam, fontWeight: "600" },
+  exportSection: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+    gap: 10,
+  },
+  exportTitle: {
+    ...type.display,
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    color: colors.ink,
+  },
+  exportSupport: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
+  },
   softNotice: {
-    marginTop: 16,
+    marginTop: 4,
+  },
+  exportActions: {
+    gap: 10,
+    marginTop: 2,
   },
   primary: {
-    marginTop: 16,
     backgroundColor: colors.river,
     borderRadius: radius.sm,
     paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: "center",
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   primaryLabel: {
     ...type.body,
     color: colors.foam,
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 15,
+    letterSpacing: 0.4,
   },
-  secondary: {
-    marginTop: 10,
+  secondaryInk: {
+    backgroundColor: colors.ink,
     borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: "center",
-    backgroundColor: colors.foam,
   },
-  secondaryLabel: {
+  secondaryInkLabel: {
     ...type.body,
-    color: colors.inkSoft,
+    color: colors.foam,
     fontWeight: "600",
+    fontSize: 14,
   },
-  disabled: { opacity: 0.45 },
+  exportTertiaryRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingTop: 2,
+  },
+  refreshLink: {
+    borderRadius: radius.xs,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  refreshLinkLabel: {
+    ...type.body,
+    fontSize: 14,
+    color: colors.inkSoft,
+    textDecorationLine: "underline",
+    textDecorationColor: "rgba(100,116,139,0.45)",
+  },
+  demoHint: {
+    ...type.body,
+    flex: 1,
+    maxWidth: 220,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: "right",
+    color: "rgba(100,116,139,0.75)",
+  },
+  disabled: { opacity: 0.4 },
   error: {
     ...type.body,
     marginTop: 12,
