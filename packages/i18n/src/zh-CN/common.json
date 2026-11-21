@@ -411,6 +411,8 @@
   "journal.mediaPlaceholder": "图框",
   "journal.photoSlots": "照片图框",
   "journal.photoStrip": "照片条",
+  "journal.photoStripSupport": "主图优先 · 最多 {max} 张",
+  "journal.photoLead": "主图",
   "journal.photoCount": "{n} / {max}",
   "journal.save": "写入日记",
   "journal.saving": "保存中…",
