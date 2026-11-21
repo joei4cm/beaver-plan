@@ -477,6 +477,8 @@
   "journal.photoStripSupport": "Lead frame · up to {max}",
   "journal.photoLead": "Lead",
   "journal.photoCount": "{n} / {max}",
+  "journal.photoStripSoftBadge": "Soft strip",
+  "journal.photoStripSoftFail": "Soft photo strip — media / R2 offline or keys absent. Lead frame and empties stay local until sync is live. Never a Failed to fetch crash.",
   "journal.save": "Save to journal",
   "journal.saving": "Saving…",
   "journal.remove": "Remove",

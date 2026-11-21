@@ -118,9 +118,9 @@ function MediaFrame({
 }
 
 /**
- * Entry photo strip chrome (BEA-225 after #124):
+ * Entry photo strip chrome (BEA-225 after #124/#172):
  * azure inset rail · count · lead frame · quieter empties to PHOTO_SLOT_MAX ·
- * tip-011 settle. SoftFailNotice stays on compose (never timber).
+ * tip-011 settle. SoftFailNotice lives on compose media rail (BEA-282).
  */
 function EntryPhotoStrip({
   locale,
@@ -687,7 +687,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const entryEmpty = visible.length === 0;
   const emptyOwnsSoft = entryEmpty;
   const emptySoftOpen = emptyOwnsSoft;
-  const showComposeSoftFail = composeSoftFail && !emptyOwnsSoft;
+  /**
+   * Photo strip SoftFailNotice chrome (BEA-282 after #124/#172):
+   * compose media rail owns compact SoftFail under azure strip rail · Soft
+   * strip badge · tip-011 (#46). Compose SoftFail yields while strip owns
+   * (no double depth). Soft copy never timber / Failed to fetch.
+   */
+  const photoStripOwnsSoft = composeSoftFail && !emptyOwnsSoft;
+  const photoStripSoftOpen = photoStripOwnsSoft;
+  const photoStripSoftCopy = t(locale, "journal.photoStripSoftFail");
+  const showComposeSoftFail =
+    composeSoftFail && !emptyOwnsSoft && !photoStripOwnsSoft;
   const showListSoftFail =
     !emptyOwnsSoft && (demoSeeded || softNotice);
   const listSoftOpen = emptySoftOpen || showListSoftFail;
@@ -1096,7 +1106,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </header>
 
-            {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+            {/* Compose SoftFail yields while photo strip owns (no double depth). */}
             <SoftFailNotice open={showComposeSoftFail} compact>
               {t(locale, "journal.composeSoftFail")}
             </SoftFailNotice>
@@ -1139,14 +1149,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               />
 
               {/*
-                Compose media rail (BEA-225 after #124): azure inset · count ·
-                drop · lead/empty strip · tip-011. SoftFailNotice stays above
-                (compose azure header) — never timber / Failed to fetch.
+                Photo strip SoftFail chrome (BEA-282 after #124/#172):
+                azure strip rail · Soft strip badge · compact SoftFailNotice ·
+                drop · lead/empty strip · tip-011 rise — never timber /
+                Failed to fetch. Compose SoftFail yields while strip owns.
               */}
               <section
                 className="animate-rise mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
                 style={{ animationDelay: "100ms" }}
-                aria-label={t(locale, "journal.photoSlots")}
+                aria-label={t(locale, "journal.photoStrip")}
               >
                 <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/65 px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -1161,17 +1172,30 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     </p>
                   </div>
                   <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold tabular-nums bp-transition ${
-                      stripMedia.length > 0
-                        ? "bg-river/12 text-river-deep"
-                        : "bg-mist text-ink-soft"
+                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                      photoStripSoftOpen
+                        ? "bg-mist text-ink-soft"
+                        : stripMedia.length > 0
+                          ? "bg-river/12 text-river-deep tabular-nums normal-case tracking-normal"
+                          : "bg-mist text-ink-soft tabular-nums normal-case tracking-normal"
                     }`}
                   >
-                    {t(locale, "journal.photoCount")
-                      .replace("{n}", String(stripMedia.length))
-                      .replace("{max}", String(PHOTO_SLOT_MAX))}
+                    {photoStripSoftOpen
+                      ? t(locale, "journal.photoStripSoftBadge")
+                      : t(locale, "journal.photoCount")
+                          .replace("{n}", String(stripMedia.length))
+                          .replace("{max}", String(PHOTO_SLOT_MAX))}
                   </span>
                 </header>
+
+                {/* Compact SoftFail under azure strip rail — never timber / Failed to fetch. */}
+                <SoftFailNotice
+                  open={photoStripSoftOpen}
+                  compact
+                  className="border-b border-[color:var(--bp-line)]"
+                >
+                  {photoStripSoftCopy}
+                </SoftFailNotice>
 
                 <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
                   <span className="text-sm font-semibold text-river">
