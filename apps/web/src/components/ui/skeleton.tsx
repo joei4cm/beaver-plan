@@ -218,20 +218,23 @@ export function JournalSkeleton() {
             </div>
           </div>
           <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 lg:block">
-            {/* Compose azure rail · SoftFailNotice slot · SheetPresence body */}
+            {/* Compose SoftFail depth — azure rail · softSupport · SoftFail mist band · mist tip-011 body */}
             <div className="space-y-2 border-b border-[color:var(--bp-line)] px-5 py-4 md:px-6 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex items-center justify-between gap-2">
-                <Skeleton className="h-3 w-20" />
+                <div className="flex items-baseline gap-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-7 w-36" />
+                </div>
                 <Skeleton className="h-4 w-14 rounded-bp-xs" />
               </div>
-              <Skeleton className="h-7 w-36" />
               <Skeleton className="h-3.5 w-full" />
             </div>
-            <Skeleton className="h-9 w-full rounded-none" />
-            <div className="p-5 md:p-6">
+            {/* SoftFailNotice mist band under azure Compose rail */}
+            <Skeleton className="h-9 w-full rounded-none border-b border-[color:var(--bp-line)]" />
+            <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent p-5 md:p-6">
               <Skeleton className="h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
-              {/* Compose media rail SoftFail depth — azure · softSupport · SoftFail · mist tip-011 body */}
+              {/* Photo strip chrome — SoftFail yields while compose SoftFail owns */}
               <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]">
                 <div className="flex items-center justify-between border-b border-[color:var(--bp-line)] px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
                   <div className="flex items-baseline gap-2">
@@ -240,9 +243,7 @@ export function JournalSkeleton() {
                   </div>
                   <Skeleton className="h-4 w-14 rounded-bp-xs" />
                 </div>
-                {/* SoftFailNotice mist band under photo-frames rail */}
-                <Skeleton className="h-9 w-full rounded-none" />
-                <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
+                <div>
                   <Skeleton className="mx-3.5 mt-3 h-16 w-[calc(100%-1.75rem)] rounded-bp-sm" />
                   <div className="mt-3 flex gap-2 px-3.5 pb-3">
                     <Skeleton className="h-[6.25rem] w-[4.5rem] shrink-0 rounded-bp-sm" />
