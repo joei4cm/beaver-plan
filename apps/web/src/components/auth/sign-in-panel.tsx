@@ -117,12 +117,20 @@ export function SignInPanel({
             ) : null}
           </section>
 
-          <Link
-            href="/trips"
-            className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
-          >
-            ← {t(locale, "nav.trips")}
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Link
+              href="/sign-up"
+              className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
+            >
+              {t(locale, "auth.needAccount")}
+            </Link>
+            <Link
+              href="/trips"
+              className={`inline-flex text-sm font-semibold text-ink-soft bp-transition hover:text-river hover:underline ${FOCUS}`}
+            >
+              ← {t(locale, "nav.trips")}
+            </Link>
+          </div>
         </div>
 
         <div className="min-h-[320px]">
@@ -132,7 +140,7 @@ export function SignInPanel({
               <SignIn
                 routing="path"
                 path="/sign-in"
-                signUpUrl="/sign-in"
+                signUpUrl="/sign-up"
                 fallbackRedirectUrl="/trips"
                 appearance={{
                   elements: {
