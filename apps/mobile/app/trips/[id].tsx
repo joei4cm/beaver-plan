@@ -134,7 +134,9 @@ export default function TripDetailScreen() {
   const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [pinStatus, setPinStatus] = useState<OfflinePinStatus | null>(null);
   const [pinBusy, setPinBusy] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const [online, setOnline] = useState(isDeviceOnline);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
   const [placeDetailsMode, setPlaceDetailsMode] = useState<"live" | "demo">(
@@ -229,6 +231,7 @@ export default function TripDetailScreen() {
         setJournal(cached.journal);
         setDayId(cached.days[0]?.id ?? null);
         setFromCache(true);
+        setSoftNotice(t(locale, "planner.demoLocal"));
         setError(null);
         if (tripId === "sample-kyoto") {
           const seed = sampleKyotoCollab();
@@ -327,6 +330,7 @@ export default function TripDetailScreen() {
   async function onTogglePin() {
     if (!trip) return;
     setPinBusy(true);
+    setPinError(null);
     try {
       if (pinStatus?.pinned) {
         await unpinTripOffline(tripId);
@@ -341,16 +345,29 @@ export default function TripDetailScreen() {
       }
       await refreshPin();
     } catch (e) {
+      // Soft-fail pin chrome — never timber the whole trip page (#87 parity).
       if (isNoiseError(e)) {
         setSoftNotice(t(locale, "planner.demoLocal"));
-        setError(null);
+        setPinError(null);
       } else {
-        setError(e instanceof Error ? e.message : "pin_failed");
+        setPinError(e instanceof Error ? e.message : "pin_failed");
       }
     } finally {
       setPinBusy(false);
     }
   }
+
+  useEffect(() => {
+    const syncOnline = () => setOnline(isDeviceOnline());
+    syncOnline();
+    if (typeof window === "undefined") return;
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
 
   useEffect(() => {
     void load();
@@ -817,10 +834,12 @@ export default function TripDetailScreen() {
 
           <Animated.View style={riseStyle}>
             <SoftFailNotice
-              open={Boolean(softNotice)}
+              open={Boolean(softNotice) || fromCache || !online}
               style={styles.softBanner}
             >
-              {softNotice ?? ""}
+              {!online || fromCache
+                ? softNotice ?? t(locale, "planner.demoLocal")
+                : (softNotice ?? "")}
             </SoftFailNotice>
           </Animated.View>
 
@@ -1019,16 +1038,18 @@ export default function TripDetailScreen() {
                       </View>
                     )}
 
-                    {searchDemo && hasSearchResults ? (
-                      <SoftFailNotice compact>
-                        {t(locale, "planner.searchDemo")}
-                      </SoftFailNotice>
-                    ) : null}
-                    {searchDemo && showSearchEmpty ? (
-                      <SoftFailNotice compact>
-                        {t(locale, "planner.search.softFailEmpty")}
-                      </SoftFailNotice>
-                    ) : null}
+                    <SoftFailNotice
+                      open={searchDemo && hasSearchResults}
+                      compact
+                    >
+                      {t(locale, "planner.searchDemo")}
+                    </SoftFailNotice>
+                    <SoftFailNotice
+                      open={searchDemo && showSearchEmpty}
+                      compact
+                    >
+                      {t(locale, "planner.search.softFailEmpty")}
+                    </SoftFailNotice>
                   </View>
                 ) : null}
               </View>
@@ -1257,7 +1278,7 @@ export default function TripDetailScreen() {
                     pinStatus?.pinned ? styles.pinMetaActive : null,
                   ])}
                 >
-                  {(pinStatus?.online ?? isDeviceOnline())
+                  {(pinStatus?.online ?? online)
                     ? t(locale, "offline.online")
                     : t(locale, "offline.offline")}
                   {(pinStatus?.pendingMutations ?? 0) > 0
@@ -1271,6 +1292,12 @@ export default function TripDetailScreen() {
               <Text style={styles.pinHint}>
                 {t(locale, "offline.statusHint")}
               </Text>
+              <SoftFailNotice
+                open={Boolean(pinError)}
+                style={styles.pinSoftFail}
+              >
+                {pinError ?? ""}
+              </SoftFailNotice>
 
               <View style={styles.collabBox}>
                 <Text style={styles.collabEyebrow}>
@@ -2047,10 +2074,13 @@ const styles = StyleSheet.create({
   },
   pinHint: {
     ...type.body,
-    marginBottom: 18,
+    marginBottom: 10,
     fontSize: 12,
     lineHeight: 18,
     color: colors.inkSoft,
+  },
+  pinSoftFail: {
+    marginBottom: 18,
   },
   collabBox: {
     paddingVertical: 14,

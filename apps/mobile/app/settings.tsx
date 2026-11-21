@@ -189,9 +189,9 @@ export default function SettingsScreen() {
           {brandName} · {t(locale, "settings.localHint")}
         </Text>
 
-        {softNotice ? (
-          <SoftFailNotice style={styles.softNotice}>{softNotice}</SoftFailNotice>
-        ) : null}
+        <SoftFailNotice open={Boolean(softNotice)} style={styles.softNotice}>
+          {softNotice ?? ""}
+        </SoftFailNotice>
 
         {/* Language */}
         <View style={styles.section}>

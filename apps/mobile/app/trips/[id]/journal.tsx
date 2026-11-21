@@ -452,13 +452,11 @@ export default function JournalScreen() {
                 </Text>
               </View>
 
-              {showSoftFail ? (
-                <SoftFailNotice style={styles.softFail}>
-                  {softNotice
-                    ? t(locale, "journal.softOffline")
-                    : t(locale, "journal.demoNotice")}
-                </SoftFailNotice>
-              ) : null}
+              <SoftFailNotice open={showSoftFail} style={styles.softFail}>
+                {softNotice
+                  ? t(locale, "journal.softOffline")
+                  : t(locale, "journal.demoNotice")}
+              </SoftFailNotice>
 
               {visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
