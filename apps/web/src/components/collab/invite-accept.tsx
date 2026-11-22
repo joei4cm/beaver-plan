@@ -43,7 +43,9 @@ function demoPreview(code: string): Preview {
 /**
  * Invite accept sheet — SoftFail depth kept (BEA-392 / BEA-420 / #241) + wave 48
  * craft residual (BEA-461) + wave 53 residual (BEA-506) + wave 56 residual
- * (BEA-543): page title `leading-snug` · sheet eyebrow `0.18em`. SoftFailBadge ·
+ * (BEA-543): page title `leading-snug` · sheet eyebrow `0.18em` + wave 66 residual
+ * (BEA-651): sheet eyebrow/role `0.65rem` · Sign-in `ease-bp-out-strong` ·
+ * demoNote rise (beyond invite-sheet no-op BEA-606 / #411). SoftFailBadge ·
  * SoftFailSupport · mist band unchanged. Never timber / Failed to fetch. No
  * `/dev` gallery.
  */
@@ -202,7 +204,7 @@ export function InviteAccept({
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "invite.sheetEyebrow")}
               </span>
               {softOpen ? (
@@ -224,7 +226,7 @@ export function InviteAccept({
                 </SoftFailLiveBadge>
               )}
               {preview ? (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {t(locale, `collab.role.${preview.role}`)}
                 </span>
               ) : null}
@@ -303,14 +305,14 @@ export function InviteAccept({
                 {clerkEnabled() && (
                   <Link
                     href={`/sign-in?redirect_url=/invite/${encodeURIComponent(code)}`}
-                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out-strong hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                   >
                     {t(locale, "nav.signIn")}
                   </Link>
                 )}
               </div>
               <p
-                className="animate-fade text-xs leading-relaxed text-ink-soft/80"
+                className="animate-rise text-xs leading-relaxed text-ink-soft/80"
                 style={{ animationDelay: "240ms" }}
               >
                 {t(locale, "invite.demoNote")}
