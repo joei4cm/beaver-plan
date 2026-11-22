@@ -1159,13 +1159,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
 
           {/*
             Transit Mode rail craft residual (BEA-549 / wave 57) beyond #370 /
-            SoftFail depth kept (BEA-358 / BEA-423): azure Mode rail · eyebrow
+            SoftFail depth kept (BEA-358 / BEA-423) + generate CTA tracking
+            residual (BEA-735 / wave 70): azure Mode rail · eyebrow
             `0.65rem` / `0.18em` · header `animate-rise` · Soft mode badge ·
             softSupport · compact SoftFail mist band · tip-011 mist-wash +
-            chip/CTA press · leg summary `ink-soft/80` — Craft: ?modeSoftFail=1.
-            Yields while TransferSteps SoftFail depth (BEA-378) /
+            chip/CTA press · generate `tracking-wide` (Expo modeGenerateLabel
+            LS 0.2 · Export Share / Stops empty twin) · leg summary
+            `ink-soft/80` — Craft: ?modeSoftFail=1. SoftFail untouched. Yields
+            while TransferSteps SoftFail depth (BEA-378) /
             ?transferSoftFail=1 owns selected-stop soft chrome — never timber /
-            Failed to fetch. No `/dev` gallery.
+            Failed to fetch. No `/dev` gallery. Export eyebrow already at bar.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
@@ -1244,7 +1247,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   type="button"
                   disabled={routing || dayStops.length < 2}
                   onClick={() => void generateRoutes()}
-                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {routing
                     ? t(locale, "planner.routing")
