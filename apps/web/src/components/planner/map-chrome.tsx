@@ -59,13 +59,14 @@ type Props = {
  *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
  *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
  * Floating SoftFailNotice depth (BEA-318 after #213) + SoftFail helper
- * adoption (BEA-390 after #284):
+ * adoption (BEA-390 after #284) + SoftFail yield (BEA-414 after #281):
  *   azure Map rail · SoftFailBadge · SoftFailSupport · compact SoftFail mist
- *   band (border-b) · tip-011 mist-wash · yields to search SoftFail (#226)
- *   when open. Basemap SoftFail still owns when open. Legend SoftFail depth
- *   (BEA-350 after #133): SoftFailBadge · SoftFailSupport · mist SoftFail
- *   under azure Transfer rail · tip-011 mist-wash strokes. Lumen tokens —
- *   never timber / Failed to fetch · no double SoftFail.
+ *   band (border-b) · tip-011 mist-wash · yields to search SoftFail (#226) /
+ *   legend SoftFail / basemap SoftFail when open — locate SoftFail yields with
+ *   the same unit (no double SoftFail). Legend SoftFail depth (BEA-350 after
+ *   #133): SoftFailBadge · SoftFailSupport · mist SoftFail under azure
+ *   Transfer rail · tip-011 mist-wash strokes. Lumen tokens — never timber /
+ *   Failed to fetch · no double SoftFail.
  */
 export function MapChrome({
   locale,
@@ -206,14 +207,19 @@ export function MapChrome({
     ? t(locale, "planner.search.softFailEmpty")
     : t(locale, "planner.search.softFail");
   /**
-   * Floating SoftFailNotice depth (BEA-318 after #213):
-   * locate always; vendor soft-fail only when basemap / search / legend are
-   * closed. Yields to search SoftFail (#226) while Places owns (no double
-   * depth). Soft copy never timber / Failed to fetch.
+   * Floating SoftFailNotice depth (BEA-318 after #213; yield audit BEA-414):
+   * locate + vendor soft-fail share one SoftFail unit. Yields while basemap
+   * SoftFail / search SoftFail (#226) / legend SoftFail (#266) SoftFail chrome
+   * own — locate SoftFail must not bypass SoftFail Soft ownership (no double
+   * SoftFail depth). Soft copy never timber / Failed to fetch.
    */
+  const legendOwnsSoftFail = legendOpen && softFail && !searchOwnsSoftFail;
+  const basemapOwnsSoftFail = engineOpen && softFail;
   const floatingOwnsSoft =
-    Boolean(locateNotice) ||
-    (softFail && !engineOpen && !legendOpen && !searchOwnsSoftFail);
+    !searchOwnsSoftFail &&
+    !legendOwnsSoftFail &&
+    !basemapOwnsSoftFail &&
+    (Boolean(locateNotice) || softFail);
   const floatingSoftCopy =
     locateNotice ||
     (floatingOwnsSoft ? t(locale, "planner.map.softFail") : null);
@@ -668,7 +674,8 @@ export function MapChrome({
           Floating SoftFail depth (BEA-318 / BEA-390):
           azure Map rail · SoftFailBadge · SoftFailSupport · compact SoftFailNotice
           mist band (border-b) · tip-011 mist-wash — yields to search SoftFail
-          (#226); never timber / Failed to fetch.
+          (#226) / legend SoftFail / basemap SoftFail (locate SoftFail too);
+          never timber / Failed to fetch.
         */}
         <SheetPresence
           open={floatingOwnsSoft}
