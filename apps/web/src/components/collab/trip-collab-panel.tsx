@@ -332,6 +332,12 @@ export function TripCollabPanel({
             {t(locale, "collab.panel.support")}
           </p>
         </div>
+        {/*
+          Web motion residual (BEA-772 / wave 72): tab color settle
+          ease-bp-out → ease-bp-out-strong — tip-011 twin of `.bp-day-tab`
+          color out-strong. SoftFail / prefer LIVE / comments·timeline
+          reopen untouched. Indicator keep ease-bp-out (mount-only).
+        */}
         <div
           className="flex gap-1 border-b border-[color:var(--bp-line)]"
           role="tablist"
@@ -348,7 +354,7 @@ export function TripCollabPanel({
                 aria-selected={on}
                 aria-controls={`collab-panel-${key}`}
                 onClick={() => setTab(key)}
-                className={`relative -mb-px px-3.5 pb-2.5 pt-1 text-sm font-medium transition duration-bp-fast ease-bp-out ${
+                className={`relative -mb-px px-3.5 pb-2.5 pt-1 text-sm font-medium transition duration-bp-fast ease-bp-out-strong ${
                   on
                     ? "text-river"
                     : "text-ink-soft hover:text-ink"
