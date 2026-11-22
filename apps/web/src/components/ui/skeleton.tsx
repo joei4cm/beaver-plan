@@ -160,9 +160,12 @@ export function PlannerSkeleton() {
             {/* SoftFailNotice mist band under azure Itinerary rail — softSupport depth */}
             <Skeleton className="h-9 w-full rounded-none" />
           </div>
-          {/* Day tabs chrome — azure Days rail · mist underline (BEA-247) */}
+          {/* Day tabs craft residual — azure Days · header + rail rise (BEA-611 / Mode #549) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
-            <div className="flex items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
+            <div
+              className="animate-rise flex items-center justify-between gap-2 px-4 pt-2.5 pb-1.5"
+              style={{ animationDelay: "40ms" }}
+            >
               <div className="flex items-baseline gap-2">
                 <Skeleton className="h-2.5 w-10" />
                 <Skeleton className="h-3 w-14" />
@@ -170,7 +173,10 @@ export function PlannerSkeleton() {
               </div>
               <Skeleton className="h-5 w-16 rounded-bp-xs" />
             </div>
-            <div className="flex gap-0 bg-mist/40 px-2 pb-3 pt-1">
+            <div
+              className="animate-rise flex gap-0 bg-mist/40 px-2 pb-3 pt-1"
+              style={{ animationDelay: "70ms" }}
+            >
               <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
               <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
               <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
