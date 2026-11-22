@@ -1846,8 +1846,9 @@ export default function TripDetailScreen() {
 
               {/*
                 Stops SoftFail helpers (BEA-388) + stop-card #381 (BEA-529) +
-                list #402 (BEA-567) + Expo stop-card residual (BEA-591 / wave 61):
-                eyebrow 1.8 · selected badge 1.4 (Mode) · SoftFailBadge ·
+                list #402 (BEA-567) + Expo stop-card #416 (BEA-591) + residual
+                (BEA-631 / wave 64 beyond #416): eyebrow 1.8 · selected badge 1.4
+                · stop-row name leading-snug (web #418) · SoftFailBadge ·
                 SoftFailSupport · SoftFailNotice mist · tip-011 mist-wash ·
                 mist-track chip press (opacity+scale Mode twin) · stop-row press ·
                 selected display + Selected mark · SheetPresence detail rise.
@@ -4051,13 +4052,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontSize: 16,
     fontWeight: "600",
+    /** Web stop-row `leading-snug` (#418 / BEA-594; Expo catch-up BEA-631). */
+    lineHeight: 22,
     color: colors.ink,
   },
-  /* Web selected font-display bold tracking-tight. */
+  /* Web selected font-display bold leading-snug tracking-tight. */
   stopNameSelected: {
     ...type.display,
     fontWeight: "700",
     letterSpacing: -0.2,
+    /** Web selected display `leading-snug` (#418; BEA-631). */
+    lineHeight: 22,
   },
   stopSelectedMark: {
     borderRadius: radius.xs,
