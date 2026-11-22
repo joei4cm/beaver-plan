@@ -148,8 +148,11 @@ async function searchLocal(
  * (beyond #455 rating · #449 priceLabel; day-fill mistTrack left to BEA-701).
  * SoftFail stays under OTA / Confirm rails; craft
  * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
- * double depth). Confirm nest known no-op — leave alone. Never timber /
- * Failed to fetch. No `/dev` gallery.
+ * double depth). Confirm nest known no-op — leave alone. Wave 69 (BEA-725):
+ * confirmTitle LH 22 twin of sectionTitle / web Confirm `leading-snug`
+ * (#465) — Expo collab panel eyebrow already denser than brand `2.6` /
+ * `0.26em` (#464) so primary no-op; title-class only, nest rgba untouched.
+ * Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -1578,6 +1581,8 @@ const styles = StyleSheet.create({
   confirmTitle: {
     ...type.display,
     fontSize: 16,
+    /** Web Confirm leading-snug (#465) · sectionTitle twin (BEA-725). */
+    lineHeight: 22,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
