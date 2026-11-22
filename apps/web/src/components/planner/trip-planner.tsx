@@ -1745,7 +1745,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                               style={{ animationDelay: "50ms" }}
                             >
                               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                                   {t(locale, "planner.drawer.detailEyebrow")}
                                 </span>
                                 <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
