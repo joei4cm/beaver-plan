@@ -92,27 +92,38 @@ export const softFailMistWashStyle: ViewStyle = {
   backgroundColor: mistWash(0.25),
 };
 
-/** Soft badge chip styles — mist / ink-soft, never timber. */
+/**
+ * Soft badge chip — mist wash + line edge so Soft chips read on Foam sheets.
+ * Foam dark contrast (BEA-412) — never timber.
+ */
 export const softFailBadgeStyle: ViewStyle = {
   borderRadius: radius.xs,
   backgroundColor: colors.mist,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: colors.line,
   paddingHorizontal: 6,
   paddingVertical: 2,
 };
 
+/** Soft label — ink/70 parity with web (~6:1 on mist). */
 export const softFailBadgeLabelStyle: TextStyle = {
   ...type.body,
   fontSize: 10,
   fontWeight: "700",
   letterSpacing: 1.4,
   textTransform: "uppercase",
-  color: colors.inkSoft,
+  color: "rgba(15, 23, 42, 0.7)",
 };
 
-/** Live badge chip — river wash while keys are present (parity SoftFailBadge). */
+/**
+ * Live badge chip — river wash + river edge (parity SoftFailBadge).
+ * Foam dark contrast (BEA-412).
+ */
 export const softFailLiveBadgeStyle: ViewStyle = {
   borderRadius: radius.xs,
   backgroundColor: "rgba(47,107,255,0.12)",
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: "rgba(47,107,255,0.2)",
   paddingHorizontal: 6,
   paddingVertical: 2,
 };
@@ -128,17 +139,20 @@ export const softFailLiveBadgeLabelStyle: TextStyle = {
 
 export type SoftFailBadgeTone = "soft" | "live";
 
+/**
+ * softSupport — solid ink-soft on Foam (~4.8:1), not 0.8 wash (BEA-412).
+ */
 export const softFailSupportStyle: TextStyle = {
   ...type.body,
   fontSize: 11,
   lineHeight: 16,
   color: colors.inkSoft,
-  opacity: 0.8,
 };
 
 /**
  * Soft | Live badge composition helper — Lumen mist (soft) or river wash
- * (live). Never timber. Default tone stays Soft for existing call sites.
+ * (live). Foam dark contrast via softFailBadge* / softFailLiveBadge* styles.
+ * Never timber. Default tone stays Soft for existing call sites.
  */
 export function SoftFailBadge({
   children,
@@ -177,7 +191,10 @@ export function SoftFailLiveBadge({
     </SoftFailBadge>
   );
 }
-/** softSupport composition helper — ink-soft line beside azure rail titles. */
+/**
+ * softSupport composition helper — solid ink-soft beside azure rail titles
+ * (Foam dark contrast). Never timber.
+ */
 export function SoftFailSupport({
   children,
   style,
