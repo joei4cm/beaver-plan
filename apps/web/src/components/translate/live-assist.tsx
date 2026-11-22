@@ -1364,7 +1364,8 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </>
       ) : (
         <section
-          className="animate-sheet-in mt-6 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
+          className="animate-rise mt-6 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
+          style={{ animationDelay: "120ms" }}
           aria-label={t(locale, "translate.mode.camera")}
         >
           {/*
@@ -1389,7 +1390,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   </SoftFailSupport>
                 </div>
               ) : (
-                <p className="mt-1 text-sm text-ink-soft">
+                <p className="mt-1 max-w-lg text-sm leading-relaxed text-ink-soft">
                   {t(locale, "translate.dualHint")}
                 </p>
               )}
@@ -1419,7 +1420,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               <DualCameraSkeleton />
             </div>
           ) : (
-            <div className={dualSoftOpen ? softFailMistWashClass : undefined}>
+            <SheetPresence
+              open
+              className={dualSoftOpen ? softFailMistWashClass : undefined}
+              style={{ animationDelay: "40ms" }}
+              aria-label={t(locale, "translate.dualHint")}
+            >
               <div className="grid md:grid-cols-2">
                 {/* Traveler lens */}
                 <div className="relative isolate min-h-[240px] border-b border-[color:var(--bp-line)] md:min-h-[340px] md:border-b-0 md:border-r">
@@ -1442,7 +1448,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                       <div className="h-14 w-14 rounded-full bg-river/35 ring-2 ring-foam/25" />
                     </div>
                   </div>
-                  <p className="absolute inset-x-3 bottom-3 z-10 text-center text-[11px] font-medium tracking-wide text-foam/65">
+                  <p className="absolute inset-x-3 bottom-3 z-10 text-center text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-foam/65">
                     {t(locale, "translate.source")}
                   </p>
                 </div>
@@ -1480,7 +1486,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                         <button
                           type="button"
                           onClick={() => void startCamera()}
-                          className="bp-transition rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep"
+                          className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98]"
                         >
                           {t(locale, "translate.enableCamera")}
                         </button>
@@ -1495,7 +1501,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   </div>
 
                   {busy && tab === "camera" && !overlay ? (
-                    <div className="absolute inset-x-3 bottom-3 z-10 space-y-2 rounded-bp bg-ink/70 px-4 py-3 backdrop-blur-md">
+                    <div className="absolute inset-x-3 bottom-3 z-10 space-y-2 rounded-bp bg-ink/70 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
                       <Skeleton className="h-3 w-36 max-w-[60%] bg-white/20" />
                       <Skeleton className="h-5 w-52 max-w-full bg-white/25" />
                     </div>
@@ -1510,7 +1516,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                         {overlay.source}
                       </p>
                       {overlay.translated ? (
-                        <p className="mt-1.5 font-display text-lg font-semibold leading-snug tracking-tight text-foam">
+                        <p className="mt-1.5 font-display text-lg font-semibold leading-snug tracking-tight text-foam md:text-xl">
                           {overlay.translated}
                         </p>
                       ) : null}
@@ -1524,7 +1530,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 </div>
               </div>
 
-              {/* Control chrome rail */}
+              {/* Control chrome rail — Live dual (tip-011 press · Talk parity) */}
               <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--bp-line)] bg-paper/85 px-3 py-3 backdrop-blur-sm">
                 <button
                   type="button"
@@ -1535,7 +1541,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     void startCamera(next);
                   }}
                   disabled={cameraStarting}
-                  className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft duration-bp-fast ease-bp-out hover:border-river/30 hover:text-river disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft duration-bp-fast ease-bp-out hover:border-river/30 hover:text-river active:scale-[0.98] disabled:opacity-50"
                 >
                   {facing === "environment"
                     ? t(locale, "translate.cameraFront")
@@ -1545,7 +1551,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={() => void onVision("ocr")}
                   disabled={busy || cameraStarting}
-                  className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
                 >
                   {busy
                     ? t(locale, "translate.translating")
@@ -1555,11 +1561,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={() => void onVision("caption")}
                   disabled={busy || cameraStarting}
-                  className="bp-transition rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-ink disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-ink active:scale-[0.98] disabled:opacity-50"
                 >
                   {t(locale, "translate.caption")}
                 </button>
-                <span className="ml-auto hidden text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft/70 sm:inline">
+                <span className="ml-auto hidden text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink-soft/70 sm:inline">
                   {cameraReady
                     ? t(locale, "translate.lensWorld")
                     : cameraDenied
@@ -1567,7 +1573,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                       : t(locale, "translate.loading")}
                 </span>
               </div>
-            </div>
+            </SheetPresence>
           )}
         </section>
       )}

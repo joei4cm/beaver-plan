@@ -366,33 +366,32 @@ export function ShareStudioSkeleton() {
   );
 }
 
-/** Tip 017 — dual-lens stage placeholder while camera / vision warms. */
+/**
+ * Tip 017 — dual-lens stage placeholder while camera / vision warms.
+ * Frameless: nests under Live dual foam section (header + SoftFail band own the frame).
+ */
 export function DualCameraSkeleton() {
   return (
-    <div
-      aria-busy="true"
-      aria-live="polite"
-      className="overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
-    >
+    <div aria-busy="true" aria-live="polite">
       <div className="grid md:grid-cols-2">
-        <div className="relative min-h-[220px] border-b border-[color:var(--bp-line)] bg-[#EAF0F8] md:min-h-[320px] md:border-b-0 md:border-r">
+        <div className="relative min-h-[240px] border-b border-[color:var(--bp-line)] bg-mist md:min-h-[340px] md:border-b-0 md:border-r">
           <Skeleton className="absolute inset-0 rounded-none" />
           <div className="absolute left-3 top-3">
             <Skeleton className="h-6 w-28 rounded-bp-xs" />
           </div>
         </div>
-        <div className="relative min-h-[220px] bg-[#EAF0F8] md:min-h-[320px]">
+        <div className="relative min-h-[240px] bg-mist md:min-h-[340px]">
           <Skeleton className="absolute inset-0 rounded-none" />
           <div className="absolute left-3 top-3">
             <Skeleton className="h-6 w-32 rounded-bp-xs" />
           </div>
-          <div className="absolute inset-x-3 bottom-3 space-y-2 rounded-bp bg-foam/70 p-3">
+          <div className="absolute inset-x-3 bottom-3 space-y-2 rounded-bp bg-foam/70 p-3 ring-1 ring-[color:var(--bp-line)]">
             <Skeleton className="h-3 w-40 max-w-[70%]" />
             <Skeleton className="h-5 w-56 max-w-full" />
           </div>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 border-t border-[color:var(--bp-line)] bg-paper/70 px-3 py-3">
+      <div className="flex flex-wrap gap-2 border-t border-[color:var(--bp-line)] bg-paper/85 px-3 py-3">
         <Skeleton className="h-10 w-24 rounded-bp-sm" />
         <Skeleton className="h-10 w-28 rounded-bp-sm" />
         <Skeleton className="h-10 w-32 rounded-bp-sm" />
