@@ -17,7 +17,12 @@ import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { fetchHealth } from "../src/api";
 import { SheetPresence } from "../src/components/sheet-presence";
-import { SoftFailNotice } from "../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashStyle,
+} from "../src/components/soft-fail-notice";
 import { clerkEnabled, wechatLoginEnabled } from "../src/clerk";
 import { type } from "../src/theme";
 
@@ -29,11 +34,10 @@ const WECHAT_STRATEGY = "oauth_wechat" as OAuthStrategy;
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
 /**
- * Expo auth SoftFailNotice depth (BEA-363 after #123 / web #238):
- * azure sheet rail · Soft sign-in badge · softSupport · compact SoftFail
- * mist band under rail · mist-wash tip-011 SheetPresence body · WeChat SoftFail
- * yield (no double depth) — never timber / Failed to fetch. Yields web auth
- * SoftFail (#238/#227) — Expo-only surface.
+ * Expo auth SoftFail helper adoption (BEA-392 after #284 / depth #269):
+ * SoftFailBadge · SoftFailSupport · softFailMistWashStyle · compact SoftFail
+ * mist band under azure rail · WeChat SoftFail yield (no double depth) —
+ * never timber / Failed to fetch. Web auth SoftFail stays sibling scope.
  */
 export default function SignInScreen() {
   const clerkReady = clerkEnabled();
@@ -116,10 +120,8 @@ export default function SignInScreen() {
         </Animated.View>
 
         {/*
-          SoftFail sheet depth (BEA-363 after #123 / web #238):
-          azure rail · Soft sign-in badge · softSupport · compact SoftFailNotice ·
-          mist-wash tip-011 SheetPresence body · WeChat SoftFail yield —
-          never timber / Failed to fetch.
+          SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
+          softFailMistWashStyle · WeChat SoftFail yield — never timber.
         */}
         <SheetPresence
           open
@@ -138,39 +140,39 @@ export default function SignInScreen() {
               <Text style={styles.sheetEyebrow}>
                 {t(locale, "auth.sheetEyebrow")}
               </Text>
-              <Text style={styles.sheetSupport}>
-                {railSoft
-                  ? t(locale, "auth.softSupport")
-                  : t(locale, "auth.sheetSupport")}
-              </Text>
+              {railSoft ? (
+                <SoftFailSupport>
+                  {t(locale, "auth.softSupport")}
+                </SoftFailSupport>
+              ) : (
+                <Text style={styles.sheetSupport}>
+                  {t(locale, "auth.sheetSupport")}
+                </Text>
+              )}
             </View>
-            <View
-              style={StyleSheet.flatten([
-                styles.statusBadge,
-                railSoft ? styles.statusBadgeSoft : styles.statusBadgeLive,
-              ])}
-            >
-              <Text
+            {railSoft ? (
+              <SoftFailBadge>{t(locale, "auth.signInSoftBadge")}</SoftFailBadge>
+            ) : (
+              <View
                 style={StyleSheet.flatten([
-                  styles.statusBadgeText,
-                  railSoft
-                    ? styles.statusBadgeTextSoft
-                    : styles.statusBadgeTextLive,
+                  styles.statusBadge,
+                  styles.statusBadgeLive,
                 ])}
               >
-                {railSoft
-                  ? t(locale, "auth.signInSoftBadge")
-                  : t(locale, "auth.liveBadge")}
-              </Text>
-            </View>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.statusBadgeText,
+                    styles.statusBadgeTextLive,
+                  ])}
+                >
+                  {t(locale, "auth.liveBadge")}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Compact SoftFail under azure rail — yields while WeChat child owns. */}
-          <SoftFailNotice
-            open={sheetSoftOpen}
-            compact
-            style={styles.sheetSoftFail}
-          >
+          <SoftFailNotice open={sheetSoftOpen} compact>
             {softCopy ?? ""}
           </SoftFailNotice>
 
@@ -180,7 +182,7 @@ export default function SignInScreen() {
             rise={10}
             style={StyleSheet.flatten([
               styles.sheetBody,
-              sheetSoftOpen ? styles.sheetBodySoft : null,
+              sheetSoftOpen ? softFailMistWashStyle : null,
             ])}
             accessibilityLabel={
               clerkReady

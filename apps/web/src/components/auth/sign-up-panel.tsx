@@ -5,17 +5,21 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+} from "@/components/soft-fail-notice";
 import { apiGet } from "@/lib/api";
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-up SoftFailNotice depth (BEA-301 after #146/#190/#203):
- * azure sheet rail · Soft sign-up badge · compact SoftFail under rail ·
- * mist-track form inset · tip-011 rise stagger — never timber / Failed to fetch
- * for keys-missing / transport noise.
+ * Sign-up SoftFail helper adoption (BEA-392 after #284 / depth #227):
+ * SoftFailBadge · SoftFailSupport · compact SoftFail mist band under azure
+ * rail · tip-011 rise stagger — never timber / Failed to fetch for
+ * keys-missing / transport noise.
  */
 export function SignUpPanel({
   locale,
@@ -75,9 +79,8 @@ export function SignUpPanel({
       </header>
 
       {/*
-        SoftFail sheet depth (BEA-301 after #190/#203):
-        azure rail · Soft sign-up badge · compact SoftFailNotice · tip-011 —
-        never timber.
+        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
+        compact SoftFailNotice · tip-011 — never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -89,31 +92,27 @@ export function SignUpPanel({
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "auth.signUpSheetEyebrow")}
             </span>
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {softOpen
-                ? t(locale, "auth.signUpSoftSupport")
-                : t(locale, "auth.signUpSheetSupport")}
-            </span>
+            {softOpen ? (
+              <SoftFailSupport>
+                {t(locale, "auth.signUpSoftSupport")}
+              </SoftFailSupport>
+            ) : (
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "auth.signUpSheetSupport")}
+              </span>
+            )}
           </div>
-          <span
-            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              softOpen
-                ? "bg-mist text-ink-soft"
-                : "bg-river/12 text-river"
-            }`}
-          >
-            {softOpen
-              ? t(locale, "auth.signUpSoftBadge")
-              : t(locale, "auth.liveBadge")}
-          </span>
+          {softOpen ? (
+            <SoftFailBadge>{t(locale, "auth.signUpSoftBadge")}</SoftFailBadge>
+          ) : (
+            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+              {t(locale, "auth.liveBadge")}
+            </span>
+          )}
         </header>
 
         {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-        <SoftFailNotice
-          open={softOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={softOpen} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
 

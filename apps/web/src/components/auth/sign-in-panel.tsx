@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet } from "@/lib/api";
 import { WeChatOAuthTrigger } from "./wechat-oauth-trigger";
@@ -14,11 +19,10 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-in SoftFailNotice depth (BEA-314 after #115/#168/#203):
- * azure sheet rail · Soft sign-in badge · softSupport · compact SoftFail
- * mist band under rail · mist-wash tip-011 SheetPresence body · WeChat SoftFail
- * yield (no double depth) — never timber / Failed to fetch for keys-missing /
- * transport noise.
+ * Sign-in SoftFail helper adoption (BEA-392 after #284 / depth #238):
+ * SoftFailBadge · SoftFailSupport · softFailMistWashClass · compact SoftFail
+ * mist band under azure rail · WeChat SoftFail yield (no double depth) —
+ * never timber / Failed to fetch for keys-missing / transport noise.
  */
 export function SignInPanel({
   locale,
@@ -87,9 +91,8 @@ export function SignInPanel({
       </header>
 
       {/*
-        SoftFail sheet depth (BEA-314 after #115/#168/#203):
-        azure rail · Soft sign-in badge · softSupport · compact SoftFailNotice ·
-        mist-wash tip-011 SheetPresence body · WeChat SoftFail yield —
+        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
+        softFailMistWashClass · compact SoftFailNotice · WeChat SoftFail yield —
         never timber.
       */}
       <div
@@ -102,31 +105,25 @@ export function SignInPanel({
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "auth.sheetEyebrow")}
             </span>
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {softOpen || wechatOwnsSoft
-                ? t(locale, "auth.softSupport")
-                : t(locale, "auth.sheetSupport")}
-            </span>
+            {softOpen || wechatOwnsSoft ? (
+              <SoftFailSupport>{t(locale, "auth.softSupport")}</SoftFailSupport>
+            ) : (
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "auth.sheetSupport")}
+              </span>
+            )}
           </div>
-          <span
-            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              softOpen || wechatOwnsSoft
-                ? "bg-mist text-ink-soft"
-                : "bg-river/12 text-river"
-            }`}
-          >
-            {softOpen || wechatOwnsSoft
-              ? t(locale, "auth.signInSoftBadge")
-              : t(locale, "auth.liveBadge")}
-          </span>
+          {softOpen || wechatOwnsSoft ? (
+            <SoftFailBadge>{t(locale, "auth.signInSoftBadge")}</SoftFailBadge>
+          ) : (
+            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+              {t(locale, "auth.liveBadge")}
+            </span>
+          )}
         </header>
 
         {/* Compact SoftFail under azure rail — yields while WeChat child owns. */}
-        <SoftFailNotice
-          open={sheetSoftOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={sheetSoftOpen} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
 
@@ -134,9 +131,7 @@ export function SignInPanel({
           open
           role="group"
           className={`space-y-8 px-4 py-6 sm:px-5 sm:py-8 ${
-            sheetSoftOpen
-              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-              : ""
+            sheetSoftOpen ? softFailMistWashClass : ""
           }`}
           style={{ animationDelay: "40ms" }}
           aria-label={t(locale, "nav.signIn")}

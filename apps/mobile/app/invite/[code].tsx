@@ -15,7 +15,12 @@ import { t } from "@beaver/i18n";
 import type { TripRole } from "@beaver/core";
 import { acceptInvite, previewInvite } from "../../src/api";
 import { SheetPresence } from "../../src/components/sheet-presence";
-import { SoftFailNotice } from "../../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashStyle,
+} from "../../src/components/soft-fail-notice";
 import { type } from "../../src/theme";
 
 const locale = "zh-CN" as const;
@@ -47,9 +52,9 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Expo invite SoftFailNotice depth (BEA-300 after #186):
- * azure sheet rail · Soft/Live badge · softSupport · compact SoftFailNotice
- * (border-b) · mist-wash trip preview · tip-011 SheetPresence stagger ·
+ * Expo invite SoftFail helper adoption (BEA-392 after #284 / depth #228):
+ * SoftFailBadge · SoftFailSupport · softFailMistWashStyle · compact SoftFail
+ * mist band under azure rail · tip-011 SheetPresence stagger ·
  * StyleSheet.flatten Pressables. Soft-fail never timber / Failed to fetch.
  */
 export default function InviteScreen() {
@@ -184,8 +189,8 @@ export default function InviteScreen() {
             accessibilityLabel={t(locale, "invite.title")}
           >
             {/*
-              SoftFail depth (BEA-300 after #186):
-              azure rail · Soft/Live · softSupport · SoftFailNotice · tip-011 —
+              SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
+              softFailMistWashStyle · SoftFailNotice · tip-011 —
               never timber / Failed to fetch.
             */}
             <View style={styles.sheetHeader}>
@@ -193,23 +198,29 @@ export default function InviteScreen() {
                 <Text style={styles.sheetEyebrow}>
                   {t(locale, "invite.sheetEyebrow")}
                 </Text>
-                <Text style={styles.sheetSupport}>
-                  {softOpen
-                    ? t(locale, "invite.softSupport")
-                    : t(locale, "invite.sheetSupport")}
-                </Text>
+                {softOpen ? (
+                  <SoftFailSupport>
+                    {t(locale, "invite.softSupport")}
+                  </SoftFailSupport>
+                ) : (
+                  <Text style={styles.sheetSupport}>
+                    {t(locale, "invite.sheetSupport")}
+                  </Text>
+                )}
               </View>
               <View style={styles.sheetBadges}>
-                <Text
-                  style={StyleSheet.flatten([
-                    styles.statusBadge,
-                    softOpen ? styles.statusBadgeSoft : styles.statusBadgeLive,
-                  ])}
-                >
-                  {softOpen
-                    ? t(locale, "invite.softBadge")
-                    : t(locale, "invite.liveBadge")}
-                </Text>
+                {softOpen ? (
+                  <SoftFailBadge>{t(locale, "invite.softBadge")}</SoftFailBadge>
+                ) : (
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.statusBadge,
+                      styles.statusBadgeLive,
+                    ])}
+                  >
+                    {t(locale, "invite.liveBadge")}
+                  </Text>
+                )}
                 {preview ? (
                   <Text style={styles.roleChip}>
                     {t(locale, `collab.role.${preview.role}`)}
@@ -219,18 +230,14 @@ export default function InviteScreen() {
             </View>
 
             {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-            <SoftFailNotice
-              open={softOpen}
-              compact
-              style={styles.sheetSoftFail}
-            >
+            <SoftFailNotice open={softOpen} compact>
               {softCopy ?? ""}
             </SoftFailNotice>
 
             <View
               style={StyleSheet.flatten([
                 styles.sheetBody,
-                softOpen ? styles.sheetBodySoft : null,
+                softOpen ? softFailMistWashStyle : null,
               ])}
             >
               {hardError ? (
