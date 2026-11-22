@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   HEADER_OFFSET_PX,
@@ -46,11 +52,12 @@ type Props = {
 };
 
 /**
- * How SoftFail sheet — azure section rail · Soft/Live badge · softSupport ·
- * compact SoftFailNotice mist band (`border-b`) · tip-011 mist-wash
- * SheetPresence body (step rail / PlainHow rows). Tip-019 throw cards stay
- * outside when provided as a sibling — SoftFail yields if a child owned it
- * (none today). Never timber / Failed to fetch.
+ * How SoftFail sheet — azure section rail · SoftFailBadge Soft / Live ·
+ * SoftFailSupport · compact SoftFailNotice mist band (`border-b`) ·
+ * softFailMistWash tip-011 SheetPresence body. SoftFail helpers (BEA-400
+ * after #284 / SoftFailLiveBadge #295). Tip-019 throw cards stay outside when
+ * provided as a sibling — SoftFail yields if a child owned it (none today).
+ * Never timber / Failed to fetch.
  */
 function HowSoftFailSheet({
   softOpen,
@@ -91,17 +98,23 @@ function HowSoftFailSheet({
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
             {sheetEyebrow}
           </span>
-          <span className="text-[11px] leading-snug text-ink-soft/80">
-            {softOpen ? softSupport : sheetSupport}
-          </span>
+          {softOpen ? (
+            <SoftFailSupport>{softSupport}</SoftFailSupport>
+          ) : (
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {sheetSupport}
+            </span>
+          )}
         </div>
-        <span
-          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-            softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
-          }`}
-        >
-          {softOpen ? softBadge : softLiveBadge}
-        </span>
+        {softOpen ? (
+          <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
+            {softBadge}
+          </SoftFailBadge>
+        ) : (
+          <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+            {softLiveBadge}
+          </SoftFailLiveBadge>
+        )}
       </header>
       {/* Compact SoftFail under azure rail — mist band + border-b depth. */}
       <SoftFailNotice
@@ -115,11 +128,7 @@ function HowSoftFailSheet({
       <SheetPresence
         open
         role="group"
-        className={`${pad} ${
-          softOpen
-            ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-            : ""
-        }`}
+        className={`${pad} ${softOpen ? softFailMistWashClass : ""}`}
         style={{ animationDelay: "40ms" }}
         aria-label={bodyLabel}
       >

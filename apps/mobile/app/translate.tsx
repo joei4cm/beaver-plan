@@ -47,7 +47,12 @@ import {
   type TranslationStatus,
 } from "../src/api";
 import { SheetPresence } from "../src/components/sheet-presence";
-import { SoftFailNotice } from "../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+} from "../src/components/soft-fail-notice";
 import { isDeviceOnline } from "../src/offline/trip-offline";
 import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
 import { type } from "../src/theme";
@@ -912,36 +917,28 @@ export default function TranslateScreen() {
                   <Text style={styles.historyEyebrow}>
                     {t(uiLocale, "translate.history")}
                   </Text>
-                  <Text style={styles.historyHint}>
-                    {emptySoftOpen
-                      ? emptySoftSupport
-                      : historyEmpty
+                  {emptySoftOpen ? (
+                    <SoftFailSupport numberOfLines={2}>
+                      {emptySoftSupport}
+                    </SoftFailSupport>
+                  ) : (
+                    <Text style={styles.historyHint}>
+                      {historyEmpty
                         ? t(uiLocale, "translate.emptySupport")
                         : t(uiLocale, "translate.historyHint")}
-                  </Text>
+                    </Text>
+                  )}
                 </View>
                 {historyEmpty ? (
-                  <View
-                    style={StyleSheet.flatten([
-                      styles.historyEmptyBadge,
-                      emptySoftOpen
-                        ? styles.historyEmptyBadgeSoft
-                        : styles.historyEmptyBadgeLive,
-                    ])}
-                  >
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.historyEmptyBadgeText,
-                        emptySoftOpen
-                          ? styles.historyEmptyBadgeTextSoft
-                          : styles.historyEmptyBadgeTextLive,
-                      ])}
-                    >
-                      {emptySoftOpen
-                        ? t(uiLocale, "translate.emptySoftBadge")
-                        : t(uiLocale, "translate.emptyBadge")}
-                    </Text>
-                  </View>
+                  emptySoftOpen ? (
+                    <SoftFailBadge>
+                      {t(uiLocale, "translate.emptySoftBadge")}
+                    </SoftFailBadge>
+                  ) : (
+                    <SoftFailLiveBadge>
+                      {t(uiLocale, "translate.emptyBadge")}
+                    </SoftFailLiveBadge>
+                  )
                 ) : (
                   <View style={styles.historyCountChip}>
                     <Text style={styles.historyCountText}>
@@ -1127,34 +1124,26 @@ export default function TranslateScreen() {
                   <Text style={styles.talkEyebrow}>
                     {t(uiLocale, "translate.talkRail")}
                   </Text>
-                  <Text style={styles.talkHint}>
-                    {talkSoftOpen
-                      ? talkSoftSupport
-                      : t(uiLocale, "translate.talkHint")}
-                  </Text>
+                  {talkSoftOpen ? (
+                    <SoftFailSupport numberOfLines={2}>
+                      {talkSoftSupport}
+                    </SoftFailSupport>
+                  ) : (
+                    <Text style={styles.talkHint}>
+                      {t(uiLocale, "translate.talkHint")}
+                    </Text>
+                  )}
                 </View>
                 <View style={styles.talkHeadBadges}>
-                  <View
-                    style={StyleSheet.flatten([
-                      styles.talkSoftBadgeWrap,
-                      talkSoftOpen
-                        ? styles.talkSoftBadgeSoft
-                        : styles.talkSoftBadgeLive,
-                    ])}
-                  >
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.talkSoftBadgeText,
-                        talkSoftOpen
-                          ? styles.talkSoftBadgeTextSoft
-                          : styles.talkSoftBadgeTextLive,
-                      ])}
-                    >
-                      {talkSoftOpen
-                        ? t(uiLocale, "translate.talkSoftBadge")
-                        : t(uiLocale, "translate.talkLiveBadge")}
-                    </Text>
-                  </View>
+                  {talkSoftOpen ? (
+                    <SoftFailBadge>
+                      {t(uiLocale, "translate.talkSoftBadge")}
+                    </SoftFailBadge>
+                  ) : (
+                    <SoftFailLiveBadge>
+                      {t(uiLocale, "translate.talkLiveBadge")}
+                    </SoftFailLiveBadge>
+                  )}
                   <Pressable
                     onPress={() => setTtsEnabled((v) => !v)}
                     style={StyleSheet.flatten([
@@ -1318,34 +1307,26 @@ export default function TranslateScreen() {
                 <Text style={styles.dualEyebrow}>
                   {t(uiLocale, "translate.mode.camera")}
                 </Text>
-                <Text style={styles.dualHint}>
-                  {dualSoftOpen
-                    ? dualSoftSupport
-                    : t(uiLocale, "translate.dualHint")}
-                </Text>
+                {dualSoftOpen ? (
+                  <SoftFailSupport numberOfLines={2}>
+                    {dualSoftSupport}
+                  </SoftFailSupport>
+                ) : (
+                  <Text style={styles.dualHint}>
+                    {t(uiLocale, "translate.dualHint")}
+                  </Text>
+                )}
               </View>
               <View style={styles.dualHeadBadges}>
-                <View
-                  style={StyleSheet.flatten([
-                    styles.dualSoftBadgeWrap,
-                    dualSoftOpen
-                      ? styles.dualSoftBadgeSoft
-                      : styles.dualSoftBadgeLive,
-                  ])}
-                >
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.dualSoftBadgeText,
-                      dualSoftOpen
-                        ? styles.dualSoftBadgeTextSoft
-                        : styles.dualSoftBadgeTextLive,
-                    ])}
-                  >
-                    {dualSoftOpen
-                      ? t(uiLocale, "translate.dualSoftBadge")
-                      : t(uiLocale, "translate.dualLiveBadge")}
-                  </Text>
-                </View>
+                {dualSoftOpen ? (
+                  <SoftFailBadge>
+                    {t(uiLocale, "translate.dualSoftBadge")}
+                  </SoftFailBadge>
+                ) : (
+                  <SoftFailLiveBadge>
+                    {t(uiLocale, "translate.dualLiveBadge")}
+                  </SoftFailLiveBadge>
+                )}
               </View>
             </View>
 
@@ -1966,30 +1947,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  historyEmptyBadge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  historyEmptyBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
-  historyEmptyBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  historyEmptyBadgeText: {
-    ...type.body,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  historyEmptyBadgeTextSoft: {
-    color: colors.inkSoft,
-  },
-  historyEmptyBadgeTextLive: {
-    color: colors.riverDeep,
-  },
   /** Mist SoftFail strip under azure history rail — border-b before mist body. */
   historySoftFail: {
     marginBottom: 0,
@@ -2214,30 +2171,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  talkSoftBadgeWrap: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  talkSoftBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
-  talkSoftBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  talkSoftBadgeText: {
-    ...type.body,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  talkSoftBadgeTextSoft: {
-    color: colors.inkSoft,
-  },
-  talkSoftBadgeTextLive: {
-    color: colors.riverDeep,
-  },
   talkEyebrow: {
     ...type.body,
     fontSize: 10,
@@ -2405,30 +2338,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     alignItems: "center",
     gap: 6,
-  },
-  dualSoftBadgeWrap: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  dualSoftBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
-  dualSoftBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  dualSoftBadgeText: {
-    ...type.body,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  dualSoftBadgeTextSoft: {
-    color: colors.inkSoft,
-  },
-  dualSoftBadgeTextLive: {
-    color: colors.riverDeep,
   },
   dualEyebrow: {
     ...type.body,

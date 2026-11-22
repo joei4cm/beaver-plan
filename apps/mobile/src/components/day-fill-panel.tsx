@@ -30,7 +30,12 @@ import {
   proposeDayFill,
 } from "../api";
 import { SheetPresence } from "./sheet-presence";
-import { SoftFailNotice } from "./soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashStyle,
+} from "./soft-fail-notice";
 import { type } from "../theme";
 
 type Props = {
@@ -118,9 +123,10 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Expo smart day-fill SoftFailNotice depth (BEA-360 after #101 / web #248):
- * azure Day fill rail · Soft fill badge · softSupport · soft rail wash ·
- * compact SoftFail mist band · tip-011 SheetPresence mist-wash body ·
+ * Expo smart day-fill SoftFailNotice depth (BEA-360 after #101 / web #248;
+ * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284):
+ * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · soft rail
+ * wash · compact SoftFail mist band · softFailMistWash tip-011 body ·
  * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
  * Failed to fetch. Yields web planner day-fill SoftFail (#248); Expo day
  * tabs SoftFail (#230) stays on Days rail (no double depth).
@@ -336,11 +342,11 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice depth (BEA-360 after #101 / web #248):
-   * azure Day fill rail · Soft fill badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · tip-011 mist-wash body. SoftFail copy always
-   * softFail / demoNotice / applySoftFail (never timber / Failed to fetch).
-   * Expo day tabs SoftFail (#230) stays on Days — no double depth.
+   * Day-fill SoftFailNotice depth (BEA-360 after #101; helpers BEA-400):
+   * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · compact
+   * SoftFail mist band (`border-b`) · softFailMistWash tip-011 body. SoftFail
+   * copy always softFail / demoNotice / applySoftFail (never timber / Failed
+   * to fetch). Expo day tabs SoftFail (#230) stays on Days — no double depth.
    */
   const softCopy =
     notice ??
@@ -387,9 +393,9 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail depth (BEA-360 after #101):
-        azure Day fill rail · Soft fill badge · softSupport · soft rail wash ·
-        tip-011 — never timber / Failed to fetch. Yields web #248.
+        Day-fill SoftFail depth (BEA-360 / helpers BEA-400):
+        azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport ·
+        softFailMistWash tip-011 — never timber / Failed to fetch. Yields web #248.
       */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
@@ -412,14 +418,16 @@ export function DayFillPanel({
               {badge}
             </Text>
             {showSoftFail ? (
-              <View style={styles.softBadge}>
-                <Text style={styles.softBadgeLabel}>
-                  {t(locale, "planner.dayFill.softBadge")}
-                </Text>
-              </View>
+              <SoftFailBadge>
+                {t(locale, "planner.dayFill.softBadge")}
+              </SoftFailBadge>
             ) : null}
           </View>
-          <Text style={styles.support}>{sheetSupportCopy}</Text>
+          {showSoftFail ? (
+            <SoftFailSupport>{sheetSupportCopy}</SoftFailSupport>
+          ) : (
+            <Text style={styles.support}>{sheetSupportCopy}</Text>
+          )}
         </View>
         <Text
           style={StyleSheet.flatten([
@@ -436,7 +444,7 @@ export function DayFillPanel({
         <Animated.View
           style={StyleSheet.flatten([
             styles.body,
-            showSoftFail ? styles.bodySoft : null,
+            showSoftFail ? softFailMistWashStyle : null,
             bodyStyle,
           ])}
         >
@@ -836,20 +844,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
-  softBadge: {
-    borderRadius: radius.xs,
-    backgroundColor: colors.mist,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  softBadgeLabel: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-  },
   support: {
     ...type.body,
     marginTop: 4,
@@ -867,10 +861,6 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: 0,
-  },
-  /** Mist-wash tip-011 sheet body when SoftFail owns the Day fill rail. */
-  bodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   /** Mist SoftFail strip under azure Day fill rail — border-b before tip-011 body. */
   sheetSoftFail: {
