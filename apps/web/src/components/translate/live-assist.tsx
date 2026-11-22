@@ -864,7 +864,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       </div>
 
       <header className="animate-rise border-b border-[color:var(--bp-line)] pb-8">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-river">
+        {/*
+          Brand secondary eyebrow craft residual (BEA-754 / wave 72): densify
+          `tracking-[0.3em]` → `tracking-[0.26em]` — trip header brand (#375) ·
+          collab panel brand (#464) twin. Beyond page subtitle snug (#479).
+          H1 `leading-[0.95]` · page eyebrow `0.2em` already at ladder bar.
+          SoftFail untouched. No journal brand · share-studio · `/dev`.
+        */}
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
           {brandSecondary}
         </p>
         <h1 className="mt-3 font-display text-[clamp(2.5rem,6vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-ink">
