@@ -26,7 +26,8 @@ export function TripsListSkeleton({ rows = 3 }: { rows?: number }) {
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}
-              className="border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:px-5"
+              className="animate-rise border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:px-5"
+              style={{ animationDelay: `${i * 50 + 40}ms` }}
             >
               <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-5">
                 <Skeleton className="h-6 w-8 shrink-0 md:h-7 md:w-10" />
@@ -65,7 +66,8 @@ export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}
-              className="grid grid-cols-[auto_1fr] items-start gap-3 border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:px-5 sm:py-[1.125rem]"
+              className="animate-rise grid grid-cols-[auto_1fr] items-start gap-3 border-t border-[color:var(--bp-line)] px-4 py-4 first:border-t-0 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:px-5 sm:py-[1.125rem]"
+              style={{ animationDelay: `${i * 50 + 55}ms` }}
             >
               <Skeleton className="h-6 w-8 shrink-0 md:h-7 md:w-10" />
               <div className="min-w-0 space-y-1.5">
