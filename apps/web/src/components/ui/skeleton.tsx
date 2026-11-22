@@ -186,9 +186,12 @@ export function PlannerSkeleton() {
               <Skeleton className="h-10 w-full rounded-bp-sm" />
             </div>
           </div>
-          {/* Stop chips SoftFail depth — azure Stops rail · Soft stops · SoftFail mist band (BEA-367) */}
+          {/* Stops rail craft residual — azure Stops · header rise (BEA-567 / Mode #549) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+            <div
+              className="animate-rise flex items-center justify-between gap-2 px-4 py-2.5"
+              style={{ animationDelay: "40ms" }}
+            >
               <div className="flex items-baseline gap-2">
                 <Skeleton className="h-2.5 w-12" />
                 <Skeleton className="h-3 w-24" />

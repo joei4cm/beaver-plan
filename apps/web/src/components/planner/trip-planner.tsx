@@ -1423,22 +1423,25 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops list craft residual (BEA-478 / wave 50) + SoftFail kept
-              (BEA-367 chips / BEA-355 empty / BEA-348 drag): azure Stops rail ·
-              Soft stops / Soft empty / Soft reorder badge · softSupport ·
-              compact SoftFail mist band · tip-011 mist-wash · mist-track chip
-              press (duration-bp-fast + active:scale) · empty CTA press —
-              stop-drawer SoftFail (#257) / day-fill SoftFail (#248) yield —
-              never timber / Failed to fetch. No `/dev` gallery.
+              Stops list craft residual (BEA-567 / wave 59 beyond #349) + SoftFail
+              kept (BEA-367 chips / BEA-355 empty / BEA-348 drag): azure Stops
+              rail · eyebrow `0.65rem` / `0.18em` (Mode #370/#549) · header
+              `animate-rise` · Soft stops / Soft empty / Soft reorder badge ·
+              softSupport · compact SoftFail mist band · tip-011 mist-wash ·
+              mist-track chip press · empty CTA press · stop-row tip-011
+              `active:scale-[0.995]` (Places / Expo #381) — stop-drawer SoftFail
+              (#257) / day-fill SoftFail (#248) yield — never timber /
+              Failed to fetch. No `/dev` gallery.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
-                className={`relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5 ${
+                className={`animate-rise relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5 ${
                   chipsSoftOpen ? softFailRailClass : ""
                 }`}
+                style={{ animationDelay: "40ms" }}
               >
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "planner.stops.eyebrow")}
                   </span>
                   <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -1654,7 +1657,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           void moveStop(stop.id, 1);
                         }
                       }}
-                      className={`group relative flex gap-2 px-3 py-4 bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 sm:gap-3 sm:px-4 ${
+                      className={`group relative flex gap-2 px-3 py-4 transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 active:scale-[0.995] sm:gap-3 sm:px-4 ${
                         selected
                           ? "animate-stop-select bg-river/[0.08] shadow-[inset_3px_0_0_var(--bp-river)]"
                           : "hover:bg-mist/30"
