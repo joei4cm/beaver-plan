@@ -16,6 +16,7 @@ import {
 import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { fetchHealth } from "../src/api";
+import { SheetPresence } from "../src/components/sheet-presence";
 import { SoftFailNotice } from "../src/components/soft-fail-notice";
 import { clerkEnabled, wechatLoginEnabled } from "../src/clerk";
 import { type } from "../src/theme";
@@ -28,12 +29,17 @@ const WECHAT_STRATEGY = "oauth_wechat" as OAuthStrategy;
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
 /**
- * Lumen Route Expo sign-in after web #115: paper + azure wash · river eyebrow ·
- * SoftFailNotice (demo / soft offline / WeChat fail) · never timber · StyleSheet.flatten (#46).
+ * Expo auth SoftFailNotice depth (BEA-363 after #123 / web #238):
+ * azure sheet rail · Soft sign-in badge · softSupport · compact SoftFail
+ * mist band under rail · mist-wash tip-011 SheetPresence body · WeChat SoftFail
+ * yield (no double depth) — never timber / Failed to fetch. Yields web auth
+ * SoftFail (#238/#227) — Expo-only surface.
  */
 export default function SignInScreen() {
   const clerkReady = clerkEnabled();
   const [apiSoft, setApiSoft] = useState(false);
+  /** Child WeChat SoftFail ownership — sheet SoftFail yields while open. */
+  const [wechatOwnsSoft, setWechatOwnsSoft] = useState(false);
   const rise = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -60,11 +66,16 @@ export default function SignInScreen() {
     }).start();
   }, [rise, clerkReady, apiSoft]);
 
+  /** SoftFail owned by sign-in sheet — never timber / Failed to fetch. */
   const softCopy = !clerkReady
-    ? t(locale, "auth.demoNotice")
+    ? t(locale, "auth.signInSoftFail")
     : apiSoft
-      ? t(locale, "auth.softOffline")
+      ? t(locale, "auth.signInApiSoftFail")
       : null;
+  const softOpen = Boolean(softCopy);
+  /** Parent SoftFail yields while WeChat child SoftFail owns (no double depth). */
+  const sheetSoftOpen = softOpen && !wechatOwnsSoft;
+  const railSoft = softOpen || wechatOwnsSoft;
 
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
 
@@ -104,41 +115,96 @@ export default function SignInScreen() {
           <Text style={styles.support}>{t(locale, "auth.support")}</Text>
         </Animated.View>
 
-        <SoftFailNotice
-          open={Boolean(softCopy)}
-          style={styles.softNotice}
+        {/*
+          SoftFail sheet depth (BEA-363 after #123 / web #238):
+          azure rail · Soft sign-in badge · softSupport · compact SoftFailNotice ·
+          mist-wash tip-011 SheetPresence body · WeChat SoftFail yield —
+          never timber / Failed to fetch.
+        */}
+        <SheetPresence
+          open
+          delayMs={60}
+          rise={18}
+          style={styles.sheet}
+          accessibilityLabel={t(locale, "nav.signIn")}
         >
-          {softCopy ?? ""}
-        </SoftFailNotice>
+          <View
+            style={StyleSheet.flatten([
+              styles.sheetRail,
+              railSoft ? styles.sheetRailSoft : null,
+            ])}
+          >
+            <View style={styles.sheetRailCopy}>
+              <Text style={styles.sheetEyebrow}>
+                {t(locale, "auth.sheetEyebrow")}
+              </Text>
+              <Text style={styles.sheetSupport}>
+                {railSoft
+                  ? t(locale, "auth.softSupport")
+                  : t(locale, "auth.sheetSupport")}
+              </Text>
+            </View>
+            <View
+              style={StyleSheet.flatten([
+                styles.statusBadge,
+                railSoft ? styles.statusBadgeSoft : styles.statusBadgeLive,
+              ])}
+            >
+              <Text
+                style={StyleSheet.flatten([
+                  styles.statusBadgeText,
+                  railSoft
+                    ? styles.statusBadgeTextSoft
+                    : styles.statusBadgeTextLive,
+                ])}
+              >
+                {railSoft
+                  ? t(locale, "auth.signInSoftBadge")
+                  : t(locale, "auth.liveBadge")}
+              </Text>
+            </View>
+          </View>
 
-        <Animated.View
-          style={StyleSheet.flatten([
-            styles.stage,
-            {
-              opacity: rise,
-              transform: [
-                {
-                  translateY: rise.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [22, 0],
-                  }),
-                },
-              ],
-            },
-          ])}
-        >
-          {clerkReady ? (
-            <ClerkProviders />
-          ) : (
-            <DemoAuthSheet />
-          )}
-        </Animated.View>
+          {/* Compact SoftFail under azure rail — yields while WeChat child owns. */}
+          <SoftFailNotice
+            open={sheetSoftOpen}
+            compact
+            style={styles.sheetSoftFail}
+          >
+            {softCopy ?? ""}
+          </SoftFailNotice>
+
+          <SheetPresence
+            open
+            delayMs={40}
+            rise={10}
+            style={StyleSheet.flatten([
+              styles.sheetBody,
+              sheetSoftOpen ? styles.sheetBodySoft : null,
+            ])}
+            accessibilityLabel={
+              clerkReady
+                ? t(locale, "auth.providersEyebrow")
+                : t(locale, "auth.demoTitle")
+            }
+          >
+            {clerkReady ? (
+              <ClerkProviders onWechatSoftFailChange={setWechatOwnsSoft} />
+            ) : (
+              <DemoAuthSheet soft={sheetSoftOpen} />
+            )}
+          </SheetPresence>
+        </SheetPresence>
       </ScrollView>
     </View>
   );
 }
 
-function ClerkProviders() {
+function ClerkProviders({
+  onWechatSoftFailChange,
+}: {
+  onWechatSoftFailChange: (owns: boolean) => void;
+}) {
   const wechat = wechatLoginEnabled();
   const { isSignedIn } = useAuth();
 
@@ -149,70 +215,74 @@ function ClerkProviders() {
   }, [isSignedIn]);
 
   return (
-    <View style={styles.providers}>
-      <View style={styles.providersHeader}>
-        <Text style={styles.sheetEyebrow}>
-          {t(locale, "auth.providersEyebrow")}
-        </Text>
-      </View>
-      <View style={styles.providersBody}>
-        <Text style={styles.providersTitle}>{t(locale, "nav.signIn")}</Text>
-        <Text style={styles.providersCopy}>{t(locale, "auth.providers")}</Text>
-        {wechat ? (
-          <Text style={styles.wechatReady}>{t(locale, "auth.wechatReady")}</Text>
-        ) : (
-          <Text style={styles.providersCopy}>{t(locale, "auth.wechatHint")}</Text>
-        )}
-        {wechat ? <WeChatButton /> : null}
-        <Link href="/trips" asChild>
-          <Pressable
-            style={styles.linkRow}
-            accessibilityRole="link"
-          >
-            <Text style={styles.linkLabel}>← {t(locale, "nav.trips")}</Text>
-          </Pressable>
-        </Link>
-      </View>
+    <View style={styles.providersBody}>
+      <Text style={styles.providersEyebrow}>
+        {t(locale, "auth.providersEyebrow")}
+      </Text>
+      <Text style={styles.providersTitle}>{t(locale, "auth.providersTitle")}</Text>
+      <Text style={styles.providersCopy}>{t(locale, "auth.providers")}</Text>
+      {wechat ? (
+        <Text style={styles.wechatReady}>{t(locale, "auth.wechatReady")}</Text>
+      ) : (
+        <Text style={styles.providersCopy}>{t(locale, "auth.wechatHint")}</Text>
+      )}
+      {wechat ? (
+        <WeChatButton onSoftFailChange={onWechatSoftFailChange} />
+      ) : null}
+      <Link href="/trips" asChild>
+        <Pressable
+          style={styles.linkRow}
+          accessibilityRole="link"
+        >
+          <Text style={styles.linkLabel}>← {t(locale, "nav.trips")}</Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
 
-function DemoAuthSheet() {
+function DemoAuthSheet({ soft }: { soft?: boolean }) {
   return (
     <View
-      style={styles.sheet}
+      style={StyleSheet.flatten([
+        styles.demoInset,
+        soft ? styles.demoInsetSoft : null,
+      ])}
       accessibilityLabel={t(locale, "auth.demoTitle")}
     >
-      <View style={styles.sheetHeader}>
-        <Text style={styles.sheetEyebrow}>
-          {t(locale, "auth.setupEyebrow")}
-        </Text>
+      <Text style={styles.setupEyebrow}>{t(locale, "auth.setupEyebrow")}</Text>
+      <Text style={styles.demoTitle}>{t(locale, "auth.demoTitle")}</Text>
+      <Text style={styles.demoBody}>{t(locale, "auth.demoBody")}</Text>
+      <View style={styles.steps}>
+        <Text style={styles.step}>1. {t(locale, "auth.demoStep1")}</Text>
+        <Text style={styles.step}>2. {t(locale, "mobile.signInExpoHint")}</Text>
+        <Text style={styles.step}>3. {t(locale, "auth.demoStep3")}</Text>
       </View>
-      <View style={styles.sheetBody}>
-        <Text style={styles.demoTitle}>{t(locale, "auth.demoTitle")}</Text>
-        <Text style={styles.demoBody}>{t(locale, "auth.demoBody")}</Text>
-        <View style={styles.steps}>
-          <Text style={styles.step}>1. {t(locale, "auth.demoStep1")}</Text>
-          <Text style={styles.step}>2. {t(locale, "mobile.signInExpoHint")}</Text>
-          <Text style={styles.step}>3. {t(locale, "auth.demoStep3")}</Text>
-        </View>
-        <Link href="/trips/sample-kyoto" asChild>
-          <Pressable
-            style={styles.cta}
-            accessibilityRole="button"
-          >
-            <Text style={styles.ctaLabel}>{t(locale, "trips.openSample")}</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <Link href="/trips/sample-kyoto" asChild>
+        <Pressable style={styles.cta} accessibilityRole="button">
+          <Text style={styles.ctaLabel}>{t(locale, "trips.openSample")}</Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
 
-function WeChatButton() {
+function WeChatButton({
+  onSoftFailChange,
+}: {
+  /** Parent SoftFail yields while this SoftFail is open. */
+  onSoftFailChange?: (owns: boolean) => void;
+}) {
   const { startOAuthFlow } = useOAuth({ strategy: WECHAT_STRATEGY });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    onSoftFailChange?.(failed);
+    return () => {
+      onSoftFailChange?.(false);
+    };
+  }, [failed, onSoftFailChange]);
 
   const onPress = useCallback(async () => {
     setBusy(true);
@@ -248,7 +318,8 @@ function WeChatButton() {
           <Text style={styles.ctaLabel}>{t(locale, "auth.wechat")}</Text>
         )}
       </Pressable>
-      <SoftFailNotice open={failed} compact>
+      {/* Child SoftFail — sign-in sheet SoftFail yields while open. */}
+      <SoftFailNotice open={failed} compact style={styles.wechatSoftFail}>
         {t(locale, "auth.wechatStartFailed")}
       </SoftFailNotice>
     </View>
@@ -286,7 +357,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   header: {
-    marginBottom: 8,
+    marginBottom: 16,
   },
   eyebrow: {
     ...type.body,
@@ -312,14 +383,8 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     maxWidth: 420,
   },
-  softNotice: {
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  stage: {
-    marginTop: 16,
-  },
-  providers: {
+  sheet: {
+    marginTop: 8,
     overflow: "hidden",
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
@@ -330,17 +395,95 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
   },
-  providersHeader: {
+  sheetRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
     backgroundColor: "rgba(244, 246, 250, 0.7)",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  providersBody: {
+  sheetRailSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
+  sheetRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  sheetEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  sheetSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  /** Mist SoftFail strip under azure rail — border-b before mist body. */
+  sheetSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  statusBadge: {
+    borderRadius: radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  statusBadgeLive: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  statusBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  statusBadgeTextSoft: {
+    color: colors.inkSoft,
+  },
+  statusBadgeTextLive: {
+    color: colors.river,
+  },
+  sheetBody: {
     paddingHorizontal: 18,
     paddingVertical: 18,
+    gap: 14,
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  /** Mist wash on tip-011 body while SoftFail owns the rail. */
+  sheetBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.32)",
+  },
+  providersBody: {
     gap: 12,
+  },
+  providersEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: colors.river,
   },
   providersTitle: {
     ...type.display,
@@ -366,36 +509,29 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 4,
   },
-  sheet: {
+  wechatSoftFail: {
+    borderTopWidth: 0,
+  },
+  demoInset: {
+    gap: 14,
     overflow: "hidden",
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: colors.foam,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(230, 236, 245, 0.42)",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
-  sheetHeader: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+  demoInsetSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
   },
-  sheetEyebrow: {
+  setupEyebrow: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 2.2,
     textTransform: "uppercase",
     color: colors.river,
-  },
-  sheetBody: {
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    gap: 14,
   },
   demoTitle: {
     ...type.display,
