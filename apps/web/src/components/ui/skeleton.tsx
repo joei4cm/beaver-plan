@@ -283,9 +283,9 @@ export function JournalSkeleton() {
               </div>
             </div>
           </div>
-          <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/50 lg:block">
-            {/* Compose SoftFail depth — azure rail · softSupport · SoftFail mist band · mist tip-011 body */}
-            <div className="space-y-2 border-b border-[color:var(--bp-line)] px-5 py-4 md:px-6 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="hidden border-l border-[color:var(--bp-line)] bg-paper/55 lg:block">
+            {/* Compose SoftFail depth — azure rail · paper/70 · softSupport · SoftFail mist band · mist tip-011 body */}
+            <div className="space-y-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 md:px-6 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-baseline gap-2">
                   <Skeleton className="h-3 w-20" />

@@ -47,9 +47,9 @@ import {
 const COMPOSE_CONTROL =
   "bp-transition border border-[color:var(--bp-line)] bg-foam outline-none focus:border-river focus:ring-2 focus:ring-focus/45";
 
-/** Azure primary CTA settle — tip-011 ease-out-strong (#46). */
+/** Azure primary CTA settle — tip-011 ease-out-strong + press (#46 / BEA-510). */
 const COMPOSE_CTA =
-  "rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40";
+  "rounded-bp bg-river px-4 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40";
 
 /** Compose / entry photo strip — three Polarsteps-like frame slots. */
 const PHOTO_SLOT_MAX = 3;
@@ -1242,10 +1242,15 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               photo strip SoftFail (#244) yield while compose owns; never timber /
               Failed to fetch.
             */}
+            {/*
+              Compose chrome residual (BEA-510 beyond #333 / #346 / day strip
+              #357): eyebrow 0.18em · tip-011 save/photo-drop press. SoftFail
+              rails untouched.
+            */}
             <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
               <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "journal.composeEyebrow")}
                   </p>
                   <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
@@ -1366,7 +1371,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   className="animate-rise"
                   style={{ animationDelay: "70ms" }}
                 >
-                  <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
+                  <label className="mx-3.5 mt-3 flex cursor-pointer flex-col items-start gap-1.5 rounded-bp-sm border border-dashed border-river/35 bg-mist/35 px-3.5 py-4 transition duration-bp ease-bp-out-strong hover:border-river/60 hover:bg-river/[0.04] active:scale-[0.98] focus-within:border-river focus-within:ring-2 focus-within:ring-focus/45">
                     <span className="text-sm font-semibold text-river">
                       {t(locale, "journal.addPhotos")}
                     </span>

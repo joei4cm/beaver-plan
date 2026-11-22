@@ -847,11 +847,11 @@ export default function JournalScreen() {
 
             {/*
               SoftFail kept (BEA-391 / BEA-322 / BEA-424) + wave 49 craft
-              (BEA-476): compose eyebrow 1.8 · tip-011 bind/photo/save press ·
-              foam/paper tokens. SoftFailBadge Soft media · SoftFailSupport ·
-              mist band · tip-011 mist-wash unchanged. Craft: ?composeSoftFail=1.
-              Soft copy never timber / Failed to fetch. Own Compose rail;
-              Entries SoftFail owns Entries — not overlapping chrome.
+              (BEA-476 + BEA-510): compose eyebrow 1.8 · tip-011 bind/photo/save
+              press · paper/70 azure rail · foam media. SoftFailBadge Soft media ·
+              SoftFailSupport · mist band · tip-011 mist-wash unchanged. Craft:
+              ?composeSoftFail=1. Soft copy never timber / Failed to fetch. Own
+              Compose rail; Entries SoftFail owns Entries — not overlapping.
             */}
             <View
               style={styles.compose}
@@ -1543,15 +1543,16 @@ const styles = StyleSheet.create({
   composeHeader: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: colors.paper,
+    /** Web bg-paper/70 — Lumen paper @ 0.7 (BEA-510 beyond #346). */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
-  /** Softer azure rail wash while SoftFail owns Compose. */
+  /** Softer azure rail wash while SoftFail owns Compose — web paper/85. */
   composeHeaderSoft: {
-    backgroundColor: colors.paper,
+    backgroundColor: `${colors.paper}D9`,
   },
   composeHeaderTop: {
     flexDirection: "row",
@@ -1683,7 +1684,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: colors.paper,
+    /** Web bg-paper/65 — Lumen paper @ ~0.65 (BEA-510). */
+    backgroundColor: `${colors.paper}A6`,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
