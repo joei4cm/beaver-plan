@@ -578,8 +578,9 @@ export function TripCollabPanel({
 
       {/*
         Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
-        craft (#347 / BEA-479) + wave 55 residual (BEA-532): empty animate-rise ·
-        actor inkSoft/80. SoftFailBadge · SoftFailSupport · softFailMistWashClass
+        craft (#347 / BEA-479) + wave 55 residual (BEA-532) + wave 60 residual
+        (BEA-575 beyond #377): loading `/80` snug · refresh secondary `/80` +
+        out-strong. SoftFailBadge · SoftFailSupport · softFailMistWashClass
         unchanged. Invite SoftFail owns when open. Craft: ?timelineSoftFail=1 —
         never timber / Failed to fetch. No `/dev` gallery.
       */}
@@ -625,7 +626,7 @@ export function TripCollabPanel({
                       );
                     })
                   }
-                  className="animate-rise text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                  className="animate-rise text-[11px] font-medium text-ink-soft/80 transition duration-bp-fast ease-bp-out-strong hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                   style={{ animationDelay: "55ms" }}
                 >
                   {t(locale, "collab.panel.refresh")}
@@ -665,7 +666,7 @@ export function TripCollabPanel({
             >
               <div className="h-3 w-24 rounded-bp-xs bg-mist" />
               <div className="h-4 w-64 max-w-full rounded-bp-xs bg-mist/70" />
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm leading-snug text-ink-soft/80">
                 {t(locale, "collab.panel.loading")}
               </p>
             </li>
