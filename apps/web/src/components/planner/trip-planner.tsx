@@ -1266,11 +1266,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         </section>
 
         {/*
-          Stop drawer SoftFail depth (BEA-343 after #225):
-          azure Itinerary rail · Soft drawer badge · softSupport · compact
-          SoftFail mist band · tip-011 mist-wash body — empty SoftFail /
+          Stop drawer SoftFail depth (BEA-343 after #225) + Itinerary azure
+          rail type residual (BEA-709 / wave 68): eyebrow densify to
+          `0.65rem` / `0.18em` — Export #375 · Mode #370 · Days #426 ·
+          Stops #402 / #418 parity · Expo sheet azure LS 1.8 twin.
+          SoftFail rails unchanged (Soft drawer badge · softSupport ·
+          compact SoftFail mist · tip-011 mist-wash body). Empty SoftFail /
           day-fill SoftFail (#248) / drag SoftFail (BEA-348) yield Itinerary
-          ownership — never timber / Failed to fetch.
+          ownership — never timber / Failed to fetch. SoftFail untouched.
+          No `/dev` gallery. Not stop-card / presence / invite / map-search.
         */}
         <aside
           className="animate-sheet-in flex flex-col border-t border-[color:var(--bp-line)] bg-foam lg:border-l lg:border-t-0"
@@ -1279,7 +1283,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         >
           <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.drawer.eyebrow")}
               </span>
               <SoftFailSupport>{drawerSupportCopy}</SoftFailSupport>
