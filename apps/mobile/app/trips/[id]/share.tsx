@@ -439,7 +439,7 @@ export default function ShareScreen() {
               {active.aspect} · {active.nameZh}
             </Text>
 
-            {/* Template grid picker (#74) — wave 50 type/motion/token residual */}
+            {/* Template grid picker (#74) — wave 50 + wave 58 type/motion/token residual */}
             <View
               style={styles.templateSection}
               accessibilityRole="summary"
@@ -451,7 +451,7 @@ export default function ShareScreen() {
               <Text style={styles.templateTitle}>
                 {t(locale, "share.pickTemplate")}
               </Text>
-              <Text style={styles.sectionSupport}>
+              <Text style={styles.templateSupport}>
                 {t(locale, "share.pickTemplateSupport")}
               </Text>
               <View style={styles.templateGrid}>
@@ -902,7 +902,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     fontWeight: "700",
+    /** Web tracking-tight */
+    letterSpacing: -0.3,
     color: colors.ink,
+  },
+  /** Web text-ink-soft/80 support ladder */
+  templateSupport: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: `${colors.inkSoft}CC`,
   },
   templateGrid: {
     flexDirection: "row",
@@ -922,7 +931,8 @@ const styles = StyleSheet.create({
   },
   templateCardActive: {
     borderColor: colors.river,
-    backgroundColor: "rgba(47,107,255,0.08)",
+    /** Web bg-river/[0.08] */
+    backgroundColor: `${colors.river}14`,
     borderWidth: 1.5,
     shadowColor: colors.river,
     shadowOpacity: 0.28,
@@ -939,16 +949,19 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     paddingTop: 12,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(230,236,245,0.55)",
+    /** Web bg-mist/55 */
+    backgroundColor: `${colors.mist}8C`,
   },
   templateThumbActive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
+    /** Web bg-river/[0.12] */
+    backgroundColor: `${colors.river}1F`,
   },
   templateSilhouette: {
     width: "42%",
     borderRadius: radius.xs,
     overflow: "hidden",
-    backgroundColor: "rgba(47,107,255,0.55)",
+    /** Web from-river/55 */
+    backgroundColor: `${colors.river}8C`,
     marginBottom: 10,
   },
   templateSilhouetteActive: {
@@ -959,7 +972,8 @@ const styles = StyleSheet.create({
     marginHorizontal: "12%",
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.55)",
+    /** Web bg-foam/55 */
+    backgroundColor: `${colors.foam}8C`,
   },
   silLineNarrow: {
     marginTop: "10%",
@@ -967,7 +981,8 @@ const styles = StyleSheet.create({
     width: "55%",
     height: 3,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    /** Web bg-foam/30 */
+    backgroundColor: `${colors.foam}4D`,
   },
   silLineBottom: {
     position: "absolute",
@@ -976,7 +991,8 @@ const styles = StyleSheet.create({
     bottom: "14%",
     height: 2,
     borderRadius: 1,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    /** Web bg-foam/25 */
+    backgroundColor: `${colors.foam}40`,
   },
   aspectBadge: {
     position: "absolute",
@@ -1020,6 +1036,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "700",
+    /** Web tracking-tight */
+    letterSpacing: -0.3,
     color: colors.ink,
   },
   templateNameActive: {
@@ -1038,7 +1056,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 16,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 blurb ladder */
+    color: `${colors.inkSoft}CC`,
   },
   section: {
     ...type.display,
@@ -1047,12 +1066,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: colors.ink,
-  },
-  sectionSupport: {
-    ...type.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.inkSoft,
   },
   fieldLabel: {
     ...type.body,

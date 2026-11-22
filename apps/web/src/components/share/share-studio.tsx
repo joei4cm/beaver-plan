@@ -791,7 +791,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 >
                   {t(locale, "share.pickTemplate")}
                 </h2>
-                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft/80">
                   {t(locale, "share.pickTemplateSupport")}
                 </p>
               </div>
@@ -811,7 +811,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       role="option"
                       aria-selected={selected}
                       onClick={() => pickTemplate(tpl.id)}
-                      className={`group flex flex-col overflow-hidden rounded-bp border text-left transition duration-bp ease-bp-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+                      className={`group flex flex-col overflow-hidden rounded-bp border text-left transition duration-bp ease-bp-out-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
                         selected
                           ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
                           : "border-[color:var(--bp-line)] bg-foam/80 hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
@@ -858,7 +858,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
                         <div className="flex items-start justify-between gap-1.5">
                           <span
-                            className={`font-display text-base font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
+                            className={`font-display text-base font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out-strong ${
                               selected
                                 ? "text-river"
                                 : "text-ink group-hover:text-river"
@@ -886,7 +886,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-xs leading-snug text-ink-soft">
+                        <p className="text-xs leading-snug text-ink-soft/80">
                           {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
                         </p>
                       </div>
