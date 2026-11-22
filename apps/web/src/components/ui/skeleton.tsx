@@ -403,13 +403,19 @@ export function ShareStudioSkeleton() {
           {/* SoftFailNotice mist band under Studio rail */}
           <Skeleton className="h-9 w-full rounded-none" />
           <div className={`space-y-3 ${softFailMistWashClass} px-4 py-4`}>
-            <Skeleton className="h-2.5 w-16" />
-            <Skeleton className="h-7 w-36" />
-            <Skeleton className="h-3.5 w-full max-w-xs" />
-            <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-[8.5rem] w-full rounded-bp" />
-              ))}
+            {/* Template picker — live section animate-rise 40ms parity (BEA-608) */}
+            <div
+              className="animate-rise space-y-3"
+              style={{ animationDelay: "40ms" }}
+            >
+              <Skeleton className="h-2.5 w-16" />
+              <Skeleton className="h-7 w-36" />
+              <Skeleton className="h-3.5 w-full max-w-xs" />
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[8.5rem] w-full rounded-bp" />
+                ))}
+              </div>
             </div>
             {/* Nested Export rail — azure inset · SoftFail slot · dual CTA heights */}
             <div className="mt-2 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
