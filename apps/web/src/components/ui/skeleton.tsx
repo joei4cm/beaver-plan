@@ -152,7 +152,7 @@ export function PlannerSkeleton() {
               <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
             </div>
           </div>
-          {/* Empty SoftFail depth — azure Stops rail · Soft empty · SoftFail mist band (BEA-355) */}
+          {/* Stop chips SoftFail depth — azure Stops rail · Soft stops · SoftFail mist band (BEA-367) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex items-center justify-between gap-2 px-4 py-2.5">
               <div className="flex items-baseline gap-2">
@@ -162,8 +162,16 @@ export function PlannerSkeleton() {
               </div>
               <Skeleton className="h-5 w-16 rounded-bp-xs" />
             </div>
-            {/* SoftFailNotice mist band under azure Stops rail */}
+            {/* SoftFailNotice mist band under azure Stops rail — softSupport depth */}
             <Skeleton className="h-9 w-full rounded-none" />
+            {/* tip-011 mist-wash chip track while SoftFail owns depth */}
+            <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 pb-2.5 pt-1">
+              <div className="flex gap-0.5 rounded-bp-sm bg-mist/70 p-1 shadow-[inset_3px_0_0_var(--bp-river)]">
+                <Skeleton className="h-8 w-24 rounded-bp-xs" />
+                <Skeleton className="h-8 w-20 rounded-bp-xs" />
+                <Skeleton className="h-8 w-28 rounded-bp-xs" />
+              </div>
+            </div>
           </div>
           {/* tip-011 mist-wash empty body while SoftFail owns depth */}
           <div className="space-y-3 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-5 py-10">
