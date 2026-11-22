@@ -62,10 +62,11 @@ function presenceFor(member: TripMember): PresenceState {
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
  * (BEA-518) + wave 56–58 invite/roster + wave 57 members invite (BEA-547) +
- * wave 60 presence pills (BEA-579) + wave 60 members invite residual (BEA-584):
- * Show/Hide tip-011 out-strong · empty shareHint rise 40ms. SoftFailBadge ·
- * SoftFailSupport · mist band unchanged. Invite SoftFail yields presence (no
- * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
+ * wave 60 presence pills (BEA-579) + wave 60 members invite (BEA-584) +
+ * wave 61 members roster residual (BEA-587): roster role leading-4 · empty /
+ * loading rise 40ms · Expo row stagger +55. SoftFailBadge · SoftFailSupport ·
+ * mist band unchanged. Invite SoftFail yields presence (no double depth). Soft
+ * copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -555,9 +556,9 @@ export function TripMembersBar({
         </div>
 
         {/*
-          Members roster / companions list — wave 54 (#373) + wave 58 residual
-          (BEA-562): loading `/80` + rise · name leading-snug. SoftFail untouched.
-          Beyond #373 / invite #391 / pills #389.
+          Members roster / companions list — wave 54 (#373) + wave 58 (#400) +
+          wave 61 residual (BEA-587): role leading-4 · empty/loading rise 40ms.
+          SoftFail untouched. Beyond #400 / invite #411 / pills #409.
         */}
         <div className="border-t border-[color:var(--bp-line)]">
           <header className="flex flex-wrap items-center justify-between gap-2 bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
@@ -631,7 +632,7 @@ export function TripMembersBar({
                       </div>
                     </div>
                     <span
-                      className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${ROLE_CHIP[m.role]}`}
+                      className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] ${ROLE_CHIP[m.role]}`}
                     >
                       {t(locale, `collab.role.${m.role}`)}
                     </span>
@@ -639,12 +640,18 @@ export function TripMembersBar({
                 );
               })}
               {pending && members.length === 0 ? (
-                <li className="animate-rise px-2 py-2 text-sm leading-snug text-ink-soft/80">
+                <li
+                  className="animate-rise px-2 py-2 text-sm leading-snug text-ink-soft/80"
+                  style={{ animationDelay: "40ms" }}
+                >
                   {t(locale, "collab.loading")}
                 </li>
               ) : null}
               {!pending && members.length === 0 ? (
-                <li className="animate-rise space-y-1 px-2 py-3">
+                <li
+                  className="animate-rise space-y-1 px-2 py-3"
+                  style={{ animationDelay: "40ms" }}
+                >
                   <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                     {t(locale, "collab.presence.empty")}
                   </p>
