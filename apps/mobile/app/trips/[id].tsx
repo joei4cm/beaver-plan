@@ -1105,14 +1105,28 @@ export default function TripDetailScreen() {
     (daysSoftPreview || detailSoftNoise) && !inviteOpen;
   const daysSoftCopy = t(locale, "planner.days.softFail");
   /**
-   * Expo Offline pin SoftFail depth (BEA-448 SoftFailSupport) + craft SoftFail
-   * query closeout (BEA-450): azure Offline pin SoftFail rail · SoftFailBadge
-   * Soft pin · SoftFailSupport · SoftFailNotice compact mist band · tip-011.
-   * Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin miss. Soft
-   * copy always offline.pinSoftFail — never timber / Failed to fetch.
+   * Expo Offline pin SoftFail depth kept (BEA-448 / BEA-450) + wave 49 craft
+   * residual (BEA-474): always-on azure Offline pin rail · tip-011 pin press ·
+   * Lumen tokens. SoftFailBadge Soft pin · SoftFailSupport · mist band
+   * unchanged. Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin
+   * miss. Soft copy always offline.pinSoftFail — never timber / Failed to
+   * fetch. No `/dev` gallery.
    */
   const pinSoftOpen = pinSoftPreview || Boolean(pinError);
   const pinSoftCopy = pinError ?? t(locale, "offline.pinSoftFail");
+  const pinStatusLabel = [
+    (pinStatus?.online ?? online)
+      ? t(locale, "offline.online")
+      : t(locale, "offline.offline"),
+    (pinStatus?.pendingMutations ?? 0) > 0
+      ? t(locale, "offline.pending").replace(
+          "{n}",
+          String(pinStatus?.pendingMutations ?? 0),
+        )
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const selectedDayIndex = dayId
     ? Math.max(1, days.findIndex((d) => d.id === dayId) + 1)
     : 0;
@@ -2177,12 +2191,11 @@ export default function TripDetailScreen() {
 
             <View style={styles.secondaryBlock}>
               {/*
-                SoftFailSupport residual (BEA-448 after #323) + craft SoftFail
-                query closeout (BEA-450): azure Offline pin SoftFail rail ·
-                SoftFailBadge Soft pin · SoftFailSupport · SoftFailNotice
-                compact mist band · tip-011 — SoftFail depth + helpers kept.
+                SoftFail kept (BEA-448 / BEA-450) + wave 49 craft (BEA-474):
+                always-on azure Offline pin rail · tip-011 pin press · Lumen
+                tokens · SoftFailBadge Soft pin · SoftFailSupport · mist band.
                 Craft: ?pinSoftFail=1 — SoftFail depth without a pin miss.
-                Soft copy never timber / Failed to fetch.
+                Soft copy never timber / Failed to fetch. No `/dev` gallery.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -2191,24 +2204,36 @@ export default function TripDetailScreen() {
                 ])}
                 accessibilityLabel={t(locale, "offline.pinRail")}
               >
-                {pinSoftOpen ? (
-                  <View style={styles.pinSoftRail}>
-                    <View style={styles.pinSoftRailCopy}>
-                      <Text style={styles.pinSoftEyebrow}>
-                        {t(locale, "offline.pinRail")}
-                      </Text>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.pinRail,
+                    pinSoftOpen ? styles.pinRailSoft : null,
+                    pinSoftOpen ? softFailBandStyle : null,
+                  ])}
+                >
+                  <View style={styles.pinSoftRailCopy}>
+                    <Text style={styles.pinSoftEyebrow}>
+                      {t(locale, "offline.pinRail")}
+                    </Text>
+                    {pinSoftOpen ? (
                       <SoftFailSupport
                         style={styles.softSupportShrink}
                         numberOfLines={2}
                       >
                         {t(locale, "offline.softSupport")}
                       </SoftFailSupport>
-                    </View>
+                    ) : (
+                      <Text style={styles.pinRailStatus} numberOfLines={1}>
+                        {pinStatusLabel}
+                      </Text>
+                    )}
+                  </View>
+                  {pinSoftOpen ? (
                     <SoftFailBadge>
                       {t(locale, "offline.softBadge")}
                     </SoftFailBadge>
-                  </View>
-                ) : null}
+                  ) : null}
+                </View>
                 <SoftFailNotice
                   open={pinSoftOpen}
                   compact
@@ -2220,17 +2245,27 @@ export default function TripDetailScreen() {
                 <View
                   style={StyleSheet.flatten([
                     styles.pinBody,
-                    pinSoftOpen ? styles.pinBodySoft : null,
                     pinSoftOpen ? softFailMistWashStyle : null,
                   ])}
                 >
                   <Pressable
-                    style={StyleSheet.flatten([
-                      styles.pinBtn,
-                      pinStatus?.pinned ? styles.pinBtnActive : null,
-                    ])}
                     disabled={pinBusy}
                     onPress={() => void onTogglePin()}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      pinBusy
+                        ? t(locale, "offline.working")
+                        : pinStatus?.pinned
+                          ? t(locale, "offline.pinned")
+                          : t(locale, "offline.pin")
+                    }
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.pinBtn,
+                        pinStatus?.pinned ? styles.pinBtnActive : null,
+                        pressed && !pinBusy ? styles.pinBtnPressed : null,
+                      ])
+                    }
                   >
                     <Text
                       style={StyleSheet.flatten([
@@ -2250,15 +2285,7 @@ export default function TripDetailScreen() {
                         pinStatus?.pinned ? styles.pinMetaActive : null,
                       ])}
                     >
-                      {(pinStatus?.online ?? online)
-                        ? t(locale, "offline.online")
-                        : t(locale, "offline.offline")}
-                      {(pinStatus?.pendingMutations ?? 0) > 0
-                        ? ` · ${t(locale, "offline.pending").replace(
-                            "{n}",
-                            String(pinStatus?.pendingMutations ?? 0),
-                          )}`
-                        : ""}
+                      {pinStatusLabel}
                     </Text>
                   </Pressable>
                   <Text style={styles.pinHint}>
@@ -3681,20 +3708,21 @@ const styles = StyleSheet.create({
   secondaryBlock: {
     marginTop: 4,
   },
-  /** Azure Offline pin SoftFail chrome (BEA-448 SoftFailSupport residual). */
+  /** Offline pin chrome — always-on azure rail (BEA-474) · SoftFail wash. */
   pinChrome: {
     marginBottom: 18,
-  },
-  pinChromeSoft: {
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(244, 246, 250, 0.95)",
+    backgroundColor: colors.foam,
+  },
+  pinChromeSoft: {
+    backgroundColor: colors.paper,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
-  pinSoftRail: {
+  pinRail: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
@@ -3706,7 +3734,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    backgroundColor: colors.paper,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  pinRailSoft: {
+    borderLeftWidth: 0,
+    /** SoftFail rail wash — mist token (parity prior SoftFail pin chrome). */
+    backgroundColor: colors.mist,
   },
   pinSoftRailCopy: {
     flexDirection: "row",
@@ -3721,14 +3756,20 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
-  pinBody: {
-    paddingHorizontal: 0,
+  pinRailStatus: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 0.2,
+    color: colors.inkSoft,
+    flexShrink: 1,
+    minWidth: 0,
   },
-  pinBodySoft: {
+  pinBody: {
     paddingHorizontal: 14,
     paddingTop: 10,
     paddingBottom: 4,
@@ -3736,11 +3777,14 @@ const styles = StyleSheet.create({
   pinBtn: {
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.35)",
+    borderColor: colors.line,
     backgroundColor: colors.foam,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 8,
+  },
+  pinBtnPressed: {
+    transform: [{ scale: 0.98 }],
   },
   pinBtnActive: {
     backgroundColor: colors.river,
@@ -3750,6 +3794,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 14,
     fontWeight: "700",
+    letterSpacing: -0.2,
     color: colors.river,
   },
   pinLabelActive: {
@@ -3759,10 +3804,11 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 4,
     fontSize: 12,
+    lineHeight: 16,
     color: colors.inkSoft,
   },
   pinMetaActive: {
-    color: "rgba(255,255,255,0.78)",
+    color: colors.foam,
   },
   pinHint: {
     ...type.body,
