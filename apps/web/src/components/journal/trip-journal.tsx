@@ -1278,14 +1278,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               aria-label={t(locale, "journal.compose")}
             >
               <label
-                className="animate-rise block text-xs font-medium uppercase tracking-wider text-ink-soft"
+                className="animate-rise block text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft"
                 style={{ animationDelay: "40ms" }}
               >
                 {t(locale, "journal.bindStop")}
                 <select
                   value={stopId}
                   onChange={(e) => setStopId(e.target.value)}
-                  className={`mt-2 w-full rounded-bp-sm px-3 py-2 text-sm text-ink ${COMPOSE_CONTROL}`}
+                  className={`mt-2 w-full rounded-bp-sm px-3 py-2.5 text-sm font-medium text-ink ${COMPOSE_CONTROL}`}
                 >
                   <option value="">{t(locale, "journal.dayOnly")}</option>
                   {dayStops.map((s) => (
@@ -1303,7 +1303,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 placeholder={t(locale, "journal.placeholder")}
-                className={`animate-rise mt-4 w-full resize-none rounded-bp-sm px-3 py-3 font-display text-lg text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
+                className={`animate-rise mt-4 w-full resize-none rounded-bp-sm px-3.5 py-3.5 font-display text-lg leading-snug tracking-tight text-ink placeholder:text-ink-soft/50 ${COMPOSE_CONTROL}`}
                 style={{ animationDelay: "70ms" }}
               />
 
@@ -1435,7 +1435,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     pendingLocalPhotos.length === 0)
                 }
                 onClick={() => void saveEntry()}
-                className={`mt-5 w-full ${COMPOSE_CTA}`}
+                className={`animate-rise mt-5 w-full ${COMPOSE_CTA}`}
+                style={{ animationDelay: "130ms" }}
               >
                 {saving
                   ? t(locale, "journal.saving")

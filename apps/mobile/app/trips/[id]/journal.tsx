@@ -138,6 +138,7 @@ export default function JournalScreen() {
   const [composeSoftFail, setComposeSoftFail] = useState(false);
   const [stopId, setStopId] = useState<string>("");
   const composeRef = useRef<TextInput | null>(null);
+  const composeMountedRef = useRef(false);
   const rise = useRef(new Animated.Value(0)).current;
 
   const applySampleSeed = useCallback(
@@ -243,6 +244,19 @@ export default function JournalScreen() {
       useNativeDriver: true,
     }).start();
   }, [loading, rise, dayId]);
+
+  // Day-tab compose remount → sheet-in, then land focus in the body (web #64).
+  useEffect(() => {
+    if (loading || !dayId) return;
+    if (!composeMountedRef.current) {
+      composeMountedRef.current = true;
+      return;
+    }
+    const timer = setTimeout(() => {
+      composeRef.current?.focus();
+    }, motion.durationFastMs + 20);
+    return () => clearTimeout(timer);
+  }, [dayId, loading]);
 
   const dayStops = useMemo(
     () => (dayId ? stopsForDay(stops, dayId) : []),
@@ -952,48 +966,94 @@ export default function JournalScreen() {
                   style={styles.input}
                 />
 
-                <Pressable
-                  style={StyleSheet.flatten([styles.photoDrop])}
-                  onPress={() => void capture()}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(locale, "journal.addPhotos")}
+                {/*
+                  Compose media rail craft residual (BEA-455) — web #124 nested
+                  foam card · azure inset · photoSlots eyebrow · count · lead
+                  frame. SoftFail depth kept elsewhere; no SoftFail reopen here.
+                */}
+                <View
+                  style={styles.composeMediaRail}
+                  accessibilityLabel={t(locale, "journal.photoStrip")}
                 >
-                  <Text style={styles.photoDropTitle}>
-                    {t(locale, "journal.addPhotos")}
-                  </Text>
-                  <Text style={styles.photoDropHint}>
-                    {t(locale, "journal.uploadHint")}
-                  </Text>
-                </Pressable>
-
-                <Text style={styles.slotsLabel}>
-                  {t(locale, "journal.photoSlots")}
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.previewRow}
-                >
-                  {previewMedia.map((item) => (
-                    <Image
-                      key={item.key}
-                      source={{ uri: item.uri }}
-                      style={StyleSheet.flatten([
-                        styles.thumb,
-                        styles.thumbCompose,
-                      ])}
-                    />
-                  ))}
-                  {Array.from({ length: emptySlots }).map((_, i) => (
+                  <View style={styles.composeMediaHead}>
+                    <View style={styles.composeMediaHeadTitle}>
+                      <Text style={styles.composeMediaEyebrow}>
+                        {t(locale, "journal.photoSlots")}
+                      </Text>
+                      <Text style={styles.composeMediaSupport} numberOfLines={1}>
+                        {t(locale, "journal.photoStripSupport").replace(
+                          "{max}",
+                          String(PHOTO_SLOT_MAX),
+                        )}
+                      </Text>
+                    </View>
                     <View
-                      key={`slot-${i}`}
                       style={StyleSheet.flatten([
-                        styles.slot,
-                        styles.slotCompose,
+                        styles.composeMediaCount,
+                        previewMedia.length > 0
+                          ? styles.composeMediaCountOn
+                          : null,
                       ])}
-                    />
-                  ))}
-                </ScrollView>
+                    >
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.composeMediaCountText,
+                          previewMedia.length > 0
+                            ? styles.composeMediaCountTextOn
+                            : null,
+                        ])}
+                      >
+                        {t(locale, "journal.photoCount")
+                          .replace("{n}", String(previewMedia.length))
+                          .replace("{max}", String(PHOTO_SLOT_MAX))}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    style={styles.photoDrop}
+                    onPress={() => void capture()}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(locale, "journal.addPhotos")}
+                  >
+                    <Text style={styles.photoDropTitle}>
+                      {t(locale, "journal.addPhotos")}
+                    </Text>
+                    <Text style={styles.photoDropHint}>
+                      {t(locale, "journal.uploadHint")}
+                    </Text>
+                  </Pressable>
+
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.previewRow}
+                    accessibilityLabel={t(locale, "journal.photoStrip")}
+                  >
+                    {previewMedia.map((item, i) => (
+                      <Image
+                        key={item.key}
+                        source={{ uri: item.uri }}
+                        style={StyleSheet.flatten([
+                          styles.thumb,
+                          styles.thumbCompose,
+                          i === 0 ? styles.thumbComposeLead : null,
+                        ])}
+                      />
+                    ))}
+                    {Array.from({ length: emptySlots }).map((_, i) => (
+                      <View
+                        key={`slot-${i}`}
+                        style={StyleSheet.flatten([
+                          styles.slot,
+                          styles.slotCompose,
+                        ])}
+                      >
+                        <Text style={styles.slotComposeMark}>+</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
 
                 {info ? (
                   <Text style={styles.info} accessibilityRole="text">
@@ -1468,9 +1528,9 @@ const styles = StyleSheet.create({
   },
   composeTitle: {
     ...type.display,
-    fontSize: 22,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    fontSize: 24,
+    fontWeight: "600",
+    letterSpacing: -0.35,
     color: colors.ink,
   },
   composeHint: {
@@ -1495,9 +1555,9 @@ const styles = StyleSheet.create({
   },
   bindLabel: {
     ...type.body,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.4,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
     textTransform: "uppercase",
     color: colors.inkSoft,
     marginBottom: 8,
@@ -1513,12 +1573,16 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 9,
     maxWidth: 180,
   },
   bindChipOn: {
     borderColor: colors.river,
     backgroundColor: "rgba(47, 107, 255, 0.1)",
+    shadowColor: colors.river,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   bindChipLabel: {
     ...type.body,
@@ -1528,26 +1592,101 @@ const styles = StyleSheet.create({
   },
   bindChipLabelOn: {
     color: colors.riverDeep,
+    fontWeight: "700",
   },
   input: {
-    ...type.body,
-    minHeight: 96,
+    ...type.display,
+    minHeight: 108,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    padding: 12,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    fontSize: 18,
+    lineHeight: 26,
+    letterSpacing: -0.2,
+    fontWeight: "500",
     color: colors.ink,
     backgroundColor: colors.foam,
     textAlignVertical: "top",
   },
+  /** Nested foam media rail — web #124 compose chrome (BEA-455). */
+  composeMediaRail: {
+    marginTop: 14,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  composeMediaHead: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  composeMediaHeadTitle: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  composeMediaEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
+  },
+  composeMediaSupport: {
+    ...type.body,
+    flexShrink: 1,
+    fontSize: 11,
+    lineHeight: 15,
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  composeMediaCount: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  composeMediaCountOn: {
+    backgroundColor: "rgba(47, 107, 255, 0.12)",
+  },
+  composeMediaCountText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    color: colors.inkSoft,
+  },
+  composeMediaCountTextOn: {
+    color: colors.riverDeep,
+  },
   photoDrop: {
     marginTop: 12,
+    marginHorizontal: 14,
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderStyle: "dashed",
     borderColor: "rgba(47, 107, 255, 0.35)",
-    backgroundColor: "rgba(230, 236, 245, 0.4)",
+    backgroundColor: "rgba(230, 236, 245, 0.35)",
     paddingHorizontal: 14,
     paddingVertical: 16,
     gap: 4,
@@ -1580,25 +1719,44 @@ const styles = StyleSheet.create({
     color: colors.foam,
     fontSize: 14,
     fontWeight: "700",
+    letterSpacing: 0.2,
   },
-  slotsLabel: {
-    ...type.body,
-    marginTop: 14,
-    fontSize: 10,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-    fontWeight: "600",
+  previewRow: {
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 12,
   },
-  previewRow: { marginTop: 8 },
   thumbCompose: {
+    marginRight: 0,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(47, 107, 255, 0.3)",
+  },
+  thumbComposeLead: {
+    width: 84,
+    height: 112,
+    borderColor: "rgba(47, 107, 255, 0.4)",
+    shadowColor: colors.river,
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   slotCompose: {
+    marginRight: 0,
+    width: 64,
+    height: 88,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderStyle: "dashed",
-    borderColor: "rgba(47, 107, 255, 0.3)",
+    borderColor: "rgba(47, 107, 255, 0.22)",
+    backgroundColor: "rgba(47, 107, 255, 0.06)",
+  },
+  slotComposeMark: {
+    ...type.body,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "rgba(47, 107, 255, 0.4)",
   },
   disabled: { opacity: 0.4 },
   error: {
