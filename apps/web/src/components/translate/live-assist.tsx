@@ -24,7 +24,10 @@ import {
 } from "@beaver/core";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailNotice,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   DualCameraSkeleton,
@@ -835,9 +838,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
           <div
             className={`animate-rise px-4 py-3 sm:px-5 ${
-              bannerSoftOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              bannerSoftOpen ? softFailMistWashClass : ""
             }`}
             style={{ animationDelay: "70ms" }}
           >

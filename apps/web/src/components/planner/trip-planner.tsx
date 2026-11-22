@@ -1464,9 +1464,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {!dayEmpty ? (
                 <p
                   className={`animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80 ${
-                    dragOwnsSoft || chipsSoftOpen
-                      ? "bg-gradient-to-b from-mist/10 to-transparent"
-                      : ""
+                    dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
                   }`}
                   style={{ animationDelay: "55ms" }}
                 >

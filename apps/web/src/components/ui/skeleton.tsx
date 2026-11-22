@@ -1,3 +1,5 @@
+import { softFailMistWashClass } from "@/components/soft-fail-notice";
+
 type SkeletonProps = {
   className?: string;
 };
@@ -59,7 +61,7 @@ export function TemplatesListSkeleton({ rows = 3 }: { rows?: number }) {
         </div>
         {/* SoftFailNotice mist band under Playbooks rail */}
         <Skeleton className="h-9 w-full rounded-none" />
-        <ul className="space-y-0 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
+        <ul className={`space-y-0 ${softFailMistWashClass}`}>
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}
@@ -105,7 +107,7 @@ export function PlannerSkeleton() {
             <Skeleton className="h-5 w-16 rounded-bp-xs" />
           </div>
           <Skeleton className="h-9 w-full rounded-none" />
-          <div className="flex items-center justify-end gap-2 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-3 py-2.5">
+          <div className={`flex items-center justify-end gap-2 ${softFailMistWashClass} px-3 py-2.5`}>
             <Skeleton className="h-8 w-16 rounded-bp" />
             <Skeleton className="h-8 w-20 rounded-bp" />
             <Skeleton className="h-9 w-28 rounded-bp" />
@@ -165,7 +167,7 @@ export function PlannerSkeleton() {
             {/* SoftFailNotice mist band under azure Stops rail — softSupport depth */}
             <Skeleton className="h-9 w-full rounded-none" />
             {/* tip-011 mist-wash chip track while SoftFail owns depth */}
-            <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 pb-2.5 pt-1">
+            <div className={`${softFailMistWashClass} px-4 pb-2.5 pt-1`}>
               <div className="flex gap-0.5 rounded-bp-sm bg-mist/70 p-1 shadow-[inset_3px_0_0_var(--bp-river)]">
                 <Skeleton className="h-8 w-24 rounded-bp-xs" />
                 <Skeleton className="h-8 w-20 rounded-bp-xs" />
@@ -174,7 +176,7 @@ export function PlannerSkeleton() {
             </div>
           </div>
           {/* tip-011 mist-wash empty body while SoftFail owns depth */}
-          <div className="space-y-3 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-5 py-10">
+          <div className={`space-y-3 ${softFailMistWashClass} px-5 py-10`}>
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-8 w-48 max-w-full" />
             <Skeleton className="h-4 w-64 max-w-full" />
@@ -221,7 +223,7 @@ export function JournalSkeleton() {
             </div>
           </div>
           <Skeleton className="h-9 w-full rounded-none border-b border-[color:var(--bp-line)]" />
-          <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 pb-3 pt-2">
+          <div className={`${softFailMistWashClass} px-4 pb-3 pt-2`}>
             <Skeleton className="h-10 w-full rounded-bp-sm" />
           </div>
         </div>
@@ -266,7 +268,7 @@ export function JournalSkeleton() {
             </div>
             {/* SoftFailNotice mist band under azure Compose rail */}
             <Skeleton className="h-9 w-full rounded-none border-b border-[color:var(--bp-line)]" />
-            <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent p-5 md:p-6">
+            <div className={`${softFailMistWashClass} p-5 md:p-6`}>
               <Skeleton className="h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
               {/* Photo strip chrome — SoftFail yields while compose SoftFail owns */}
@@ -340,7 +342,7 @@ export function ShareStudioSkeleton() {
           </div>
           {/* SoftFailNotice mist band under Studio rail */}
           <Skeleton className="h-9 w-full rounded-none" />
-          <div className="space-y-3 bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 py-4">
+          <div className={`space-y-3 ${softFailMistWashClass} px-4 py-4`}>
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-7 w-36" />
             <Skeleton className="h-3.5 w-full max-w-xs" />
@@ -512,7 +514,7 @@ export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
       </div>
       {/* SoftFailNotice mist band under azure Transfer rail */}
       <Skeleton className="h-9 w-full rounded-none" />
-      <div className="divide-y divide-[color:var(--bp-line)] bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
+      <div className={`divide-y divide-[color:var(--bp-line)] ${softFailMistWashClass}`}>
         <div className="space-y-2 px-3 py-3">
           <Skeleton className="h-2.5 w-12" />
           <div className="flex flex-wrap items-center gap-2">

@@ -434,13 +434,7 @@ export function TripMembersBar({
           {inviteSoftCopy}
         </SoftFailNotice>
 
-        <div
-          className={`space-y-4 px-4 py-4 ${
-            inviteSoftOpen
-              ? softFailMistWashClass
-              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-          }`}
-        >
+        <div className={`space-y-4 px-4 py-4 ${softFailMistWashClass}`}>
           {lastInvite ? (
             <SheetPresence
               open
