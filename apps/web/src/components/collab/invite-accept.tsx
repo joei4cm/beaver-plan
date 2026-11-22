@@ -41,10 +41,12 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Invite SoftFail helper adoption (BEA-392 after #284 / depth #241):
- * SoftFailBadge · SoftFailSupport · softFailMistWashClass · compact SoftFail
- * mist band under azure rail · tip-011 SheetPresence trip preview —
- * never timber / Failed to fetch for transport / demo soft-fail.
+ * Invite SoftFail helper adoption (BEA-392 after #284 / depth #241) + craft
+ * SoftFail query parity (BEA-420): `/invite/…?inviteSoftFail=1` forces SoftFail
+ * depth under azure invite rail (mirrors Expo + #282 / wave 42). SoftFailBadge ·
+ * SoftFailSupport · softFailMistWashClass · compact SoftFail mist band · tip-011
+ * SheetPresence trip preview — never timber / Failed to fetch. No `/dev`
+ * SoftFail gallery.
  */
 export function InviteAccept({
   code,
@@ -60,17 +62,41 @@ export function InviteAccept({
   const [joining, setJoining] = useState(false);
   const [pending, startTransition] = useTransition();
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
+  /** Craft preview: /invite/…?inviteSoftFail=1 — SoftFail depth under invite. */
+  const [inviteSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("inviteSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+
+  /** Craft SoftFail: seed demo preview so SoftFail depth paints without a miss. */
+  useEffect(() => {
+    if (!inviteSoftPreview) return;
+    setPreview((prev) => prev ?? demoPreview(code));
+    setSoftNotice(t(locale, "invite.softOffline"));
+    setError(null);
+  }, [inviteSoftPreview, code, locale]);
 
   useEffect(() => {
     startTransition(() => {
       void apiGet<Preview>(`/v1/invites/${encodeURIComponent(code)}`)
         .then((data) => {
           setPreview(data);
-          setSoftNotice(null);
+          if (inviteSoftPreview) {
+            setSoftNotice(t(locale, "invite.softOffline"));
+          } else {
+            setSoftNotice(null);
+          }
           setError(null);
         })
         .catch((e: unknown) => {
-          if (isPlannerNoiseError(e)) {
+          if (isPlannerNoiseError(e) || inviteSoftPreview) {
             setPreview(demoPreview(code));
             setSoftNotice(t(locale, "invite.softOffline"));
             setError(null);
@@ -81,7 +107,7 @@ export function InviteAccept({
           setError(e instanceof Error ? e.message : "load_failed");
         });
     });
-  }, [code, locale]);
+  }, [code, locale, inviteSoftPreview]);
 
   async function accept() {
     setJoining(true);
@@ -107,14 +133,23 @@ export function InviteAccept({
     }
   }
 
-  const sheetOpen = Boolean(preview) || Boolean(softNotice) || Boolean(error);
-  /** SoftFail owned by invite sheet — never timber / Failed to fetch. */
-  const softCopy =
-    softNotice ??
-    (error && isPlannerNoiseError(new Error(error))
-      ? t(locale, "invite.softOffline")
-      : null);
-  const softOpen = Boolean(softCopy);
+  const sheetOpen =
+    Boolean(preview) ||
+    Boolean(softNotice) ||
+    Boolean(error) ||
+    inviteSoftPreview;
+  /**
+   * SoftFail owned by invite sheet + craft SoftFail query parity (BEA-420):
+   * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band · tip-011.
+   * Craft: /invite/…?inviteSoftFail=1 — SoftFail depth without a transport miss.
+   * SoftFail copy never timber / Failed to fetch.
+   */
+  const softFailCopy = t(locale, "invite.softOffline");
+  const softCopy = inviteSoftPreview
+    ? softFailCopy
+    : (softNotice ??
+      (error && isPlannerNoiseError(new Error(error)) ? softFailCopy : null));
+  const softOpen = inviteSoftPreview || Boolean(softCopy);
   const hardError =
     error && !softOpen && !isPlannerNoiseError(new Error(error))
       ? error
@@ -154,8 +189,9 @@ export function InviteAccept({
       ) : null}
 
       {/*
-        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
-        softFailMistWashClass · compact SoftFailNotice · tip-011 trip preview —
+        SoftFail helper adoption (BEA-392) + craft SoftFail query parity
+        (BEA-420): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
+        compact SoftFailNotice · tip-011 trip preview. Craft: ?inviteSoftFail=1 —
         never timber / Failed to fetch.
       */}
       <SheetPresence

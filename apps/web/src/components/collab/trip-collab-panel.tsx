@@ -37,6 +37,14 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
+/**
+ * Timeline SoftFail helpers (BEA-392 after #284 / yield #281) + craft SoftFail
+ * query parity (BEA-420): `/trips/…?timelineSoftFail=1` forces SoftFail depth
+ * under Timeline (mirrors Expo + #282 / wave 42). SoftFailBadge · SoftFailSupport ·
+ * SoftFailNotice mist band · tip-011 kept. Panel SoftFail yields on Activity;
+ * invite SoftFail yields timeline (no double depth). Soft copy never timber /
+ * Failed to fetch. No `/dev` SoftFail gallery.
+ */
 export function TripCollabPanel({
   tripId,
   locale,
@@ -65,6 +73,23 @@ export function TripCollabPanel({
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [softOffline, setSoftOffline] = useState(false);
   const [liveApi, setLiveApi] = useState(false);
+  /** Craft preview: /trips/…?timelineSoftFail=1 — SoftFail depth under Timeline. */
+  const [timelineSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("timelineSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+
+  /** Craft SoftFail: `?timelineSoftFail=1` opens Activity tab SoftFail depth. */
+  useEffect(() => {
+    if (timelineSoftPreview) setTab("activity");
+  }, [timelineSoftPreview]);
 
   const canComment = yourRole === "owner" || yourRole === "editor";
 
@@ -258,14 +283,14 @@ export function TripCollabPanel({
 
   const showLoading =
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
-  const softNoticeOpen = demoSeeded || softOffline;
   /**
-   * Timeline SoftFail helper adoption / yield (BEA-392 after #284 / #281):
-   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
-   * track. Panel SoftFail yields on Activity; invite SoftFail owns when invite
-   * sheet open — timeline SoftFail yields (no double depth). Soft copy never
-   * timber / Failed to fetch.
+   * Timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+   * parity (BEA-420): SoftFailBadge · SoftFailSupport · mist SoftFail band ·
+   * tip-011 mist-wash track. Craft: /trips/…?timelineSoftFail=1. Panel SoftFail
+   * yields on Activity; invite SoftFail owns when invite sheet open — timeline
+   * SoftFail yields (no double depth). Soft copy never timber / Failed to fetch.
    */
+  const softNoticeOpen = demoSeeded || softOffline || timelineSoftPreview;
   const timelineSoftOpen =
     softNoticeOpen && tab === "activity" && !inviteOpen;
   const panelSoftOpen =
@@ -273,9 +298,10 @@ export function TripCollabPanel({
   const softNoticeCopy = softOffline
     ? t(locale, "collab.panel.softOffline")
     : t(locale, "collab.panel.demoNotice");
-  const timelineSoftCopy = softOffline
-    ? t(locale, "collab.panel.timelineSoftFail")
-    : t(locale, "collab.panel.timelineDemoNotice");
+  const timelineSoftCopy =
+    softOffline || timelineSoftPreview
+      ? t(locale, "collab.panel.timelineSoftFail")
+      : t(locale, "collab.panel.timelineDemoNotice");
   const timelineSupportCopy = timelineSoftOpen
     ? t(locale, "collab.panel.timelineSoftSupport")
     : t(locale, "collab.panel.timelineSupport");
@@ -516,9 +542,10 @@ export function TripCollabPanel({
       </SheetPresence>
 
       {/*
-        Timeline SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
-        SoftFailSupport · softFailMistWashClass · invite SoftFail owns when open
-        — never timber / Failed to fetch.
+        Timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+        parity (BEA-420): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
+        invite SoftFail owns when open. Craft: ?timelineSoftFail=1 — never timber /
+        Failed to fetch.
       */}
       <SheetPresence
         open={tab === "activity"}
