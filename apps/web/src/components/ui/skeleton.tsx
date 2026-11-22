@@ -379,8 +379,13 @@ export function ShareStudioSkeleton() {
             <Skeleton className="mt-0 h-9 w-full rounded-none" />
             <Skeleton className="mt-3 aspect-[9/16] w-full max-w-[400px] rounded-bp" />
           </div>
-          <Skeleton className="mt-4 h-4 w-56" />
-          <Skeleton className="mt-1 h-3 w-28" />
+          {/* Canvas captions — live rise stagger 70/100ms (#380 / wave 59) */}
+          <div className="animate-rise mt-4" style={{ animationDelay: "70ms" }}>
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <div className="animate-rise mt-1" style={{ animationDelay: "100ms" }}>
+            <Skeleton className="h-3 w-28" />
+          </div>
         </div>
         {/* Control sheet SoftFail depth — azure rail · SoftFail · mist tip-011 body */}
         <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
