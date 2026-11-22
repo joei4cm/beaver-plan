@@ -890,12 +890,11 @@ export default function TripDetailScreen() {
 
   const collabSoftOpen = collabSeeded || collabSoftOffline;
   /**
-   * Presence SoftFailNotice depth (BEA-374 after #141):
-   * azure rail · Soft/Live badge · softSupport · compact SoftFailNotice
-   * mist band (`border-b`) · tip-011 mist-wash SheetPresence chips ·
-   * StyleSheet.flatten. Yields while invite sheet open (#228). SoftFail
-   * copy never timber / Failed to fetch. Timeline SoftFail (BEA-371) owns
-   * its rail when present — no double depth on presence.
+   * Presence SoftFailNotice depth / yield (BEA-379 after #135 / #275):
+   * Soft badge · softSupport · mist SoftFail band · tip-011 mist-wash chips
+   * own as one unit. Yields while invite sheet SoftFail (#228) owns — no
+   * double depth. SoftFail copy never timber / Failed to fetch. Timeline
+   * SoftFail (BEA-371) owns its rail when present.
    */
   const presenceSoftOpen = collabSoftOpen && !inviteOpen;
   const presenceSoftCopy = collabSoftOffline
@@ -2056,7 +2055,7 @@ export default function TripDetailScreen() {
                         )}
                       </Text>
                       <Text style={styles.presenceSupport} numberOfLines={2}>
-                        {collabSoftOpen
+                        {presenceSoftOpen
                           ? t(locale, "collab.presence.softSupport")
                           : t(locale, "collab.presence.support")}
                       </Text>
@@ -2079,14 +2078,14 @@ export default function TripDetailScreen() {
                       <View
                         style={StyleSheet.flatten([
                           styles.presenceStatusBadge,
-                          collabSoftOpen
+                          presenceSoftOpen
                             ? styles.presenceStatusBadgeSoft
                             : members.length > 0
                               ? styles.presenceStatusBadgeLive
                               : styles.presenceStatusBadgeIdle,
                         ])}
                       >
-                        {!collabSoftOpen && members.length > 0 ? (
+                        {!presenceSoftOpen && members.length > 0 ? (
                           <Animated.View
                             style={StyleSheet.flatten([
                               styles.liveDot,
@@ -2102,17 +2101,17 @@ export default function TripDetailScreen() {
                         <Text
                           style={StyleSheet.flatten([
                             styles.presenceStatusBadgeText,
-                            collabSoftOpen
+                            presenceSoftOpen
                               ? styles.presenceStatusBadgeTextSoft
                               : members.length > 0
                                 ? styles.presenceStatusBadgeTextLive
                                 : styles.presenceStatusBadgeTextIdle,
                           ])}
                         >
-                          {collabSoftOpen
+                          {presenceSoftOpen
                             ? t(locale, "collab.presence.softBadge")
                             : t(locale, "collab.presence.live")}
-                          {!collabSoftOpen && presenceActiveCount > 0
+                          {!presenceSoftOpen && presenceActiveCount > 0
                             ? ` · ${presenceActiveCount}`
                             : ""}
                         </Text>

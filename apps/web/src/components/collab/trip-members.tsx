@@ -53,11 +53,14 @@ export function TripMembersBar({
   locale,
   tripVersion,
   onVersion,
+  onInviteOpenChange,
 }: {
   tripId: string;
   locale: Locale;
   tripVersion: number;
   onVersion?: (v: number) => void;
+  /** SoftFail yield (BEA-379): timeline/panel SoftFail yield while invite owns. */
+  onInviteOpenChange?: (open: boolean) => void;
 }) {
   const [members, setMembers] = useState<TripMember[]>([]);
   const [yourRole, setYourRole] = useState<TripRole | null>(null);
@@ -69,6 +72,10 @@ export function TripMembersBar({
   const [pending, startTransition] = useTransition();
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [softOffline, setSoftOffline] = useState(false);
+
+  useEffect(() => {
+    onInviteOpenChange?.(open);
+  }, [open, onInviteOpenChange]);
 
   const applySeed = useCallback(
     (opts?: { soft?: boolean }) => {
@@ -177,10 +184,10 @@ export function TripMembersBar({
   const overflow = Math.max(0, members.length - visible.length);
   const softOpen = demoSeeded || softOffline;
   /**
-   * Presence SoftFailNotice depth (BEA-292 after #181):
-   * azure rail · Soft/Live badge · compact SoftFailNotice (border-b) ·
-   * mist-wash SheetPresence chips · tip-011. Invite sheet open → SoftFail
-   * yields (no double depth). Soft copy never timber / Failed to fetch.
+   * Presence SoftFailNotice depth / yield (BEA-379 after #135 / #223):
+   * Soft badge · softSupport · mist SoftFail band · tip-011 mist-wash chips
+   * own as one unit. Invite sheet open → SoftFail chrome yields (no double
+   * depth with invite SoftFail). Soft copy never timber / Failed to fetch.
    */
   const presenceSoftOpen = softOpen && !open;
   const presenceSoftCopy = softOffline
@@ -188,10 +195,10 @@ export function TripMembersBar({
     : t(locale, "collab.presenceDemoNotice");
   /**
    * Invite SoftFailNotice depth (BEA-319 after #216):
-   * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
-   * softSupport · mist-wash tip-011 SheetPresence code · tip-011 rise.
-   * Presence SoftFail yields while invite open (#223). Soft copy never
-   * timber / Failed to fetch.
+   * invite sheet owns Soft badge · softSupport · compact SoftFail under azure
+   * rail · mist-wash tip-011 SheetPresence code · tip-011 rise.
+   * Presence SoftFail yields while invite open (#223 / BEA-379). Soft copy
+   * never timber / Failed to fetch.
    */
   const inviteSoftOpen = softOpen && open;
   const inviteSoftCopy = softOffline
@@ -221,7 +228,7 @@ export function TripMembersBar({
               )}
             </span>
             <span className="text-[11px] leading-snug text-ink-soft/80">
-              {softOpen
+              {presenceSoftOpen
                 ? t(locale, "collab.presence.softSupport")
                 : t(locale, "collab.presence.support")}
             </span>
@@ -239,23 +246,23 @@ export function TripMembersBar({
             </span>
             <span
               className={`inline-flex items-center gap-1.5 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                softOpen
+                presenceSoftOpen
                   ? "bg-mist text-ink-soft"
                   : members.length > 0
                     ? "bg-river/12 text-river-deep"
                     : "bg-mist/60 text-ink-soft/70"
               }`}
             >
-              {!softOpen && members.length > 0 ? (
+              {!presenceSoftOpen && members.length > 0 ? (
                 <span
                   className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
                   aria-hidden
                 />
               ) : null}
-              {softOpen
+              {presenceSoftOpen
                 ? t(locale, "collab.presence.softBadge")
                 : t(locale, "collab.presence.live")}
-              {!softOpen && activeCount > 0 ? (
+              {!presenceSoftOpen && activeCount > 0 ? (
                 <span className="tabular-nums font-medium normal-case tracking-normal text-river/80">
                   · {activeCount}
                 </span>
