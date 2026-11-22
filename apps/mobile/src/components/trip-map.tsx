@@ -363,7 +363,8 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "#EAF0F8",
+    // Lumen mist twin of web MapStage / MapSkeleton (BEA-628) — not near-mist hex.
+    backgroundColor: colors.mist,
   },
   tileLayer: {
     position: "absolute",
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: "rgba(244,246,250,0.18)",
+    backgroundColor: `${colors.paper}2E`,
   },
   overlay: {
     position: "absolute",
@@ -456,11 +457,12 @@ const styles = StyleSheet.create({
     color: colors.river,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.4,
+    // Field eyebrow twin of web map azure 0.18em (BEA-628).
+    letterSpacing: 1.8,
     textTransform: "uppercase",
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: `${colors.foam}EB`,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.22)",
+    borderColor: `${colors.river}38`,
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: radius.sm,
@@ -473,7 +475,7 @@ const styles = StyleSheet.create({
     bottom: 8,
     fontSize: 9,
     color: colors.inkSoft,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    backgroundColor: `${colors.foam}D9`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.xs,
