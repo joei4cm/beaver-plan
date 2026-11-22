@@ -1843,12 +1843,13 @@ export default function TripDetailScreen() {
 
               {/*
                 Stops SoftFail helpers (BEA-388) + stop-card #381 (BEA-529) +
-                list craft residual (BEA-567 / wave 59 beyond #349): eyebrow
-                tracking 1.8 (Mode #549) · SoftFailBadge · SoftFailSupport ·
-                SoftFailNotice mist · tip-011 mist-wash · mist-track chip press ·
-                stop-row press · selected display + Selected mark · SheetPresence
-                detail rise. Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy
-                never timber / Failed to fetch. No `/dev` gallery.
+                list #402 (BEA-567) + Expo stop-card residual (BEA-591 / wave 61):
+                eyebrow 1.8 · selected badge 1.4 (Mode) · SoftFailBadge ·
+                SoftFailSupport · SoftFailNotice mist · tip-011 mist-wash ·
+                mist-track chip press (opacity+scale Mode twin) · stop-row press ·
+                selected display + Selected mark · SheetPresence detail rise.
+                Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy never timber
+                / Failed to fetch. No `/dev` gallery.
               */}
               <View style={styles.stopsChrome}>
                 <View
@@ -3883,11 +3884,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  /* Mode selected badge 1.4 / web Stops rail tracking-[0.14em] (BEA-591). */
   stopsSelectedBadgeText: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3931,8 +3933,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     backgroundColor: "transparent",
   },
-  /* tip-011 press — parity with web stop chips active:scale-[0.98] (#349). */
+  /* tip-011 press — Mode mist-track chip opacity+scale (#549); web scale 0.98. */
   stopChipPressed: {
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
   },
   stopChipOn: {
