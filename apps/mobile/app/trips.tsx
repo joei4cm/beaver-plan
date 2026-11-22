@@ -31,7 +31,13 @@ import {
   type MobileTemplateCard,
 } from "../src/api";
 import { SheetPresence } from "../src/components/sheet-presence";
-import { SoftFailNotice } from "../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailBandStyle,
+  softFailMistWashStyle,
+} from "../src/components/soft-fail-notice";
 import { type } from "../src/theme";
 
 const locale = "zh-CN" as const;
@@ -273,10 +279,11 @@ function TripsListRail({
 }
 
 /**
- * Azure inset Playbooks rail — Soft playbooks badge + softSupport when SoftFail
- * owns (BEA-372 depth after #114/#166; web #245 parity). Soft azure head wash
- * while soft. Empty SoftFail (#233) stays on Start; cards SoftFail (#259) stays
- * on Trips (yield / no overlap). Soft copy never timber / Failed to fetch.
+ * Azure inset Playbooks rail — SoftFailBadge Soft playbooks + SoftFailSupport
+ * when SoftFail owns (BEA-398 helpers after #284 / BEA-372 depth; web #245
+ * parity). Soft azure head wash while soft. Empty SoftFail (#233) stays on
+ * Start; cards SoftFail (#259) stays on Trips (yield / no overlap). Soft copy
+ * never timber / Failed to fetch.
  */
 function PlaybooksRail({
   count,
@@ -296,32 +303,35 @@ function PlaybooksRail({
         <Text style={styles.listRailLabel}>
           {t(locale, "trips.templatesRail")}
         </Text>
-        <Text style={styles.listRailCount}>
-          {soft
-            ? t(locale, "trips.playbooksSoftSupport")
-            : t(locale, "trips.templatesCount").replace(
-                "{n}",
-                String(count),
-              )}
-        </Text>
+        {soft ? (
+          <SoftFailSupport style={styles.softSupportShrink} numberOfLines={1}>
+            {t(locale, "trips.playbooksSoftSupport")}
+          </SoftFailSupport>
+        ) : (
+          <Text style={styles.listRailCount}>
+            {t(locale, "trips.templatesCount").replace("{n}", String(count))}
+          </Text>
+        )}
       </View>
-      <View
-        style={StyleSheet.flatten([
-          styles.statusChip,
-          soft ? styles.statusChipDemo : styles.statusChipLive,
-        ])}
-      >
-        <Text
+      {soft ? (
+        <SoftFailBadge>{t(locale, "trips.playbooksSoftBadge")}</SoftFailBadge>
+      ) : (
+        <View
           style={StyleSheet.flatten([
-            styles.statusChipText,
-            soft ? styles.statusChipTextDemo : styles.statusChipTextLive,
+            styles.statusChip,
+            styles.statusChipLive,
           ])}
         >
-          {soft
-            ? t(locale, "trips.playbooksSoftBadge")
-            : t(locale, "trips.templatesCatalog")}
-        </Text>
-      </View>
+          <Text
+            style={StyleSheet.flatten([
+              styles.statusChipText,
+              styles.statusChipTextLive,
+            ])}
+          >
+            {t(locale, "trips.templatesCatalog")}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -349,13 +359,13 @@ function TripsListSkeleton() {
 }
 
 /**
- * Expo home SoftFailNotice (BEA-307 empty + BEA-341 cards + BEA-372 playbooks
- * depth after #114/#166):
+ * Expo home SoftFailNotice (BEA-307 empty + BEA-341 cards + BEA-398 playbooks
+ * SoftFail helpers after #284 / BEA-372 depth):
  * Empty: azure Start · Soft empty · emptySupport · emptySoftFail.
  * Cards: azure Trips rail · Soft cards · softSupport · cardsSoftFail copy
  * (never inherit softNotice) · mist SoftFail band · tip-011 mist-wash stage.
- * Playbooks: azure Playbooks rail · Soft playbooks · softSupport ·
- * templatesSoftOffline · mist SoftFail band · tip-011 mist-wash catalog.
+ * Playbooks: azure Playbooks rail · SoftFailBadge · SoftFailSupport ·
+ * templatesSoftOffline · softFailBandStyle · softFailMistWashStyle catalog.
  * StyleSheet.flatten · Lumen tokens. SoftFail never timber / Failed to fetch.
  * SoftFail yields across empty / cards / playbooks sheets (no double depth).
  * Yields web trips playbooks SoftFail (#245).
@@ -500,12 +510,11 @@ export default function TripsScreen() {
   const cardsSoftCopy = t(locale, "trips.cardsSoftFail");
   const cardsSoftActive = cardsSoftOpen && !emptyOwnsSoft;
   /**
-   * Playbooks SoftFailNotice depth (BEA-372 after #114/#166; web #245 parity):
-   * playbooks sheet owns compact SoftFail under azure rail · Soft playbooks
-   * badge · softSupport · SoftFail mist band (`border-b`) · tip-011 mist-wash
-   * body while soft. Empty SoftFail (#233) stays on Start; cards SoftFail
-   * (#259) stays on Trips (yield / no overlap). Soft copy never timber /
-   * Failed to fetch.
+   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245 parity):
+   * SoftFailBadge Soft playbooks · SoftFailSupport · softFailBandStyle mist
+   * band · softFailMistWashStyle tip-011 body while soft. Empty SoftFail
+   * (#233) stays on Start; cards SoftFail (#259) stays on Trips (yield / no
+   * overlap). Soft copy never timber / Failed to fetch.
    */
   const playbooksSoftOpen = hydrated && templatesSoft;
   const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
@@ -774,9 +783,9 @@ export default function TripsScreen() {
             accessibilityLabel={t(locale, "trips.templatesRail")}
           >
             {/*
-              Playbooks SoftFail depth (BEA-372 after #114/#166; web #245 parity):
-              azure Playbooks rail · Soft playbooks badge · softSupport ·
-              compact SoftFail mist band · tip-011 mist-wash catalog ·
+              Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245
+              parity): azure Playbooks rail · SoftFailBadge · SoftFailSupport ·
+              softFailBandStyle · softFailMistWashStyle catalog ·
               StyleSheet.flatten — never timber / Failed to fetch.
               Empty SoftFail (#233) stays on Start; cards SoftFail (#259)
               stays on Trips (yield / no overlap). Yields web #245.
@@ -790,7 +799,7 @@ export default function TripsScreen() {
               <SoftFailNotice
                 open={playbooksSoftOpen}
                 compact
-                style={styles.listSoftFail}
+                style={softFailBandStyle}
               >
                 {playbooksSoftCopy}
               </SoftFailNotice>
@@ -800,14 +809,19 @@ export default function TripsScreen() {
                 delayMs={50}
                 style={StyleSheet.flatten([
                   styles.playbooksBody,
-                  playbooksSoftOpen ? styles.playbooksBodySoft : null,
+                  playbooksSoftOpen ? softFailMistWashStyle : null,
                 ])}
                 accessibilityLabel={t(locale, "trips.templates")}
               >
                 <View
                   style={StyleSheet.flatten([
                     styles.playbooksStage,
-                    playbooksSoftOpen ? styles.playbooksStageSoft : null,
+                    playbooksSoftOpen
+                      ? StyleSheet.flatten([
+                          softFailMistWashStyle,
+                          styles.playbooksStageSoft,
+                        ])
+                      : null,
                   ])}
                 >
                   {templates.map((tpl, index) => {
@@ -1063,6 +1077,10 @@ const styles = StyleSheet.create({
     color: "rgba(100, 116, 139, 0.85)",
     flexShrink: 1,
   },
+  /** Layout-only shrink for SoftFailSupport beside azure Playbooks rail. */
+  softSupportShrink: {
+    flexShrink: 1,
+  },
   statusChip: {
     borderRadius: radius.xs,
     paddingHorizontal: 6,
@@ -1117,16 +1135,14 @@ const styles = StyleSheet.create({
   playbooksBody: {
     paddingVertical: 0,
   },
-  /** Mist-wash tip-011 playbooks body when SoftFail owns the Playbooks rail (BEA-372). */
-  playbooksBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
-  },
   playbooksStage: {
     width: "100%",
   },
-  /** Mist-wash stage inset with azure river rail while Playbooks SoftFail open. */
+  /**
+   * Playbooks SoftFail stage chrome (BEA-398) — softFailMistWashStyle supplies
+   * mist wash; keep azure river inset + pad while SoftFail owns.
+   */
   playbooksStageSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     borderRadius: radius.md,
