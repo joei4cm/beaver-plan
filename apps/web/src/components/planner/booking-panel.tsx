@@ -16,6 +16,7 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -384,15 +385,11 @@ export function BookingPanel({
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                isConfigured
-                  ? "bg-river/12 text-river-deep"
-                  : "bg-mist text-ink-soft"
-              }`}
-            >
-              {badge}
-            </span>
+            {isConfigured ? (
+              <SoftFailLiveBadge>{badge}</SoftFailLiveBadge>
+            ) : (
+              <SoftFailBadge>{badge}</SoftFailBadge>
+            )}
             {showOtaSoftFail ? (
               <SoftFailBadge>
                 {t(locale, "planner.booking.otaSoftBadge")}
@@ -731,9 +728,9 @@ export function BookingPanel({
                         {t(locale, "planner.booking.confirmSoftBadge")}
                       </SoftFailBadge>
                     ) : (
-                      <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                      <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                         {t(locale, "planner.booking.confirmSoftLiveBadge")}
-                      </span>
+                      </SoftFailLiveBadge>
                     )}
                   </div>
                   <h3 className="mt-1 font-display text-base tracking-tight text-ink">

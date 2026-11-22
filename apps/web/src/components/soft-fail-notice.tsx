@@ -40,6 +40,10 @@ const EXIT_FALLBACK_MS = 380;
 export const softFailBadgeClass =
   "rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition";
 
+/** Live badge chip — river wash while keys are present (parity SoftFailBadge). */
+export const softFailLiveBadgeClass =
+  "rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition";
+
 /** softSupport line under an azure rail title while SoftFail owns. */
 export const softFailSupportClass =
   "min-w-0 text-[11px] leading-snug text-ink-soft/80";
@@ -51,6 +55,8 @@ export const softFailMistWashClass =
 /** Azure rail wash while SoftFail owns (mist + river inset). */
 export const softFailRailClass =
   "bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]";
+
+export type SoftFailBadgeTone = "soft" | "live";
 
 /**
  * Raw browser / transport noise SoftFailNotice must never paint as copy.
@@ -77,8 +83,30 @@ export function sanitizeSoftFailCopy(
   return isRawSoftFailNoise(message) ? fallback : message;
 }
 
-/** Soft badge composition helper — Lumen mist chip, never timber. */
+/**
+ * Soft | Live badge composition helper — Lumen mist (soft) or river wash
+ * (live). Never timber. Default tone stays Soft for existing call sites.
+ */
 export function SoftFailBadge({
+  children,
+  className,
+  tone = "soft",
+}: {
+  children: string;
+  className?: string;
+  tone?: SoftFailBadgeTone;
+}) {
+  const toneClass =
+    tone === "live" ? softFailLiveBadgeClass : softFailBadgeClass;
+  return (
+    <span className={[toneClass, className].filter(Boolean).join(" ")}>
+      {children}
+    </span>
+  );
+}
+
+/** Live badge helper — SoftFailBadge tone="live" shorthand. */
+export function SoftFailLiveBadge({
   children,
   className,
 }: {
@@ -86,12 +114,11 @@ export function SoftFailBadge({
   className?: string;
 }) {
   return (
-    <span className={[softFailBadgeClass, className].filter(Boolean).join(" ")}>
+    <SoftFailBadge tone="live" className={className}>
       {children}
-    </span>
+    </SoftFailBadge>
   );
 }
-
 /** softSupport composition helper — ink-soft line beside azure rail titles. */
 export function SoftFailSupport({
   children,

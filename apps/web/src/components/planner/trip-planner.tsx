@@ -41,9 +41,9 @@ import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
-  softFailBadgeClass,
   softFailMistWashClass,
   softFailRailClass,
 } from "@/components/soft-fail-notice";
@@ -959,9 +959,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 {t(locale, "planner.shareSoftBadge")}
               </SoftFailBadge>
             ) : (
-              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+              <SoftFailLiveBadge>
                 {t(locale, "planner.shareLiveBadge")}
-              </span>
+              </SoftFailLiveBadge>
             )}
           </div>
 
@@ -1204,17 +1204,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               <SoftFailSupport>{drawerSupportCopy}</SoftFailSupport>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span
-                className={
-                  drawerSoftOpen || demoShell
-                    ? softFailBadgeClass
-                    : "rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition"
-                }
-              >
-                {demoShell
-                  ? t(locale, "planner.drawer.demoBadge")
-                  : t(locale, "planner.drawer.liveBadge")}
-              </span>
+              {drawerSoftOpen || demoShell ? (
+                <SoftFailBadge>
+                  {demoShell
+                    ? t(locale, "planner.drawer.demoBadge")
+                    : t(locale, "planner.drawer.liveBadge")}
+                </SoftFailBadge>
+              ) : (
+                <SoftFailLiveBadge>
+                  {t(locale, "planner.drawer.liveBadge")}
+                </SoftFailLiveBadge>
+              )}
               {drawerSoftOpen ? (
                 <SoftFailBadge>
                   {t(locale, "planner.drawer.softBadge")}

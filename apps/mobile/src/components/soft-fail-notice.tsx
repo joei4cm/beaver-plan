@@ -109,6 +109,25 @@ export const softFailBadgeLabelStyle: TextStyle = {
   color: colors.inkSoft,
 };
 
+/** Live badge chip — river wash while keys are present (parity SoftFailBadge). */
+export const softFailLiveBadgeStyle: ViewStyle = {
+  borderRadius: radius.xs,
+  backgroundColor: "rgba(47,107,255,0.12)",
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+};
+
+export const softFailLiveBadgeLabelStyle: TextStyle = {
+  ...type.body,
+  fontSize: 10,
+  fontWeight: "700",
+  letterSpacing: 1.4,
+  textTransform: "uppercase",
+  color: colors.riverDeep,
+};
+
+export type SoftFailBadgeTone = "soft" | "live";
+
 export const softFailSupportStyle: TextStyle = {
   ...type.body,
   fontSize: 11,
@@ -117,8 +136,33 @@ export const softFailSupportStyle: TextStyle = {
   opacity: 0.8,
 };
 
-/** Soft badge composition helper — Lumen mist chip. */
+/**
+ * Soft | Live badge composition helper — Lumen mist (soft) or river wash
+ * (live). Never timber. Default tone stays Soft for existing call sites.
+ */
 export function SoftFailBadge({
+  children,
+  style,
+  labelStyle,
+  tone = "soft",
+}: {
+  children: string;
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  tone?: SoftFailBadgeTone;
+}) {
+  const chip = tone === "live" ? softFailLiveBadgeStyle : softFailBadgeStyle;
+  const label =
+    tone === "live" ? softFailLiveBadgeLabelStyle : softFailBadgeLabelStyle;
+  return (
+    <View style={StyleSheet.flatten([chip, style])}>
+      <Text style={StyleSheet.flatten([label, labelStyle])}>{children}</Text>
+    </View>
+  );
+}
+
+/** Live badge helper — SoftFailBadge tone="live" shorthand. */
+export function SoftFailLiveBadge({
   children,
   style,
   labelStyle,
@@ -128,14 +172,11 @@ export function SoftFailBadge({
   labelStyle?: StyleProp<TextStyle>;
 }) {
   return (
-    <View style={StyleSheet.flatten([softFailBadgeStyle, style])}>
-      <Text style={StyleSheet.flatten([softFailBadgeLabelStyle, labelStyle])}>
-        {children}
-      </Text>
-    </View>
+    <SoftFailBadge tone="live" style={style} labelStyle={labelStyle}>
+      {children}
+    </SoftFailBadge>
   );
 }
-
 /** softSupport composition helper — ink-soft line beside azure rail titles. */
 export function SoftFailSupport({
   children,

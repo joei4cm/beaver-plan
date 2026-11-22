@@ -12,6 +12,7 @@ import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -427,12 +428,14 @@ export function MapChrome({
                 <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
                   {t(locale, "planner.search.softBadge")}
                 </SoftFailBadge>
+              ) : searchDemo ? (
+                <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
+                  {t(locale, "planner.search.demoBadge")}
+                </SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
-                  {searchDemo
-                    ? t(locale, "planner.search.demoBadge")
-                    : t(locale, "planner.search.liveBadge")}
-                </span>
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+                  {t(locale, "planner.search.liveBadge")}
+                </SoftFailLiveBadge>
               )}
             </div>
 
@@ -739,9 +742,9 @@ export function MapChrome({
                 {t(locale, "planner.map.legendSoftBadge")}
               </SoftFailBadge>
             ) : (
-              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
+              <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                 {t(locale, "planner.map.legendLiveBadge")}
-              </span>
+              </SoftFailLiveBadge>
             )}
           </div>
 

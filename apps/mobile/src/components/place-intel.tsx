@@ -11,6 +11,7 @@ import { type } from "../theme";
 import { SheetPresence } from "./sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailBandStyle,
@@ -150,23 +151,17 @@ export function PlaceIntel({
                 <Text style={styles.headerEyebrow}>
                   {t(locale, "planner.place.sheetEyebrow")}
                 </Text>
-                <View
-                  style={StyleSheet.flatten([
-                    styles.badge,
-                    demo ? styles.badgeDemo : styles.badgeLive,
-                  ])}
-                >
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.badgeText,
-                      demo ? styles.badgeTextDemo : styles.badgeTextLive,
-                    ])}
-                  >
+                {softOpen || demo ? (
+                  <SoftFailBadge>
                     {demo
                       ? t(locale, "planner.place.demoBadge")
                       : t(locale, "planner.place.liveBadge")}
-                  </Text>
-                </View>
+                  </SoftFailBadge>
+                ) : (
+                  <SoftFailLiveBadge>
+                    {t(locale, "planner.place.liveBadge")}
+                  </SoftFailLiveBadge>
+                )}
                 {softOpen ? (
                   <SoftFailBadge>
                     {t(locale, "planner.place.softBadge")}
@@ -383,30 +378,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
     color: "rgba(100,116,139,0.7)",
-  },
-  badge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  badgeDemo: {
-    backgroundColor: colors.mist,
-  },
-  badgeLive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
-  },
-  badgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  badgeTextDemo: {
-    color: colors.inkSoft,
-  },
-  badgeTextLive: {
-    color: colors.riverDeep,
   },
   sections: {
     borderTopWidth: 0,
