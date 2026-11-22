@@ -2936,17 +2936,31 @@ export default function TripDetailScreen() {
                 </SheetPresence>
 
                 {comments.length > 0 ? (
+                  /*
+                    Comments preview residual (BEA-565 beyond reply #378 / #352):
+                    tip-011 SheetPresence rise · river hex-alpha rail · author
+                    lineHeight snug. SoftFail / composer invent untouched.
+                  */
                   <View style={styles.collabThread}>
-                    <Text style={styles.collabSectionLabel}>
-                      {t(locale, "collab.panel.tab.comments")}
-                    </Text>
-                    {comments.slice(0, 3).map((c) => (
-                      <View key={c.id} style={styles.commentRail}>
-                        <Text style={styles.commentAuthor}>
-                          {c.authorDisplayName ?? c.authorUserId}
-                        </Text>
-                        <Text style={styles.commentBody}>{c.body}</Text>
-                      </View>
+                    <SheetPresence open delayMs={40} rise={8}>
+                      <Text style={styles.collabSectionLabel}>
+                        {t(locale, "collab.panel.tab.comments")}
+                      </Text>
+                    </SheetPresence>
+                    {comments.slice(0, 3).map((c, i) => (
+                      <SheetPresence
+                        key={c.id}
+                        open
+                        delayMs={Math.min(i, 6) * 35 + 40}
+                        rise={8}
+                      >
+                        <View style={styles.commentRail}>
+                          <Text style={styles.commentAuthor}>
+                            {c.authorDisplayName ?? c.authorUserId}
+                          </Text>
+                          <Text style={styles.commentBody}>{c.body}</Text>
+                        </View>
+                      </SheetPresence>
                     ))}
                   </View>
                 ) : null}
@@ -4526,7 +4540,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 8,
   },
-  /** Comments preview eyebrow — wave 50 craft residual (BEA-487): 1.8 tracking. */
+  /** Comments preview eyebrow — wave 50 (#352) + wave 59 tip-011 rise (BEA-565). */
   collabSectionLabel: {
     ...type.body,
     fontSize: 11,
@@ -4535,10 +4549,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
-  /** Azure rail @ 40% — matches web border-river/40 (colors.river #2F6BFF). */
+  /** Azure rail @ 40% — web border-river/40 via river hex-alpha (BEA-565). */
   commentRail: {
     borderLeftWidth: 2,
-    borderLeftColor: "rgba(47, 107, 255, 0.4)",
+    borderLeftColor: `${colors.river}66`,
     paddingLeft: 10,
     gap: 2,
   },
@@ -4546,6 +4560,9 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "600",
+    letterSpacing: -0.15,
+    /** Web thread author leading-snug (BEA-565). */
+    lineHeight: 18,
     color: colors.ink,
   },
   commentBody: {
