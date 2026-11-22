@@ -1107,22 +1107,6 @@ const styles = StyleSheet.create({
   exportSupportSoft: {
     flexShrink: 1,
   },
-  exportBadge: {
-    ...type.body,
-    alignSelf: "flex-start",
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.xs,
-    overflow: "hidden",
-  },
-  exportBadgeLive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
-    color: colors.river,
-  },
   /** Mist SoftFail strip under azure Export rail — border-b before tip-011 CTAs. */
   softNotice: {
     marginTop: 0,

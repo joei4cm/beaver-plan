@@ -3192,24 +3192,6 @@ const styles = StyleSheet.create({
     color: "rgba(15, 23, 42, 0.55)",
     flexShrink: 1,
   },
-  searchBadge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-  },
-  searchBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  searchBadgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  searchBadgeTextLive: {
-    color: colors.riverDeep,
-  },
   searchHits: {
     paddingVertical: 4,
   },
@@ -3394,24 +3376,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: colors.river,
-  },
-  stopsSoftBadge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  stopsSoftBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  stopsSoftBadgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-  },
-  stopsSoftBadgeTextLive: {
     color: colors.river,
   },
   stopsListHint: {
@@ -3724,9 +3688,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  presenceStatusBadgeLive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
-  },
   presenceStatusBadgeIdle: {
     backgroundColor: "rgba(230, 236, 245, 0.7)",
   },
@@ -3736,9 +3697,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-  },
-  presenceStatusBadgeTextLive: {
-    color: colors.riverDeep,
   },
   presenceStatusBadgeTextIdle: {
     color: "rgba(100, 116, 139, 0.7)",
@@ -3958,21 +3916,6 @@ const styles = StyleSheet.create({
     color: "rgba(71, 85, 105, 0.8)",
     maxWidth: 420,
   },
-  timelineStatusBadge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.xs,
-    overflow: "hidden",
-  },
-  timelineStatusBadgeLive: {
-    color: colors.river,
-    backgroundColor: "rgba(47,107,255,0.12)",
-  },
   timelineBody: {
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -4121,21 +4064,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     alignItems: "center",
     gap: 6,
-  },
-  inviteStatusBadge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.xs,
-    overflow: "hidden",
-  },
-  inviteStatusBadgeLive: {
-    color: colors.river,
-    backgroundColor: "rgba(47,107,255,0.12)",
   },
   inviteRoleChip: {
     ...type.body,

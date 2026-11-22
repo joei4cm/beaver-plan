@@ -847,25 +847,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colors.ink,
   },
-  badge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    overflow: "hidden",
-    borderRadius: radius.xs,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-  },
-  badgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-    color: colors.riverDeep,
-  },
-  badgeDemo: {
-    backgroundColor: colors.mist,
-    color: colors.inkSoft,
-  },
   support: {
     ...type.body,
     marginTop: 4,
