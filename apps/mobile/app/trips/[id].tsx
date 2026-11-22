@@ -2710,10 +2710,11 @@ export default function TripDetailScreen() {
                   {/*
                     Invite SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
                     wave 48 (BEA-461) + wave 53 (BEA-506) + wave 56 residual
-                    (BEA-543) + wave 57 members invite residual (BEA-547): sheet
-                    eyebrow 1.8 · empty shareHint inkSoft/80 + lineHeight · URL
-                    inkSoft/80. SoftFailBadge · SoftFailSupport · mist band
-                    unchanged. Craft: ?inviteSoftFail=1.
+                    (BEA-543) + wave 57 members invite residual (BEA-547) + wave
+                    60 residual (BEA-584): sheet eyebrow 1.8 · role chip type 1.4 ·
+                    empty shareHint inkSoft/80 + snug · URL inkSoft/80.
+                    SoftFailBadge · SoftFailSupport · mist band unchanged. Craft:
+                    ?inviteSoftFail=1.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -4838,7 +4839,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    /** Web invite role chip tracking-[0.14em] · presenceRole 1.4 (BEA-584). */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.riverDeep,
     backgroundColor: `${colors.river}1F`,
@@ -4887,7 +4889,8 @@ const styles = StyleSheet.create({
   inviteShareHintMuted: {
     ...type.body,
     fontSize: 14,
-    lineHeight: 20,
+    /** Web empty shareHint leading-snug · presence empty 18 (BEA-584). */
+    lineHeight: 18,
     /** Web empty shareHint text-ink-soft/80 */
     color: `${colors.inkSoft}CC`,
   },

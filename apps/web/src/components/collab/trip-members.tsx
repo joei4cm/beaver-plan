@@ -61,8 +61,9 @@ function presenceFor(member: TripMember): PresenceState {
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
- * (BEA-518) + wave 56–58 invite/roster + wave 57 presence pills (BEA-546) +
- * wave 60 presence pills residual (BEA-579): version badge `/80`. SoftFailBadge ·
+ * (BEA-518) + wave 56–58 invite/roster + wave 57 members invite (BEA-547) +
+ * wave 60 presence pills (BEA-579) + wave 60 members invite residual (BEA-584):
+ * Show/Hide tip-011 out-strong · empty shareHint rise 40ms. SoftFailBadge ·
  * SoftFailSupport · mist band unchanged. Invite SoftFail yields presence (no
  * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
@@ -430,7 +431,7 @@ export function TripMembersBar({
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft/80 transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft/80 transition duration-bp-fast ease-bp-out-strong hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 style={{ animationDelay: "115ms" }}
               >
                 {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
@@ -544,7 +545,10 @@ export function TripMembersBar({
               </p>
             </SheetPresence>
           ) : (
-            <p className="animate-rise text-sm leading-snug text-ink-soft/80">
+            <p
+              className="animate-rise text-sm leading-snug text-ink-soft/80"
+              style={{ animationDelay: "40ms" }}
+            >
               {t(locale, "collab.shareHint")}
             </p>
           )}
