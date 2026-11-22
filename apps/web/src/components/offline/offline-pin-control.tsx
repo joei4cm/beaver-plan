@@ -36,13 +36,12 @@ type Props = {
 type SoftFailKind = "pin" | "sync";
 
 /**
- * Offline pin SoftFail helpers (BEA-448 after #323 timber fix) + craft SoftFail
- * query closeout (BEA-450 after #327 / #319):
- * azure Offline pin SoftFail rail · SoftFailBadge Soft pin/sync · SoftFailSupport ·
- * SoftFailNotice compact mist band · tip-011 mist-wash. SoftFail depth + helpers
- * kept. Craft: /trips/…?pinSoftFail=1 · /trips/…/journal?pinSoftFail=1 — SoftFail
- * depth without a pin/sync miss. Soft copy never timber / Failed to fetch. No
- * `/dev` SoftFail gallery.
+ * Offline pin chrome — SoftFail depth kept (BEA-448 / BEA-450 / #323) + wave 49
+ * craft residual (BEA-474): always-on azure Offline pin rail (non-compact) ·
+ * tip-011 pin/sync press · Lumen status chip tokens. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. Craft: ?pinSoftFail=1 — SoftFail
+ * depth without a pin/sync miss. Soft copy never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function OfflinePinControl({
   tripId,
@@ -148,9 +147,8 @@ export function OfflinePinControl({
     : true;
 
   /**
-   * Offline pin SoftFail rail owns SoftFail under azure pin chrome. SoftFail
-   * copy always pinSoftFail / syncSoftFail (never timber). Craft
-   * `?pinSoftFail=1` forces SoftFail depth without a pin/sync miss.
+   * SoftFail depth kept (BEA-448 / BEA-450) — SoftFailBadge Soft pin/sync ·
+   * SoftFailSupport · compact mist band · tip-011 wash. Craft: ?pinSoftFail=1.
    */
   const softOpen = pinSoftPreview || Boolean(softFail);
   const pinSoftCopy = t(locale, "offline.pinSoftFail");
@@ -162,15 +160,27 @@ export function OfflinePinControl({
       : t(locale, "offline.softBadge");
   const softSupportCopy = t(locale, "offline.softSupport");
 
+  const statusLabel = [
+    online ? t(locale, "offline.online") : t(locale, "offline.offline"),
+    pending > 0
+      ? t(locale, "offline.pending").replace("{n}", String(pending))
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  /** Always-on sheet for journal / SoftFail; compact stays chip-thin in export. */
+  const sheetChrome = softOpen || !compact;
+
   const pinControls = (
     <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
         disabled={busy}
         onClick={() => void togglePin()}
-        className={`rounded-bp-sm px-3 py-1.5 text-sm transition disabled:opacity-40 ${
+        className={`rounded-bp-sm px-3 py-1.5 text-sm font-semibold transition duration-bp ease-bp-out-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:opacity-40 ${
           pinned
-            ? "bg-river text-foam"
+            ? "bg-river text-foam shadow-bp-soft"
             : "border border-[color:var(--bp-line)] bg-foam/60 text-ink-soft hover:border-river/40 hover:text-river"
         }`}
         title={t(locale, "offline.pinHint")}
@@ -181,18 +191,17 @@ export function OfflinePinControl({
             ? t(locale, "offline.pinned")
             : t(locale, "offline.pin")}
       </button>
-      <span className="text-xs text-ink-soft/70">
-        {online ? t(locale, "offline.online") : t(locale, "offline.offline")}
-        {pending > 0
-          ? ` · ${t(locale, "offline.pending").replace("{n}", String(pending))}`
-          : ""}
-      </span>
+      {compact ? (
+        <span className="text-[11px] font-medium tracking-wide text-ink-soft/75">
+          {statusLabel}
+        </span>
+      ) : null}
       {pending > 0 && online ? (
         <button
           type="button"
           disabled={busy}
           onClick={() => void onFlush()}
-          className="text-xs text-river underline-offset-2 hover:underline disabled:opacity-40"
+          className="text-xs font-medium text-river underline-offset-2 transition duration-bp-fast ease-bp-out hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-40"
         >
           {t(locale, "offline.syncNow")}
         </button>
@@ -203,34 +212,39 @@ export function OfflinePinControl({
   return (
     <div
       className={
-        softOpen
+        sheetChrome
           ? "max-w-md overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
-          : compact
-            ? "inline-flex flex-col gap-1"
-            : "flex flex-col gap-2"
+          : "inline-flex flex-col gap-1"
       }
       aria-label={t(locale, "offline.pinRail")}
     >
       {/*
-        SoftFailSupport residual (BEA-448 after #323) + craft SoftFail query
-        closeout (BEA-450): azure Offline pin SoftFail rail · SoftFailBadge Soft
-        pin/sync · SoftFailSupport · SoftFailNotice compact mist band · tip-011 —
-        SoftFail depth + helpers kept. Craft: ?pinSoftFail=1 — never timber.
+        SoftFail kept (BEA-448 / BEA-450) + wave 49 craft (BEA-474): azure
+        Offline pin rail · SoftFailBadge Soft pin/sync · SoftFailSupport ·
+        tip-011 press — craft ?pinSoftFail=1. Never timber / Failed to fetch.
       */}
-      {softOpen ? (
+      {sheetChrome ? (
         <header
           className={[
             "relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-3 py-2",
-            softFailRailClass,
+            softOpen
+              ? softFailRailClass
+              : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
           ].join(" ")}
         >
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "offline.pinRail")}
             </span>
-            <SoftFailSupport>{softSupportCopy}</SoftFailSupport>
+            {softOpen ? (
+              <SoftFailSupport>{softSupportCopy}</SoftFailSupport>
+            ) : (
+              <span className="text-[11px] font-medium tracking-wide text-ink-soft/80">
+                {statusLabel}
+              </span>
+            )}
           </div>
-          <SoftFailBadge>{softBadgeCopy}</SoftFailBadge>
+          {softOpen ? <SoftFailBadge>{softBadgeCopy}</SoftFailBadge> : null}
         </header>
       ) : null}
 
@@ -246,16 +260,16 @@ export function OfflinePinControl({
 
       <div
         className={
-          softOpen
-            ? `px-3 py-2.5 ${softFailMistWashClass}`
+          sheetChrome
+            ? `px-3 py-2.5 ${softOpen ? softFailMistWashClass : ""}`
             : undefined
         }
       >
         {pinControls}
         {pinned && !compact ? (
           <p
-            className={`max-w-md text-xs text-ink-soft/80 ${
-              softOpen ? "mt-2" : "mt-0"
+            className={`max-w-md text-xs leading-relaxed text-ink-soft/80 ${
+              softOpen || sheetChrome ? "mt-2" : "mt-0"
             }`}
           >
             {t(locale, "offline.statusHint")}
