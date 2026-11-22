@@ -214,13 +214,14 @@ function LegCardHeader({
 }) {
   return (
     <header
-      className={`relative border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)] ${
+      className={`animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)] ${
         softOpen ? "bg-mist/35" : ""
       }`}
+      style={{ animationDelay: "50ms" }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
             {t(locale, "planner.transfer.title")}
           </span>
           {softOpen || demoMode ? (
@@ -257,14 +258,14 @@ function LegCardHeader({
 }
 
 /**
- * Transit panel — SoftFail depth kept (BEA-396 / BEA-423) + wave 48 craft
- * residual (BEA-462): Lumen river ring token on transit marks · SheetPresence
- * Summary / Steps · `--bp-line` + `shadow-bp-soft` shell. Craft SoftFail:
- * `/trips/…?transferSoftFail=1`. SoftFailBadge Soft/Demo · SoftFailLiveBadge ·
- * SoftFailSupport · compact SoftFail mist band under rail · tip-011 mist-wash.
- * SoftFail copy always softFail / softFailEmpty — never timber / Failed to
- * fetch. Mode SoftFail (#272) yields while TransferSteps owns selected-stop
- * soft chrome (no double depth). No `/dev` gallery.
+ * Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
+ * wave 48 Mode/river ring (BEA-462) + wave 51 craft residual (BEA-490):
+ * Transfer rail eyebrow `0.65rem` / `0.18em` · Summary / Steps `animate-rise`.
+ * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact
+ * SoftFail mist band · tip-011 mist-wash unchanged. Craft SoftFail:
+ * `/trips/…?transferSoftFail=1`. Soft copy never timber / Failed to fetch.
+ * Mode SoftFail (#272) yields while this owns (no double depth). No `/dev`
+ * gallery.
  */
 export function TransferSteps({
   leg,
@@ -394,7 +395,7 @@ export function TransferSteps({
             }`}
           >
             <section
-              className="animate-fade space-y-2 px-3 py-3"
+              className="animate-rise space-y-2 px-3 py-3"
               style={{ animationDelay: "55ms" }}
               aria-label={t(locale, "planner.transfer.summaryEyebrow")}
             >
@@ -413,7 +414,7 @@ export function TransferSteps({
 
             {hasSteps ? (
               <section
-                className="animate-fade px-3 pt-3 pb-1"
+                className="animate-rise px-3 pt-3 pb-1"
                 style={{ animationDelay: "75ms" }}
                 aria-label={t(locale, "planner.transfer.stepsEyebrow")}
               >
