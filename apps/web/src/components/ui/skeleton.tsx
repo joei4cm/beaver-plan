@@ -352,12 +352,17 @@ export function ShareStudioSkeleton() {
       aria-live="polite"
       className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8"
     >
-      <div className="space-y-3 border-b border-[color:var(--bp-line)] pb-8">
+      {/* Page header — live header animate-rise parity (BEA-627 / #48 motion) */}
+      <div className="animate-rise space-y-3 border-b border-[color:var(--bp-line)] pb-8">
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-10 w-72 max-w-full" />
         <Skeleton className="h-4 w-full max-w-md" />
       </div>
-      <div className="mt-6 flex gap-2 border-b border-[color:var(--bp-line)] pb-0">
+      {/* Day tabs — live tablist animate-rise 40ms parity (BEA-627 / #48 motion) */}
+      <div
+        className="animate-rise mt-6 flex gap-2 border-b border-[color:var(--bp-line)] pb-0"
+        style={{ animationDelay: "40ms" }}
+      >
         <Skeleton className="h-14 w-28 rounded-none" />
         <Skeleton className="h-14 w-28 rounded-none" />
         <Skeleton className="h-14 w-28 rounded-none" />

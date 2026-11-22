@@ -501,7 +501,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
           <p className="mt-2 font-display text-xl font-semibold tracking-tight text-ink/85 md:text-2xl">
             {trip.title}
           </p>
-          <p className="mt-3 max-w-xl text-ink-soft">
+          <p className="mt-3 max-w-xl text-ink-soft/80">
             {t(locale, "share.support")}
           </p>
         </div>
@@ -523,7 +523,8 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
       <div
         ref={dayTabsRef}
-        className="relative mt-6 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/50"
+        className="animate-rise relative mt-6 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/50"
+        style={{ animationDelay: "40ms" }}
         role="tablist"
         aria-label={t(locale, "share.eyebrow")}
       >
@@ -563,7 +564,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
                 {t(locale, "planner.day")} {i + 1}
               </span>
-              <span className="text-sm font-semibold">{day.date}</span>
+              <span className="text-sm font-semibold leading-snug">
+                {day.date}
+              </span>
             </button>
           );
         })}
@@ -910,7 +913,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   <SectionEyebrow>
                     {t(locale, "share.editEyebrow")}
                   </SectionEyebrow>
-                  <h2 className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl">
+                  <h2 className="mt-1 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl">
                     {t(locale, "share.lightEdit")}
                   </h2>
                 </div>
