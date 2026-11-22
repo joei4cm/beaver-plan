@@ -29,6 +29,7 @@ import {
   isApiSoftFail,
   proposeDayFill,
 } from "../api";
+import { SheetPresence } from "./sheet-presence";
 import { SoftFailNotice } from "./soft-fail-notice";
 import { type } from "../theme";
 
@@ -117,9 +118,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Expo smart day-fill sheet — Lumen hierarchy parity with web #99.
- * Azure header rail · SoftFailNotice · prefs · preview;
- * mist-track interest chips; StyleSheet.flatten for RN Web.
+ * Expo smart day-fill SoftFailNotice depth (BEA-360 after #101 / web #248):
+ * azure Day fill rail · Soft fill badge · softSupport · soft rail wash ·
+ * compact SoftFail mist band · tip-011 SheetPresence mist-wash body ·
+ * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
+ * Failed to fetch. Yields web planner day-fill SoftFail (#248); Expo day
+ * tabs SoftFail (#230) stays on Days rail (no double depth).
  */
 export function DayFillPanel({
   tripId,
@@ -331,6 +335,13 @@ export function DayFillPanel({
     mode === "live"
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
+  /**
+   * Day-fill SoftFailNotice depth (BEA-360 after #101 / web #248):
+   * azure Day fill rail · Soft fill badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash body. SoftFail copy always
+   * softFail / demoNotice / applySoftFail (never timber / Failed to fetch).
+   * Expo day tabs SoftFail (#230) stays on Days — no double depth.
+   */
   const softCopy =
     notice ??
     (softDemo
@@ -338,6 +349,10 @@ export function DayFillPanel({
       : demoMode
         ? t(locale, "planner.dayFill.demoNotice")
         : null);
+  const showSoftFail = Boolean(softCopy);
+  const sheetSupportCopy = showSoftFail
+    ? t(locale, "planner.dayFill.softSupport")
+    : t(locale, "planner.dayFill.support");
 
   const bodyStyle = useMemo(
     () => ({
@@ -371,11 +386,19 @@ export function DayFillPanel({
 
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
+      {/*
+        Day-fill SoftFail depth (BEA-360 after #101):
+        azure Day fill rail · Soft fill badge · softSupport · soft rail wash ·
+        tip-011 — never timber / Failed to fetch. Yields web #248.
+      */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        style={styles.header}
+        style={StyleSheet.flatten([
+          styles.header,
+          showSoftFail ? styles.headerSoft : null,
+        ])}
       >
         <View style={styles.headerText}>
           <View style={styles.headerTitleRow}>
@@ -388,8 +411,15 @@ export function DayFillPanel({
             >
               {badge}
             </Text>
+            {showSoftFail ? (
+              <View style={styles.softBadge}>
+                <Text style={styles.softBadgeLabel}>
+                  {t(locale, "planner.dayFill.softBadge")}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <Text style={styles.support}>{t(locale, "planner.dayFill.support")}</Text>
+          <Text style={styles.support}>{sheetSupportCopy}</Text>
         </View>
         <Text
           style={StyleSheet.flatten([
@@ -403,13 +433,30 @@ export function DayFillPanel({
       </Pressable>
 
       {open ? (
-        <Animated.View style={StyleSheet.flatten([styles.body, bodyStyle])}>
-          <SoftFailNotice open={Boolean(softCopy)} style={styles.softFail}>
+        <Animated.View
+          style={StyleSheet.flatten([
+            styles.body,
+            showSoftFail ? styles.bodySoft : null,
+            bodyStyle,
+          ])}
+        >
+          {/* Compact SoftFail mist band under azure Day fill rail — never timber. */}
+          <SoftFailNotice
+            open={showSoftFail}
+            compact
+            style={styles.sheetSoftFail}
+          >
             {softCopy ?? ""}
           </SoftFailNotice>
 
-          <View
-            style={styles.prefs}
+          <SheetPresence
+            open={open}
+            delayMs={50}
+            rise={10}
+            style={StyleSheet.flatten([
+              styles.prefs,
+              showSoftFail ? styles.prefsSoft : null,
+            ])}
             accessibilityLabel={t(locale, "planner.dayFill.interests")}
           >
             <View>
@@ -556,134 +603,167 @@ export function DayFillPanel({
                 </Pressable>
               ) : null}
             </View>
-          </View>
+          </SheetPresence>
 
           {generating ? (
-            <View style={styles.loadingBlock} accessibilityRole="progressbar">
-              <View style={styles.skeletonCard}>
-                <View style={styles.skeletonHeader}>
-                  <View style={styles.skeletonEyebrow} />
-                  <View style={styles.skeletonTitle} />
-                  <View style={styles.skeletonLine} />
-                </View>
-                {Array.from({ length: dayCount }).map((_, i) => (
-                  <View key={i} style={styles.skeletonDay}>
-                    <View style={styles.skeletonDayTitle} />
-                    <View style={styles.skeletonNote} />
+            <SheetPresence
+              open={open}
+              delayMs={70}
+              rise={10}
+              style={StyleSheet.flatten([
+                styles.stage,
+                showSoftFail ? styles.stageSoft : null,
+              ])}
+              accessibilityLabel={t(locale, "planner.dayFill.loadingHint")}
+            >
+              <View style={styles.loadingBlock} accessibilityRole="progressbar">
+                <View style={styles.skeletonCard}>
+                  <View style={styles.skeletonHeader}>
+                    <View style={styles.skeletonEyebrow} />
+                    <View style={styles.skeletonTitle} />
+                    <View style={styles.skeletonLine} />
                   </View>
-                ))}
+                  {Array.from({ length: dayCount }).map((_, i) => (
+                    <View key={i} style={styles.skeletonDay}>
+                      <View style={styles.skeletonDayTitle} />
+                      <View style={styles.skeletonNote} />
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.loadingHint}>
+                  {t(locale, "planner.dayFill.loadingHint")}
+                </Text>
               </View>
-              <Text style={styles.loadingHint}>
-                {t(locale, "planner.dayFill.loadingHint")}
-              </Text>
-            </View>
+            </SheetPresence>
           ) : null}
 
           {!proposal && !generating ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>
-                {t(locale, "planner.dayFill.empty")}
-              </Text>
-              <Text style={styles.emptyHint}>
-                {t(locale, "planner.dayFill.emptyHint")}
-              </Text>
-            </View>
+            <SheetPresence
+              open={open}
+              delayMs={70}
+              rise={10}
+              style={StyleSheet.flatten([
+                styles.stage,
+                showSoftFail ? styles.stageSoft : null,
+              ])}
+              accessibilityLabel={t(locale, "planner.dayFill.empty")}
+            >
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>
+                  {t(locale, "planner.dayFill.empty")}
+                </Text>
+                <Text style={styles.emptyHint}>
+                  {t(locale, "planner.dayFill.emptyHint")}
+                </Text>
+              </View>
+            </SheetPresence>
           ) : null}
 
           {proposal && !generating ? (
-            <Animated.View
-              style={StyleSheet.flatten([styles.preview, previewStyle])}
+            <SheetPresence
+              open={open}
+              delayMs={70}
+              rise={12}
+              style={StyleSheet.flatten([
+                styles.stage,
+                showSoftFail ? styles.stageSoft : null,
+              ])}
               accessibilityLabel={t(locale, "planner.dayFill.preview")}
             >
-              <View style={styles.previewHeader}>
-                <View style={styles.previewHeaderText}>
-                  <View style={styles.headerTitleRow}>
-                    <SectionEyebrow>
-                      {t(locale, "planner.dayFill.previewEyebrow")}
-                    </SectionEyebrow>
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.badge,
-                        proposal.mode === "live"
-                          ? styles.badgeLive
-                          : styles.badgeDemo,
-                      ])}
-                    >
-                      {proposal.mode === "live"
-                        ? t(locale, "planner.dayFill.liveBadge")
-                        : t(locale, "planner.dayFill.demoBadge")}
-                    </Text>
-                  </View>
-                  <Text style={styles.prefsTitle}>
-                    {t(locale, "planner.dayFill.preview")}
-                  </Text>
-                  {proposal.rationale ? (
-                    <Text style={styles.rationale}>{proposal.rationale}</Text>
-                  ) : null}
-                </View>
-                <Pressable
-                  disabled={applying}
-                  onPress={() => void apply()}
-                  accessibilityRole="button"
-                  style={StyleSheet.flatten([
-                    styles.cta,
-                    applying ? styles.ctaDisabled : null,
-                  ])}
-                >
-                  <Text style={styles.ctaLabel}>
-                    {applying
-                      ? t(locale, "planner.dayFill.applying")
-                      : t(locale, "planner.dayFill.apply")}
-                  </Text>
-                </Pressable>
-              </View>
-
-              {proposal.days.map((day) => (
-                <View key={day.dayIndex} style={styles.dayBlock}>
-                  <View style={styles.dayHead}>
-                    <Text style={styles.dayTitle}>
-                      {t(locale, "planner.day")} {day.dayIndex + 1}
-                      {day.date ? (
-                        <Text style={styles.dayDate}> {day.date}</Text>
-                      ) : null}
-                    </Text>
-                    {day.note ? (
-                      <Text style={styles.dayNote}>{day.note}</Text>
-                    ) : null}
-                  </View>
-                  <View style={styles.stopList}>
-                    {day.stops.map((stop, i) => (
-                      <View
-                        key={`${stop.place.enginePlaceId}-${i}`}
-                        style={styles.stopRow}
+              <Animated.View
+                style={StyleSheet.flatten([styles.preview, previewStyle])}
+                accessibilityLabel={t(locale, "planner.dayFill.preview")}
+              >
+                <View style={styles.previewHeader}>
+                  <View style={styles.previewHeaderText}>
+                    <View style={styles.headerTitleRow}>
+                      <SectionEyebrow>
+                        {t(locale, "planner.dayFill.previewEyebrow")}
+                      </SectionEyebrow>
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.badge,
+                          proposal.mode === "live"
+                            ? styles.badgeLive
+                            : styles.badgeDemo,
+                        ])}
                       >
-                        <View style={styles.stopMarker}>
-                          <Text style={styles.stopMarkerLabel}>{i + 1}</Text>
-                        </View>
-                        <View style={styles.stopBody}>
-                          <Text style={styles.stopName} numberOfLines={1}>
-                            {stop.place.name}
-                          </Text>
-                          {typeof stop.estimatedWalkMinutes === "number" &&
-                          stop.estimatedWalkMinutes > 0 ? (
-                            <Text style={styles.stopWalk}>
-                              {t(locale, "planner.dayFill.stopWalk")}{" "}
-                              {stop.estimatedWalkMinutes}
-                              {t(locale, "planner.dayFill.minutes")}
-                            </Text>
-                          ) : null}
-                        </View>
-                      </View>
-                    ))}
-                    {day.stops.length === 0 ? (
-                      <Text style={styles.noStops}>
-                        {t(locale, "planner.dayFill.noStops")}
+                        {proposal.mode === "live"
+                          ? t(locale, "planner.dayFill.liveBadge")
+                          : t(locale, "planner.dayFill.demoBadge")}
                       </Text>
+                    </View>
+                    <Text style={styles.prefsTitle}>
+                      {t(locale, "planner.dayFill.preview")}
+                    </Text>
+                    {proposal.rationale ? (
+                      <Text style={styles.rationale}>{proposal.rationale}</Text>
                     ) : null}
                   </View>
+                  <Pressable
+                    disabled={applying}
+                    onPress={() => void apply()}
+                    accessibilityRole="button"
+                    style={StyleSheet.flatten([
+                      styles.cta,
+                      applying ? styles.ctaDisabled : null,
+                    ])}
+                  >
+                    <Text style={styles.ctaLabel}>
+                      {applying
+                        ? t(locale, "planner.dayFill.applying")
+                        : t(locale, "planner.dayFill.apply")}
+                    </Text>
+                  </Pressable>
                 </View>
-              ))}
-            </Animated.View>
+
+                {proposal.days.map((day) => (
+                  <View key={day.dayIndex} style={styles.dayBlock}>
+                    <View style={styles.dayHead}>
+                      <Text style={styles.dayTitle}>
+                        {t(locale, "planner.day")} {day.dayIndex + 1}
+                        {day.date ? (
+                          <Text style={styles.dayDate}> {day.date}</Text>
+                        ) : null}
+                      </Text>
+                      {day.note ? (
+                        <Text style={styles.dayNote}>{day.note}</Text>
+                      ) : null}
+                    </View>
+                    <View style={styles.stopList}>
+                      {day.stops.map((stop, i) => (
+                        <View
+                          key={`${stop.place.enginePlaceId}-${i}`}
+                          style={styles.stopRow}
+                        >
+                          <View style={styles.stopMarker}>
+                            <Text style={styles.stopMarkerLabel}>{i + 1}</Text>
+                          </View>
+                          <View style={styles.stopBody}>
+                            <Text style={styles.stopName} numberOfLines={1}>
+                              {stop.place.name}
+                            </Text>
+                            {typeof stop.estimatedWalkMinutes === "number" &&
+                            stop.estimatedWalkMinutes > 0 ? (
+                              <Text style={styles.stopWalk}>
+                                {t(locale, "planner.dayFill.stopWalk")}{" "}
+                                {stop.estimatedWalkMinutes}
+                                {t(locale, "planner.dayFill.minutes")}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      ))}
+                      {day.stops.length === 0 ? (
+                        <Text style={styles.noStops}>
+                          {t(locale, "planner.dayFill.noStops")}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                ))}
+              </Animated.View>
+            </SheetPresence>
           ) : null}
         </Animated.View>
       ) : null}
@@ -712,7 +792,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
     backgroundColor: "rgba(244, 246, 250, 0.55)",
+  },
+  /** Soft azure Day fill rail wash when SoftFail owns depth (BEA-360). */
+  headerSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
   headerText: {
     flex: 1,
@@ -750,6 +836,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
+  softBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  softBadgeLabel: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
   support: {
     ...type.body,
     marginTop: 4,
@@ -766,17 +866,33 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "180deg" }],
   },
   body: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 18,
+    gap: 0,
   },
-  softFail: {
-    marginBottom: 2,
+  /** Mist-wash tip-011 sheet body when SoftFail owns the Day fill rail. */
+  bodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
+  },
+  /** Mist SoftFail strip under azure Day fill rail — border-b before tip-011 body. */
+  sheetSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
   },
   prefs: {
     gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  /** tip-011 mist wash on prefs while SoftFail owns the rail. */
+  prefsSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  stage: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  stageSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.12)",
   },
   sectionEyebrow: {
     ...type.body,
