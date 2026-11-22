@@ -608,11 +608,11 @@ export default function ShareScreen() {
 
             {/*
               Export SoftFail helpers (BEA-397 after #284 / depth BEA-365) +
-              craft SoftFail query parity (BEA-404): azure Export rail ·
-              SoftFailBadge Soft export / Soft studio · SoftFailSupport ·
-              SoftFailNotice mist band · softFailMistWashStyle tip-011 ·
-              StyleSheet.flatten · Craft: ?exportSoftFail=1 · ?studioSoftFail=1 —
-              never timber / Failed to fetch. No /dev SoftFail gallery.
+              craft SoftFail query parity (BEA-404) + wave 52 craft residual
+              (BEA-501): Export gap 12 · paper/inkSoft tokens · tip-011 press
+              0.98 · secondary ink/90 settle. SoftFail rails unchanged. Craft:
+              ?exportSoftFail=1 · ?studioSoftFail=1 — never timber / Failed to
+              fetch. No /dev SoftFail gallery.
             */}
             <SheetPresence
               open
@@ -681,10 +681,13 @@ export default function ShareScreen() {
                 >
                   <SheetPresence open delayMs={40} rise={8}>
                     <Pressable
-                      style={StyleSheet.flatten([
-                        styles.primary,
-                        busy || !svg ? styles.disabled : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.primary,
+                          pressed ? styles.exportCtaPressed : null,
+                          busy || !svg ? styles.disabled : null,
+                        ])
+                      }
                       disabled={busy || !svg}
                       onPress={() => void downloadExport()}
                       accessibilityRole="button"
@@ -697,10 +700,13 @@ export default function ShareScreen() {
                   </SheetPresence>
                   <SheetPresence open delayMs={70} rise={8}>
                     <Pressable
-                      style={StyleSheet.flatten([
-                        styles.secondaryInk,
-                        busy || !svg ? styles.disabled : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.secondaryInk,
+                          pressed ? styles.secondaryInkPressed : null,
+                          busy || !svg ? styles.disabled : null,
+                        ])
+                      }
                       disabled={busy || !svg}
                       onPress={() => void shareOut()}
                       accessibilityRole="button"
@@ -714,10 +720,13 @@ export default function ShareScreen() {
                   <SheetPresence open delayMs={100} rise={6}>
                     <View style={styles.exportTertiaryRow}>
                       <Pressable
-                        style={StyleSheet.flatten([
-                          styles.refreshLink,
-                          busy ? styles.disabled : null,
-                        ])}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.refreshLink,
+                            pressed ? styles.exportCtaPressed : null,
+                            busy ? styles.disabled : null,
+                          ])
+                        }
                         disabled={busy}
                         onPress={() => void refreshPreview()}
                         accessibilityRole="button"
@@ -1100,7 +1109,8 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244,246,250,0.7)",
+    /** Web bg-paper/70 — Lumen paper @ 0.7 */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderLeftWidth: 3,
@@ -1108,7 +1118,8 @@ const styles = StyleSheet.create({
   },
   /** Soft azure Export rail wash when SoftFail owns depth (BEA-365). */
   exportHeaderSoft: {
-    backgroundColor: "rgba(244,246,250,0.85)",
+    /** Web paper/85 when Soft owns — Lumen paper @ 0.85 */
+    backgroundColor: `${colors.paper}D9`,
   },
   exportHeaderText: {
     flex: 1,
@@ -1126,6 +1137,7 @@ const styles = StyleSheet.create({
   exportTitle: {
     ...type.display,
     fontSize: 20,
+    lineHeight: 26,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
@@ -1148,7 +1160,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   exportActions: {
-    gap: 10,
+    gap: 12,
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 14,
@@ -1179,11 +1191,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: "center",
   },
+  /** tip-011 press + web hover:bg-ink/90 settle */
+  secondaryInkPressed: {
+    backgroundColor: `${colors.ink}E6`,
+    transform: [{ scale: 0.98 }],
+  },
   secondaryInkLabel: {
     ...type.body,
     color: colors.foam,
     fontWeight: "600",
     fontSize: 14,
+  },
+  /** tip-011 press — parity with web Export active:scale-[0.98] / template #348 */
+  exportCtaPressed: {
+    transform: [{ scale: 0.98 }],
   },
   exportTertiaryRow: {
     flexDirection: "row",
@@ -1202,7 +1223,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.inkSoft,
     textDecorationLine: "underline",
-    textDecorationColor: "rgba(100,116,139,0.45)",
+    /** Web text-ink-soft underline @ 0.45 */
+    textDecorationColor: `${colors.inkSoft}73`,
   },
   demoHint: {
     ...type.body,
@@ -1211,7 +1233,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
     textAlign: "right",
-    color: "rgba(100,116,139,0.75)",
+    /** Web text-ink-soft/75 */
+    color: `${colors.inkSoft}BF`,
   },
   disabled: { opacity: 0.4 },
   error: {
