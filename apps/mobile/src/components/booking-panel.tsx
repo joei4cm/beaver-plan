@@ -1211,6 +1211,8 @@ const styles = StyleSheet.create({
   emptyResults: {
     ...type.display,
     fontSize: 17,
+    /** Web emptyResults leading-snug · day-fill emptyTitle twin (BEA-618). */
+    lineHeight: 22,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,

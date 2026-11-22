@@ -638,7 +638,7 @@ export function BookingPanel({
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                   {t(locale, "planner.booking.emptyEyebrow")}
                 </p>
-                <p className="font-display text-lg font-semibold tracking-tight text-ink">
+                <p className="font-display text-lg font-semibold leading-snug tracking-tight text-ink">
                   {t(locale, "planner.booking.emptyResults")}
                 </p>
                 <p className="text-sm leading-relaxed text-ink-soft/80">
