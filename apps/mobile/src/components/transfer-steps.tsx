@@ -259,8 +259,9 @@ function LegCardHeader({
 /**
  * Expo Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
  * wave 48 Mode/river chrome (BEA-462) + wave 51 craft residual (BEA-490) +
- * wave 56 residual (BEA-538): Lumen hex-alpha foam/paper/river/inkSoft tokens ·
- * mode/step kind tracking 1.4 · tip-011 step SheetPresence stagger. SoftFailBadge
+ * wave 56 residual (BEA-538) + wave 62 residual (BEA-601): Lumen hex-alpha
+ * foam/paper/river/inkSoft tokens · mode/step kind tracking 1.4 · tip-011 step
+ * SheetPresence stagger · headerMeta inkSoft@CC (Mode #549 / web /80). SoftFailBadge
  * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · softFailBandStyle mist band ·
  * tip-011 softFailMistWashStyle unchanged. Craft SoftFail:
  * `/trips/…?transferSoftFail=1`. Soft copy never timber / Failed to fetch.
@@ -473,7 +474,8 @@ const styles = StyleSheet.create({
     ...type.body,
     flexShrink: 0,
     fontSize: 11,
-    color: colors.inkSoft,
+    /** Web `text-ink-soft/80` — Mode #549 leg summary ladder. */
+    color: `${colors.inkSoft}CC`,
     fontVariant: ["tabular-nums"],
   },
   headerDuration: {
