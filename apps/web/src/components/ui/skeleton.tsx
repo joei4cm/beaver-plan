@@ -356,18 +356,27 @@ export function ShareStudioSkeleton() {
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-7 w-36" />
             <Skeleton className="h-3.5 w-full max-w-xs" />
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-[8.5rem] w-full rounded-bp" />
               ))}
             </div>
-            <div className="mt-2 space-y-2.5 border-t border-[color:var(--bp-line)] pt-5">
-              <Skeleton className="h-2.5 w-12" />
-              <Skeleton className="h-7 w-24" />
-              <Skeleton className="h-3.5 w-full max-w-xs" />
-              <Skeleton className="mt-1 h-12 w-full rounded-bp" />
-              <Skeleton className="h-11 w-full rounded-bp" />
-              <Skeleton className="h-4 w-20" />
+            {/* Nested Export rail — azure inset · SoftFail slot · dual CTA heights */}
+            <div className="mt-2 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+              <div className="relative flex items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+                <div className="min-w-0 space-y-1.5">
+                  <Skeleton className="h-2.5 w-12" />
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-3 w-40 max-w-full" />
+                </div>
+                <Skeleton className="h-5 w-12 rounded-bp-xs" />
+              </div>
+              <Skeleton className="h-9 w-full rounded-none" />
+              <div className="flex flex-col gap-3 px-3 py-3">
+                <Skeleton className="h-12 w-full rounded-bp" />
+                <Skeleton className="h-11 w-full rounded-bp" />
+                <Skeleton className="h-4 w-20" />
+              </div>
             </div>
           </div>
         </div>
