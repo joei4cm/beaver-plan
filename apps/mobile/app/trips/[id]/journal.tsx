@@ -568,6 +568,8 @@ export default function JournalScreen() {
                 Craft: ?emptySoftFail=1 · ?entriesSoftFail=1. Soft copy never
                 timber / Failed to fetch. Empty owns while empty; Soft entries
                 yields while empty; Compose SoftFail stays on Compose.
+                List chrome residual (BEA-607): daySectionTitle snug lineHeight
+                (web list day h2 twin). SoftFail / empty / compose untouched.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -1387,6 +1389,8 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "700",
     letterSpacing: -0.4,
+    /** Web list day h2 leading-snug twin (BEA-607 beyond #357 / #415 empty). */
+    lineHeight: 32,
     color: colors.ink,
   },
   entryDetailHint: {
