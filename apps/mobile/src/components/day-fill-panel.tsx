@@ -127,11 +127,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
- * wave 48 (#340) + wave 53 craft residual (BEA-508): paper/inkSoft/river
- * token alphas · stop-row gap 12 · prefs/empty/day title lineHeights.
- * SoftFailBadge · SoftFailSupport · mist band unchanged. SoftFail copy never
- * timber / Failed to fetch. Yields web #248; Expo day tabs SoftFail (#230)
- * stays on Days. No `/dev` gallery.
+ * wave 48 (#340) + wave 53 (#367) + wave 56 craft residual (BEA-544): header
+ * paper/70 · support inkSoft/80 · stop name lineHeight. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. SoftFail copy never timber / Failed
+ * to fetch. Yields web #248; Expo day tabs SoftFail (#230) stays on Days. No
+ * `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -417,8 +417,8 @@ export function DayFillPanel({
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
         Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48 (#340) +
-        wave 53 craft (BEA-508): azure Day fill rail · paper/inkSoft/river
-        tokens · stop-row gap 12 · SoftFailBadge Soft fill · SoftFailSupport ·
+        wave 53 (#367) + wave 56 craft (BEA-544): azure Day fill rail · header
+        paper/70 · support inkSoft/80 · SoftFailBadge Soft fill · SoftFailSupport ·
         softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Never timber.
       */}
       <Pressable
@@ -860,8 +860,8 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.river,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    /** Web bg-paper soft wash — Lumen paper @ 0.55 */
-    backgroundColor: `${colors.paper}8C`,
+    /** Web bg-paper/70 — Lumen paper @ 0.70 */
+    backgroundColor: `${colors.paper}B3`,
   },
   /** Soft azure Day fill rail wash when SoftFail owns depth (BEA-360). */
   headerSoft: {
@@ -907,7 +907,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   chevron: {
     ...type.body,
@@ -1289,12 +1290,15 @@ const styles = StyleSheet.create({
   stopName: {
     ...type.body,
     fontSize: 14,
+    /** Web truncate stop name — leading-snug parity */
+    lineHeight: 20,
     color: colors.ink,
   },
   stopWalk: {
     ...type.body,
     marginTop: 2,
     fontSize: 12,
+    lineHeight: 18,
     color: colors.inkSoft,
   },
   noStops: {
