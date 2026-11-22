@@ -1163,15 +1163,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           {/*
             Transit Mode rail craft residual (BEA-549 / wave 57) beyond #370 /
             SoftFail depth kept (BEA-358 / BEA-423) + generate CTA tracking
-            residual (BEA-735 / wave 70): azure Mode rail · eyebrow
-            `0.65rem` / `0.18em` · header `animate-rise` · Soft mode badge ·
-            softSupport · compact SoftFail mist band · tip-011 mist-wash +
-            chip/CTA press · generate `tracking-wide` (Expo modeGenerateLabel
-            LS 0.2 · Export Share / Stops empty twin) · leg summary
+            residual (BEA-735 / wave 70) + Mode chip color settle (BEA-775 /
+            wave 72): azure Mode rail · eyebrow `0.65rem` / `0.18em` · header
+            `animate-rise` · Soft mode badge · softSupport · compact SoftFail
+            mist band · tip-011 mist-wash + chip/CTA press · generate
+            `tracking-wide` (Expo modeGenerateLabel LS 0.2 · Export Share /
+            Stops empty twin) · walk/transit/drive chips `ease-bp-out-strong`
+            (`.bp-day-tab` / collab #484 tip-011 twin) · leg summary
             `ink-soft/80` — Craft: ?modeSoftFail=1. SoftFail untouched. Yields
             while TransferSteps SoftFail depth (BEA-378) /
             ?transferSoftFail=1 owns selected-stop soft chrome — never timber /
-            Failed to fetch. No `/dev` gallery. Export eyebrow already at bar.
+            Failed to fetch. No `/dev` gallery. Not Mode soft chrome (BEA-740) ·
+            not Export CTAs · not collab tabs (#484). Export eyebrow at bar.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
@@ -1235,7 +1238,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         type="button"
                         aria-pressed={on}
                         onClick={() => setTravelMode(m)}
-                        className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
+                        className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp-fast ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
                           on
                             ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                             : "text-ink-soft hover:text-river"
@@ -1454,17 +1457,20 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             {/*
               Stops list craft residual (BEA-594 / wave 61 beyond #402) + planner
               drag residual (BEA-641 / wave 65 beyond #47 / #157) + stops residual
-              (BEA-644 beyond #418): azure Stops rail · eyebrow `0.65rem` /
-              `0.18em` · Reorder hint same densify · header `animate-rise` · Soft
-              stops / Soft empty / Soft reorder badge · softSupport · compact
-              SoftFail mist band · tip-011 mist-wash · mist-track SheetPresence
-              body rise 70ms (Mode #549) · drag hint 85ms · chip/empty CTA press ·
+              (BEA-644 beyond #418) + stop chip color settle (BEA-775 / wave 72):
+              azure Stops rail · eyebrow `0.65rem` / `0.18em` · Reorder hint same
+              densify · header `animate-rise` · Soft stops / Soft empty / Soft
+              reorder badge · softSupport · compact SoftFail mist band · tip-011
+              mist-wash · mist-track SheetPresence body rise 70ms (Mode #549) ·
+              drag hint 85ms · chip/empty CTA press · stop chips
+              `ease-bp-out-strong` (Mode / `.bp-day-tab` / collab #484 twin) ·
               empty title `leading-snug` · stop-row tip-011 `active:scale-[0.995]`
               + selected display `leading-snug` · address `ink-soft/80` (Expo
               stopAddr@CC twin from #381) — SoftFail kept (BEA-367 chips /
               BEA-355 empty / BEA-348 drag) — stop-drawer SoftFail (#257) /
               day-fill SoftFail (#248) yield — never timber / Failed to fetch.
-              No `/dev` gallery. Not Expo stop-card (#437).
+              No `/dev` gallery. Not Expo stop-card (#437) · not Mode soft
+              (BEA-740) · not invent new tab chrome.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
@@ -1559,7 +1565,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             aria-pressed={on}
                             aria-label={`${t(locale, "planner.stops.chip").replace("{n}", String(i + 1))}: ${stop.place.name}`}
                             onClick={() => setSelectedStopId(stop.id)}
-                            className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
+                            className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold transition duration-bp-fast ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
                               on
                                 ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                                 : "text-ink-soft hover:text-river"
