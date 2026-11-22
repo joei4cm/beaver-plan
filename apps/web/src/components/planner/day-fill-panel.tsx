@@ -113,13 +113,15 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Planner secondary tool — smart day-fill SoftFailNotice depth (BEA-323 after #206;
- * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284).
+ * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284) + craft SoftFail
+ * query parity (BEA-408): `/trips/…?dayFillSoftFail=1` forces SoftFail under the
+ * Day fill rail (mirrors Expo + #282 stops/drag craft queries).
  * Lumen hierarchy: azure header rail · SoftFailBadge Soft fill · SoftFailSupport ·
  * compact SoftFail mist band under rail · softFailMistWash tip-011 body ·
  * SheetPresence in/out.
  * Stop drawer SoftFail (#225) owns Itinerary — day-fill SoftFail stays under the
  * Day fill rail (no double depth). Soft-fails to local Kyoto demo when LLM/API/
- * Neon are absent — never timber / Failed to fetch.
+ * Neon are absent — never timber / Failed to fetch. No `/dev` SoftFail gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -145,6 +147,18 @@ export function DayFillPanel({
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [softDemo, setSoftDemo] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  /** Craft preview: /trips/…?dayFillSoftFail=1 — SoftFail depth under Day fill. */
+  const [dayFillSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("dayFillSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -309,19 +323,23 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice depth (BEA-323 after #206; helpers BEA-400):
+   * Day-fill SoftFailNotice depth (BEA-323 after #206; helpers BEA-400) +
+   * craft SoftFail query parity (BEA-408):
    * azure sheet rail · SoftFailBadge Soft fill · SoftFailSupport · compact
    * SoftFail mist band (`border-b`) · softFailMistWash tip-011 body while soft.
+   * Craft: /trips/…?dayFillSoftFail=1 — forces softFail copy under Day fill.
    * Stop drawer SoftFail (#225) owns Itinerary — no double depth. Soft copy
    * never timber / Failed to fetch.
    */
-  const softCopy =
-    notice ??
-    (softDemo
-      ? t(locale, "planner.dayFill.softFail")
-      : demoMode
-        ? t(locale, "planner.dayFill.demoNotice")
-        : null);
+  const softFailCopy = t(locale, "planner.dayFill.softFail");
+  const softCopy = dayFillSoftPreview
+    ? softFailCopy
+    : (notice ??
+      (softDemo
+        ? softFailCopy
+        : demoMode
+          ? t(locale, "planner.dayFill.demoNotice")
+          : null));
   const showSoftFail = Boolean(softCopy);
   const sheetSupportCopy = showSoftFail
     ? t(locale, "planner.dayFill.softSupport")
@@ -334,10 +352,11 @@ export function DayFillPanel({
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        Day-fill SoftFail depth (BEA-323 / helpers BEA-400):
-        azure sheet rail · SoftFailBadge Soft fill · SoftFailSupport ·
-        softFailMistWash tip-011 — yields stop drawer SoftFail (#225)
-        ownership on Itinerary — never timber / Failed to fetch.
+        Day-fill SoftFail depth (BEA-323 / helpers BEA-400) + craft SoftFail
+        query parity (BEA-408): azure sheet rail · SoftFailBadge Soft fill ·
+        SoftFailSupport · softFailMistWash tip-011 — craft ?dayFillSoftFail=1.
+        Yields stop drawer SoftFail (#225) ownership on Itinerary — never
+        timber / Failed to fetch.
       */}
       <button
         type="button"
