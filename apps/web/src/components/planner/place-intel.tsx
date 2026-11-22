@@ -63,15 +63,11 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Map place intel SoftFailNotice depth (BEA-333 after #200) + SoftFail helper
- * adoption (BEA-390 after #284) + craft SoftFail query parity (BEA-422):
- * azure inset rail · SoftFailBadge · SoftFailSupport · compact SoftFail mist
- * band under rail · softFailMistWash tip-011 body · Snapshot / Categories /
- * About / Note rise stagger. Craft: `/trips/…?placeSoftFail=1` forces SoftFail
- * depth under Place intel without a Places miss. SoftFail stays under Place
- * intel rail — map search (#226) / floating (#242) SoftFail own map chrome when
- * open (no double depth). Never timber / Failed to fetch. No `/dev` SoftFail
- * gallery.
+ * Map place intel sheet — SoftFail depth kept (BEA-333 / BEA-390 / BEA-422) +
+ * wave 47 craft residual (BEA-453): nested shell `--bp-line` + `shadow-bp-soft`
+ * matching TransferSteps in the stop drawer (no double river elevation).
+ * SoftFail stays under Place intel rail; craft `/trips/…?placeSoftFail=1`.
+ * Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function PlaceIntel({
   details,
@@ -144,7 +140,7 @@ export function PlaceIntel({
   return (
     <SheetPresence
       open={open}
-      className="mt-3 overflow-hidden rounded-bp-sm border border-river/25 bg-foam shadow-bp"
+      className="mt-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
       style={{ animationDelay: "40ms" }}
       aria-label={t(locale, "planner.place.sheetEyebrow")}
     >
