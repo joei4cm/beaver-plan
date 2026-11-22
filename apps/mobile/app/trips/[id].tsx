@@ -2681,8 +2681,9 @@ export default function TripDetailScreen() {
                   {/*
                     Invite SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
                     wave 48 (BEA-461) + wave 53 (BEA-506) + wave 56 residual
-                    (BEA-543): sheet eyebrow 1.8 · empty shareHint inkSoft/80 +
-                    lineHeight. SoftFailBadge · SoftFailSupport · mist band
+                    (BEA-543) + wave 57 members invite residual (BEA-547): sheet
+                    eyebrow 1.8 · empty shareHint inkSoft/80 + lineHeight · URL
+                    inkSoft/80. SoftFailBadge · SoftFailSupport · mist band
                     unchanged. Craft: ?inviteSoftFail=1.
                   */}
                   <View style={styles.inviteSheetHeader}>
@@ -4826,7 +4827,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: `${colors.inkSoft}D9`,
+    /** Web invite URL text-ink-soft/80 (BEA-547). */
+    color: `${colors.inkSoft}CC`,
   },
   inviteMemberList: {
     borderTopWidth: StyleSheet.hairlineWidth,
