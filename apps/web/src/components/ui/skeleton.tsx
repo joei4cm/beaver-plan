@@ -355,7 +355,8 @@ export function ShareStudioSkeleton() {
         <Skeleton className="h-14 w-28 rounded-none" />
       </div>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
-        <div className="flex flex-col items-center">
+        {/* Canvas column — live section animate-rise parity (BEA-598 / #405 captions) */}
+        <div className="animate-rise flex flex-col items-center">
           {/* Canvas chrome — tokenized foam/paper/river wash · azure rail · SoftFail slot */}
           <div
             className="relative w-full max-w-[440px] space-y-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] p-4 shadow-bp-soft md:p-5"

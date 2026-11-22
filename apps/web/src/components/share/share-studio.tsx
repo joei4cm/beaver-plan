@@ -657,9 +657,14 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   }
                 />
               ) : busy && !emptySoftOpen ? (
-                <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-ink-soft">
+                <div
+                  className="animate-rise flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-ink-soft/80"
+                  style={{ animationDelay: "70ms" }}
+                >
                   <div className="bp-skeleton h-8 w-40" />
-                  <span className="text-sm">{t(locale, "share.rendering")}</span>
+                  <span className="text-sm leading-relaxed">
+                    {t(locale, "share.rendering")}
+                  </span>
                 </div>
               ) : (
                 <SheetPresence
