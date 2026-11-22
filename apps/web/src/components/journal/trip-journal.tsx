@@ -238,6 +238,54 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const [softNotice, setSoftNotice] = useState(false);
   /** Media / journal API soft-fail while composing (R2 / Neon absent). */
   const [composeSoftFail, setComposeSoftFail] = useState(false);
+  /** Craft preview: /trips/…/journal?composeSoftFail=1 — SoftFail depth under Compose. */
+  const [composeSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("composeSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…/journal?entriesSoftFail=1 — SoftFail depth under Soft entries. */
+  const [entriesSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("entriesSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…/journal?scrubSoftFail=1 — SoftFail depth under day scrub. */
+  const [scrubSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("scrubSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…/journal?photoStripSoftFail=1 — SoftFail depth under photo strip. */
+  const [photoStripSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get(
+          "photoStripSoftFail",
+        ) === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
@@ -684,60 +732,78 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
   /**
-   * Empty SoftFail helpers (BEA-391 after #284 / entry rail):
-   * empty owns compact SoftFail under azure list rail · SoftFailBadge Soft
-   * empty · SoftFailSupport · emptySoftFail copy (never inherit list softNotice) ·
+   * Empty SoftFail helpers (BEA-391 after #284 / entry rail): empty owns
+   * compact SoftFail under azure list rail · SoftFailBadge Soft empty ·
+   * SoftFailSupport · emptySoftFail copy (never inherit list softNotice) ·
    * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
-   * Compose SoftFail yields while empty owns (no double depth). Soft copy
-   * never timber / Failed to fetch.
+   * SoftFail Soft empty SoftFail depth is always Soft when empty (no craft
+   * SoftFail query needed). Compose SoftFail yields while empty owns (no
+   * double depth). Soft copy never timber / Failed to fetch.
    */
   const entryEmpty = visible.length === 0;
   const emptyOwnsSoft = entryEmpty;
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
   /**
-   * Compose SoftFail helpers (BEA-391 after #284 / BEA-356):
-   * azure Compose rail · SoftFailBadge Soft media · SoftFailSupport ·
-   * compact SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence
-   * body · tip-011 (#46). Compose owns soft-fail while entries exist; empty
-   * SoftFail (#231) and photo strip SoftFail (#244) yield while compose owns
-   * (no double depth). Soft copy never timber / Failed to fetch.
+   * Compose SoftFail helpers (BEA-391 after #284 / BEA-356) + craft SoftFail
+   * query parity (BEA-424): azure Compose rail · SoftFailBadge Soft media ·
+   * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
+   * mist-wash SheetPresence body. Craft: /trips/…/journal?composeSoftFail=1 —
+   * SoftFail depth without a media miss. Compose owns soft-fail while entries
+   * exist; empty SoftFail (#231) and photo strip SoftFail (#244) yield while
+   * compose owns (no double depth). Soft copy never timber / Failed to fetch.
    */
-  const composeOwnsSoft = composeSoftFail && !emptyOwnsSoft;
+  const composeOwnsSoft =
+    (composeSoftFail || composeSoftPreview) && !emptyOwnsSoft;
   const showComposeSoftFail = composeOwnsSoft;
   const composeSoftCopy = t(locale, "journal.composeSoftFail");
   const composeSoftSupportCopy = t(locale, "journal.composeSoftSupport");
   /**
-   * Photo strip SoftFailNotice depth (BEA-325 after #217):
-   * SoftFail under azure strip rail yields while empty (#231) or compose
-   * SoftFail (BEA-356) owns (no double depth). Soft copy never timber.
+   * Photo strip SoftFailNotice depth (BEA-325 after #217) + craft SoftFail
+   * query parity (BEA-424): SoftFail under azure strip rail yields while empty
+   * (#231) or compose SoftFail (BEA-356) owns (no double depth). Craft:
+   * /trips/…/journal?photoStripSoftFail=1 — SoftFail depth without a media miss.
+   * Soft copy never timber.
    */
-  const photoStripSoftOpen = false;
+  const photoStripSoftOpen =
+    photoStripSoftPreview && !emptyOwnsSoft && !composeOwnsSoft;
   const photoStripSoftCopy = t(locale, "journal.photoStripSoftFail");
-  const photoStripSupportCopy = t(locale, "journal.photoStripSupport").replace(
-    "{max}",
-    String(PHOTO_SLOT_MAX),
-  );
+  const photoStripSupportCopy = photoStripSoftOpen
+    ? t(locale, "journal.photoStripSoftSupport")
+    : t(locale, "journal.photoStripSupport").replace(
+        "{max}",
+        String(PHOTO_SLOT_MAX),
+      );
   /**
-   * Journal day scrub SoftFail helpers (BEA-391 after #284 / BEA-368):
-   * SoftFailBadge / SoftFailSupport on azure scrub rail · tip-011 mist-wash.
+   * Journal day scrub SoftFail helpers (BEA-391 after #284 / BEA-368) + craft
+   * SoftFail query parity (BEA-424): SoftFailBadge / SoftFailSupport on azure
+   * scrub rail · tip-011 mist-wash. Craft: /trips/…/journal?scrubSoftFail=1.
    * Own rail under day tabs — sibling to compose SoftFail (#264) / empty
    * SoftFail (#231) / photo strip SoftFail (#244) (those SoftFails stay on
    * their rails; no double SoftFail on scrub). Soft copy never timber /
    * Failed to fetch. Expo journal scrub out of scope.
    */
-  const scrubSoftShell = demoSeeded || softNotice || composeSoftFail;
+  const scrubSoftShell =
+    scrubSoftPreview ||
+    demoSeeded ||
+    softNotice ||
+    composeSoftFail ||
+    composeSoftPreview;
   const scrubSoftOpen = scrubSoftShell && dayStops.length > 0;
   /**
-   * Entry SoftFail helpers (BEA-391 after #284): SoftFailBadge Soft entries ·
-   * SoftFailSupport · compact SoftFail mist band under azure list rail.
+   * Entry SoftFail helpers (BEA-391 after #284) + craft SoftFail query parity
+   * (BEA-424): SoftFailBadge Soft entries · SoftFailSupport · compact SoftFail
+   * mist band under azure list rail. Craft: /trips/…/journal?entriesSoftFail=1.
    * Yields while empty SoftFail owns (no double depth). Soft copy never timber.
    */
   const showListSoftFail =
-    !emptyOwnsSoft && !composeOwnsSoft && (demoSeeded || softNotice);
+    !emptyOwnsSoft &&
+    !composeOwnsSoft &&
+    (entriesSoftPreview || demoSeeded || softNotice);
   const listSoftOpen = showListSoftFail;
-  const listSoftCopy =
-    softNotice && !online
+  const listSoftCopy = entriesSoftPreview
+    ? t(locale, "journal.softFail")
+    : softNotice && !online
       ? t(locale, "journal.softOffline")
       : t(locale, "journal.softFail");
   const listSoftSupportCopy = t(locale, "journal.softSupport");
@@ -899,12 +965,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             aria-label={t(locale, "journal.listEyebrow")}
           >
             {/*
-              Entry SoftFail helpers (BEA-391 after #284):
-              azure list rail · SoftFailBadge Soft empty/entries · SoftFailSupport ·
-              compact SoftFailNotice mist band · SheetPresence empty body ·
-              tip-011 rise — never timber / Failed to fetch. Nested SoftFail
-              yields: empty owns while empty; Soft entries yields while empty /
-              compose owns.
+              Entry SoftFail helpers (BEA-391 after #284) + craft SoftFail query
+              parity (BEA-424): azure list rail · SoftFailBadge Soft empty/entries ·
+              SoftFailSupport · compact SoftFailNotice mist band · SheetPresence
+              empty body · tip-011 rise. Craft: ?entriesSoftFail=1 — never timber /
+              Failed to fetch. Nested SoftFail yields: empty owns while empty;
+              Soft entries yields while empty / compose owns.
             */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -1146,11 +1212,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             aria-label={t(locale, "journal.compose")}
           >
             {/*
-              Compose SoftFail helpers (BEA-391 after #284 / BEA-356):
-              azure Compose rail · SoftFailBadge Soft media · SoftFailSupport ·
-              compact SoftFail mist band · tip-011 mist-wash body — empty SoftFail
-              (#231) + photo strip SoftFail (#244) yield while compose owns;
-              never timber / Failed to fetch.
+              Compose SoftFail helpers (BEA-391 after #284 / BEA-356) + craft
+              SoftFail query parity (BEA-424): azure Compose rail · SoftFailBadge
+              Soft media · SoftFailSupport · compact SoftFail mist band · tip-011
+              mist-wash body. Craft: ?composeSoftFail=1 — empty SoftFail (#231) +
+              photo strip SoftFail (#244) yield while compose owns; never timber /
+              Failed to fetch.
             */}
             <header className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
               <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -1223,10 +1290,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               />
 
               {/*
-                Photo strip SoftFail depth (BEA-325 after #217):
-                azure strip rail chrome kept; SoftFailNotice yields while
-                compose SoftFail (BEA-356) or empty SoftFail (#231) owns —
-                no double depth. tip-011 rise on frames; never timber.
+                Photo strip SoftFail depth (BEA-325 after #217) + craft SoftFail
+                query parity (BEA-424): azure strip rail · SoftFailBadge Soft
+                strip · SoftFailSupport · SoftFailNotice mist band · tip-011.
+                Craft: ?photoStripSoftFail=1 — yields while compose SoftFail
+                (BEA-356) or empty SoftFail (#231) owns (no double depth). Soft
+                copy never timber / Failed to fetch.
               */}
               <section
                 className="animate-rise mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft"
@@ -1238,29 +1307,35 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                       {t(locale, "journal.photoSlots")}
                     </p>
-                    <p className="truncate text-[11px] leading-snug text-ink-soft/80">
-                      {photoStripSupportCopy}
-                    </p>
+                    {photoStripSoftOpen ? (
+                      <SoftFailSupport>{photoStripSupportCopy}</SoftFailSupport>
+                    ) : (
+                      <p className="truncate text-[11px] leading-snug text-ink-soft/80">
+                        {photoStripSupportCopy}
+                      </p>
+                    )}
                   </div>
-                  <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                      stripMedia.length > 0
-                        ? "bg-river/12 text-river-deep tabular-nums normal-case tracking-normal"
-                        : "bg-mist text-ink-soft tabular-nums normal-case tracking-normal"
-                    }`}
-                  >
-                    {t(locale, "journal.photoCount")
-                      .replace("{n}", String(stripMedia.length))
-                      .replace("{max}", String(PHOTO_SLOT_MAX))}
-                  </span>
+                  {photoStripSoftOpen ? (
+                    <SoftFailBadge>
+                      {t(locale, "journal.photoStripSoftBadge")}
+                    </SoftFailBadge>
+                  ) : (
+                    <span
+                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                        stripMedia.length > 0
+                          ? "bg-river/12 text-river-deep tabular-nums normal-case tracking-normal"
+                          : "bg-mist text-ink-soft tabular-nums normal-case tracking-normal"
+                      }`}
+                    >
+                      {t(locale, "journal.photoCount")
+                        .replace("{n}", String(stripMedia.length))
+                        .replace("{max}", String(PHOTO_SLOT_MAX))}
+                    </span>
+                  )}
                 </header>
 
-                {/* SoftFail under strip rail — yields while compose SoftFail owns. */}
-                <SoftFailNotice
-                  open={photoStripSoftOpen}
-                  compact
-                  className="border-b border-[color:var(--bp-line)]"
-                >
+                {/* SoftFail under strip rail — yields while compose SoftFail owns. Craft: ?photoStripSoftFail=1. */}
+                <SoftFailNotice open={photoStripSoftOpen} compact>
                   {photoStripSoftCopy}
                 </SoftFailNotice>
 
