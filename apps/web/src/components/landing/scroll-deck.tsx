@@ -162,6 +162,21 @@ function useBrowserOnline(): boolean {
   return online;
 }
 
+/** Craft SoftFail query: `/?howSoftFail=1` — SoftFail depth without going offline. */
+function useCraftSoftFailPreview(): boolean {
+  const [preview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("howSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  return preview;
+}
+
 function DeckArt({
   index,
   accent,
@@ -296,7 +311,8 @@ function PlainHow({
   softLiveBadge,
 }: Omit<Props, "progressLabel" | "liveBadge">) {
   const online = useBrowserOnline();
-  const softOpen = !online;
+  const softPreview = useCraftSoftFailPreview();
+  const softOpen = softPreview || !online;
   const reduced = usePrefersReducedMotion();
   const [focus, setFocus] = useState(0);
 
@@ -327,9 +343,9 @@ function PlainHow({
         </header>
 
         {/*
-          How SoftFail depth (BEA-317 after #212):
-          azure rail · Soft badge · softSupport · mist SoftFail band ·
-          tip-011 mist-wash steps — never timber.
+          How SoftFail depth (BEA-317 after #212) + craft SoftFail query
+          parity (BEA-406): azure rail · Soft badge · softSupport · mist
+          SoftFail band · tip-011. Craft: ?howSoftFail=1 — never timber.
         */}
         <div className={reduced ? "mt-10" : "mt-10 animate-rise"}>
           <HowSoftFailSheet
@@ -444,11 +460,13 @@ function PlainHow({
 }
 
 /**
- * Landing how-it-works SoftFailNotice depth (BEA-317 after #212):
+ * Landing how-it-works SoftFailNotice depth (BEA-317 after #212) + craft
+ * SoftFail query parity (BEA-406):
  * azure SoftFail sheet · Soft/Live badge · softSupport · compact SoftFailNotice
  * mist band under rail · tip-011 mist-wash SheetPresence step rail · tip-019
  * throw deck stays outside — SoftFail owned by the sheet (yield if a child
- * owned SoftFail; none today). Never timber / Failed to fetch.
+ * owned SoftFail; none today). Craft: `/?howSoftFail=1`.
+ * Never timber / Failed to fetch.
  */
 export function LandingScrollDeck({
   title,
@@ -470,7 +488,8 @@ export function LandingScrollDeck({
   const reduced = usePrefersReducedMotion();
   const pin = usePinEnabled(reduced);
   const online = useBrowserOnline();
-  const softOpen = !online;
+  const softPreview = useCraftSoftFailPreview();
+  const softOpen = softPreview || !online;
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const [sectionHeight, setSectionHeight] = useState("220svh");
@@ -669,10 +688,10 @@ export function LandingScrollDeck({
         </header>
 
         {/*
-          How SoftFail depth (BEA-317 after #212):
-          azure rail · Soft badge · softSupport · mist SoftFail band ·
-          tip-011 mist-wash step rail — tip-019 throw cards stay outside;
-          never timber.
+          How SoftFail depth (BEA-317 after #212) + craft SoftFail query
+          parity (BEA-406): azure rail · Soft badge · softSupport · mist
+          SoftFail band · tip-011 step rail — tip-019 throw cards stay
+          outside. Craft: ?howSoftFail=1 — never timber.
         */}
         <div
           className={`mb-4 w-full max-w-xl ${revealClass}`}
