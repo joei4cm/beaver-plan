@@ -376,9 +376,7 @@ export function TripsHome({ locale }: Props) {
               open
               role="group"
               className={`flex flex-wrap items-center gap-2.5 px-4 py-4 sm:px-5 ${
-                seedSoftOpen
-                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                  : ""
+                seedSoftOpen ? softFailMistWashClass : ""
               }`}
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "trips.seedActions")}

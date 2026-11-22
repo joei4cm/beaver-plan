@@ -589,11 +589,7 @@ export function TripCollabPanel({
         </SoftFailNotice>
 
         <ol
-          className={`bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5 ${
-            timelineSoftOpen
-              ? softFailMistWashClass
-              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-          }`}
+          className={`bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5 ${softFailMistWashClass}`}
         >
           {/* Mist track — tip-011 wash spine behind azure nodes */}
           <span aria-hidden className="bp-collab-timeline__track" />

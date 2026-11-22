@@ -201,13 +201,7 @@ export function InviteAccept({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div
-          className={`space-y-5 px-5 py-5 ${
-            softOpen
-              ? softFailMistWashClass
-              : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-          }`}
-        >
+        <div className={`space-y-5 px-5 py-5 ${softFailMistWashClass}`}>
           {hardError ? (
             <p className="animate-rise text-sm text-ink-soft" role="alert">
               {hardError}

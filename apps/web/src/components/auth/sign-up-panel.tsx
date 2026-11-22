@@ -9,6 +9,7 @@ import {
   SoftFailBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailMistWashClass,
 } from "@/components/soft-fail-notice";
 import { apiGet } from "@/lib/api";
 
@@ -116,7 +117,11 @@ export function SignUpPanel({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div className="space-y-8 px-4 py-6 sm:px-5 sm:py-8">
+        <div
+          className={`space-y-8 px-4 py-6 sm:px-5 sm:py-8 ${
+            softOpen ? softFailMistWashClass : ""
+          }`}
+        >
           <div
             className="animate-rise grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
             style={{ animationDelay: "120ms" }}

@@ -250,9 +250,7 @@ function DemoAuthSheet({
       </div>
       <div
         className={`space-y-5 px-5 py-5 ${
-          soft
-            ? "bg-gradient-to-b from-mist/30 via-mist/10 to-transparent"
-            : ""
+          soft ? softFailMistWashClass : ""
         }`}
       >
         <div>

@@ -87,9 +87,9 @@ export const softFailBandStyle: ViewStyle = {
   borderTopWidth: 0,
 };
 
-/** tip-011 mist-wash body / CTA track under a SoftFail mist band. */
+/** tip-011 mist-wash body / CTA track under a SoftFail mist band (parity web from-mist/25). */
 export const softFailMistWashStyle: ViewStyle = {
-  backgroundColor: mistWash(0.22),
+  backgroundColor: mistWash(0.25),
 };
 
 /** Soft badge chip styles — mist / ink-soft, never timber. */
