@@ -1124,7 +1124,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderLeftWidth: 2,
     borderLeftColor: colors.timber,
-    backgroundColor: "rgba(225, 29, 72, 0.08)",
+    backgroundColor: `${colors.timber}14`,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
