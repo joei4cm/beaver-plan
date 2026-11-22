@@ -1484,14 +1484,14 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit Mode rail craft residual (BEA-511 / wave 53) beyond
-                #337 / Transfer #358 + SoftFail kept (BEA-388 / BEA-423) +
-                Mode generate press (BEA-503): azure Mode rail · eyebrow
-                tracking 1.8 · SoftFailBadge · SoftFailSupport · SoftFailNotice
-                mist band · tip-011 mist-wash SheetPresence · generate tip-011
-                press. Craft: ?modeSoftFail=1. Yields while TransferSteps /
-                ?transferSoftFail=1 owns. Never timber / Failed to fetch. No
-                `/dev` gallery.
+                Transit Mode rail craft residual (BEA-549 / wave 57) beyond
+                #370 / BEA-511 + SoftFail kept (BEA-388 / BEA-423): Lumen
+                hex-alpha foam/paper/mist/river/inkSoft · eyebrow tracking 1.8 ·
+                SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
+                tip-011 mist-wash SheetPresence · chip/generate tip-011 press ·
+                leg summary /80. Craft: ?modeSoftFail=1. Yields while
+                TransferSteps / ?transferSoftFail=1 owns. Never timber /
+                Failed to fetch. No `/dev` gallery.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -1568,10 +1568,14 @@ export default function TripDetailScreen() {
                             onPress={() => selectTravelMode(m)}
                             accessibilityRole="tab"
                             accessibilityState={{ selected: on }}
-                            style={StyleSheet.flatten([
-                              styles.modeChip,
-                              on ? styles.modeChipOn : null,
-                            ])}
+                            style={({ pressed }) =>
+                              StyleSheet.flatten([
+                                styles.modeChip,
+                                on ? styles.modeChipOn : null,
+                                /* tip-011 press — web Mode chip active:scale (#337) */
+                                pressed ? styles.modeChipPressed : null,
+                              ])
+                            }
                           >
                             <Animated.Text
                               style={StyleSheet.flatten([
@@ -3388,11 +3392,12 @@ const styles = StyleSheet.create({
     color: colors.river,
     opacity: 0.9,
   },
-  /* Transit Mode rail — azure inset · mist chips (web BEA-511 / #337). */
+  /* Transit Mode rail — azure inset · mist chips (web BEA-549 / #370). */
   modeFilter: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    /** Web Mode shell `bg-foam/95`. */
+    backgroundColor: `${colors.foam}F2`,
   },
   modeFilterHead: {
     flexDirection: "row",
@@ -3403,15 +3408,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 6,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web `bg-paper/70`. */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
-  /** Soft azure mode rail wash when SoftFail owns depth (BEA-342). */
+  /** Soft azure mode rail wash when SoftFail owns depth — token only (BEA-342). */
   modeFilterHeadSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.35)",
+    /** Web SoftFail header mist/35 — SoftFail logic untouched. */
+    backgroundColor: `${colors.mist}59`,
   },
   /** Mode rail eyebrow — Transfer #358 tracking 1.8 parity (BEA-511). */
   modeEyebrow: {
@@ -3426,12 +3433,14 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web SoftFailSupport / support ladder `ink-soft/80`. */
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
   },
   modeSelectedBadge: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** Web `bg-river/12`. */
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -3462,12 +3471,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 2,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    /** Web `bg-mist/50`. */
+    backgroundColor: `${colors.mist}80`,
     padding: 4,
   },
   /** Azure inset mist track when Mode SoftFail open (depth craft). */
   modeMistTrackSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.78)",
+    /** Web soft track `bg-mist/70`. */
+    backgroundColor: `${colors.mist}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3485,7 +3496,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     /* Azure ring — web ring-river/25 */
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.25)",
+    borderColor: `${colors.river}40`,
+  },
+  /* tip-011 press — parity with web Mode chip active:scale-[0.98] (#337). */
+  modeChipPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   modeChipLabel: {
     ...type.body,
@@ -3525,7 +3541,8 @@ const styles = StyleSheet.create({
   modeLegSummary: {
     ...type.body,
     fontSize: 13,
-    color: colors.inkSoft,
+    /** Web Mode leg summary `text-ink-soft/80`. */
+    color: `${colors.inkSoft}CC`,
     fontVariant: ["tabular-nums"],
     paddingVertical: 2,
   },

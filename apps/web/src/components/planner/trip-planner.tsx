@@ -1153,14 +1153,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
 
           {/*
-            Transit Mode rail craft residual (BEA-511 / wave 53) beyond #337 /
-            Transfer #358 + SoftFail depth kept (BEA-358 / BEA-423): azure Mode
-            rail · eyebrow `0.65rem` / `0.18em` · header `animate-rise` · Soft
-            mode badge · softSupport · compact SoftFail mist band · tip-011
-            mist-wash + chip/CTA press — Craft: ?modeSoftFail=1. Yields while
-            TransferSteps SoftFail depth (BEA-378) / ?transferSoftFail=1 owns
-            selected-stop soft chrome — never timber / Failed to fetch. No
-            `/dev` gallery.
+            Transit Mode rail craft residual (BEA-549 / wave 57) beyond #370 /
+            SoftFail depth kept (BEA-358 / BEA-423): azure Mode rail · eyebrow
+            `0.65rem` / `0.18em` · header `animate-rise` · Soft mode badge ·
+            softSupport · compact SoftFail mist band · tip-011 mist-wash +
+            chip/CTA press · leg summary `ink-soft/80` — Craft: ?modeSoftFail=1.
+            Yields while TransferSteps SoftFail depth (BEA-378) /
+            ?transferSoftFail=1 owns selected-stop soft chrome — never timber /
+            Failed to fetch. No `/dev` gallery.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
@@ -1246,7 +1246,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     : t(locale, "planner.generateRoutes")}
                 </button>
                 {dayLegs.length > 0 && (
-                  <p className="pb-1 text-sm tabular-nums text-ink-soft">
+                  <p className="pb-1 text-sm tabular-nums text-ink-soft/80">
                     {dayLegs
                       .map(
                         (l) =>
