@@ -62,10 +62,11 @@ function presenceFor(member: TripMember): PresenceState {
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
  * (BEA-518) + wave 56 invite residual (BEA-543) + wave 57 presence pills
- * (BEA-546): away pill inset · strip empty `/80` · status pill out-strong.
- * SoftFailBadge · SoftFailSupport · mist band unchanged. Invite SoftFail
- * yields presence (no double depth). Soft copy never timber / Failed to fetch.
- * No `/dev` gallery.
+ * (BEA-546): away pill inset · strip empty `/80` · status pill out-strong +
+ * wave 57 members invite residual (BEA-547): invite sheet eyebrow + role chip
+ * `0.65rem` (roster parity) · role select hover river. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. Invite SoftFail yields presence (no
+ * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -413,7 +414,7 @@ export function TripMembersBar({
                 onChange={(e) =>
                   setInviteRole(e.target.value as "editor" | "viewer")
                 }
-                className="animate-rise rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-2.5 py-1.5 text-xs text-ink-soft outline-none transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/35"
+                className="animate-rise rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-2.5 py-1.5 text-xs text-ink-soft outline-none transition duration-bp-fast ease-bp-out hover:border-river/40 focus:border-river focus:ring-2 focus:ring-focus/35"
                 style={{ animationDelay: "85ms" }}
                 aria-label={t(locale, "collab.inviteRole")}
               >
@@ -462,7 +463,7 @@ export function TripMembersBar({
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.inviteEyebrow")}
               </span>
               {inviteSoftOpen ? (
@@ -486,7 +487,7 @@ export function TripMembersBar({
                 </SoftFailLiveBadge>
               )}
               {lastInvite ? (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {t(locale, `collab.role.${lastInvite.invite.role}`)}
                 </span>
               ) : null}
