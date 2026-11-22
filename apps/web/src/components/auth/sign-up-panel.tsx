@@ -12,6 +12,7 @@ import {
   SoftFailSupport,
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
+import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet } from "@/lib/api";
 import { clerkEmailElements } from "./clerk-email-appearance";
 
@@ -20,10 +21,10 @@ const FOCUS =
 
 /**
  * Sign-up sheet — SoftFail depth kept (BEA-392 / BEA-421 / #227) + wave 49
- * WeChat/page chrome parity (BEA-472) + wave 52 Clerk email sheet (BEA-498):
- * Lumen sky · eyebrows · tip-011 demo press · Clerk email form tokens / type /
- * tip-011 primary. SoftFailBadge · SoftFailSupport · mist unchanged. Craft:
- * /sign-up?signUpSoftFail=1 — SoftFail copy never timber / Failed to fetch.
+ * WeChat/page chrome parity (BEA-472) + wave 52 Clerk email sheet (BEA-498) +
+ * wave 54 auth landing residual (BEA-522): SheetPresence body parity ·
+ * tip-011 secondary links · display leading-snug. SoftFailBadge · SoftFailSupport ·
+ * mist unchanged. Craft: /sign-up?signUpSoftFail=1 — SoftFail copy never timber.
  * No `/dev` gallery.
  */
 export function SignUpPanel({
@@ -92,7 +93,7 @@ export function SignUpPanel({
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
           {t(locale, "auth.signUpEyebrow")} · {brand.en}
         </p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-bold leading-snug tracking-tight text-ink md:text-5xl">
           {t(locale, "nav.signUp")}
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-ink-soft">
@@ -102,9 +103,9 @@ export function SignUpPanel({
 
       {/*
         SoftFail kept (BEA-392 / BEA-421) + WeChat/page chrome (BEA-472) +
-        Clerk email sheet (BEA-498): Lumen sky · 0.18em eyebrows · tip-011
-        CTA / email primary. SoftFailBadge · SoftFailSupport · mist. Craft:
-        ?signUpSoftFail=1 — never timber.
+        Clerk email sheet (BEA-498) + landing residual (BEA-522): SheetPresence ·
+        tip-011 secondary links · leading-snug. SoftFailBadge · SoftFailSupport ·
+        mist. Craft: ?signUpSoftFail=1 — never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -140,10 +141,14 @@ export function SignUpPanel({
           {softCopy ?? ""}
         </SoftFailNotice>
 
-        <div
+        <SheetPresence
+          open
+          role="group"
           className={`space-y-8 px-4 py-6 sm:px-5 sm:py-8 ${
             softOpen ? softFailMistWashClass : ""
           }`}
+          style={{ animationDelay: "40ms" }}
+          aria-label={t(locale, "nav.signUp")}
         >
           <div
             className="animate-rise grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start"
@@ -159,7 +164,7 @@ export function SignUpPanel({
                 </p>
                 <h2
                   id="auth-signup-providers-heading"
-                  className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                  className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
                 >
                   {t(locale, "auth.signUpFormTitle")}
                 </h2>
@@ -171,13 +176,13 @@ export function SignUpPanel({
               <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-0.5">
                 <Link
                   href="/sign-in"
-                  className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
+                  className={`inline-flex text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:underline active:scale-[0.98] ${FOCUS}`}
                 >
                   {t(locale, "auth.haveAccount")}
                 </Link>
                 <Link
                   href="/trips"
-                  className={`inline-flex text-sm font-semibold text-ink-soft bp-transition hover:text-river hover:underline ${FOCUS}`}
+                  className={`inline-flex text-sm font-semibold text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] ${FOCUS}`}
                 >
                   ← {t(locale, "nav.trips")}
                 </Link>
@@ -213,7 +218,7 @@ export function SignUpPanel({
               )}
             </div>
           </div>
-        </div>
+        </SheetPresence>
       </div>
     </section>
   );
@@ -234,7 +239,7 @@ function DemoSignUpSheet({ locale }: { locale: Locale }) {
         <div>
           <h2
             id="auth-signup-demo-heading"
-            className="font-display text-2xl font-semibold tracking-tight text-ink"
+            className="font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
           >
             {t(locale, "auth.signUpDemoTitle")}
           </h2>

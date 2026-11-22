@@ -22,9 +22,9 @@ const FOCUS =
 
 /**
  * Sign-in / WeChat sheet — SoftFail depth kept (BEA-392 / BEA-421 / #238) +
- * wave 49 WeChat chrome (BEA-472) + wave 52 Clerk email sheet (BEA-498):
- * Lumen sky · eyebrows · tip-011 WeChat/demo press · Clerk email form tokens /
- * type / tip-011 primary. SoftFailBadge · SoftFailSupport · mist · WeChat
+ * wave 49 WeChat chrome (BEA-472) + wave 52 Clerk email sheet (BEA-498) +
+ * wave 54 auth landing residual (BEA-522): tip-011 secondary links ·
+ * display leading-snug. SoftFailBadge · SoftFailSupport · mist · WeChat
  * SoftFail yield unchanged. Craft: /sign-in?signInSoftFail=1 — SoftFail copy
  * never timber / Failed to fetch. No `/dev` gallery.
  */
@@ -103,7 +103,7 @@ export function SignInPanel({
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
           {t(locale, "auth.eyebrow")} · {brand.en}
         </p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-bold leading-snug tracking-tight text-ink md:text-5xl">
           {t(locale, "nav.signIn")}
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-ink-soft">
@@ -174,7 +174,7 @@ export function SignInPanel({
                 </p>
                 <h2
                   id="auth-providers-heading"
-                  className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                  className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
                 >
                   {t(locale, "auth.providersTitle")}
                 </h2>
@@ -203,13 +203,13 @@ export function SignInPanel({
               <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-0.5">
                 <Link
                   href="/sign-up"
-                  className={`inline-flex text-sm font-semibold text-river bp-transition hover:underline ${FOCUS}`}
+                  className={`inline-flex text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:underline active:scale-[0.98] ${FOCUS}`}
                 >
                   {t(locale, "auth.needAccount")}
                 </Link>
                 <Link
                   href="/trips"
-                  className={`inline-flex text-sm font-semibold text-ink-soft bp-transition hover:text-river hover:underline ${FOCUS}`}
+                  className={`inline-flex text-sm font-semibold text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] ${FOCUS}`}
                 >
                   ← {t(locale, "nav.trips")}
                 </Link>
@@ -286,7 +286,7 @@ function DemoAuthSheet({
         <div>
           <h2
             id="auth-demo-heading"
-            className="font-display text-2xl font-semibold tracking-tight text-ink"
+            className="font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
           >
             {t(locale, "auth.demoTitle")}
           </h2>
