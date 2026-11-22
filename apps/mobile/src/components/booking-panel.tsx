@@ -128,10 +128,11 @@ async function searchLocal(
  * wave 48 craft residual (BEA-460): root / confirmRail soft elevation ·
  * offerCard `--bp-line` + soft shadow · offerTitle display 14.
  * Wave 50 Confirm residual (BEA-481): tip-011 press on Confirm save / open
- * chip · draftKind tracking 1.4 (web `0.14em`). SoftFail stays under OTA /
- * Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm
- * SoftFail yields OTA (no double depth). Never timber / Failed to fetch.
- * No `/dev` gallery.
+ * chip · draftKind tracking 1.4 (web `0.14em`). Wave 52 (BEA-502): tip-011
+ * press on OTA Search / Open / Use link (reuse `ctaPressed`). SoftFail stays
+ * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
+ * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -619,10 +620,13 @@ export function BookingPanel({
             </View>
 
             <Pressable
-              style={StyleSheet.flatten([
-                styles.searchBtn,
-                searching ? styles.searchBtnBusy : null,
-              ])}
+              style={({ pressed }) =>
+                StyleSheet.flatten([
+                  styles.searchBtn,
+                  searching ? styles.searchBtnBusy : null,
+                  pressed && !searching ? styles.ctaPressed : null,
+                ])
+              }
               disabled={searching}
               onPress={() => void runSearch()}
               accessibilityRole="button"
@@ -730,7 +734,12 @@ export function BookingPanel({
                     </View>
                     <View style={styles.offerActions}>
                       <Pressable
-                        style={styles.openBtn}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.openBtn,
+                            pressed ? styles.ctaPressed : null,
+                          ])
+                        }
                         onPress={() => openExternal(s.url)}
                         accessibilityRole="button"
                       >
@@ -740,7 +749,12 @@ export function BookingPanel({
                       </Pressable>
                       {stop ? (
                         <Pressable
-                          style={styles.pinBtn}
+                          style={({ pressed }) =>
+                            StyleSheet.flatten([
+                              styles.pinBtn,
+                              pressed ? styles.ctaPressed : null,
+                            ])
+                          }
                           onPress={() => applySuggestion(s)}
                           accessibilityRole="button"
                         >

@@ -133,10 +133,11 @@ async function searchLocal(
 /**
  * Booking OTA sheet — SoftFail depth kept (BEA-389 / BEA-418) + wave 48 craft
  * residual (BEA-460): offer title on display `text-sm` (day-fill / place-intel
- * density) · BookingOffersSkeleton foam + `shadow-bp-soft` parity. SoftFail
- * stays under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
- * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to fetch.
- * No `/dev` gallery.
+ * density) · BookingOffersSkeleton foam + `shadow-bp-soft` parity. Wave 52
+ * (BEA-502): tip-011 `active:scale-[0.98]` on Search / Open / Use link / Save
+ * (day-fill sibling). SoftFail stays under OTA / Confirm rails; craft
+ * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
+ * double depth). Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -576,7 +577,7 @@ export function BookingPanel({
               type="button"
               disabled={searching}
               onClick={() => void runSearch()}
-              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
             >
               {searching
                 ? t(locale, "planner.booking.searching")
@@ -693,7 +694,7 @@ export function BookingPanel({
                         <button
                           type="button"
                           onClick={() => openExternal(s.url)}
-                          className="rounded-bp bg-river px-3.5 py-2 text-xs font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
+                          className="rounded-bp bg-river px-3.5 py-2 text-xs font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
                         >
                           {t(locale, "planner.booking.openExternal")}
                         </button>
@@ -701,7 +702,7 @@ export function BookingPanel({
                           <button
                             type="button"
                             onClick={() => applySuggestion(s)}
-                            className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                            className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                           >
                             {t(locale, "planner.booking.useLink")}
                           </button>
@@ -796,7 +797,7 @@ export function BookingPanel({
                     type="button"
                     disabled={saving || !isDirty}
                     onClick={() => void save()}
-                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {saving
                       ? t(locale, "planner.booking.saving")
