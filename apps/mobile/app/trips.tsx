@@ -1089,7 +1089,7 @@ const styles = StyleSheet.create({
   },
   outlineCta: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.35)",
+    borderColor: `${colors.river}59`,
     backgroundColor: colors.foam,
     paddingHorizontal: 18,
     paddingVertical: 12,
