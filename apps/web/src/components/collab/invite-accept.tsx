@@ -41,12 +41,10 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Invite SoftFail helper adoption (BEA-392 after #284 / depth #241) + craft
- * SoftFail query parity (BEA-420): `/invite/…?inviteSoftFail=1` forces SoftFail
- * depth under azure invite rail (mirrors Expo + #282 / wave 42). SoftFailBadge ·
- * SoftFailSupport · softFailMistWashClass · compact SoftFail mist band · tip-011
- * SheetPresence trip preview — never timber / Failed to fetch. No `/dev`
- * SoftFail gallery.
+ * Invite accept sheet — SoftFail depth kept (BEA-392 / BEA-420 / #241) + wave 48
+ * craft residual (BEA-461): Lumen sky tokens · eyebrow tracking · tip-011 rise ·
+ * Join `active:scale`. SoftFailBadge · SoftFailSupport · mist band unchanged.
+ * Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function InviteAccept({
   code,
@@ -162,21 +160,21 @@ export function InviteAccept({
         className="animate-drift pointer-events-none absolute inset-0 -z-10 opacity-90"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 72% 55% at 12% 0%, rgba(47,107,255,0.16), transparent 58%),
-            radial-gradient(ellipse 48% 38% at 90% 8%, rgba(96,165,250,0.14), transparent 52%),
-            linear-gradient(180deg, #dbe8ff 0%, transparent 68%)
+            radial-gradient(ellipse 72% 55% at 12% 0%, color-mix(in srgb, var(--bp-river) 16%, transparent), transparent 58%),
+            radial-gradient(ellipse 48% 38% at 90% 8%, color-mix(in srgb, var(--bp-focus) 14%, transparent), transparent 52%),
+            linear-gradient(180deg, color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam)) 0%, transparent 68%)
           `,
         }}
       />
 
-      <p className="animate-fade text-xs uppercase tracking-[0.2em] text-river/80">
+      <p className="animate-fade text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
         {brandName}
       </p>
-      <h1 className="animate-rise mt-3 font-display text-4xl tracking-tight text-ink md:text-5xl">
+      <h1 className="animate-rise mt-3 font-display text-4xl font-extrabold tracking-tight text-ink md:text-5xl">
         {t(locale, "invite.title")}
       </h1>
       <p
-        className="animate-rise mt-4 max-w-lg text-ink-soft"
+        className="animate-rise mt-4 max-w-lg text-sm leading-relaxed text-ink-soft md:text-base"
         style={{ animationDelay: "70ms" }}
       >
         {t(locale, "invite.support")}
@@ -257,23 +255,23 @@ export function InviteAccept({
                 style={{ animationDelay: "40ms" }}
                 aria-label={t(locale, "invite.previewEyebrow")}
               >
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "invite.previewEyebrow")}
                 </p>
                 <p
-                  className="animate-rise mt-3 text-sm text-ink-soft"
+                  className="animate-rise mt-3 text-sm leading-relaxed text-ink-soft"
                   style={{ animationDelay: "80ms" }}
                 >
                   {preview.trip.destination ?? t(locale, "planner.trip")}
                 </p>
                 <p
-                  className="animate-rise mt-1 font-display text-3xl tracking-tight text-ink"
+                  className="animate-rise mt-1 font-display text-3xl font-semibold tracking-tight text-ink md:text-[2rem]"
                   style={{ animationDelay: "120ms" }}
                 >
                   {preview.trip.title}
                 </p>
                 <p
-                  className="animate-rise pt-2 text-sm text-ink-soft"
+                  className="animate-rise pt-2 text-sm leading-relaxed text-ink-soft"
                   style={{ animationDelay: "160ms" }}
                 >
                   {t(locale, "invite.asRole")}{" "}
@@ -295,7 +293,7 @@ export function InviteAccept({
                   type="button"
                   disabled={joining}
                   onClick={() => void accept()}
-                  className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:opacity-50"
+                  className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:opacity-50"
                 >
                   {joining
                     ? t(locale, "invite.joining")
@@ -304,7 +302,7 @@ export function InviteAccept({
                 {clerkEnabled() && (
                   <Link
                     href={`/sign-in?redirect_url=/invite/${encodeURIComponent(code)}`}
-                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                    className="rounded-bp border border-[color:var(--bp-line)] px-5 py-3 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                   >
                     {t(locale, "nav.signIn")}
                   </Link>

@@ -59,12 +59,10 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
 }
 
 /**
- * Expo invite SoftFail helper adoption (BEA-392 after #284 / depth #228) + craft
- * SoftFail query parity (BEA-420): `/invite/…?inviteSoftFail=1` forces SoftFail
- * depth under azure invite rail (mirrors web + #282 / wave 42). SoftFailBadge ·
- * SoftFailSupport · softFailMistWashStyle · compact SoftFail mist band · tip-011
- * SheetPresence stagger · StyleSheet.flatten. Soft-fail never timber / Failed
- * to fetch. No `/dev` SoftFail gallery.
+ * Expo invite sheet — SoftFail depth kept (BEA-392 / BEA-420 / #228) + wave 48
+ * craft residual (BEA-461): Lumen sky tokens · eyebrow tracking · display title
+ * weight. SoftFailBadge · SoftFailSupport · mist band unchanged. Soft-fail never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export default function InviteScreen() {
   const { code: raw, inviteSoftFail: inviteSoftFailParam } =
@@ -357,7 +355,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 160,
-    backgroundColor: "rgba(219, 232, 255, 0.55)",
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
   },
   skyOrb: {
     position: "absolute",
@@ -366,7 +364,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: "rgba(96, 165, 250, 0.16)",
+    backgroundColor: "rgba(96, 165, 250, 0.14)",
   },
   center: {
     flex: 1,
@@ -389,9 +387,9 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...type.body,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: "rgba(47, 107, 255, 0.8)",
     marginBottom: 10,
@@ -407,7 +405,7 @@ const styles = StyleSheet.create({
   support: {
     ...type.body,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 23,
     color: colors.inkSoft,
     maxWidth: 420,
     marginBottom: 22,
@@ -418,7 +416,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -510,7 +508,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.4,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 6,
@@ -518,12 +516,13 @@ const styles = StyleSheet.create({
   destination: {
     ...type.body,
     fontSize: 14,
+    lineHeight: 20,
     color: colors.inkSoft,
   },
   tripTitle: {
     ...type.display,
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: -0.6,
     color: colors.ink,
   },
@@ -531,7 +530,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 4,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     color: colors.inkSoft,
   },
   metaRole: {
