@@ -186,7 +186,7 @@ function StepRow({
           step.instruction &&
           step.instruction !== label &&
           step.instruction !== step.lineName && (
-            <div className="mt-1 truncate text-xs text-ink-soft">
+            <div className="mt-1 truncate text-xs text-ink-soft/80">
               {step.instruction}
             </div>
           )}
@@ -260,12 +260,12 @@ function LegCardHeader({
 /**
  * Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
  * wave 48 Mode/river ring (BEA-462) + wave 51 craft residual (BEA-490) +
- * wave 56 residual (BEA-538): empty title `leading-snug` · Expo hex-alpha /
- * step stagger parity. SoftFailBadge Soft/Demo · SoftFailLiveBadge ·
- * SoftFailSupport · compact SoftFail mist band · tip-011 mist-wash unchanged.
- * Craft SoftFail: `/trips/…?transferSoftFail=1`. Soft copy never timber /
- * Failed to fetch. Mode SoftFail (#272) yields while this owns (no double
- * depth). No `/dev` gallery.
+ * wave 56 residual (BEA-538) + wave 60 residual (BEA-578): step instruction
+ * `ink-soft/80` (Expo #388 inkSoft@CC parity). SoftFailBadge Soft/Demo ·
+ * SoftFailLiveBadge · SoftFailSupport · compact SoftFail mist band · tip-011
+ * mist-wash unchanged. Craft SoftFail: `/trips/…?transferSoftFail=1`. Soft
+ * copy never timber / Failed to fetch. Mode SoftFail (#272) yields while
+ * this owns (no double depth). No `/dev` gallery.
  */
 export function TransferSteps({
   leg,
