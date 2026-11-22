@@ -81,7 +81,7 @@ export function MapStage({
     stops.length > 0 || legs.some((l) => legPathSegments(l).length > 0);
 
   return (
-    <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-[#EAF0F8] lg:min-h-[640px] lg:rounded-none">
+    <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-mist lg:min-h-[640px] lg:rounded-none">
       <InteractiveBasemap
         stops={stops}
         legs={legs}
