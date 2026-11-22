@@ -114,11 +114,10 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
- * wave 48 (#340) + wave 53 craft residual (BEA-508): tip-011 interest-chip
- * `active:scale` · prefs/empty/preview title `leading-snug`. SoftFailBadge Soft
- * fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
- * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
- * fetch. No `/dev` gallery.
+ * wave 48 (#340) + wave 53 (#367) + wave 56 craft residual (BEA-544): sheet
+ * title + day title `leading-snug`. SoftFailBadge Soft fill · SoftFailSupport ·
+ * mist band unchanged. Stop drawer SoftFail (#225) owns Itinerary. Soft-fails
+ * to local Kyoto demo — never timber / Failed to fetch. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -366,7 +365,7 @@ export function DayFillPanel({
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "planner.dayFill.sheetEyebrow")}
             </span>
-            <span className="font-display text-lg tracking-tight text-ink">
+            <span className="font-display text-lg leading-snug tracking-tight text-ink">
               {t(locale, "planner.dayFill.title")}
             </span>
             {mode === "live" ? (
@@ -626,7 +625,7 @@ export function DayFillPanel({
                     }}
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-display text-sm font-semibold tracking-tight text-ink">
+                      <span className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                         {t(locale, "planner.day")} {day.dayIndex + 1}
                         {day.date ? (
                           <span className="ml-2 text-sm font-normal text-ink-soft">
