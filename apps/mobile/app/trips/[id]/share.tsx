@@ -438,13 +438,16 @@ export default function ShareScreen() {
               {active.aspect} · {active.nameZh}
             </Text>
 
-            {/* Template grid picker (#74) */}
+            {/* Template grid picker (#74) — wave 50 type/motion/token residual */}
             <View
               style={styles.templateSection}
               accessibilityRole="summary"
               accessibilityLabel={t(locale, "share.pickTemplate")}
             >
-              <Text style={styles.section}>
+              <Text style={styles.templateEyebrow}>
+                {t(locale, "share.templatesEyebrow")}
+              </Text>
+              <Text style={styles.templateTitle}>
                 {t(locale, "share.pickTemplate")}
               </Text>
               <Text style={styles.sectionSupport}>
@@ -460,10 +463,13 @@ export default function ShareScreen() {
                       onPress={() => pickTemplate(tpl.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected }}
-                      style={StyleSheet.flatten([
-                        styles.templateCard,
-                        selected ? styles.templateCardActive : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.templateCard,
+                          selected ? styles.templateCardActive : null,
+                          pressed ? styles.templateCardPressed : null,
+                        ])
+                      }
                     >
                       <View
                         style={StyleSheet.flatten([
@@ -856,10 +862,28 @@ const styles = StyleSheet.create({
     color: "rgba(47,107,255,0.7)",
   },
   templateSection: { marginTop: 12 },
+  templateEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: colors.river,
+    marginBottom: 4,
+  },
+  templateTitle: {
+    ...type.display,
+    marginTop: 0,
+    marginBottom: 4,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "700",
+    color: colors.ink,
+  },
   templateGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
     marginTop: 12,
   },
   templateCard: {
@@ -870,12 +894,20 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: radius.md,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.88)",
+    backgroundColor: colors.foam,
   },
   templateCardActive: {
     borderColor: colors.river,
     backgroundColor: "rgba(47,107,255,0.08)",
     borderWidth: 1.5,
+    shadowColor: colors.river,
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 2,
+  },
+  templateCardPressed: {
+    transform: [{ scale: 0.98 }],
   },
   templateThumb: {
     position: "relative",
@@ -929,7 +961,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: colors.foam,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
   },
@@ -961,7 +993,8 @@ const styles = StyleSheet.create({
   templateName: {
     ...type.display,
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: "700",
     color: colors.ink,
   },
@@ -972,15 +1005,15 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
     paddingTop: 2,
   },
   templateMeta: {
     ...type.body,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 16,
     color: colors.inkSoft,
   },
   section: {
