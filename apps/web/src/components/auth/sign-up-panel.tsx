@@ -18,10 +18,11 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-up SoftFail helper adoption (BEA-392 after #284 / depth #227):
- * SoftFailBadge · SoftFailSupport · compact SoftFail mist band under azure
- * rail · tip-011 rise stagger — never timber / Failed to fetch for
- * keys-missing / transport noise.
+ * Sign-up SoftFail helper adoption (BEA-392 after #284 / depth #227) + craft
+ * SoftFail query parity (BEA-421): SoftFailBadge · SoftFailSupport · compact
+ * SoftFail mist band under azure rail · tip-011 rise stagger. Craft:
+ * /sign-up?signUpSoftFail=1 — SoftFail depth without a Clerk/API miss.
+ * SoftFail copy never timber / Failed to fetch. No `/dev` SoftFail gallery.
  */
 export function SignUpPanel({
   locale,
@@ -31,6 +32,18 @@ export function SignUpPanel({
   clerkReady: boolean;
 }) {
   const [apiSoft, setApiSoft] = useState(false);
+  /** Craft preview: /sign-up?signUpSoftFail=1 — SoftFail depth under azure rail. */
+  const [signUpSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("signUpSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -46,12 +59,17 @@ export function SignUpPanel({
     };
   }, []);
 
-  /** SoftFail owned by sign-up sheet — never timber / Failed to fetch. */
-  const softCopy = !clerkReady
+  /**
+   * SoftFail owned by sign-up sheet — never timber / Failed to fetch.
+   * Craft `?signUpSoftFail=1` forces SoftFail depth without a Clerk/API miss.
+   */
+  const softCopy = signUpSoftPreview
     ? t(locale, "auth.signUpSoftFail")
-    : apiSoft
-      ? t(locale, "auth.signUpApiSoftFail")
-      : null;
+    : !clerkReady
+      ? t(locale, "auth.signUpSoftFail")
+      : apiSoft
+        ? t(locale, "auth.signUpApiSoftFail")
+        : null;
   const softOpen = Boolean(softCopy);
 
   return (
@@ -81,8 +99,9 @@ export function SignUpPanel({
       </header>
 
       {/*
-        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
-        compact SoftFailNotice · tip-011 — never timber.
+        SoftFail helper adoption (BEA-392) + craft SoftFail query parity
+        (BEA-421): SoftFailBadge · SoftFailSupport · compact SoftFailNotice ·
+        tip-011. Craft: ?signUpSoftFail=1 — never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"

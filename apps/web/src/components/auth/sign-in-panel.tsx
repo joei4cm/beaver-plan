@@ -20,10 +20,12 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-in SoftFail helper adoption (BEA-392 after #284 / depth #238):
- * SoftFailBadge · SoftFailSupport · softFailMistWashClass · compact SoftFail
- * mist band under azure rail · WeChat SoftFail yield (no double depth) —
- * never timber / Failed to fetch for keys-missing / transport noise.
+ * Sign-in SoftFail helper adoption (BEA-392 after #284 / depth #238) + craft
+ * SoftFail query parity (BEA-421): SoftFailBadge · SoftFailSupport ·
+ * softFailMistWashClass · compact SoftFail mist band under azure rail ·
+ * WeChat SoftFail yield (no double depth). Craft: /sign-in?signInSoftFail=1 —
+ * SoftFail depth without a Clerk/API miss. SoftFail copy never timber /
+ * Failed to fetch. No `/dev` SoftFail gallery.
  */
 export function SignInPanel({
   locale,
@@ -40,6 +42,18 @@ export function SignInPanel({
   const [apiSoft, setApiSoft] = useState(false);
   /** Child WeChat SoftFail ownership — parent SoftFail yields while open. */
   const [wechatOwnsSoft, setWechatOwnsSoft] = useState(false);
+  /** Craft preview: /sign-in?signInSoftFail=1 — SoftFail depth under azure rail. */
+  const [signInSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("signInSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -55,12 +69,17 @@ export function SignInPanel({
     };
   }, []);
 
-  /** SoftFail owned by sign-in sheet — never timber / Failed to fetch. */
-  const softCopy = !clerkReady
+  /**
+   * SoftFail owned by sign-in sheet — never timber / Failed to fetch.
+   * Craft `?signInSoftFail=1` forces SoftFail depth without a Clerk/API miss.
+   */
+  const softCopy = signInSoftPreview
     ? t(locale, "auth.signInSoftFail")
-    : apiSoft
-      ? t(locale, "auth.signInApiSoftFail")
-      : null;
+    : !clerkReady
+      ? t(locale, "auth.signInSoftFail")
+      : apiSoft
+        ? t(locale, "auth.signInApiSoftFail")
+        : null;
   const softOpen = Boolean(softCopy);
   /** Parent SoftFail yields while WeChat child SoftFail owns (no double depth). */
   const sheetSoftOpen = softOpen && !wechatOwnsSoft;
@@ -92,9 +111,10 @@ export function SignInPanel({
       </header>
 
       {/*
-        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
-        softFailMistWashClass · compact SoftFailNotice · WeChat SoftFail yield —
-        never timber.
+        SoftFail helper adoption (BEA-392) + craft SoftFail query parity
+        (BEA-421): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
+        compact SoftFailNotice · WeChat SoftFail yield. Craft:
+        ?signInSoftFail=1 — never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
