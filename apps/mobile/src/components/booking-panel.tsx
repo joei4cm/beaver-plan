@@ -141,10 +141,12 @@ async function searchLocal(
  * + BookingLinkChips #395 twin). Wave 66 (BEA-670 / #449): priceLabel
  * letterSpacing 1.2. Wave 67 (BEA-674): loading skeleton foam shell + bones
  * twin of live offerCard / web BookingOffersSkeleton (beyond #446/#449 live
- * chrome). SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth).
- * Confirm nest known no-op — leave alone. Never timber / Failed to fetch.
- * No `/dev` gallery.
+ * chrome). Wave 67 (BEA-694): offer rating ★ `river@CC` + ink value twin of
+ * web `text-river/80` / place-intel ratingStar (beyond #447/#449 live chrome;
+ * skeleton leave-alone). SoftFail stays under OTA / Confirm rails; craft
+ * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
+ * double depth). Confirm nest known no-op — leave alone. Never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -774,9 +776,17 @@ export function BookingPanel({
                           </View>
                         ) : null}
                         {typeof s.ratingHint === "number" ? (
-                          <Text style={styles.rating}>
-                            ★ {s.ratingHint.toFixed(1)}
-                          </Text>
+                          <View style={styles.ratingRow}>
+                            <Text
+                              style={styles.ratingStar}
+                              accessibilityElementsHidden
+                            >
+                              ★
+                            </Text>
+                            <Text style={styles.rating}>
+                              {s.ratingHint.toFixed(1)}
+                            </Text>
+                          </View>
                         ) : null}
                         <Text style={styles.provider}>{s.providerLabel}</Text>
                       </View>
@@ -1416,6 +1426,24 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.river,
   },
+  /** Web offer rating row `inline-flex items-baseline gap-1` (BEA-694). */
+  ratingRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  /**
+   * Web ★ `text-[0.7rem] font-bold text-river/80` · place-intel ratingStar
+   * twin (BEA-694).
+   */
+  ratingStar: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "700",
+    color: `${colors.river}CC`,
+  },
+  /** Web rating value `text-xs font-medium text-ink` (BEA-694). */
   rating: {
     ...type.body,
     fontSize: 12,
