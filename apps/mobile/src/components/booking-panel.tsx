@@ -1621,8 +1621,9 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.river,
   },
   draftCardEmpty: {
-    borderColor: "rgba(148,163,184,0.4)",
-    backgroundColor: "rgba(244,246,250,0.5)",
+    /** Web border-[color:var(--bp-line)]/70 · bg-paper/50 (BEA-745). */
+    borderColor: `${colors.ink}1A`,
+    backgroundColor: `${colors.paper}80`,
   },
   draftHead: {
     flexDirection: "row",
