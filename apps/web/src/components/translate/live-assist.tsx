@@ -1391,11 +1391,18 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     ))}
                 </ul>
               )}
+              {/*
+                Queue flush secondary CTA color settle (BEA-811 / wave 75):
+                tip-011 hover `ease-bp-out-strong` (emptyCta / #488/#491 twin).
+                SoftFail / phrase rows · queue × / nextDemo / HoldMic·Talk·Dual
+                (#488) / mode tabs (#491) / phrasebook (#492) / locale-swap
+                (#494) / TTS (#495) leave.
+              */}
               <button
                 type="button"
                 onClick={() => void onFlushQueue()}
                 disabled={!online || pendingQueueCount(queue) === 0}
-                className="bp-transition mt-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-40"
+                className="bp-transition mt-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river duration-bp-fast ease-bp-out-strong hover:border-river/40 active:scale-[0.98] disabled:opacity-40"
               >
                 {t(locale, "translate.queueFlush")}
               </button>
