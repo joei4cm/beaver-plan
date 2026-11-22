@@ -59,14 +59,15 @@ type Props = {
  *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
  *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
  * Floating SoftFailNotice depth (BEA-318 after #213) + SoftFail helper
- * adoption (BEA-390 after #284) + SoftFail yield (BEA-414 after #281):
- *   azure Map rail · SoftFailBadge · SoftFailSupport · compact SoftFail mist
- *   band (border-b) · tip-011 mist-wash · yields to search SoftFail (#226) /
- *   legend SoftFail / basemap SoftFail when open — locate SoftFail yields with
- *   the same unit (no double SoftFail). Legend SoftFail depth (BEA-350 after
- *   #133): SoftFailBadge · SoftFailSupport · mist SoftFail under azure
- *   Transfer rail · tip-011 mist-wash strokes. Lumen tokens — never timber /
- *   Failed to fetch · no double SoftFail.
+ * adoption (BEA-390 after #284) + SoftFail yield (BEA-414 after #281) +
+ * craft SoftFail query parity (BEA-422): `/trips/…?searchSoftFail=1` ·
+ * `/trips/…?mapSoftFail=1` · `/trips/…?legendSoftFail=1` force SoftFail depth
+ * under Places / Map / Transfer rails (mirrors #282 / wave 42). SoftFailBadge ·
+ * SoftFailSupport · compact SoftFail mist band (border-b) · tip-011 mist-wash ·
+ * yields to search SoftFail (#226) / legend SoftFail / basemap SoftFail when
+ * open — locate SoftFail yields with the same unit (no double SoftFail).
+ * Legend SoftFail depth (BEA-350 after #133) kept. SoftFail copy never timber /
+ * Failed to fetch. No `/dev` SoftFail gallery.
  */
 export function MapChrome({
   locale,
@@ -101,6 +102,41 @@ export function MapChrome({
   const engineRef = useRef<HTMLDivElement | null>(null);
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  /** Craft preview: /trips/…?searchSoftFail=1 — SoftFail depth under Places. */
+  const [searchSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("searchSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?mapSoftFail=1 — SoftFail depth under floating Map. */
+  const [mapSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("mapSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?legendSoftFail=1 — SoftFail depth under Transfer. */
+  const [legendSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("legendSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   const q = query.trim();
   const hasResults = results.length > 0;
@@ -198,28 +234,33 @@ export function MapChrome({
   const legendOpen = layers.legend && hasRoute;
   /**
    * Search SoftFailNotice depth (BEA-302 after #179) + SoftFail helpers
-   * (BEA-390): azure Places rail · SoftFailBadge / Live · SoftFailSupport ·
-   * compact SoftFail (border-b) · mist-wash tip-011 body. Stage + transfer
-   * legend yield (no double depth). Soft copy never timber / Failed to fetch.
+   * (BEA-390) + craft SoftFail query parity (BEA-422): azure Places rail ·
+   * SoftFailBadge / Live · SoftFailSupport · compact SoftFail (border-b) ·
+   * mist-wash tip-011 body. Craft: /trips/…?searchSoftFail=1 forces SoftFail
+   * under Places when the sheet is open. Stage + transfer legend yield (no
+   * double depth). Soft copy never timber / Failed to fetch.
    */
-  const searchOwnsSoftFail = searchDemo && sheetOpen;
+  const searchOwnsSoftFail = (searchDemo || searchSoftPreview) && sheetOpen;
   const searchSoftCopy = showEmpty
     ? t(locale, "planner.search.softFailEmpty")
     : t(locale, "planner.search.softFail");
   /**
-   * Floating SoftFailNotice depth (BEA-318 after #213; yield audit BEA-414):
-   * locate + vendor soft-fail share one SoftFail unit. Yields while basemap
-   * SoftFail / search SoftFail (#226) / legend SoftFail (#266) SoftFail chrome
-   * own — locate SoftFail must not bypass SoftFail Soft ownership (no double
-   * SoftFail depth). Soft copy never timber / Failed to fetch.
+   * Floating SoftFailNotice depth (BEA-318 after #213; yield audit BEA-414) +
+   * craft SoftFail query parity (BEA-422): locate + vendor soft-fail share one
+   * SoftFail unit. Craft: /trips/…?mapSoftFail=1 · /trips/…?legendSoftFail=1.
+   * Yields while basemap SoftFail / search SoftFail (#226) / legend SoftFail
+   * (#266) SoftFail chrome own — locate SoftFail must not bypass SoftFail Soft
+   * ownership (no double SoftFail depth). Soft copy never timber / Failed to
+   * fetch.
    */
-  const legendOwnsSoftFail = legendOpen && softFail && !searchOwnsSoftFail;
+  const legendSoft = softFail || legendSoftPreview;
+  const legendOwnsSoftFail = legendOpen && legendSoft && !searchOwnsSoftFail;
   const basemapOwnsSoftFail = engineOpen && softFail;
   const floatingOwnsSoft =
     !searchOwnsSoftFail &&
     !legendOwnsSoftFail &&
     !basemapOwnsSoftFail &&
-    (Boolean(locateNotice) || softFail);
+    (Boolean(locateNotice) || softFail || mapSoftPreview);
   const floatingSoftCopy =
     locateNotice ||
     (floatingOwnsSoft ? t(locale, "planner.map.softFail") : null);
@@ -395,10 +436,10 @@ export function MapChrome({
             className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp"
           >
             {/*
-              Search SoftFail depth (BEA-302 / BEA-390):
-              azure Places rail · SoftFailBadge / Live · SoftFailSupport ·
-              compact SoftFailNotice · softFailMistWash tip-011 body —
-              never timber / Failed to fetch.
+              Search SoftFail depth (BEA-302 / BEA-390) + craft SoftFail query
+              parity (BEA-422): azure Places rail · SoftFailBadge / Live ·
+              SoftFailSupport · compact SoftFailNotice · softFailMistWash tip-011
+              body. Craft: ?searchSoftFail=1 — never timber / Failed to fetch.
             */}
             <div
               className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -671,11 +712,12 @@ export function MapChrome({
       {/* Field tools — floating SoftFail depth + transfer legend (under chrome) */}
       <div className="absolute bottom-4 left-3 z-[1] flex max-w-[min(100%-5rem,22rem)] flex-col gap-2 sm:left-4">
         {/*
-          Floating SoftFail depth (BEA-318 / BEA-390):
-          azure Map rail · SoftFailBadge · SoftFailSupport · compact SoftFailNotice
-          mist band (border-b) · tip-011 mist-wash — yields to search SoftFail
-          (#226) / legend SoftFail / basemap SoftFail (locate SoftFail too);
-          never timber / Failed to fetch.
+          Floating SoftFail depth (BEA-318 / BEA-390) + craft SoftFail query
+          parity (BEA-422): azure Map rail · SoftFailBadge · SoftFailSupport ·
+          compact SoftFailNotice mist band (border-b) · tip-011 mist-wash.
+          Craft: ?mapSoftFail=1 — yields to search SoftFail (#226) / legend
+          SoftFail / basemap SoftFail (locate SoftFail too); never timber /
+          Failed to fetch.
         */}
         <SheetPresence
           open={floatingOwnsSoft}
@@ -715,11 +757,12 @@ export function MapChrome({
         </SheetPresence>
 
         {/*
-          Legend SoftFail depth (BEA-350 / BEA-390):
-          azure Transfer rail · SoftFailBadge / Live · SoftFailSupport · compact
-          SoftFail mist band (border-b) · tip-011 mist-wash stroke body — yields
-          to search SoftFail (#226); floating SoftFail yields while legend owns;
-          never timber / Failed to fetch.
+          Legend SoftFail depth (BEA-350 / BEA-390) + craft SoftFail query
+          parity (BEA-422): azure Transfer rail · SoftFailBadge / Live ·
+          SoftFailSupport · compact SoftFail mist band (border-b) · tip-011
+          mist-wash stroke body. Craft: ?legendSoftFail=1 — yields to search
+          SoftFail (#226); floating SoftFail yields while legend owns; never
+          timber / Failed to fetch.
         */}
         <SheetPresence
           open={legendOpen && !searchOwnsSoftFail}
@@ -738,13 +781,13 @@ export function MapChrome({
               <span className="text-[11px] font-medium text-ink-soft/80">
                 {t(locale, "planner.map.legendTitle")}
               </span>
-              {softFail ? (
+              {legendSoft ? (
                 <SoftFailSupport>
                   {t(locale, "planner.map.legendSoftSupport")}
                 </SoftFailSupport>
               ) : null}
             </div>
-            {softFail ? (
+            {legendSoft ? (
               <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
                 {t(locale, "planner.map.legendSoftBadge")}
               </SoftFailBadge>
@@ -757,7 +800,7 @@ export function MapChrome({
 
           {/* Compact SoftFail mist band under azure Transfer rail — never timber. */}
           <SoftFailNotice
-            open={softFail}
+            open={legendSoft}
             compact
             fallback={t(locale, "planner.map.legendSoftFail")}
           >
@@ -766,7 +809,7 @@ export function MapChrome({
 
           <div
             className={`animate-rise flex flex-wrap items-center gap-3 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft ${
-              softFail ? softFailMistWashClass : ""
+              legendSoft ? softFailMistWashClass : ""
             }`}
             style={{ animationDelay: "70ms" }}
           >

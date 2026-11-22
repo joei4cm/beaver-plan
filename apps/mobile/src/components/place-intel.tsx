@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
   DAY_FILL_INTERESTS,
@@ -25,6 +25,8 @@ type Props = {
   /** Demo / soft-fail badge when live Places is unavailable. */
   demoMode?: boolean;
   userNote?: string;
+  /** Craft SoftFail query: `/trips/…?placeSoftFail=1` (BEA-422 / #282 parity). */
+  craftPlaceSoftFail?: boolean;
 };
 
 const INTEREST_KEYS: Record<DayFillInterest, MessageKey> = {
@@ -59,12 +61,14 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo place intel SoftFailNotice depth (BEA-359 after #108 / web #251) +
- * SoftFail helper adoption (BEA-390 after #284):
- * azure Place intel rail · SoftFailBadge · SoftFailSupport · soft rail wash ·
- * compact SoftFail mist band under rail · softFailMistWash tip-011 body ·
- * StyleSheet.flatten · Lumen tokens. SoftFail stays under Place intel rail
- * — never timber / Failed to fetch. Web map SoftFail helpers land in the
- * same BEA-390 PR; Expo trip SoftFail rails stay with BEA-388.
+ * SoftFail helper adoption (BEA-390 after #284) + craft SoftFail query parity
+ * (BEA-422): azure Place intel rail · SoftFailBadge · SoftFailSupport · soft
+ * rail wash · compact SoftFail mist band under rail · softFailMistWash tip-011
+ * body · StyleSheet.flatten · Lumen tokens. Craft: `/trips/…?placeSoftFail=1`
+ * forces SoftFail depth under Place intel (mirrors web + #282). SoftFail stays
+ * under Place intel rail — never timber / Failed to fetch. No `/dev` SoftFail
+ * gallery. Web map SoftFail craft queries land in the same BEA-422 PR; Expo
+ * trip SoftFail rails stay with BEA-388 except search SoftFail craft.
  */
 export function PlaceIntel({
   details,
@@ -72,7 +76,24 @@ export function PlaceIntel({
   locale,
   demoMode,
   userNote,
+  craftPlaceSoftFail = false,
 }: Props) {
+  /**
+   * Craft SoftFail query parity with web (`?placeSoftFail=1`) — prefer Expo
+   * Router param from trip detail (#282); fall back to window search (Expo web).
+   */
+  const [windowPlaceSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("placeSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  const placeSoftPreview = craftPlaceSoftFail || windowPlaceSoftPreview;
   const snapRef = useRef<{
     details: PlaceDetails;
     userNote?: string;
@@ -110,11 +131,13 @@ export function PlaceIntel({
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
   /**
-   * SoftFail depth (BEA-359 after #108): Soft intel badge · softSupport ·
-   * SoftFail under azure Place intel rail · tip-011 mist-wash body.
-   * SoftFail copy always softFail — never timber / Failed to fetch.
+   * SoftFail depth (BEA-359 after #108 / helpers BEA-390) + craft SoftFail
+   * query parity (BEA-422): Soft intel badge · softSupport · SoftFail under
+   * azure Place intel rail · tip-011 mist-wash body. Craft:
+   * /trips/…?placeSoftFail=1. SoftFail copy always softFail — never timber /
+   * Failed to fetch.
    */
-  const softOpen = open && demo;
+  const softOpen = open && (demo || placeSoftPreview);
   const sheetSupportCopy = softOpen
     ? t(locale, "planner.place.softSupport")
     : view?.address
@@ -136,9 +159,10 @@ export function PlaceIntel({
       {view ? (
         <>
           {/*
-            SoftFail depth (BEA-359 / BEA-390): azure Place intel rail ·
-            SoftFailBadge · SoftFailSupport · soft rail wash · tip-011 —
-            SoftFail under rail. Expo trip SoftFail rails stay with BEA-388.
+            SoftFail depth (BEA-359 / BEA-390) + craft SoftFail query parity
+            (BEA-422): azure Place intel rail · SoftFailBadge · SoftFailSupport ·
+            soft rail wash · tip-011. Craft: ?placeSoftFail=1 — SoftFail under
+            rail. Expo trip SoftFail rails stay with BEA-388 except search craft.
           */}
           <View
             style={StyleSheet.flatten([
