@@ -59,9 +59,12 @@ import { PlaceIntel } from "../../src/components/place-intel";
 import { SheetPresence } from "../../src/components/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailBandStyle,
+  softFailLiveBadgeLabelStyle,
+  softFailLiveBadgeStyle,
   softFailMistWashStyle,
 } from "../../src/components/soft-fail-notice";
 import { TransferSteps } from "../../src/components/transfer-steps";
@@ -1556,21 +1559,9 @@ export default function TripDetailScreen() {
                           {t(locale, "planner.search.softBadge")}
                         </SoftFailBadge>
                       ) : (
-                        <View
-                          style={StyleSheet.flatten([
-                            styles.searchBadge,
-                            styles.searchBadgeLive,
-                          ])}
-                        >
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.searchBadgeText,
-                              styles.searchBadgeTextLive,
-                            ])}
-                          >
-                            {t(locale, "planner.search.liveBadge")}
-                          </Text>
-                        </View>
+                        <SoftFailLiveBadge>
+                          {t(locale, "planner.search.liveBadge")}
+                        </SoftFailLiveBadge>
                       )}
                     </View>
 
@@ -1759,21 +1750,9 @@ export default function TripDetailScreen() {
                               : t(locale, "planner.stops.softBadge")}
                           </SoftFailBadge>
                         ) : (
-                          <View
-                            style={StyleSheet.flatten([
-                              styles.stopsSoftBadge,
-                              styles.stopsSoftBadgeLive,
-                            ])}
-                          >
-                            <Text
-                              style={StyleSheet.flatten([
-                                styles.stopsSoftBadgeText,
-                                styles.stopsSoftBadgeTextLive,
-                              ])}
-                            >
-                              {t(locale, "planner.stops.liveBadge")}
-                            </Text>
-                          </View>
+                          <SoftFailLiveBadge>
+                            {t(locale, "planner.stops.liveBadge")}
+                          </SoftFailLiveBadge>
                         )}
                       </>
                     )}
@@ -2162,7 +2141,7 @@ export default function TripDetailScreen() {
                           style={StyleSheet.flatten([
                             styles.presenceStatusBadge,
                             members.length > 0
-                              ? styles.presenceStatusBadgeLive
+                              ? softFailLiveBadgeStyle
                               : styles.presenceStatusBadgeIdle,
                           ])}
                         >
@@ -2183,7 +2162,7 @@ export default function TripDetailScreen() {
                             style={StyleSheet.flatten([
                               styles.presenceStatusBadgeText,
                               members.length > 0
-                                ? styles.presenceStatusBadgeTextLive
+                                ? softFailLiveBadgeLabelStyle
                                 : styles.presenceStatusBadgeTextIdle,
                             ])}
                           >
@@ -2361,14 +2340,9 @@ export default function TripDetailScreen() {
                           {t(locale, "collab.inviteSoftBadge")}
                         </SoftFailBadge>
                       ) : (
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.inviteStatusBadge,
-                            styles.inviteStatusBadgeLive,
-                          ])}
-                        >
+                        <SoftFailLiveBadge>
                           {t(locale, "collab.inviteLiveBadge")}
-                        </Text>
+                        </SoftFailLiveBadge>
                       )}
                       {inviteCode ? (
                         <Text style={styles.inviteRoleChip}>
@@ -2547,14 +2521,9 @@ export default function TripDetailScreen() {
                             {t(locale, "collab.panel.timelineSoftBadge")}
                           </SoftFailBadge>
                         ) : (
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.timelineStatusBadge,
-                              styles.timelineStatusBadgeLive,
-                            ])}
-                          >
+                          <SoftFailLiveBadge>
                             {t(locale, "collab.panel.liveBadge")}
-                          </Text>
+                          </SoftFailLiveBadge>
                         )}
                       </View>
                       {timelineSoftOpen ? (

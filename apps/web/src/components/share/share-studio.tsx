@@ -31,6 +31,7 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -744,9 +745,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   : t(locale, "share.demoBadge")}
               </SoftFailBadge>
             ) : (
-              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+              <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                 {t(locale, "share.liveBadge")}
-              </span>
+              </SoftFailLiveBadge>
             )}
           </header>
 
@@ -1040,9 +1041,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       {t(locale, "share.exportSoftBadge")}
                     </SoftFailBadge>
                   ) : (
-                    <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                    <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                       {t(locale, "share.liveBadge")}
-                    </span>
+                    </SoftFailLiveBadge>
                   )}
                 </div>
 

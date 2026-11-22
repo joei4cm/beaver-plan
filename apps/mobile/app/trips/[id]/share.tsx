@@ -36,6 +36,7 @@ import { fetchTrip, isApiSoftFail, renderShare } from "../../../src/api";
 import { SheetPresence } from "../../../src/components/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashStyle,
@@ -648,14 +649,9 @@ export default function ShareScreen() {
                   {softOpen ? (
                     <SoftFailBadge>{exportSoftBadgeCopy}</SoftFailBadge>
                   ) : (
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.exportBadge,
-                        styles.exportBadgeLive,
-                      ])}
-                    >
+                    <SoftFailLiveBadge>
                       {t(locale, "share.liveBadge")}
-                    </Text>
+                    </SoftFailLiveBadge>
                   )}
                 </View>
 

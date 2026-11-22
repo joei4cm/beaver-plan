@@ -19,6 +19,7 @@ import { fetchHealth } from "../src/api";
 import { SheetPresence } from "../src/components/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashStyle,
@@ -153,21 +154,9 @@ export default function SignInScreen() {
             {railSoft ? (
               <SoftFailBadge>{t(locale, "auth.signInSoftBadge")}</SoftFailBadge>
             ) : (
-              <View
-                style={StyleSheet.flatten([
-                  styles.statusBadge,
-                  styles.statusBadgeLive,
-                ])}
-              >
-                <Text
-                  style={StyleSheet.flatten([
-                    styles.statusBadgeText,
-                    styles.statusBadgeTextLive,
-                  ])}
-                >
-                  {t(locale, "auth.liveBadge")}
-                </Text>
-              </View>
+              <SoftFailLiveBadge>
+                {t(locale, "auth.liveBadge")}
+              </SoftFailLiveBadge>
             )}
           </View>
 

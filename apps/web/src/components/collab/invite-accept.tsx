@@ -7,6 +7,7 @@ import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -183,9 +184,9 @@ export function InviteAccept({
               {softOpen ? (
                 <SoftFailBadge>{t(locale, "invite.softBadge")}</SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                   {t(locale, "invite.liveBadge")}
-                </span>
+                </SoftFailLiveBadge>
               )}
               {preview ? (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">

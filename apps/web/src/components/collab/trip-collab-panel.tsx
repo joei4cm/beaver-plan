@@ -12,6 +12,7 @@ import { parseMentions, sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -372,9 +373,9 @@ export function TripCollabPanel({
               {panelSoftOpen ? (
                 <SoftFailBadge>{t(locale, "collab.demoBadge")}</SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                   {t(locale, "collab.panel.liveBadge")}
-                </span>
+                </SoftFailLiveBadge>
               )}
             </header>
 
@@ -543,9 +544,9 @@ export function TripCollabPanel({
                   {t(locale, "collab.panel.timelineSoftBadge")}
                 </SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                   {t(locale, "collab.panel.liveBadge")}
-                </span>
+                </SoftFailLiveBadge>
               )}
               {liveApi && !demoSeeded ? (
                 <button

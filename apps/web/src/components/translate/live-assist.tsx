@@ -25,6 +25,8 @@ import {
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
@@ -821,15 +823,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   : t(locale, "translate.bannerSupport")}
               </span>
             </div>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                !online || isDemo
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river-deep"
-              }`}
-            >
-              {bannerBadge}
-            </span>
+            {!online || isDemo ? (
+              <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
+                {bannerBadge}
+              </SoftFailBadge>
+            ) : (
+              <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+                {bannerBadge}
+              </SoftFailLiveBadge>
+            )}
           </div>
 
           {/* Compact SoftFail under azure rail — yields while empty / Talk / camera SoftFail own. */}

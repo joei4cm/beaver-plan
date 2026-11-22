@@ -32,6 +32,7 @@ import {
 import { SheetPresence } from "./sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashStyle,
@@ -436,14 +437,11 @@ export function DayFillPanel({
         <View style={styles.headerText}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.title}>{t(locale, "planner.dayFill.title")}</Text>
-            <Text
-              style={StyleSheet.flatten([
-                styles.badge,
-                mode === "live" ? styles.badgeLive : styles.badgeDemo,
-              ])}
-            >
-              {badge}
-            </Text>
+            {mode === "live" ? (
+              <SoftFailLiveBadge>{badge}</SoftFailLiveBadge>
+            ) : (
+              <SoftFailBadge>{badge}</SoftFailBadge>
+            )}
             {showSoftFail ? (
               <SoftFailBadge>
                 {t(locale, "planner.dayFill.softBadge")}
@@ -715,18 +713,15 @@ export function DayFillPanel({
                       <SectionEyebrow>
                         {t(locale, "planner.dayFill.previewEyebrow")}
                       </SectionEyebrow>
-                      <Text
-                        style={StyleSheet.flatten([
-                          styles.badge,
-                          proposal.mode === "live"
-                            ? styles.badgeLive
-                            : styles.badgeDemo,
-                        ])}
-                      >
-                        {proposal.mode === "live"
-                          ? t(locale, "planner.dayFill.liveBadge")
-                          : t(locale, "planner.dayFill.demoBadge")}
-                      </Text>
+                      {proposal.mode === "live" ? (
+                        <SoftFailLiveBadge>
+                          {t(locale, "planner.dayFill.liveBadge")}
+                        </SoftFailLiveBadge>
+                      ) : (
+                        <SoftFailBadge>
+                          {t(locale, "planner.dayFill.demoBadge")}
+                        </SoftFailBadge>
+                      )}
                     </View>
                     <Text style={styles.prefsTitle}>
                       {t(locale, "planner.dayFill.preview")}
