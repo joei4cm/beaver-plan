@@ -1817,11 +1817,13 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Stops SoftFail helpers (BEA-388 after #284 / BEA-298 + #282):
-                SoftFailBadge (Soft/empty/reorder) · SoftFailSupport ·
-                SoftFailNotice mist band · tip-011 softFailMistWashStyle chips.
+                Stops SoftFail helpers (BEA-388 after #284 / BEA-298 + #282) +
+                stop-card craft residual (BEA-529 / wave 55 beyond #349):
+                SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
+                tip-011 mist-wash · mist-track chip press · stop-row press ·
+                selected display + Selected mark · SheetPresence detail rise.
                 Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy never timber
-                / Failed to fetch.
+                / Failed to fetch. No `/dev` gallery.
               */}
               <View style={styles.stopsChrome}>
                 <View
@@ -1957,10 +1959,14 @@ export default function TripDetailScreen() {
                               locale,
                               "planner.stops.chip",
                             ).replace("{n}", String(i + 1))}
-                            style={StyleSheet.flatten([
-                              styles.stopChip,
-                              on ? styles.stopChipOn : null,
-                            ])}
+                            style={({ pressed }) =>
+                              StyleSheet.flatten([
+                                styles.stopChip,
+                                on ? styles.stopChipOn : null,
+                                /* tip-011 press — web mist-track chips (#349) */
+                                pressed ? styles.stopChipPressed : null,
+                              ])
+                            }
                           >
                             <Animated.View
                               style={StyleSheet.flatten([
@@ -2003,11 +2009,17 @@ export default function TripDetailScreen() {
                 return (
                   <Pressable
                     key={stop.id}
-                    style={StyleSheet.flatten([
-                      styles.stopRow,
-                      selected ? styles.stopRowSelected : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.stopRow,
+                        selected ? styles.stopRowSelected : null,
+                        /* tip-011 press — Places searchHit / web list-row scale */
+                        pressed ? styles.stopRowPressed : null,
+                      ])
+                    }
                     onPress={() => selectStop(stop.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                   >
                     <Animated.View
                       style={StyleSheet.flatten([
@@ -2021,46 +2033,112 @@ export default function TripDetailScreen() {
                       <Text style={styles.stopIndexText}>{index + 1}</Text>
                     </Animated.View>
                     <View style={styles.stopBody}>
-                      <Text style={styles.stopName}>{stop.place.name}</Text>
+                      <View style={styles.stopNameRow}>
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.stopName,
+                            selected ? styles.stopNameSelected : null,
+                          ])}
+                          numberOfLines={1}
+                        >
+                          {stop.place.name}
+                        </Text>
+                        {selected ? (
+                          <View style={styles.stopSelectedMark}>
+                            <Text style={styles.stopSelectedMarkText}>
+                              {t(locale, "planner.stops.selected")}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
                       {stop.place.address ? (
                         <Text style={styles.stopAddr}>
                           {stop.place.address}
                         </Text>
                       ) : null}
                       {selected ? (
-                        <PlaceIntel
-                          details={
-                            placeDetails?.enginePlaceId ===
-                            stop.place.enginePlaceId
-                              ? placeDetails
-                              : null
-                          }
-                          loading={placeDetailsLoading}
-                          locale={locale}
-                          demoMode={placeDetailsMode === "demo"}
-                          craftPlaceSoftFail={placeSoftPreview}
-                          userNote={stop.userNote}
-                        />
-                      ) : null}
-                      {(leg ||
-                        (selected &&
-                          !routing &&
-                          index < dayStops.length - 1)) && (
-                        <TransferSteps
-                          leg={leg ?? null}
-                          locale={locale}
-                          demoMode={routingDemo}
-                          showSoftFail={selected && Boolean(leg)}
-                          showEmpty={
-                            selected &&
-                            !routing &&
-                            !leg &&
-                            index < dayStops.length - 1
-                          }
-                          craftSoftFail={selected && transferSoftPreview}
-                        />
-                      )}
-                      {(stop.bookingLinks ?? []).length > 0 ? (
+                        <SheetPresence
+                          open
+                          delayMs={40}
+                          rise={8}
+                          style={styles.stopDetailShell}
+                          accessibilityLabel={t(
+                            locale,
+                            "planner.drawer.detailEyebrow",
+                          )}
+                        >
+                          <PlaceIntel
+                            details={
+                              placeDetails?.enginePlaceId ===
+                              stop.place.enginePlaceId
+                                ? placeDetails
+                                : null
+                            }
+                            loading={placeDetailsLoading}
+                            locale={locale}
+                            demoMode={placeDetailsMode === "demo"}
+                            craftPlaceSoftFail={placeSoftPreview}
+                            userNote={stop.userNote}
+                          />
+                          {(leg ||
+                            (!routing && index < dayStops.length - 1)) && (
+                            <TransferSteps
+                              leg={leg ?? null}
+                              locale={locale}
+                              demoMode={routingDemo}
+                              showSoftFail={Boolean(leg)}
+                              showEmpty={
+                                !routing &&
+                                !leg &&
+                                index < dayStops.length - 1
+                              }
+                              craftSoftFail={transferSoftPreview}
+                            />
+                          )}
+                          {(stop.bookingLinks ?? []).length > 0 ? (
+                            <View style={styles.bookingBlock}>
+                              <Text style={styles.bookingTitle}>
+                                {t(locale, "mobile.booking")}
+                              </Text>
+                              <View
+                                style={styles.bookingMistTrack}
+                                accessibilityRole="list"
+                                accessibilityLabel={t(locale, "mobile.booking")}
+                              >
+                                {(stop.bookingLinks ?? []).map((link) => (
+                                  <Pressable
+                                    key={`${link.kind}-${link.url}`}
+                                    style={({ pressed }) =>
+                                      StyleSheet.flatten([
+                                        styles.bookingChip,
+                                        pressed
+                                          ? styles.bookingChipPressed
+                                          : null,
+                                      ])
+                                    }
+                                    onPress={() =>
+                                      void Linking.openURL(link.url)
+                                    }
+                                    accessibilityRole="link"
+                                  >
+                                    <Text style={styles.bookingChipText}>
+                                      {t(
+                                        locale,
+                                        `planner.booking.kind.${link.kind as BookingLinkKind}`,
+                                      )}
+                                      {link.providerLabel
+                                        ? ` · ${link.providerLabel}`
+                                        : ""}
+                                      {" · "}
+                                      {t(locale, "mobile.bookingOpen")}
+                                    </Text>
+                                  </Pressable>
+                                ))}
+                              </View>
+                            </View>
+                          ) : null}
+                        </SheetPresence>
+                      ) : (stop.bookingLinks ?? []).length > 0 ? (
                         <View style={styles.bookingBlock}>
                           <Text style={styles.bookingTitle}>
                             {t(locale, "mobile.booking")}
@@ -3621,11 +3699,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inkSoft,
   },
-  /* Stop list chrome — azure rail · mist-track chips (web #105). */
+  /* Stop list chrome — azure rail · mist-track chips · stop-card residual (BEA-529). */
   stopsChrome: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web paper/70 — Lumen paper hex-alpha. */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3642,7 +3721,7 @@ const styles = StyleSheet.create({
   stopsRailSoft: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    backgroundColor: `${colors.paper}D9`,
   },
   stopsRailCopy: {
     flexDirection: "row",
@@ -3665,12 +3744,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100, 116, 139, 0.85)",
+    /** Web ink-soft/80. */
+    color: `${colors.inkSoft}CC`,
   },
   stopsSupport: {
     ...type.body,
     fontSize: 11,
-    color: "rgba(100, 116, 139, 0.8)",
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
   },
   stopsRailBadges: {
@@ -3685,7 +3765,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   stopsEmptyBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    backgroundColor: `${colors.river}1F`,
   },
   stopsEmptyBadgeText: {
     ...type.body,
@@ -3700,7 +3780,7 @@ const styles = StyleSheet.create({
   stopsSelectedBadge: {
     maxWidth: 160,
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -3718,7 +3798,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(100, 116, 139, 0.55)",
+    color: `${colors.inkSoft}8C`,
   },
   stopChipScroll: {
     maxHeight: 44,
@@ -3733,11 +3813,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 4,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(230, 236, 245, 0.5)",
+    /** Web mist/50. */
+    backgroundColor: `${colors.mist}80`,
   },
   stopChipTrackSoft: {
     marginLeft: 12,
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    backgroundColor: `${colors.mist}8C`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3751,10 +3832,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     backgroundColor: "transparent",
   },
+  /* tip-011 press — parity with web stop chips active:scale-[0.98] (#349). */
+  stopChipPressed: {
+    transform: [{ scale: 0.98 }],
+  },
   stopChipOn: {
     backgroundColor: colors.foam,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.25)",
+    borderColor: `${colors.river}40`,
     // Soft Lumen lift — selected chip over Mist track
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
@@ -3768,7 +3853,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(15, 23, 42, 0.1)",
+    backgroundColor: `${colors.ink}1A`,
   },
   stopChipIndexOn: {
     backgroundColor: colors.river,
@@ -3802,8 +3887,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  /* tip-011 press — Places searchHit / web Places active:scale-[0.995]. */
+  stopRowPressed: {
+    transform: [{ scale: 0.995 }],
+  },
   stopRowSelected: {
-    backgroundColor: "rgba(47,107,255,0.08)",
+    /** Web river/[0.08]. */
+    backgroundColor: `${colors.river}14`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingLeft: 11,
@@ -3812,32 +3902,84 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: radius.sm,
-    backgroundColor: colors.river,
+    backgroundColor: colors.ink,
     alignItems: "center",
     justifyContent: "center",
+    /* Web shadow-bp-soft on stop index. */
+    shadowColor: colors.ink,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   stopIndexSelected: {
-    backgroundColor: colors.riverDeep,
+    backgroundColor: colors.river,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.river}4D`,
   },
   stopIndexText: {
     ...type.body,
     fontWeight: "800",
     color: colors.foam,
     fontSize: 12,
+    fontVariant: ["tabular-nums"],
   },
-  stopBody: { flex: 1 },
+  stopBody: { flex: 1, minWidth: 0 },
+  stopNameRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    minWidth: 0,
+  },
   stopName: {
-    ...type.display,
+    ...type.body,
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
     color: colors.ink,
+  },
+  /* Web selected font-display bold tracking-tight. */
+  stopNameSelected: {
+    ...type.display,
+    fontWeight: "700",
     letterSpacing: -0.2,
+  },
+  stopSelectedMark: {
+    borderRadius: radius.xs,
+    backgroundColor: `${colors.river}1F`,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  stopSelectedMarkText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  /* Web SheetPresence detail shell — paper/river inset. */
+  stopDetailShell: {
+    marginTop: 12,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.river}33`,
+    backgroundColor: `${colors.paper}80`,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 10,
+    gap: 8,
   },
   stopAddr: {
     ...type.body,
     marginTop: 3,
     fontSize: 12,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
   },
   /* Booking list chips — web BookingLinkChips mist-track · tip-011 (BEA-521). */
   bookingBlock: { marginTop: 8, gap: 6 },
