@@ -257,13 +257,13 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit panel — SoftFail depth kept (BEA-396 / BEA-423) + wave 48 craft
- * residual (BEA-462): Lumen tokens · SheetPresence Summary / Steps · azure
- * Transfer rail. Craft SoftFail: `/trips/…?transferSoftFail=1`. SoftFailBadge
+ * Expo Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
+ * wave 48 Mode/river chrome (BEA-462) + wave 51 craft residual (BEA-490):
+ * Transfer rail eyebrow tracking 1.8 · transit mark river ring. SoftFailBadge
  * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · softFailBandStyle mist band ·
- * tip-011 softFailMistWashStyle. SoftFail copy always softFail / softFailEmpty —
- * never timber / Failed to fetch. Mode SoftFail yields while TransferSteps owns
- * selected-stop soft chrome (no double depth). No `/dev` gallery.
+ * tip-011 softFailMistWashStyle unchanged. Craft SoftFail:
+ * `/trips/…?transferSoftFail=1`. Soft copy never timber / Failed to fetch.
+ * Mode SoftFail yields while this owns (no double depth). No `/dev` gallery.
  */
 export function TransferSteps({
   leg,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -575,8 +575,13 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     backgroundColor: "rgba(230,236,245,0.8)",
   },
+  /** Transit mark river ring — web #337 color-mix(--bp-river 16%) parity. */
   iconTransit: {
     backgroundColor: colors.river,
+    shadowColor: colors.river,
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
   },
   iconTransfer: {
     borderWidth: StyleSheet.hairlineWidth,
