@@ -43,7 +43,7 @@ import { type } from "../src/theme";
 
 const locale = "zh-CN" as const;
 
-/** Craft SoftFail query parity with web (`?playbooksSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?emptySoftFail=1` / `?cardsSoftFail=1` / `?playbooksSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -369,17 +369,28 @@ function TripsListSkeleton() {
 /**
  * Expo home SoftFailNotice (BEA-307 empty + BEA-341 cards + BEA-398 playbooks
  * SoftFail helpers after #284 / BEA-372 depth) + craft SoftFail query parity
- * (BEA-405): Empty / cards / playbooks SoftFail rails unchanged. Craft:
- * /trips?playbooksSoftFail=1 forces SoftFail depth under azure Playbooks
- * (mirrors web). SoftFail never timber / Failed to fetch. SoftFail yields
- * across empty / cards / playbooks sheets (no double depth). No /dev gallery.
- * Yields web trips playbooks SoftFail (#245 / BEA-405).
+ * (BEA-425 after #298 / BEA-405 playbooks): Empty / cards SoftFail rails +
+ * playbooks SoftFail. Craft: /trips?emptySoftFail=1 · /trips?cardsSoftFail=1 ·
+ * /trips?playbooksSoftFail=1 force SoftFail depth under Start / Trips /
+ * Playbooks (mirrors web + #282). SoftFail never timber / Failed to fetch.
+ * SoftFail yields across empty / cards / playbooks sheets (no double depth).
+ * SoftFail depth + helpers kept. No /dev gallery.
  */
 export default function TripsScreen() {
   const router = useRouter();
-  const { playbooksSoftFail: playbooksSoftFailParam } = useLocalSearchParams<{
+  const {
+    emptySoftFail: emptySoftFailParam,
+    cardsSoftFail: cardsSoftFailParam,
+    playbooksSoftFail: playbooksSoftFailParam,
+  } = useLocalSearchParams<{
+    emptySoftFail?: string | string[];
+    cardsSoftFail?: string | string[];
     playbooksSoftFail?: string | string[];
   }>();
+  /** Craft preview: /trips?emptySoftFail=1 — SoftFail depth under Start. */
+  const emptySoftPreview = craftSoftFailOn(emptySoftFailParam);
+  /** Craft preview: /trips?cardsSoftFail=1 — SoftFail depth under Trips cards. */
+  const cardsSoftPreview = craftSoftFailOn(cardsSoftFailParam);
   /** Craft preview: /trips?playbooksSoftFail=1 — SoftFail depth under Playbooks. */
   const playbooksSoftPreview = craftSoftFailOn(playbooksSoftFailParam);
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -429,12 +440,17 @@ export default function TripsScreen() {
       byId.set("sample-kyoto", sampleTripStub());
     }
     /**
-     * Soft local demo row when list soft-fails (BEA-341 after #211): Soft cards
-     * SoftFail owns mist-wash rows. Empty SoftFail (#233) still owns when API
-     * is up and ownTrips is empty — never timber / Failed to fetch.
+     * Soft local demo row when list soft-fails (BEA-341 after #211) or craft
+     * `?cardsSoftFail=1` (BEA-425): Soft cards SoftFail owns mist-wash rows.
+     * Empty SoftFail (#233) still owns when API is up and ownTrips is empty
+     * unless cards craft seeds the soft local row — never timber / Failed to fetch.
      */
+    const seedCardsSoftDemo =
+      cardsSoftPreview &&
+      !emptySoftPreview &&
+      ![...byId.keys()].some((id) => id !== "sample-kyoto");
     if (
-      remoteFailed &&
+      (remoteFailed || seedCardsSoftDemo) &&
       ![...byId.keys()].some((id) => id !== "sample-kyoto")
     ) {
       byId.set("local-soft-osaka", softLocalDemoTrip());
@@ -447,14 +463,14 @@ export default function TripsScreen() {
       }),
     );
 
-    if (remoteFailed) {
+    if (remoteFailed || cardsSoftPreview) {
       setSoftNotice(t(locale, "trips.cardsSoftFail"));
       setError(null);
     } else {
       setSoftNotice(null);
     }
     setHydrated(true);
-  }, []);
+  }, [cardsSoftPreview, emptySoftPreview]);
 
   useEffect(() => {
     void load();
@@ -499,33 +515,46 @@ export default function TripsScreen() {
     () => trips.filter((x) => x.id !== "sample-kyoto"),
     [trips],
   );
-  const showEmptyInvite = hydrated && ownTrips.length === 0;
+  /**
+   * Craft SoftFail query parity (BEA-425): `?emptySoftFail=1` forces Start
+   * SoftFail rail (empty owns); `?cardsSoftFail=1` seeds soft local demo /
+   * SoftFail under Trips so empty yields. Empty SoftFail craft wins over cards
+   * when both are set (translate empty/talk parity).
+   */
+  const showEmptyInvite =
+    hydrated &&
+    (emptySoftPreview && !cardsSoftPreview
+      ? true
+      : ownTrips.length === 0);
   const sampleTrips = trips.filter((x) => x.id === "sample-kyoto");
   /**
-   * SoftFail ownership (BEA-307 empty / BEA-341 cards / BEA-372 playbooks):
-   * empty sheet owns SoftFail while empty invite; cards sheet owns SoftFail
-   * when trips exist; playbooks sheet owns SoftFail under azure Playbooks rail
-   * when templates soft. SoftFail yields across sheets (no double depth).
+   * SoftFail ownership (BEA-307 empty / BEA-341 cards / BEA-372 playbooks) +
+   * craft SoftFail query parity (BEA-425 after #298 / #282):
+   * empty sheet owns SoftFail while empty invite / `?emptySoftFail=1`; cards
+   * sheet owns SoftFail when trips exist / `?cardsSoftFail=1`; playbooks sheet
+   * owns SoftFail under azure Playbooks rail when templates soft /
+   * `?playbooksSoftFail=1`. SoftFail yields across sheets (no double depth).
    * Empty copy always emptySoftFail; cards copy always cardsSoftFail;
    * playbooks copy always templatesSoftOffline — never inherit softNotice /
-   * timber. Soft copy never Failed to fetch. Yields web playbooks SoftFail (#245).
+   * timber. Soft copy never Failed to fetch.
    */
   const emptyOwnsSoft = showEmptyInvite;
   const cardsOwnsSoft = hydrated && !showEmptyInvite;
   const emptySoftOpen = emptyOwnsSoft;
   const cardsSoftOpen =
-    cardsOwnsSoft && !error && Boolean(softNotice);
+    cardsOwnsSoft && !error && (Boolean(softNotice) || cardsSoftPreview);
   const emptySoftCopy = t(locale, "trips.emptySoftFail");
   /** Cards SoftFail copy owned by Trips rail — never inherit softNotice. */
   const cardsSoftCopy = t(locale, "trips.cardsSoftFail");
   const cardsSoftActive = cardsSoftOpen && !emptyOwnsSoft;
   /**
    * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245 parity)
-   * + craft SoftFail query parity (BEA-405): SoftFailBadge Soft playbooks ·
-   * SoftFailSupport · softFailBandStyle mist band · softFailMistWashStyle
-   * tip-011 body while soft. Craft: /trips?playbooksSoftFail=1 — mirrors web.
-   * Empty SoftFail (#233) stays on Start; cards SoftFail (#259) stays on
-   * Trips (yield / no overlap). Soft copy never timber / Failed to fetch.
+   * + craft SoftFail query parity (BEA-405 / BEA-425): SoftFailBadge Soft
+   * playbooks · SoftFailSupport · softFailBandStyle mist band ·
+   * softFailMistWashStyle tip-011 body while soft. Craft:
+   * /trips?playbooksSoftFail=1 — mirrors web. Empty SoftFail (#233) stays on
+   * Start; cards SoftFail (#259) stays on Trips (yield / no overlap). Soft
+   * copy never timber / Failed to fetch.
    */
   const playbooksSoftOpen =
     hydrated && (templatesSoft || playbooksSoftPreview);
@@ -643,10 +672,11 @@ export default function TripsScreen() {
               accessibilityLabel={t(locale, "trips.seedRail")}
             >
               {/*
-                Empty SoftFail depth (BEA-307 after web #224 / Expo #96):
-                azure Start rail · Soft empty badge · emptySoftSupport ·
-                compact SoftFailNotice · tip-011 SheetPresence CTAs /
-                sample cards — never timber / Failed to fetch.
+                Empty SoftFail depth (BEA-307 after web #224 / Expo #96) +
+                craft SoftFail query parity (BEA-425): azure Start rail · Soft
+                empty badge · emptySoftSupport · compact SoftFailNotice ·
+                tip-011 SheetPresence CTAs / sample cards. Craft:
+                ?emptySoftFail=1 — never timber / Failed to fetch.
               */}
               <View style={styles.listSheet}>
                 <EmptyRail soft={emptySoftOpen} />
@@ -722,10 +752,11 @@ export default function TripsScreen() {
               accessibilityLabel={t(locale, "trips.listRail")}
             >
               {/*
-                Trip cards SoftFail depth (BEA-341 after #211 / BEA-316):
-                azure Trips rail · Soft cards badge · softSupport ·
-                compact SoftFail mist band · tip-011 mist-wash stage ·
-                never timber / Failed to fetch. Yields while empty owns.
+                Trip cards SoftFail depth (BEA-341 after #211 / BEA-316) +
+                craft SoftFail query parity (BEA-425): azure Trips rail · Soft
+                cards badge · softSupport · compact SoftFail mist band ·
+                tip-011 mist-wash stage. Craft: ?cardsSoftFail=1 — never timber
+                / Failed to fetch. Yields while empty owns.
               */}
               <View style={styles.listSheet}>
                 <TripsListRail
