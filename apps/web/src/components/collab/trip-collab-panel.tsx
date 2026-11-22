@@ -39,10 +39,9 @@ function newLocalId(prefix: string) {
 
 /**
  * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
- * yield #281) + wave 50 craft (#347 / BEA-479 · #352 / BEA-487) + wave 55:
- * Timeline residual (BEA-532) empty rise · actor inkSoft/80 + reply compose
- * residual (BEA-528): Compose azure rail · paper/70 · field rise · mention
- * tip-011 press. SoftFailBadge · SoftFailSupport · SoftFailNotice mist band
+ * yield #281) + wave 50–55 craft (#347 / #352 / #378) + wave 59 thread residual
+ * (BEA-565): list loading rise/`/80` · empty/author snug · row out-strong.
+ * Compose (#378) + SoftFailBadge · SoftFailSupport · SoftFailNotice mist band
  * unchanged. Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on
  * Activity; invite SoftFail yields timeline (no double depth). Soft copy never
  * timber / Failed to fetch. No `/dev` gallery.
@@ -380,10 +379,9 @@ export function TripCollabPanel({
       <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
       {/*
         Comments thread SoftFail depth kept (panel SoftFailNotice + Demo/Live) +
-        wave 50 thread craft (BEA-487 / #352): eyebrow 0.18em · tip-011 Post +
-        wave 55 reply compose residual (BEA-528): Compose azure rail · paper/70 ·
-        field rise · mention tip-011. Empty rise already #351. SoftFail reopen
-        out of scope. No `/dev` gallery.
+        wave 50 thread craft (BEA-487 / #352) + wave 55 compose (BEA-528 / #378) +
+        wave 59 thread residual (BEA-565): loading rise/`/80` · empty/author snug ·
+        row out-strong. SoftFail reopen out of scope. No `/dev` gallery.
       */}
       <SheetPresence
         open={tab === "comments"}
@@ -413,13 +411,22 @@ export function TripCollabPanel({
               )}
             </header>
 
+            {/*
+              Thread list residual (BEA-565 beyond reply #378): loading rise/`/80`
+              · empty/author leading-snug · row ease-bp-out-strong. SoftFail /
+              compose chrome untouched.
+            */}
             <ul className="max-h-72 space-y-0 overflow-y-auto px-3 py-2">
               {showLoading ? (
-                <li className="space-y-3 px-1 py-3" aria-busy="true">
+                <li
+                  className="animate-rise space-y-3 px-1 py-3"
+                  style={{ animationDelay: "40ms" }}
+                  aria-busy="true"
+                >
                   <div className="h-3 w-28 rounded-bp-xs bg-mist" />
                   <div className="h-4 w-full max-w-md rounded-bp-xs bg-mist/70" />
                   <div className="h-4 w-3/4 max-w-sm rounded-bp-xs bg-mist/50" />
-                  <p className="pt-1 text-sm text-ink-soft">
+                  <p className="pt-1 text-sm leading-snug text-ink-soft/80">
                     {t(locale, "collab.panel.loading")}
                   </p>
                 </li>
@@ -431,7 +438,7 @@ export function TripCollabPanel({
                   role="status"
                   aria-live="polite"
                 >
-                  <p className="font-display text-base font-semibold tracking-tight text-ink">
+                  <p className="font-display text-base font-semibold leading-snug tracking-tight text-ink">
                     {t(locale, "collab.panel.emptyComments")}
                   </p>
                 </li>
@@ -439,7 +446,7 @@ export function TripCollabPanel({
               {visibleComments.map((c, i) => (
                 <li
                   key={c.id}
-                  className="animate-rise group relative border-l-2 border-river/40 py-3.5 pl-4 transition duration-bp-fast ease-bp-out hover:border-river hover:bg-mist/35"
+                  className="animate-rise group relative border-l-2 border-river/40 py-3.5 pl-4 transition duration-bp-fast ease-bp-out-strong hover:border-river hover:bg-mist/35"
                   style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
                 >
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
@@ -449,7 +456,7 @@ export function TripCollabPanel({
                     >
                       {commentInitials(c.authorDisplayName ?? c.authorUserId)}
                     </span>
-                    <span className="text-sm font-semibold text-ink">
+                    <span className="text-sm font-semibold leading-snug tracking-tight text-ink">
                       {c.authorDisplayName ?? c.authorUserId}
                     </span>
                     <time className="text-[11px] tabular-nums text-ink-soft/80">
