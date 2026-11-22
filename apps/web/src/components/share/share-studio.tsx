@@ -521,6 +521,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         </div>
       </header>
 
+      {/*
+        Day-tab color settle (BEA-780 / wave 73): `ease-bp-out-strong` —
+        tip-011 `.bp-day-tab` / collab #484 / Mode·Stops #485 twin. SoftFail /
+        page chrome (BEA-708) / day-chip prefer (BEA-699) leave. Indicator
+        travel stays animate-tab-indicator.
+      */}
       <div
         ref={dayTabsRef}
         className="animate-rise relative mt-6 flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/50"
@@ -555,7 +561,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 // Day change from empty SoftFail chrome kicks first render.
                 if (!preview) kickRender();
               }}
-              className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out ${
+              className={`relative z-[1] shrink-0 px-5 py-3.5 text-left transition duration-bp-fast ease-bp-out-strong ${
                 activeDay
                   ? "text-foam"
                   : "text-ink-soft hover:bg-mist/70 hover:text-ink"
