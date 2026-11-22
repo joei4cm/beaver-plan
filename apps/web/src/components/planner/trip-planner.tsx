@@ -1004,14 +1004,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       {/*
         Trip header chrome craft residual (BEA-524 / wave 54) beyond Share SoftFail
         depth (#268 / BEA-362) + Share CTA hierarchy (#121) + Export Journal
-        tracking residual (BEA-748 / wave 71 beyond Mode generate #470): brand
-        eyebrow kept `0.26em` · Export azure rail eyebrow `0.65rem` / `0.18em`
-        (Mode #370 / Studio Export #364 parity) · tip-011 `active:scale-[0.98]`
-        on Journal / Share / Duplicate · Journal `tracking-wide` (Expo
-        actionLabel LS 0.2 · Share / Mode generate twin) · SoftFail rails
-        unchanged. Craft: ?shareSoftFail=1 · yield share export SoftFail (#255) /
-        share studio SoftFail (#243) on /share — never timber / Failed to fetch.
-        No `/dev` gallery.
+        tracking residual (BEA-748 / wave 71 beyond Mode generate #470) + Export
+        CTA color settle (BEA-778 / wave 73): brand eyebrow kept `0.26em` ·
+        Export azure rail eyebrow `0.65rem` / `0.18em` (Mode #370 / Studio
+        Export #364 parity) · tip-011 `active:scale-[0.98]` on Journal / Share /
+        Duplicate · Journal `tracking-wide` (Expo actionLabel LS 0.2 · Share /
+        Mode generate twin) · Journal / Duplicate `ease-bp-out-strong` (Share /
+        Mode·Stops #485 / collab #484 / `.bp-day-tab` tip-011 twin) · SoftFail
+        rails unchanged. Craft: ?shareSoftFail=1 · yield share export SoftFail
+        (#255) / share studio SoftFail (#243) on /share — never timber /
+        Failed to fetch. No `/dev` gallery. Not Mode/Stops (#485) · not collab
+        tabs (#484) · not share day tabs (BEA-780).
       */}
       <header className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
         <div>
@@ -1090,7 +1093,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 type="button"
                 disabled={duplicating}
                 onClick={() => void duplicateTrip()}
-                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out-strong hover:text-river hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
               >
                 {duplicating
                   ? t(locale, "planner.duplicating")
@@ -1099,7 +1102,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             </div>
             <Link
               href={`/trips/${tripId}/journal`}
-              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium tracking-wide text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium tracking-wide text-ink-soft transition duration-bp-fast ease-bp-out-strong hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "nav.journal")}
             </Link>
@@ -1174,7 +1177,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             while TransferSteps SoftFail depth (BEA-378) /
             ?transferSoftFail=1 owns selected-stop soft chrome — never timber /
             Failed to fetch. No `/dev` gallery. Not Mode soft chrome (BEA-740) ·
-            not Export CTAs · not collab tabs (#484). Export eyebrow at bar.
+            not Export CTA settle (BEA-778) · not collab tabs (#484). Export
+            eyebrow at bar.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
