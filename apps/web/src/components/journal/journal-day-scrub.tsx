@@ -27,8 +27,9 @@ type Props = {
   selectedStopId: string | null;
   onSelectStop: (stopId: string) => void;
   /**
-   * SoftFail helpers (BEA-391 after #284): SoftFailBadge / SoftFailSupport on
-   * azure scrub rail · Soft/Live · softSupport · tip-011 mist-wash.
+   * SoftFail helpers (BEA-391 after #284) + craft SoftFail query parity
+   * (BEA-424): SoftFailBadge / SoftFailSupport on azure scrub rail · Soft/Live ·
+   * softSupport · tip-011 mist-wash. Craft parent: ?scrubSoftFail=1.
    * Sibling rail — compose SoftFail (#264) / empty SoftFail (#231) / photo strip
    * SoftFail (#244) stay on their rails (no double SoftFail on scrub).
    */

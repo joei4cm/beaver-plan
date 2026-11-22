@@ -94,9 +94,27 @@ function EntryIndexMark({ n, active }: { n: number; active?: boolean }) {
   );
 }
 
+/** Craft SoftFail query parity with web (`?composeSoftFail=1` / `?entriesSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
+
 export default function JournalScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const {
+    id,
+    composeSoftFail: composeSoftFailParam,
+    entriesSoftFail: entriesSoftFailParam,
+  } = useLocalSearchParams<{
+    id: string;
+    composeSoftFail?: string | string[];
+    entriesSoftFail?: string | string[];
+  }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
+  /** Craft preview: /trips/…/journal?composeSoftFail=1 — SoftFail depth under Compose. */
+  const composeSoftPreview = craftSoftFailOn(composeSoftFailParam);
+  /** Craft preview: /trips/…/journal?entriesSoftFail=1 — SoftFail depth under Soft entries. */
+  const entriesSoftPreview = craftSoftFailOn(entriesSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -399,32 +417,37 @@ export default function JournalScreen() {
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
   /**
-   * Entry SoftFail helpers (BEA-391 after #284 / BEA-370):
-   * azure Entries rail · SoftFailBadge Soft entries · SoftFailSupport ·
-   * compact SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence ·
-   * StyleSheet.flatten. SoftFail copy always softFail / softOffline — never
-   * timber / Failed to fetch. Yields while empty SoftFail (#231) would own the
-   * Entries rail (no double depth). Compose SoftFail (#247) keeps its own
-   * Compose rail — different azure rail.
+   * Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft SoftFail
+   * query parity (BEA-424): azure Entries rail · SoftFailBadge Soft entries ·
+   * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
+   * mist-wash SheetPresence · StyleSheet.flatten. Craft:
+   * /trips/…/journal?entriesSoftFail=1 — SoftFail depth without API down.
+   * SoftFail copy always softFail / softOffline — never timber / Failed to
+   * fetch. Yields while empty SoftFail (#231) would own the Entries rail (no
+   * double depth). Compose SoftFail (#247) keeps its own Compose rail —
+   * different azure rail. SoftFail depth + helpers kept. No `/dev` SoftFail
+   * gallery.
    */
   const entryEmpty = visible.length === 0;
   const emptyOwnsSoft = entryEmpty;
   const entryOwnsSoft =
-    (demoSeeded || softNotice) && !emptyOwnsSoft;
+    (entriesSoftPreview || demoSeeded || softNotice) && !emptyOwnsSoft;
   const showListSoftFail = entryOwnsSoft;
-  const listSoftCopy =
-    softNotice && !isDeviceOnline()
+  const listSoftCopy = entriesSoftPreview
+    ? t(locale, "journal.softFail")
+    : softNotice && !isDeviceOnline()
       ? t(locale, "journal.softOffline")
       : t(locale, "journal.softFail");
   const listSoftSupportCopy = t(locale, "journal.softSupport");
   /**
-   * Compose SoftFail helpers (BEA-391 after #284 / BEA-322):
-   * azure Compose rail · SoftFailBadge Soft media · SoftFailSupport ·
-   * compact SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence ·
-   * StyleSheet.flatten. SoftFail copy always composeSoftFail — never timber /
-   * Failed to fetch.
+   * Compose SoftFail helpers (BEA-391 after #284 / BEA-322) + craft SoftFail
+   * query parity (BEA-424): azure Compose rail · SoftFailBadge Soft media ·
+   * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
+   * mist-wash SheetPresence · StyleSheet.flatten. Craft:
+   * /trips/…/journal?composeSoftFail=1 — SoftFail depth without a media miss.
+   * SoftFail copy always composeSoftFail — never timber / Failed to fetch.
    */
-  const composeOwnsSoft = composeSoftFail;
+  const composeOwnsSoft = composeSoftFail || composeSoftPreview;
   const showComposeSoftFail = composeOwnsSoft;
   /** Compose SoftFail copy owned by azure rail — never inherit noise / timber. */
   const composeSoftCopy = t(locale, "journal.composeSoftFail");
@@ -506,11 +529,12 @@ export default function JournalScreen() {
 
             <View style={styles.listPane}>
               {/*
-                Entry SoftFail helpers (BEA-391 after #284 / BEA-370):
-                azure Entries rail · SoftFailBadge Soft entries · SoftFailSupport ·
-                compact SoftFail mist band · tip-011 mist-wash body —
-                never timber / Failed to fetch. Yields while empty SoftFail
-                (#231) owns Entries; Compose SoftFail (#247) stays on Compose.
+                Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft
+                SoftFail query parity (BEA-424): azure Entries rail · SoftFailBadge
+                Soft entries · SoftFailSupport · compact SoftFail mist band ·
+                tip-011 mist-wash body. Craft: ?entriesSoftFail=1 — never timber /
+                Failed to fetch. Yields while empty SoftFail (#231) owns Entries;
+                Compose SoftFail (#247) stays on Compose.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -748,10 +772,11 @@ export default function JournalScreen() {
             </View>
 
             {/*
-              Compose SoftFail helpers (BEA-391 after #284 / BEA-322):
-              foam compose · azure head · SoftFailBadge Soft media · SoftFailSupport ·
-              compact SoftFail mist band · tip-011 mist-wash body —
-              never timber / Failed to fetch. Own Compose rail; Entries SoftFail
+              Compose SoftFail helpers (BEA-391 after #284 / BEA-322) + craft
+              SoftFail query parity (BEA-424): foam compose · azure head ·
+              SoftFailBadge Soft media · SoftFailSupport · compact SoftFail mist
+              band · tip-011 mist-wash body. Craft: ?composeSoftFail=1 — never
+              timber / Failed to fetch. Own Compose rail; Entries SoftFail
               (BEA-370) owns the Entries rail — not overlapping chrome.
             */}
             <View
