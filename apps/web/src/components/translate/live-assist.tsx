@@ -982,8 +982,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       </header>
 
       {/*
-        Live panel craft residual (BEA-515 wave 53): mode tabs tip-011 press ·
-        pair eyebrow 0.18em · swap tip-011. SoftFail / history (#353) untouched.
+        Live panel craft residual (BEA-515 wave 53) + Conversation/Camera mode
+        tab color settle (BEA-796 / wave 73): mode tabs tip-011 press ·
+        `ease-bp-out-strong` (tip-011 / #484/#485/#487 twin). SoftFail /
+        history (#353) / Dual prefer / HoldMic·Talk·Dual CTAs (#488) untouched.
       */}
       <div
         className="animate-rise mt-8 flex gap-2 rounded-bp bg-mist/70 p-1.5"
@@ -1013,7 +1015,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 }
               }
             }}
-            className={`bp-transition flex-1 rounded-bp-sm px-4 py-2.5 text-sm font-semibold duration-bp-fast ease-bp-out active:scale-[0.98] ${
+            className={`bp-transition flex-1 rounded-bp-sm px-4 py-2.5 text-sm font-semibold duration-bp-fast ease-bp-out-strong active:scale-[0.98] ${
               tab === id
                 ? "bg-river text-foam shadow-bp-soft"
                 : "text-ink-soft hover:text-ink"
