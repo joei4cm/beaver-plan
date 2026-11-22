@@ -2143,9 +2143,11 @@ export default function TripDetailScreen() {
                                         locale,
                                         `planner.booking.kind.${link.kind as BookingLinkKind}`,
                                       )}
-                                      {link.providerLabel
-                                        ? ` · ${link.providerLabel}`
-                                        : ""}
+                                      {link.providerLabel ? (
+                                        <Text style={styles.bookingChipMeta}>
+                                          {` · ${link.providerLabel}`}
+                                        </Text>
+                                      ) : null}
                                       {" · "}
                                       {t(locale, "mobile.bookingOpen")}
                                     </Text>
@@ -2184,9 +2186,11 @@ export default function TripDetailScreen() {
                                     locale,
                                     `planner.booking.kind.${link.kind as BookingLinkKind}`,
                                   )}
-                                  {link.providerLabel
-                                    ? ` · ${link.providerLabel}`
-                                    : ""}
+                                  {link.providerLabel ? (
+                                    <Text style={styles.bookingChipMeta}>
+                                      {` · ${link.providerLabel}`}
+                                    </Text>
+                                  ) : null}
                                   {" · "}
                                   {t(locale, "mobile.bookingOpen")}
                                 </Text>
@@ -4025,11 +4029,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: `${colors.inkSoft}CC`,
   },
-  /* Booking list chips — web BookingLinkChips mist-track · tip-011 (BEA-521). */
+  /* Booking list chips — web BookingLinkChips mist-track · tip-011 beyond #371. */
   bookingBlock: { marginTop: 8, gap: 6 },
   bookingTitle: {
     ...type.body,
-    fontSize: 11,
+    /** Web SectionEyebrow / pin SoftFail eyebrow `0.65rem`. */
+    fontSize: 10.4,
     fontWeight: "700",
     letterSpacing: 1.8,
     textTransform: "uppercase",
@@ -4040,7 +4045,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 2,
     borderRadius: radius.sm,
-    backgroundColor: `${colors.mist}8C`,
+    /** Web `bg-mist/50` — Mode mist track #394 parity. */
+    backgroundColor: `${colors.mist}80`,
     padding: 4,
   },
   bookingChip: {
@@ -4056,15 +4062,25 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 1 },
   },
-  /* tip-011 press — parity with web BookingLinkChips active:scale-[0.98]. */
+  /* tip-011 press — Mode chip opacity + scale parity with web active:scale. */
   bookingChipPressed: {
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
   },
   bookingChipText: {
     ...type.body,
     fontSize: 11,
+    lineHeight: 16,
     color: colors.river,
     fontWeight: "600",
+  },
+  /** Provider meta — web chip `text-ink-soft/80`. */
+  bookingChipMeta: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "500",
+    color: `${colors.inkSoft}CC`,
   },
   dayFillWrap: {
     marginTop: 16,
