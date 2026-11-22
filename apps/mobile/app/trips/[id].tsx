@@ -2439,10 +2439,10 @@ export default function TripDetailScreen() {
                 {/*
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
                   wave 48 invite residual (BEA-461) + wave 51 presence pills craft
-                  (BEA-493) + wave 54 members roster residual (BEA-518): paper /
-                  mist / inkSoft / river token alphas on presence chrome.
-                  SoftFailBadge · SoftFailSupport · mist band unchanged. Craft:
-                  ?presenceSoftFail=1 — never timber.
+                  (BEA-493) + wave 54 members roster residual (BEA-518) + wave 57
+                  presence pills residual (BEA-546): role/state type 1.4 · away
+                  inset · strip empty /80. SoftFailBadge · SoftFailSupport · mist
+                  band unchanged. Craft: ?presenceSoftFail=1 — never timber.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -4327,11 +4327,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
+  /** Strip empty — web ink-soft/80 + snug (BEA-546). */
   presenceEmpty: {
     ...type.body,
     fontSize: 13,
-    lineHeight: 19,
-    color: colors.inkSoft,
+    lineHeight: 18,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
     paddingHorizontal: 6,
     paddingVertical: 6,
   },
@@ -4410,11 +4412,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.15,
     color: colors.ink,
   },
-  /** Role pill on presence chips — wave 51 (BEA-493) type bar. */
+  /** Role pill on presence chips — wave 51 (BEA-493) · 1.4 bar (BEA-546). */
   presenceRole: {
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     paddingHorizontal: 5,
     paddingVertical: 1,
@@ -4434,14 +4436,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
-  /** List status pills — web PRESENCE_PILL parity (BEA-493) · token alphas (BEA-518). */
+  /** List status pills — BEA-493 / BEA-518 · type 1.4 + away inset (BEA-546). */
   presenceStatePill: {
     ...type.body,
     alignSelf: "flex-start",
     marginTop: 2,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -4465,6 +4467,9 @@ const styles = StyleSheet.create({
   presenceStateAway: {
     backgroundColor: colors.mist,
     color: colors.inkSoft,
+    /** Web away inset ink-soft @ 55% */
+    borderLeftWidth: 2,
+    borderLeftColor: `${colors.inkSoft}8C`,
   },
   collabThread: {
     marginTop: 10,
