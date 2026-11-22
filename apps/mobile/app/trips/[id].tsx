@@ -1202,11 +1202,11 @@ export default function TripDetailScreen() {
 
           {/*
             Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice ·
-            tip-011 rise. Craft residual beyond #375 / BEA-524 (BEA-556): display
+            tip-011 rise. Craft residual beyond #398 / BEA-556 (BEA-588): display
             weight 700 · brand 0.65rem tracking · title lineHeight 40 · support
-            inkSoft@CC (Mode / web secondary ladder) · Journal foam@CC (web
-            foam/80) · paper@0.55 wash · soft-shadow primary · tip-011 press.
-            SoftFail rails unchanged.
+            inkSoft@CC · Journal foam@CC · paper@0.55 wash · soft-shadow primary ·
+            tip-011 press · Demo/Offline Soft mist Foam dark (ink/70 + line ring,
+            #404 Soft-shaped twin). SoftFail rails unchanged.
           */}
           <Animated.View
             style={StyleSheet.flatten([styles.header, riseStyle])}
@@ -3145,11 +3145,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  /** Foam dark Soft mist (BEA-588 beyond #398 / #404 Soft-shaped twin). */
   statusChipOffline: {
     backgroundColor: colors.mist,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
   statusChipDemo: {
     backgroundColor: colors.mist,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
   statusChipLive: {
     /** River @ 0.12 — token alpha (BEA-524). */
@@ -3163,10 +3168,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   statusChipTextOffline: {
-    color: colors.inkSoft,
+    /** ink/70 — SoftFail Soft Foam dark AA on mist (BEA-568 / #404). */
+    color: "rgba(15, 23, 42, 0.7)",
   },
   statusChipTextDemo: {
-    color: colors.inkSoft,
+    color: "rgba(15, 23, 42, 0.7)",
   },
   statusChipTextLive: {
     color: colors.river,
