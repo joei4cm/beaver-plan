@@ -486,10 +486,7 @@ export function DayFillPanel({
             open={open}
             delayMs={50}
             rise={10}
-            style={StyleSheet.flatten([
-              styles.prefs,
-              showSoftFail ? styles.prefsSoft : null,
-            ])}
+            style={styles.prefs}
             accessibilityLabel={t(locale, "planner.dayFill.interests")}
           >
             <View>
@@ -894,10 +891,6 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 16,
     paddingVertical: 16,
-  },
-  /** tip-011 mist wash on prefs while SoftFail owns the rail. */
-  prefsSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
   stage: {
     paddingHorizontal: 16,

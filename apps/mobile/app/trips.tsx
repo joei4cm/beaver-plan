@@ -777,7 +777,7 @@ export default function TripsScreen() {
                   delayMs={50}
                   style={StyleSheet.flatten([
                     styles.cardsBody,
-                    cardsSoftActive ? styles.cardsBodySoft : null,
+                    cardsSoftActive ? softFailMistWashStyle : null,
                   ])}
                   accessibilityLabel={t(locale, "trips.yours")}
                 >
@@ -1158,10 +1158,6 @@ const styles = StyleSheet.create({
   },
   cardsBody: {
     paddingVertical: 0,
-  },
-  /** Mist-wash tip-011 trip body when SoftFail owns the Trips rail (BEA-341). */
-  cardsBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
   cardsStage: {
     width: "100%",

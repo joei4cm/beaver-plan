@@ -52,6 +52,7 @@ import {
   SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailMistWashStyle,
 } from "../src/components/soft-fail-notice";
 import { isDeviceOnline } from "../src/offline/trip-offline";
 import { createMobileOfflineQueueStore } from "../src/offline/translation-queue";
@@ -1025,7 +1026,7 @@ export default function TranslateScreen() {
                   rise={12}
                   style={StyleSheet.flatten([
                     styles.historyEmpty,
-                    emptySoftOpen ? styles.historyEmptySoft : null,
+                    emptySoftOpen ? softFailMistWashStyle : null,
                   ])}
                   accessibilityLabel={t(uiLocale, "translate.empty")}
                 >
@@ -1238,7 +1239,7 @@ export default function TranslateScreen() {
                 rise={12}
                 style={StyleSheet.flatten([
                   styles.talkBody,
-                  talkSoftOpen ? styles.talkBodySoft : null,
+                  talkSoftOpen ? softFailMistWashStyle : null,
                 ])}
                 accessibilityLabel={t(uiLocale, "translate.talkRail")}
               >
@@ -1403,7 +1404,7 @@ export default function TranslateScreen() {
               rise={12}
               style={StyleSheet.flatten([
                 styles.dualBody,
-                dualSoftOpen ? styles.dualBodySoft : null,
+                dualSoftOpen ? softFailMistWashStyle : null,
               ])}
               accessibilityLabel={t(uiLocale, "translate.dualHint")}
             >
@@ -2018,10 +2019,6 @@ const styles = StyleSheet.create({
     gap: 10,
     maxWidth: 420,
   },
-  /** Mist-wash empty body when SoftFail open (BEA-351 tip-011). */
-  historyEmptySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
-  },
   historyEmptyStage: {
     gap: 10,
   },
@@ -2248,10 +2245,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
   },
-  /** Mist-wash Talk compose body when SoftFail open (BEA-326 tip-011). */
-  talkBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
-  },
   /** Mist SoftFail strip under azure Talk rail — border-b before mist body. */
   talkSoftFail: {
     marginBottom: 0,
@@ -2421,10 +2414,6 @@ const styles = StyleSheet.create({
   dualBody: {
     paddingHorizontal: 12,
     paddingVertical: 12,
-  },
-  /** Mist-wash dual stage body when SoftFail open (BEA-335 tip-011). */
-  dualBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
   dualFrame: {
     borderRadius: radius.md,
