@@ -57,7 +57,13 @@ import { BookingPanel } from "../../src/components/booking-panel";
 import { DayFillPanel } from "../../src/components/day-fill-panel";
 import { PlaceIntel } from "../../src/components/place-intel";
 import { SheetPresence } from "../../src/components/sheet-presence";
-import { SoftFailNotice } from "../../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailBandStyle,
+  softFailMistWashStyle,
+} from "../../src/components/soft-fail-notice";
 import { TransferSteps } from "../../src/components/transfer-steps";
 import { TripMap } from "../../src/components/trip-map";
 import {
@@ -1191,11 +1197,11 @@ export default function TripDetailScreen() {
 
             <View style={styles.sheet}>
               {/*
-                Day tabs SoftFail depth (BEA-299 after #196 / BEA-258):
-                azure Days rail · Soft days badge · compact SoftFail under rail
-                (mist band · border-b) · tip-011 SheetPresence mist tabs ·
-                per-day stop meta · StyleSheet.flatten. SoftFail yields while
-                invite open. Never timber / Failed to fetch.
+                Day tabs SoftFail helpers (BEA-388 after #284 / BEA-299):
+                azure Days rail · SoftFailBadge · SoftFailSupport ·
+                SoftFailNotice mist band · tip-011 SheetPresence mist tabs ·
+                StyleSheet.flatten. SoftFail yields while invite open. Never
+                timber / Failed to fetch.
               */}
               <View
                 style={styles.daysChrome}
@@ -1212,18 +1218,23 @@ export default function TripDetailScreen() {
                         String(days.length),
                       )}
                     </Text>
-                    <Text style={styles.daysSupport} numberOfLines={1}>
-                      {daysSoftOpen
-                        ? t(locale, "planner.days.softSupport")
-                        : t(locale, "planner.days.support")}
-                    </Text>
+                    {daysSoftOpen ? (
+                      <SoftFailSupport
+                        style={styles.softSupportShrink}
+                        numberOfLines={1}
+                      >
+                        {t(locale, "planner.days.softSupport")}
+                      </SoftFailSupport>
+                    ) : (
+                      <Text style={styles.daysSupport} numberOfLines={1}>
+                        {t(locale, "planner.days.support")}
+                      </Text>
+                    )}
                   </View>
                   {daysSoftOpen ? (
-                    <View style={styles.daysSoftBadge}>
-                      <Text style={styles.daysSoftBadgeText}>
-                        {t(locale, "planner.days.softBadge")}
-                      </Text>
-                    </View>
+                    <SoftFailBadge>
+                      {t(locale, "planner.days.softBadge")}
+                    </SoftFailBadge>
                   ) : dayId ? (
                     <View style={styles.daysSelectedBadge}>
                       <Text style={styles.daysSelectedBadgeText}>
@@ -1242,7 +1253,7 @@ export default function TripDetailScreen() {
                 <SoftFailNotice
                   open={daysSoftOpen}
                   compact
-                  style={styles.daysSoftFail}
+                  style={softFailBandStyle}
                 >
                   {daysSoftCopy}
                 </SoftFailNotice>
@@ -1343,11 +1354,11 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit filters SoftFail depth (BEA-342 after #221 / BEA-289):
-                azure mode rail · Soft mode badge · softSupport · compact
-                SoftFail mist band (`border-b`) · tip-011 mist-wash
-                SheetPresence · StyleSheet.flatten. Yields while TransferSteps
-                owns. Never timber / Failed to fetch.
+                Transit filters SoftFail helpers (BEA-388 after #284 / BEA-342):
+                azure mode rail · SoftFailBadge · SoftFailSupport ·
+                SoftFailNotice mist band · tip-011 mist-wash SheetPresence ·
+                StyleSheet.flatten. Yields while TransferSteps owns. Never
+                timber / Failed to fetch.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -1359,17 +1370,22 @@ export default function TripDetailScreen() {
                   <Text style={styles.modeEyebrow}>
                     {t(locale, "planner.mode.eyebrow")}
                   </Text>
-                  <Text style={styles.modeSupport} numberOfLines={1}>
-                    {modeSoftOpen
-                      ? modeSoftSupport
-                      : t(locale, "planner.mode.support")}
-                  </Text>
                   {modeSoftOpen ? (
-                    <View style={styles.modeSoftBadge}>
-                      <Text style={styles.modeSoftBadgeText}>
-                        {t(locale, "planner.mode.softBadge")}
-                      </Text>
-                    </View>
+                    <SoftFailSupport
+                      style={styles.softSupportShrink}
+                      numberOfLines={1}
+                    >
+                      {modeSoftSupport}
+                    </SoftFailSupport>
+                  ) : (
+                    <Text style={styles.modeSupport} numberOfLines={1}>
+                      {t(locale, "planner.mode.support")}
+                    </Text>
+                  )}
+                  {modeSoftOpen ? (
+                    <SoftFailBadge>
+                      {t(locale, "planner.mode.softBadge")}
+                    </SoftFailBadge>
                   ) : (
                     <View style={styles.modeSelectedBadge}>
                       <Text style={styles.modeSelectedBadgeText}>
@@ -1384,7 +1400,7 @@ export default function TripDetailScreen() {
                 <SoftFailNotice
                   open={modeSoftOpen}
                   compact
-                  style={styles.modeSoftFail}
+                  style={softFailBandStyle}
                 >
                   {modeSoftCopy}
                 </SoftFailNotice>
@@ -1516,33 +1532,37 @@ export default function TripDetailScreen() {
                             )}
                           </Text>
                         ) : null}
-                        <Text style={styles.searchSupport}>
-                          {searchDemo
-                            ? t(locale, "planner.search.softSupport")
-                            : t(locale, "planner.search.support")}
-                        </Text>
+                        {searchDemo ? (
+                          <SoftFailSupport style={styles.softSupportShrink}>
+                            {t(locale, "planner.search.softSupport")}
+                          </SoftFailSupport>
+                        ) : (
+                          <Text style={styles.searchSupport}>
+                            {t(locale, "planner.search.support")}
+                          </Text>
+                        )}
                       </View>
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.searchBadge,
-                          searchDemo
-                            ? styles.searchBadgeDemo
-                            : styles.searchBadgeLive,
-                        ])}
-                      >
-                        <Text
+                      {searchDemo ? (
+                        <SoftFailBadge>
+                          {t(locale, "planner.search.softBadge")}
+                        </SoftFailBadge>
+                      ) : (
+                        <View
                           style={StyleSheet.flatten([
-                            styles.searchBadgeText,
-                            searchDemo
-                              ? styles.searchBadgeTextDemo
-                              : styles.searchBadgeTextLive,
+                            styles.searchBadge,
+                            styles.searchBadgeLive,
                           ])}
                         >
-                          {searchDemo
-                            ? t(locale, "planner.search.softBadge")
-                            : t(locale, "planner.search.liveBadge")}
-                        </Text>
-                      </View>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.searchBadgeText,
+                              styles.searchBadgeTextLive,
+                            ])}
+                          >
+                            {t(locale, "planner.search.liveBadge")}
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     {hasSearchResults ? (
@@ -1627,14 +1647,14 @@ export default function TripDetailScreen() {
                     <SoftFailNotice
                       open={searchDemo && hasSearchResults}
                       compact
-                      style={styles.searchSoftFail}
+                      style={softFailBandStyle}
                     >
                       {t(locale, "planner.search.softFail")}
                     </SoftFailNotice>
                     <SoftFailNotice
                       open={searchDemo && showSearchEmpty}
                       compact
-                      style={styles.searchSoftFail}
+                      style={softFailBandStyle}
                     >
                       {t(locale, "planner.search.softFailEmpty")}
                     </SoftFailNotice>
@@ -1643,11 +1663,10 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                SoftFailNotice depth under azure Stops rail (BEA-298 after #194) +
-                craft SoftFail query parity (BEA-384): Soft/empty/reorder badge ·
-                softSupport · mist SoftFail band · tip-011 mist-wash chips.
-                Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Days SoftFail is
-                sibling rail under Days chrome (BEA-299). Soft copy never timber
+                Stops SoftFail helpers (BEA-388 after #284 / BEA-298 + #282):
+                SoftFailBadge (Soft/empty/reorder) · SoftFailSupport ·
+                SoftFailNotice mist band · tip-011 softFailMistWashStyle chips.
+                Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy never timber
                 / Failed to fetch.
               */}
               <View style={styles.stopsChrome}>
@@ -1669,37 +1688,44 @@ export default function TripDetailScreen() {
                             String(dayStops.length),
                           )}
                     </Text>
-                    <Text style={styles.stopsSupport} numberOfLines={1}>
-                      {stopsSoftOpen
-                        ? stopsSoftSupport
-                        : dayEmpty
+                    {stopsSoftOpen ? (
+                      <SoftFailSupport
+                        style={styles.softSupportShrink}
+                        numberOfLines={1}
+                      >
+                        {stopsSoftSupport}
+                      </SoftFailSupport>
+                    ) : (
+                      <Text style={styles.stopsSupport} numberOfLines={1}>
+                        {dayEmpty
                           ? t(locale, "planner.emptySupport")
                           : t(locale, "planner.stops.support")}
-                    </Text>
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.stopsRailBadges}>
                     {dayEmpty ? (
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.stopsEmptyBadge,
-                          stopsSoftOpen
-                            ? styles.stopsEmptyBadgeSoft
-                            : styles.stopsEmptyBadgeLive,
-                        ])}
-                      >
-                        <Text
+                      stopsSoftOpen ? (
+                        <SoftFailBadge>
+                          {t(locale, "planner.emptySoftBadge")}
+                        </SoftFailBadge>
+                      ) : (
+                        <View
                           style={StyleSheet.flatten([
-                            styles.stopsEmptyBadgeText,
-                            stopsSoftOpen
-                              ? styles.stopsEmptyBadgeTextSoft
-                              : styles.stopsEmptyBadgeTextLive,
+                            styles.stopsEmptyBadge,
+                            styles.stopsEmptyBadgeLive,
                           ])}
                         >
-                          {stopsSoftOpen
-                            ? t(locale, "planner.emptySoftBadge")
-                            : t(locale, "planner.emptyBadge")}
-                        </Text>
-                      </View>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.stopsEmptyBadgeText,
+                              styles.stopsEmptyBadgeTextLive,
+                            ])}
+                          >
+                            {t(locale, "planner.emptyBadge")}
+                          </Text>
+                        </View>
+                      )
                     ) : (
                       <>
                         {selectedStop && !dragOwnsSoft ? (
@@ -1717,29 +1743,29 @@ export default function TripDetailScreen() {
                             {t(locale, "planner.stopsList")}
                           </Text>
                         ) : null}
-                        <View
-                          style={StyleSheet.flatten([
-                            styles.stopsSoftBadge,
-                            stopsSoftOpen
-                              ? styles.stopsSoftBadgeSoft
-                              : styles.stopsSoftBadgeLive,
-                          ])}
-                        >
-                          <Text
+                        {stopsSoftOpen ? (
+                          <SoftFailBadge>
+                            {dragOwnsSoft
+                              ? t(locale, "planner.stops.dragSoftBadge")
+                              : t(locale, "planner.stops.softBadge")}
+                          </SoftFailBadge>
+                        ) : (
+                          <View
                             style={StyleSheet.flatten([
-                              styles.stopsSoftBadgeText,
-                              stopsSoftOpen
-                                ? styles.stopsSoftBadgeTextSoft
-                                : styles.stopsSoftBadgeTextLive,
+                              styles.stopsSoftBadge,
+                              styles.stopsSoftBadgeLive,
                             ])}
                           >
-                            {stopsSoftOpen
-                              ? dragOwnsSoft
-                                ? t(locale, "planner.stops.dragSoftBadge")
-                                : t(locale, "planner.stops.softBadge")
-                              : t(locale, "planner.stops.liveBadge")}
-                          </Text>
-                        </View>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.stopsSoftBadgeText,
+                                styles.stopsSoftBadgeTextLive,
+                              ])}
+                            >
+                              {t(locale, "planner.stops.liveBadge")}
+                            </Text>
+                          </View>
+                        )}
                       </>
                     )}
                   </View>
@@ -1749,7 +1775,7 @@ export default function TripDetailScreen() {
                 <SoftFailNotice
                   open={stopsSoftOpen}
                   compact
-                  style={styles.stopsSoftFail}
+                  style={softFailBandStyle}
                 >
                   {stopsSoftCopy}
                 </SoftFailNotice>
@@ -1760,7 +1786,7 @@ export default function TripDetailScreen() {
                     delayMs={40}
                     rise={8}
                     style={
-                      stopsSoftOpen ? styles.stopsChipsWash : undefined
+                      stopsSoftOpen ? softFailMistWashStyle : undefined
                     }
                   >
                     <ScrollView
@@ -2067,11 +2093,10 @@ export default function TripDetailScreen() {
                 </Text>
 
                 {/*
-                  Presence SoftFail depth (BEA-374 after #141):
-                  azure rail · Soft/Live badge · softSupport · compact SoftFail
-                  mist band · tip-011 mist-wash chips · StyleSheet.flatten.
-                  Yields while invite sheet open (#228). Never timber /
-                  Failed to fetch.
+                  Presence SoftFail helpers (BEA-388 after #284 / BEA-374):
+                  azure rail · SoftFailBadge / Live · SoftFailSupport ·
+                  SoftFailNotice mist band · tip-011 mist-wash chips.
+                  Yields while invite sheet open. Never timber / Failed to fetch.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2088,11 +2113,18 @@ export default function TripDetailScreen() {
                           String(members.length),
                         )}
                       </Text>
-                      <Text style={styles.presenceSupport} numberOfLines={2}>
-                        {presenceSoftOpen
-                          ? t(locale, "collab.presence.softSupport")
-                          : t(locale, "collab.presence.support")}
-                      </Text>
+                      {presenceSoftOpen ? (
+                        <SoftFailSupport
+                          style={styles.softSupportShrink}
+                          numberOfLines={2}
+                        >
+                          {t(locale, "collab.presence.softSupport")}
+                        </SoftFailSupport>
+                      ) : (
+                        <Text style={styles.presenceSupport} numberOfLines={2}>
+                          {t(locale, "collab.presence.support")}
+                        </Text>
+                      )}
                     </View>
                     <View style={styles.presenceRailBadges}>
                       {yourRole ? (
@@ -2109,47 +2141,47 @@ export default function TripDetailScreen() {
                           {t(locale, `collab.role.${yourRole}`)}
                         </Text>
                       ) : null}
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.presenceStatusBadge,
-                          presenceSoftOpen
-                            ? styles.presenceStatusBadgeSoft
-                            : members.length > 0
+                      {presenceSoftOpen ? (
+                        <SoftFailBadge>
+                          {t(locale, "collab.presence.softBadge")}
+                        </SoftFailBadge>
+                      ) : (
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.presenceStatusBadge,
+                            members.length > 0
                               ? styles.presenceStatusBadgeLive
                               : styles.presenceStatusBadgeIdle,
-                        ])}
-                      >
-                        {!presenceSoftOpen && members.length > 0 ? (
-                          <Animated.View
-                            style={StyleSheet.flatten([
-                              styles.liveDot,
-                              {
-                                opacity: presencePulse.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [0.45, 1],
-                                }),
-                              },
-                            ])}
-                          />
-                        ) : null}
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.presenceStatusBadgeText,
-                            presenceSoftOpen
-                              ? styles.presenceStatusBadgeTextSoft
-                              : members.length > 0
-                                ? styles.presenceStatusBadgeTextLive
-                                : styles.presenceStatusBadgeTextIdle,
                           ])}
                         >
-                          {presenceSoftOpen
-                            ? t(locale, "collab.presence.softBadge")
-                            : t(locale, "collab.presence.live")}
-                          {!presenceSoftOpen && presenceActiveCount > 0
-                            ? ` · ${presenceActiveCount}`
-                            : ""}
-                        </Text>
-                      </View>
+                          {members.length > 0 ? (
+                            <Animated.View
+                              style={StyleSheet.flatten([
+                                styles.liveDot,
+                                {
+                                  opacity: presencePulse.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0.45, 1],
+                                  }),
+                                },
+                              ])}
+                            />
+                          ) : null}
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.presenceStatusBadgeText,
+                              members.length > 0
+                                ? styles.presenceStatusBadgeTextLive
+                                : styles.presenceStatusBadgeTextIdle,
+                            ])}
+                          >
+                            {t(locale, "collab.presence.live")}
+                            {presenceActiveCount > 0
+                              ? ` · ${presenceActiveCount}`
+                              : ""}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
 
@@ -2157,7 +2189,7 @@ export default function TripDetailScreen() {
                   <SoftFailNotice
                     open={presenceSoftOpen}
                     compact
-                    style={styles.presenceSoftFail}
+                    style={softFailBandStyle}
                   >
                     {presenceSoftCopy}
                   </SoftFailNotice>
@@ -2291,35 +2323,41 @@ export default function TripDetailScreen() {
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
                   {/*
-                    Invite SoftFail depth (BEA-300 after #186):
-                    azure rail · Soft invite · softSupport · SoftFailNotice ·
-                    mist code · tip-011 — presence SoftFail yields (BEA-374).
-                    Never timber / Failed to fetch.
+                    Invite SoftFail helpers (BEA-388 after #284 / BEA-300):
+                    azure rail · SoftFailBadge · SoftFailSupport · SoftFailNotice ·
+                    mist code · tip-011 — presence SoftFail yields. Never timber /
+                    Failed to fetch.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
                       <Text style={styles.inviteSheetEyebrow}>
                         {t(locale, "collab.inviteEyebrow")}
                       </Text>
-                      <Text style={styles.inviteSheetSupport}>
-                        {inviteSoftOpen
-                          ? t(locale, "collab.inviteSoftSupport")
-                          : t(locale, "collab.inviteSupport")}
-                      </Text>
+                      {inviteSoftOpen ? (
+                        <SoftFailSupport>
+                          {t(locale, "collab.inviteSoftSupport")}
+                        </SoftFailSupport>
+                      ) : (
+                        <Text style={styles.inviteSheetSupport}>
+                          {t(locale, "collab.inviteSupport")}
+                        </Text>
+                      )}
                     </View>
                     <View style={styles.inviteSheetBadges}>
-                      <Text
-                        style={StyleSheet.flatten([
-                          styles.inviteStatusBadge,
-                          inviteSoftOpen
-                            ? styles.inviteStatusBadgeSoft
-                            : styles.inviteStatusBadgeLive,
-                        ])}
-                      >
-                        {inviteSoftOpen
-                          ? t(locale, "collab.inviteSoftBadge")
-                          : t(locale, "collab.inviteLiveBadge")}
-                      </Text>
+                      {inviteSoftOpen ? (
+                        <SoftFailBadge>
+                          {t(locale, "collab.inviteSoftBadge")}
+                        </SoftFailBadge>
+                      ) : (
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.inviteStatusBadge,
+                            styles.inviteStatusBadgeLive,
+                          ])}
+                        >
+                          {t(locale, "collab.inviteLiveBadge")}
+                        </Text>
+                      )}
                       {inviteCode ? (
                         <Text style={styles.inviteRoleChip}>
                           {t(locale, "collab.role.editor")}
@@ -2331,7 +2369,7 @@ export default function TripDetailScreen() {
                   <SoftFailNotice
                     open={inviteSoftOpen}
                     compact
-                    style={styles.inviteSheetSoftFail}
+                    style={softFailBandStyle}
                   >
                     {inviteSoftCopy}
                   </SoftFailNotice>
@@ -2472,11 +2510,11 @@ export default function TripDetailScreen() {
                     accessibilityLabel={t(locale, "collab.panel.tab.activity")}
                   >
                     {/*
-                      Timeline SoftFail depth (BEA-371 after #112):
-                      azure Timeline rail · Soft timeline · softSupport ·
+                      Timeline SoftFail helpers (BEA-388 after #284 / BEA-371):
+                      azure Timeline rail · SoftFailBadge · SoftFailSupport ·
                       SoftFailNotice mist band · tip-011 mist-wash track —
-                      yields invite SoftFail (#228) while sheet open · never
-                      timber / Failed to fetch. Web #252 out of scope.
+                      yields invite SoftFail while sheet open · never timber /
+                      Failed to fetch.
                     */}
                     <View
                       style={StyleSheet.flatten([
@@ -2493,28 +2531,34 @@ export default function TripDetailScreen() {
                             {timelineCount}
                           </Text>
                         </View>
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.timelineStatusBadge,
-                            timelineSoftOpen
-                              ? styles.timelineStatusBadgeSoft
-                              : styles.timelineStatusBadgeLive,
-                          ])}
-                        >
-                          {timelineSoftOpen
-                            ? t(locale, "collab.panel.timelineSoftBadge")
-                            : t(locale, "collab.panel.liveBadge")}
-                        </Text>
+                        {timelineSoftOpen ? (
+                          <SoftFailBadge>
+                            {t(locale, "collab.panel.timelineSoftBadge")}
+                          </SoftFailBadge>
+                        ) : (
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.timelineStatusBadge,
+                              styles.timelineStatusBadgeLive,
+                            ])}
+                          >
+                            {t(locale, "collab.panel.liveBadge")}
+                          </Text>
+                        )}
                       </View>
-                      <Text style={styles.timelineSupport}>
-                        {timelineSupportCopy}
-                      </Text>
+                      {timelineSoftOpen ? (
+                        <SoftFailSupport>{timelineSupportCopy}</SoftFailSupport>
+                      ) : (
+                        <Text style={styles.timelineSupport}>
+                          {timelineSupportCopy}
+                        </Text>
+                      )}
                     </View>
                     {/* Compact SoftFail mist band under azure Timeline rail. */}
                     <SoftFailNotice
                       open={timelineSoftOpen}
                       compact
-                      style={styles.timelineSoftFail}
+                      style={softFailBandStyle}
                     >
                       {timelineSoftCopy}
                     </SoftFailNotice>
@@ -2779,6 +2823,10 @@ const styles = StyleSheet.create({
     color: "rgba(100, 116, 139, 0.8)",
     flexShrink: 1,
   },
+  /** Layout-only shrink for SoftFailSupport beside azure rail titles. */
+  softSupportShrink: {
+    flexShrink: 1,
+  },
   daysSelectedBadge: {
     borderRadius: radius.xs,
     backgroundColor: "rgba(47, 107, 255, 0.12)",
@@ -2792,27 +2840,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
     color: colors.river,
-  },
-  /** Soft days badge on azure rail when SoftFail owns (BEA-299). */
-  daysSoftBadge: {
-    borderRadius: radius.xs,
-    backgroundColor: colors.mist,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  daysSoftBadgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-  },
-  /** Mist SoftFail strip under azure Days rail — border-b before tabs. */
-  daysSoftFail: {
-    marginBottom: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
   },
   daysListHint: {
     ...type.body,
@@ -3045,27 +3072,6 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     paddingVertical: 2,
   },
-  /** Soft mode badge on azure rail when SoftFail owns (BEA-342). */
-  modeSoftBadge: {
-    borderRadius: radius.xs,
-    backgroundColor: colors.mist,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  modeSoftBadgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-  },
-  /** Mist SoftFail strip under azure mode rail — border-b before mist body. */
-  modeSoftFail: {
-    marginBottom: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-  },
   searchWrap: {
     paddingHorizontal: 12,
     paddingTop: 12,
@@ -3136,17 +3142,10 @@ const styles = StyleSheet.create({
     color: "rgba(15, 23, 42, 0.55)",
     flexShrink: 1,
   },
-  searchSoftFail: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-  },
   searchBadge: {
     borderRadius: radius.xs,
     paddingHorizontal: 6,
     paddingVertical: 3,
-  },
-  searchBadgeDemo: {
-    backgroundColor: colors.mist,
   },
   searchBadgeLive: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
@@ -3157,9 +3156,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-  },
-  searchBadgeTextDemo: {
-    color: colors.inkSoft,
   },
   searchBadgeTextLive: {
     color: colors.riverDeep,
@@ -3282,14 +3278,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
-  stopsSoftFail: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    borderTopWidth: 0,
-  },
-  stopsChipsWash: {
-    backgroundColor: "rgba(230, 236, 245, 0.22)",
-  },
   stopsRailCopy: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -3330,9 +3318,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  stopsEmptyBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
   stopsEmptyBadgeLive: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
@@ -3342,9 +3327,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-  },
-  stopsEmptyBadgeTextSoft: {
-    color: colors.inkSoft,
   },
   stopsEmptyBadgeTextLive: {
     color: colors.river,
@@ -3369,9 +3351,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  stopsSoftBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
   stopsSoftBadgeLive: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
   },
@@ -3381,9 +3360,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-  },
-  stopsSoftBadgeTextSoft: {
-    color: colors.inkSoft,
   },
   stopsSoftBadgeTextLive: {
     color: colors.river,
@@ -3698,9 +3674,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  presenceStatusBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
   presenceStatusBadgeLive: {
     backgroundColor: "rgba(47,107,255,0.12)",
   },
@@ -3714,20 +3687,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
-  presenceStatusBadgeTextSoft: {
-    color: colors.inkSoft,
-  },
   presenceStatusBadgeTextLive: {
     color: colors.riverDeep,
   },
   presenceStatusBadgeTextIdle: {
     color: "rgba(100, 116, 139, 0.7)",
-  },
-  /** Mist SoftFail strip under azure Presence rail — border-b before mist body. */
-  presenceSoftFail: {
-    marginBottom: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
   },
   presenceBody: {
     paddingHorizontal: 10,
@@ -3955,19 +3919,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     overflow: "hidden",
   },
-  timelineStatusBadgeSoft: {
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
-  },
   timelineStatusBadgeLive: {
     color: colors.river,
     backgroundColor: "rgba(47,107,255,0.12)",
-  },
-  /** Mist SoftFail strip under azure Timeline rail — border-b before tip-011 track. */
-  timelineSoftFail: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    borderTopWidth: 0,
   },
   timelineBody: {
     paddingHorizontal: 14,
@@ -4129,10 +4083,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     overflow: "hidden",
   },
-  inviteStatusBadgeSoft: {
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
-  },
   inviteStatusBadgeLive: {
     color: colors.river,
     backgroundColor: "rgba(47,107,255,0.12)",
@@ -4151,12 +4101,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
-  },
-  /** Mist SoftFail strip under azure invite rail — border-b before mist body. */
-  inviteSheetSoftFail: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    borderTopWidth: 0,
   },
   inviteSheetBody: {
     paddingHorizontal: 14,
