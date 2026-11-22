@@ -1015,8 +1015,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
             Beaver Plan · {trip.destination ?? t(locale, "planner.trip")}
           </p>
+          {/*
+            Page H1 craft residual (BEA-728 / wave 70): add `leading-snug` —
+            W69 scan #4. This span only (not share / trips-home H1). SoftFail
+            untouched. No `/dev`.
+          */}
           <h1
-            className="bp-vt-trip-title mt-1.5 font-display text-3xl font-bold tracking-tight text-ink md:text-5xl"
+            className="bp-vt-trip-title mt-1.5 font-display text-3xl font-bold leading-snug tracking-tight text-ink md:text-5xl"
             style={{ viewTransitionName: `bp-trip-${trip.id}` }}
           >
             {trip.title}
