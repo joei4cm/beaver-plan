@@ -133,11 +133,13 @@ async function searchLocal(
  * (BEA-613): headerEyebrow letterSpacing 1.8 · header/loading/empty meta
  * inkSoft@CC (day-fill #408 twin) · skeleton SheetPresence `80+i*40` / rise 8
  * twin of live offers (#425 pattern). Wave 64 (BEA-618): emptyResults
- * lineHeight 22. Wave 65 (BEA-642): headerTitle LH 24 · sectionTitle LH 22 ·
- * offerTitle LH 20 (day-fill title / prefsTitle / web offer snug twin). SoftFail
- * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
- * timber / Failed to fetch. No `/dev` gallery.
+ * lineHeight 22. Wave 65 (BEA-642 / #441): headerTitle LH 24 · sectionTitle
+ * LH 22 · offerTitle LH 20 (day-fill / web snug twin). Wave 66 (BEA-659):
+ * OTA StyleSheet rgba → paper/mist/foam/river/inkSoft hex-alpha (day-fill /
+ * Days #445 twin) · fieldLabel / kindChip letterSpacing 1.4. SoftFail stays
+ * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
+ * Confirm SoftFail yields OTA (no double depth). Confirm nest known no-op —
+ * leave alone. Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -588,7 +590,7 @@ export function BookingPanel({
                   value={city}
                   onChangeText={setCity}
                   placeholder={t(locale, "planner.booking.cityPlaceholder")}
-                  placeholderTextColor="rgba(100,116,139,0.5)"
+                  placeholderTextColor={`${colors.inkSoft}80`}
                   style={styles.input}
                   autoCorrect={false}
                   autoCapitalize="words"
@@ -602,7 +604,7 @@ export function BookingPanel({
                   value={checkIn}
                   onChangeText={setCheckIn}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="rgba(100,116,139,0.5)"
+                  placeholderTextColor={`${colors.inkSoft}80`}
                   style={styles.input}
                   autoCorrect={false}
                   autoCapitalize="none"
@@ -616,7 +618,7 @@ export function BookingPanel({
                   value={checkOut}
                   onChangeText={setCheckOut}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="rgba(100,116,139,0.5)"
+                  placeholderTextColor={`${colors.inkSoft}80`}
                   style={styles.input}
                   autoCorrect={false}
                   autoCapitalize="none"
@@ -1003,7 +1005,8 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 · day-fill header twin (BEA-659). */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderLeftWidth: 3,
@@ -1011,7 +1014,8 @@ const styles = StyleSheet.create({
   },
   /** Soft azure OTA rail wash when SoftFail owns depth (BEA-349). */
   headerSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    /** Web paper/85 · day-fill headerSoft twin (BEA-659; α preserved). */
+    backgroundColor: `${colors.paper}D9`,
   },
   headerText: {
     flex: 1,
@@ -1047,7 +1051,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100,116,139,0.8)",
+    /** Web text-ink-soft/80 · day-fill headerCount twin (BEA-659). */
+    color: `${colors.inkSoft}CC`,
   },
   headerSupport: {
     ...type.body,
@@ -1106,7 +1111,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 2,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    /** Web bg-mist/50 · day-fill mistTrack twin (BEA-659). */
+    backgroundColor: `${colors.mist}8C`,
     padding: 4,
   },
   filterChip: {
@@ -1121,7 +1127,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.25)",
+    /** Web ring-river/25 · day-fill interestChipOn twin (BEA-659). */
+    borderColor: `${colors.river}40`,
   },
   filterChipText: {
     ...type.body,
@@ -1145,7 +1152,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "600",
-    letterSpacing: 1.2,
+    /** Web tracking-[0.14em] · day-fill fieldLabel twin (BEA-659). */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
@@ -1154,7 +1162,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    /** Web bg-paper/80 · day-fill daysInput twin (BEA-659). */
+    backgroundColor: `${colors.paper}CC`,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
@@ -1191,7 +1200,8 @@ const styles = StyleSheet.create({
   skeletonCard: {
     height: 72,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(230,236,245,0.85)",
+    /** Web mist wash · day-fill skeleton twin (BEA-659). */
+    backgroundColor: `${colors.mist}D9`,
   },
   loadingHint: {
     ...type.body,
@@ -1256,13 +1266,15 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.2)",
-    backgroundColor: "rgba(47,107,255,0.1)",
+    /** Web border-river/20 · bg-river/10 (BEA-659). */
+    borderColor: `${colors.river}33`,
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    /** Web tracking-[0.14em] (BEA-659). */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.riverDeep,
     ...type.body,
@@ -1287,7 +1299,8 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     gap: 4,
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    /** Web bg-river/10 (BEA-659). */
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderLeftWidth: 2,
@@ -1299,7 +1312,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: "rgba(47,107,255,0.75)",
+    /** Web text-river/75 (BEA-659). */
+    color: `${colors.river}BF`,
   },
   priceValue: {
     ...type.display,
@@ -1338,7 +1352,8 @@ const styles = StyleSheet.create({
   pinBtn: {
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.35)",
+    /** Web border-river/35 (BEA-659). */
+    borderColor: `${colors.river}59`,
     backgroundColor: colors.foam,
     paddingHorizontal: 12,
     paddingVertical: 9,
@@ -1541,6 +1556,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(71,85,105,0.8)",
+    /** Web footer text-ink-soft/80 (BEA-659). */
+    color: `${colors.inkSoft}CC`,
   },
 });
