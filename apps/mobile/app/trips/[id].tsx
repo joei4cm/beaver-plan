@@ -114,10 +114,28 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
+
 export default function TripDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const {
+    id,
+    stopsSoftFail: stopsSoftFailParam,
+    dragSoftFail: dragSoftFailParam,
+  } = useLocalSearchParams<{
+    id: string;
+    stopsSoftFail?: string | string[];
+    dragSoftFail?: string | string[];
+  }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
+  /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
+  const stopsSoftPreview = craftSoftFailOn(stopsSoftFailParam);
+  /** Craft preview: /trips/…?dragSoftFail=1 — SoftFail depth under Stops without a reorder. */
+  const dragSoftPreview = craftSoftFailOn(dragSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -950,33 +968,46 @@ export default function TripDetailScreen() {
   const detailSoftNoise =
     Boolean(softNotice) || fromCache || !online || detailDemo;
   /**
-   * Expo trip-detail SoftFailNotice depth (BEA-298 after #194 / BEA-253):
-   * azure Stops rail · Soft/empty badge · softSupport · compact SoftFailNotice
+   * Expo trip-detail SoftFailNotice depth (BEA-298 after #194 / BEA-253) +
+   * craft SoftFail query parity (BEA-384):
+   * azure Stops rail · Soft/empty/reorder badge · softSupport · compact SoftFailNotice
    * mist band under rail (`border-b`) · mist-wash tip-011 chips · StyleSheet.flatten.
-   * Empty day still owns SoftFail. Title SoftFail yields while Stops owns
-   * (no double depth). SoftFail copy always emptySoftFail / stops.softFail
-   * (never inherit softNotice). Soft copy never timber / Failed to fetch.
+   * Craft: /trips/…?stopsSoftFail=1 · /trips/…?dragSoftFail=1 — mirrors web planner.
+   * Empty day still owns SoftFail. Drag SoftFail yields chips SoftFail (no double
+   * depth). Title SoftFail yields while Stops owns. SoftFail copy always
+   * emptySoftFail / stops.softFail / dragSoftFail (never inherit softNotice).
+   * Soft copy never timber / Failed to fetch.
    */
   const emptyOwnsSoft = dayEmpty;
-  const stopsOwnsSoft = !dayEmpty;
+  const dragSoftFailCopy = t(locale, "planner.stops.dragSoftFail");
+  const dragOwnsSoft =
+    !dayEmpty && (dragSoftPreview || softNotice === dragSoftFailCopy);
+  const stopsOwnsSoft = !dayEmpty && !dragOwnsSoft;
   const stopsSoftOpen = emptyOwnsSoft
     ? detailSoftNoise
-    : Boolean(
-        softNotice ||
-          fromCache ||
-          !online ||
-          (detailDemo && (dayLegs.length > 0 || dayStops.length > 0)),
-      );
+    : dragOwnsSoft
+      ? true
+      : Boolean(
+          stopsSoftPreview ||
+            softNotice ||
+            fromCache ||
+            !online ||
+            (detailDemo && (dayLegs.length > 0 || dayStops.length > 0)),
+        );
   /** SoftFail copy owned by Stops chrome — never inherit softNotice / timber. */
   const stopsSoftCopy = emptyOwnsSoft
     ? t(locale, "planner.emptySoftFail")
-    : t(locale, "planner.stops.softFail");
+    : dragOwnsSoft
+      ? dragSoftFailCopy
+      : t(locale, "planner.stops.softFail");
   const stopsSoftSupport = emptyOwnsSoft
     ? t(locale, "planner.emptySoftSupport")
-    : t(locale, "planner.stops.softSupport");
-  /** Title SoftFail yields while Stops rail owns soft-fail. */
+    : dragOwnsSoft
+      ? t(locale, "planner.stops.dragSoftSupport")
+      : t(locale, "planner.stops.softSupport");
+  /** Title SoftFail yields while Stops rail owns soft-fail (empty / drag / chips). */
   const detailSoftOpen =
-    !emptyOwnsSoft && !stopsOwnsSoft && detailSoftNoise;
+    !emptyOwnsSoft && !dragOwnsSoft && !stopsOwnsSoft && detailSoftNoise;
   const detailSoftCopy =
     !online || fromCache
       ? (softNotice ?? t(locale, "planner.demoLocal"))
@@ -1613,11 +1644,12 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                SoftFailNotice depth under azure Stops rail (BEA-298 after #194):
-                Soft/empty badge · softSupport · mist SoftFail band · tip-011
-                mist-wash chips. Stops SoftFail stays under Stops; Days SoftFail
-                is sibling rail under Days chrome (BEA-299). Soft copy never
-                timber / Failed to fetch.
+                SoftFailNotice depth under azure Stops rail (BEA-298 after #194) +
+                craft SoftFail query parity (BEA-384): Soft/empty/reorder badge ·
+                softSupport · mist SoftFail band · tip-011 mist-wash chips.
+                Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Days SoftFail is
+                sibling rail under Days chrome (BEA-299). Soft copy never timber
+                / Failed to fetch.
               */}
               <View style={styles.stopsChrome}>
                 <View
@@ -1671,7 +1703,7 @@ export default function TripDetailScreen() {
                       </View>
                     ) : (
                       <>
-                        {selectedStop ? (
+                        {selectedStop && !dragOwnsSoft ? (
                           <View style={styles.stopsSelectedBadge}>
                             <Text
                               style={styles.stopsSelectedBadgeText}
@@ -1681,11 +1713,11 @@ export default function TripDetailScreen() {
                               {t(locale, "planner.stops.selected")}
                             </Text>
                           </View>
-                        ) : (
+                        ) : !dragOwnsSoft ? (
                           <Text style={styles.stopsListHint}>
                             {t(locale, "planner.stopsList")}
                           </Text>
-                        )}
+                        ) : null}
                         <View
                           style={StyleSheet.flatten([
                             styles.stopsSoftBadge,
@@ -1703,7 +1735,9 @@ export default function TripDetailScreen() {
                             ])}
                           >
                             {stopsSoftOpen
-                              ? t(locale, "planner.stops.softBadge")
+                              ? dragOwnsSoft
+                                ? t(locale, "planner.stops.dragSoftBadge")
+                                : t(locale, "planner.stops.softBadge")
                               : t(locale, "planner.stops.liveBadge")}
                           </Text>
                         </View>
