@@ -502,7 +502,7 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
       {Array.from({ length: rows }).map((_, i) => (
         <li
           key={i}
-          className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-paper/50 px-3 py-3"
+          className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1 space-y-2">
@@ -514,7 +514,7 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
                 <Skeleton className="h-3.5 w-16" />
               </div>
             </div>
-            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-[7.5rem]">
               <Skeleton className="h-8 w-24 rounded-bp" />
               <Skeleton className="h-8 w-20 rounded-bp-sm" />
             </div>

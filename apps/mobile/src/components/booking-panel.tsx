@@ -124,13 +124,12 @@ async function searchLocal(
 }
 
 /**
- * Expo booking SoftFail helpers (BEA-389 after #284 / depth BEA-349) + craft
- * SoftFail query parity (BEA-418): `/trips/…?otaSoftFail=1` ·
- * `/trips/…?confirmSoftFail=1` force SoftFail depth under OTA / Confirm rails
- * (mirrors web + #282 / wave 42). SoftFailBadge · SoftFailSupport ·
- * SoftFailNotice mist band · softFailMistWashStyle tip-011 · StyleSheet.flatten ·
- * Lumen tokens. Confirm SoftFail owns save soft-fail so OTA SoftFail yields
- * (no double depth). Never timber / Failed to fetch. No `/dev` SoftFail gallery.
+ * Expo booking OTA sheet — SoftFail depth kept (BEA-389 / BEA-349 / BEA-418) +
+ * wave 48 craft residual (BEA-460): root / confirmRail soft elevation matching
+ * day-fill · offerCard `--bp-line` + soft shadow · offerTitle display 14.
+ * SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -953,6 +952,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
   },
   header: {
     flexDirection: "row",
@@ -1183,11 +1186,15 @@ const styles = StyleSheet.create({
   offerCard: {
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(148,163,184,0.45)",
+    borderColor: colors.line,
     backgroundColor: colors.foam,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 12,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
   offerBody: {
     gap: 6,
@@ -1210,7 +1217,7 @@ const styles = StyleSheet.create({
   },
   offerTitle: {
     ...type.display,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
@@ -1300,6 +1307,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   confirmHeader: {
     flexDirection: "row",
