@@ -2821,8 +2821,9 @@ export default function TripDetailScreen() {
                     )}
                     {/*
                       Members roster / companions list — wave 54 (#373) + wave 58
-                      residual (BEA-562): empty tip-011 rise · name lineHeight.
-                      SoftFail untouched. Beyond #373 / invite #391 / pills #389.
+                      (#400) + wave 61 residual (BEA-587): row tip-011 stagger +55
+                      (web list SheetPresence 55ms). SoftFail untouched. Beyond
+                      #400 / invite #411 / pills #409.
                     */}
                     <View
                       style={styles.inviteMemberList}
@@ -2878,7 +2879,7 @@ export default function TripDetailScreen() {
                           <SheetPresence
                             key={m.id}
                             open
-                            delayMs={Math.min(i, 6) * 35}
+                            delayMs={Math.min(i, 6) * 35 + 55}
                             rise={8}
                           >
                           <View style={styles.inviteMemberRow}>
