@@ -126,16 +126,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Expo smart day-fill SoftFailNotice depth (BEA-360 after #101 / web #248;
- * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284) + craft SoftFail
- * query parity (BEA-408): `/trips/…?dayFillSoftFail=1` forces SoftFail under
- * the Day fill rail (mirrors web + #282 stops/drag craft queries).
- * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · soft rail
- * wash · compact SoftFail mist band · softFailMistWash tip-011 body ·
- * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
- * Failed to fetch. Yields web planner day-fill SoftFail (#248); Expo day
- * tabs SoftFail (#230) stays on Days rail (no double depth). No `/dev`
- * SoftFail gallery.
+ * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
+ * wave 48 craft residual (BEA-467): river sheet eyebrow · day-count chip ·
+ * foam mist-track select (booking OTA parity) · empty river eyebrow ·
+ * tip-011 CTA press. SoftFailBadge · SoftFailSupport · mist band unchanged.
+ * SoftFail copy never timber / Failed to fetch. Yields web #248; Expo day
+ * tabs SoftFail (#230) stays on Days. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -365,13 +361,9 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice depth (BEA-360 after #101; helpers BEA-400) +
-   * craft SoftFail query parity (BEA-408):
-   * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · compact
-   * SoftFail mist band (`border-b`) · softFailMistWash tip-011 body. SoftFail
-   * copy always softFail / demoNotice / applySoftFail (never timber / Failed
-   * to fetch). Craft: /trips/…?dayFillSoftFail=1 — forces softFail under Day
-   * fill. Expo day tabs SoftFail (#230) stays on Days — no double depth.
+   * SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) — SoftFailBadge Soft
+   * fill · SoftFailSupport · compact mist band · tip-011 wash. Craft:
+   * ?dayFillSoftFail=1. Expo day tabs SoftFail (#230) stays on Days.
    */
   const softFailCopy = t(locale, "planner.dayFill.softFail");
   const softCopy = dayFillSoftPreview
@@ -386,6 +378,10 @@ export function DayFillPanel({
   const sheetSupportCopy = showSoftFail
     ? t(locale, "planner.dayFill.softSupport")
     : t(locale, "planner.dayFill.support");
+  const dayCountLabel = t(locale, "planner.dayFill.dayCount").replace(
+    "{n}",
+    String(dayCount),
+  );
 
   const bodyStyle = useMemo(
     () => ({
@@ -420,10 +416,10 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail depth (BEA-360 / helpers BEA-400) + craft SoftFail
-        query parity (BEA-408): azure Day fill rail · SoftFailBadge Soft fill ·
-        SoftFailSupport · softFailMistWash tip-011 — craft ?dayFillSoftFail=1.
-        Never timber / Failed to fetch. Yields web #248.
+        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48 craft
+        (BEA-467): azure Day fill rail · river sheet eyebrow · day count ·
+        foam mist-track select · SoftFailBadge Soft fill · SoftFailSupport ·
+        softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Never timber.
       */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
@@ -436,7 +432,12 @@ export function DayFillPanel({
       >
         <View style={styles.headerText}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.title}>{t(locale, "planner.dayFill.title")}</Text>
+            <Text style={styles.headerEyebrow}>
+              {t(locale, "planner.dayFill.sheetEyebrow")}
+            </Text>
+            <Text style={styles.title}>
+              {t(locale, "planner.dayFill.title")}
+            </Text>
             {mode === "live" ? (
               <SoftFailLiveBadge>{badge}</SoftFailLiveBadge>
             ) : (
@@ -447,6 +448,7 @@ export function DayFillPanel({
                 {t(locale, "planner.dayFill.softBadge")}
               </SoftFailBadge>
             ) : null}
+            <Text style={styles.headerCount}>{dayCountLabel}</Text>
           </View>
           {showSoftFail ? (
             <SoftFailSupport>{sheetSupportCopy}</SoftFailSupport>
@@ -496,6 +498,9 @@ export function DayFillPanel({
               <Text style={styles.prefsTitle}>
                 {t(locale, "planner.dayFill.prefsTitle")}
               </Text>
+              <Text style={styles.prefsSupport}>
+                {t(locale, "planner.dayFill.prefsSupport")}
+              </Text>
             </View>
 
             <View>
@@ -515,10 +520,13 @@ export function DayFillPanel({
                       onPress={() => toggleInterest(id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      style={StyleSheet.flatten([
-                        styles.interestChip,
-                        on ? styles.interestChipOn : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.interestChip,
+                          on ? styles.interestChipOn : null,
+                          pressed ? styles.chipPressed : null,
+                        ])
+                      }
                     >
                       <Text
                         style={StyleSheet.flatten([
@@ -552,10 +560,13 @@ export function DayFillPanel({
                         onPress={() => setWalkMinutes(mins)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: on }}
-                        style={StyleSheet.flatten([
-                          styles.interestChip,
-                          on ? styles.interestChipOn : null,
-                        ])}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.interestChip,
+                            on ? styles.interestChipOn : null,
+                            pressed ? styles.chipPressed : null,
+                          ])
+                        }
                       >
                         <Text
                           style={StyleSheet.flatten([
@@ -595,12 +606,22 @@ export function DayFillPanel({
                 disabled={generating || interests.length === 0}
                 onPress={() => void generate()}
                 accessibilityRole="button"
-                style={StyleSheet.flatten([
-                  styles.cta,
-                  generating || interests.length === 0
-                    ? styles.ctaDisabled
-                    : null,
-                ])}
+                accessibilityLabel={
+                  generating
+                    ? t(locale, "planner.dayFill.generating")
+                    : t(locale, "planner.dayFill.generate")
+                }
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.cta,
+                    generating || interests.length === 0
+                      ? styles.ctaDisabled
+                      : null,
+                    pressed && !(generating || interests.length === 0)
+                      ? styles.ctaPressed
+                      : null,
+                  ])
+                }
               >
                 {generating ? (
                   <ActivityIndicator color={colors.foam} size="small" />
@@ -625,7 +646,13 @@ export function DayFillPanel({
                     }
                   }}
                   accessibilityRole="button"
-                  style={styles.discard}
+                  accessibilityLabel={t(locale, "planner.dayFill.discard")}
+                  style={({ pressed }) =>
+                    StyleSheet.flatten([
+                      styles.discard,
+                      pressed ? styles.discardPressed : null,
+                    ])
+                  }
                 >
                   <Text style={styles.discardLabel}>
                     {t(locale, "planner.dayFill.discard")}
@@ -679,6 +706,9 @@ export function DayFillPanel({
               accessibilityLabel={t(locale, "planner.dayFill.empty")}
             >
               <View style={styles.empty}>
+                <Text style={styles.emptyEyebrow}>
+                  {t(locale, "planner.dayFill.emptyEyebrow")}
+                </Text>
                 <Text style={styles.emptyTitle}>
                   {t(locale, "planner.dayFill.empty")}
                 </Text>
@@ -731,10 +761,18 @@ export function DayFillPanel({
                     disabled={applying}
                     onPress={() => void apply()}
                     accessibilityRole="button"
-                    style={StyleSheet.flatten([
-                      styles.cta,
-                      applying ? styles.ctaDisabled : null,
-                    ])}
+                    accessibilityLabel={
+                      applying
+                        ? t(locale, "planner.dayFill.applying")
+                        : t(locale, "planner.dayFill.apply")
+                    }
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.cta,
+                        applying ? styles.ctaDisabled : null,
+                        pressed && !applying ? styles.ctaPressed : null,
+                      ])
+                    }
                   >
                     <Text style={styles.ctaLabel}>
                       {applying
@@ -837,12 +875,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  headerEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
   title: {
     ...type.display,
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
+  },
+  headerCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100, 116, 139, 0.8)",
   },
   support: {
     ...type.body,
@@ -896,6 +949,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
     color: colors.ink,
   },
+  prefsSupport: {
+    ...type.body,
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.inkSoft,
+  },
   fieldLabel: {
     ...type.body,
     marginBottom: 8,
@@ -918,12 +978,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
+  /** Foam select on mist-track — booking OTA / web day-fill parity (BEA-467). */
   interestChipOn: {
-    backgroundColor: colors.river,
+    backgroundColor: colors.foam,
     shadowColor: colors.river,
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(47, 107, 255, 0.25)",
+  },
+  chipPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   interestChipLabel: {
     ...type.body,
@@ -932,7 +999,7 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
   },
   interestChipLabelOn: {
-    color: colors.foam,
+    color: colors.river,
   },
   prefsGrid: {
     gap: 14,
@@ -976,6 +1043,10 @@ const styles = StyleSheet.create({
   ctaDisabled: {
     opacity: 0.4,
   },
+  ctaPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
   ctaLabel: {
     ...type.body,
     color: colors.foam,
@@ -988,6 +1059,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  discardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   discardLabel: {
     ...type.body,
@@ -1062,9 +1137,19 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     paddingVertical: 12,
     paddingHorizontal: 2,
+    gap: 0,
+  },
+  emptyEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: "rgba(47, 107, 255, 0.8)",
   },
   emptyTitle: {
     ...type.display,
+    marginTop: 6,
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: -0.3,
@@ -1074,7 +1159,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 6,
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 22,
     color: colors.inkSoft,
   },
   preview: {
