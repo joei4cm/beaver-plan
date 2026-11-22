@@ -867,13 +867,20 @@ export default function TranslateScreen() {
           </SoftFailNotice>
         </View>
 
+        {/*
+          Live panel craft residual (BEA-515 wave 53): tab tip-011 · pair
+          eyebrow 1.8 · swap press. SoftFail / history (#353) untouched.
+        */}
         <View style={styles.tabs}>
           <Pressable
             onPress={() => setTab("conversation")}
-            style={StyleSheet.flatten([
-              styles.tab,
-              tab === "conversation" ? styles.tabActive : null,
-            ])}
+            style={({ pressed }) =>
+              StyleSheet.flatten([
+                styles.tab,
+                tab === "conversation" ? styles.tabActive : null,
+                pressed ? styles.dualPressScale : null,
+              ])
+            }
           >
             <Text
               style={StyleSheet.flatten([
@@ -886,10 +893,13 @@ export default function TranslateScreen() {
           </Pressable>
           <Pressable
             onPress={() => setTab("camera")}
-            style={StyleSheet.flatten([
-              styles.tab,
-              tab === "camera" ? styles.tabActive : null,
-            ])}
+            style={({ pressed }) =>
+              StyleSheet.flatten([
+                styles.tab,
+                tab === "camera" ? styles.tabActive : null,
+                pressed ? styles.dualPressScale : null,
+              ])
+            }
           >
             <Text
               style={StyleSheet.flatten([
@@ -932,7 +942,12 @@ export default function TranslateScreen() {
             />
             <Pressable
               onPress={onSwap}
-              style={styles.swapBtn}
+              style={({ pressed }) =>
+                StyleSheet.flatten([
+                  styles.swapBtn,
+                  pressed ? styles.dualPressScale : null,
+                ])
+              }
               accessibilityLabel={t(uiLocale, "translate.swap")}
             >
               <Text style={styles.swapLabel}>⇄</Text>
@@ -1099,6 +1114,11 @@ export default function TranslateScreen() {
               )}
             </Animated.View>
 
+            {/*
+              Phrasebook live craft residual (BEA-515): title lineHeight ·
+              category / row tip-011 press. SoftFail / history (#353) out of
+              scope.
+            */}
             <View style={styles.phraseHead}>
               <Text style={styles.phraseTitle}>
                 {t(uiLocale, "translate.phrasebook")}
@@ -1111,16 +1131,21 @@ export default function TranslateScreen() {
                   <Pressable
                     key={cat}
                     onPress={() => setPhraseCategory(cat)}
-                    style={[
-                      styles.catChip,
-                      phraseCategory === cat && styles.catChipActive,
-                    ]}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.catChip,
+                        phraseCategory === cat ? styles.catChipActive : null,
+                        pressed ? styles.dualPressScale : null,
+                      ])
+                    }
                   >
                     <Text
-                      style={[
+                      style={StyleSheet.flatten([
                         styles.catChipText,
-                        phraseCategory === cat && styles.catChipTextActive,
-                      ]}
+                        phraseCategory === cat
+                          ? styles.catChipTextActive
+                          : null,
+                      ])}
                     >
                       {t(uiLocale, `translate.category.${cat}` as MessageKey)}
                     </Text>
@@ -1130,7 +1155,12 @@ export default function TranslateScreen() {
               {phrases.slice(0, 6).map((phrase) => (
                 <Pressable
                   key={phrase.id}
-                  style={styles.phraseRow}
+                  style={({ pressed }) =>
+                    StyleSheet.flatten([
+                      styles.phraseRow,
+                      pressed ? styles.dualPressScale : null,
+                    ])
+                  }
                   onPress={() => {
                     pushTurn({
                       sourceText: phrase.sourceText,
@@ -1265,10 +1295,13 @@ export default function TranslateScreen() {
                         returnKeyType="send"
                       />
                       <Pressable
-                        style={StyleSheet.flatten([
-                          styles.sendBtn,
-                          busy ? styles.disabled : null,
-                        ])}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.sendBtn,
+                            busy ? styles.disabled : null,
+                            pressed && !busy ? styles.dualPressScale : null,
+                          ])
+                        }
                         onPress={() => void onSendText()}
                         disabled={busy}
                         accessibilityRole="button"
@@ -1327,10 +1360,13 @@ export default function TranslateScreen() {
                         </Animated.View>
                       </View>
                       <Pressable
-                        style={StyleSheet.flatten([
-                          styles.demoNext,
-                          busy ? styles.disabled : null,
-                        ])}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.demoNext,
+                            busy ? styles.disabled : null,
+                            pressed && !busy ? styles.dualPressScale : null,
+                          ])
+                        }
                         onPress={() => void runTurn({})}
                         disabled={busy}
                         accessibilityRole="button"
@@ -1899,15 +1935,17 @@ const styles = StyleSheet.create({
     gap: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.6)",
+    /** Web bg-paper/60 — Lumen paper @ 0.6 */
+    backgroundColor: `${colors.paper}99`,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   pairHeadCopy: { flex: 1, minWidth: 160, gap: 4 },
+  /** Pair stage eyebrow — wave 53 craft residual (BEA-515): 1.8 tracking. */
   pairEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -1929,7 +1967,7 @@ const styles = StyleSheet.create({
     color: colors.riverDeep,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   pairBody: {
@@ -1944,12 +1982,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    /** Web bg-paper/90 — foam @ 0.9 */
+    backgroundColor: `${colors.foam}E6`,
     padding: 10,
   },
   localeLabel: {
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: 10,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 6,
@@ -2272,10 +2311,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
+  /** Talk rail eyebrow — wave 53 craft residual (BEA-515): 1.8 tracking. */
   talkEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -2725,18 +2765,25 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 8,
   },
+  /** Phrasebook title — wave 53 craft residual (BEA-515): snug lineHeight. */
   phraseTitle: {
+    ...type.display,
     color: colors.ink,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "700",
     letterSpacing: -0.2,
   },
-  phraseHint: { color: colors.inkSoft, fontSize: 12, lineHeight: 16 },
+  phraseHint: {
+    color: colors.inkSoft,
+    fontSize: 12,
+    lineHeight: 16,
+  },
   catChip: {
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: colors.mist,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginRight: 6,
@@ -2744,11 +2791,16 @@ const styles = StyleSheet.create({
   catChipActive: {
     backgroundColor: colors.river,
     borderColor: colors.river,
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  catChipText: { fontSize: 12, color: colors.inkSoft },
+  catChipText: { fontSize: 12, color: colors.riverDeep, fontWeight: "500" },
   catChipTextActive: { color: colors.foam, fontWeight: "600" },
   phraseRow: {
-    borderRadius: 10,
+    borderRadius: radius.md,
     backgroundColor: colors.foam,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,

@@ -969,6 +969,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </div>
       </header>
 
+      {/*
+        Live panel craft residual (BEA-515 wave 53): mode tabs tip-011 press ·
+        pair eyebrow 0.18em · swap tip-011. SoftFail / history (#353) untouched.
+      */}
       <div
         className="animate-rise mt-8 flex gap-2 rounded-bp bg-mist/70 p-1.5"
         style={{ animationDelay: "40ms" }}
@@ -997,7 +1001,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 }
               }
             }}
-            className={`bp-transition flex-1 rounded-bp-sm px-4 py-2.5 text-sm font-semibold duration-bp-fast ease-bp-out ${
+            className={`bp-transition flex-1 rounded-bp-sm px-4 py-2.5 text-sm font-semibold duration-bp-fast ease-bp-out active:scale-[0.98] ${
               tab === id
                 ? "bg-river text-foam shadow-bp-soft"
                 : "text-ink-soft hover:text-ink"
@@ -1015,14 +1019,14 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       >
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 md:px-6">
           <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "translate.pairLabel")}
             </p>
             <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
               {t(locale, "translate.pairHint")}
             </p>
           </div>
-          <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
+          <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-river-deep">
             {localeLabel(sourceLocale, locale === "en" ? "en" : "zh-CN")}
             {" → "}
             {localeLabel(targetLocale, locale === "en" ? "en" : "zh-CN")}
@@ -1044,7 +1048,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               setSourceLocale(next.sourceLocale);
               setTargetLocale(next.targetLocale);
             }}
-            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-95"
+            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98]"
             aria-label={t(locale, "translate.swap")}
           >
             ⇄
@@ -1254,16 +1258,21 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             )}
           </section>
 
+          {/*
+            Phrasebook live craft residual (BEA-515): title leading-snug ·
+            category tip-011 · phrase row press · queue flush tip-011.
+            SoftFail / history list (#353) out of scope.
+          */}
           <section
             className="animate-rise mt-12"
             style={{ animationDelay: "140ms" }}
           >
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h2 className="font-display text-2xl tracking-tight text-ink">
+                <h2 className="font-display text-2xl leading-snug tracking-tight text-ink">
                   {t(locale, "translate.phrasebook")}
                 </h2>
-                <p className="mt-1 text-sm text-ink-soft">
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
                   {t(locale, "translate.phrasebookHint")}
                 </p>
               </div>
@@ -1282,9 +1291,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   key={cat}
                   type="button"
                   onClick={() => setPhraseCategory(cat)}
-                  className={`rounded-bp-sm px-3 py-1.5 text-xs font-medium transition ${
+                  className={`bp-transition rounded-bp-sm px-3 py-1.5 text-xs font-medium duration-bp-fast ease-bp-out active:scale-[0.98] ${
                     phraseCategory === cat
-                      ? "bg-river text-foam"
+                      ? "bg-river text-foam shadow-bp-soft"
                       : "bg-mist text-river-deep hover:bg-river/15"
                   }`}
                 >
@@ -1298,12 +1307,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   <button
                     type="button"
                     onClick={() => void onPhrase(phrase)}
-                    className="flex w-full flex-col items-start gap-1 py-3 text-left transition hover:bg-mist/40"
+                    className="bp-transition flex w-full flex-col items-start gap-1 py-3 text-left duration-bp-fast ease-bp-out hover:bg-mist/40 active:scale-[0.98]"
                   >
-                    <span className="text-sm text-ink-soft">
+                    <span className="text-sm leading-relaxed text-ink-soft">
                       {phrase.sourceText}
                     </span>
-                    <span className="font-medium text-ink">
+                    <span className="font-medium leading-snug text-ink">
                       {phrase.translatedText}
                     </span>
                   </button>
@@ -1338,7 +1347,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                         </div>
                         <button
                           type="button"
-                          className="text-xs text-timber"
+                          className="bp-transition text-xs text-ink-soft duration-bp-fast ease-bp-out hover:text-river active:scale-[0.98]"
                           onClick={() =>
                             void removeQueuedTranslation(
                               queueStore,
@@ -1356,7 +1365,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 type="button"
                 onClick={() => void onFlushQueue()}
                 disabled={!online || pendingQueueCount(queue) === 0}
-                className="mt-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river disabled:opacity-40"
+                className="bp-transition mt-3 rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-3 py-2 text-xs font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-40"
               >
                 {t(locale, "translate.queueFlush")}
               </button>
@@ -1381,7 +1390,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             }`}
           >
             <div className="min-w-0">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "translate.mode.camera")}
               </p>
               {dualSoftOpen ? (
@@ -1596,7 +1605,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             }`}
           >
             <div className="min-w-0">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "translate.talkRail")}
               </p>
               {talkSoftOpen ? (
@@ -1748,7 +1757,7 @@ function LocaleSelect({
 }) {
   return (
     <label className="block rounded-bp-sm border border-[color:var(--bp-line)] bg-paper/90 p-3 shadow-bp-soft backdrop-blur-sm">
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
         {label}
       </span>
       <select
