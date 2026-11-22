@@ -12,8 +12,10 @@ import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailLiveBadgeClass,
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
@@ -258,10 +260,10 @@ export function TripMembersBar({
               </SoftFailBadge>
             ) : (
               <span
-                className={`inline-flex items-center gap-1.5 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                className={`inline-flex items-center gap-1.5 transition duration-bp-fast ease-bp-out ${
                   members.length > 0
-                    ? "bg-river/12 text-river-deep"
-                    : "bg-mist/60 text-ink-soft/70"
+                    ? softFailLiveBadgeClass
+                    : "rounded-bp-xs bg-mist/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70"
                 }`}
               >
                 {members.length > 0 ? (
@@ -416,9 +418,9 @@ export function TripMembersBar({
                   {t(locale, "collab.inviteSoftBadge")}
                 </SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
                   {t(locale, "collab.inviteLiveBadge")}
-                </span>
+                </SoftFailLiveBadge>
               )}
               {lastInvite ? (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">

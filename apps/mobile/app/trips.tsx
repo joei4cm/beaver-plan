@@ -33,6 +33,7 @@ import {
 import { SheetPresence } from "../src/components/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailBandStyle,
@@ -276,23 +277,11 @@ function TripsListRail({
             : t(locale, "trips.listCount").replace("{n}", String(count))}
         </Text>
       </View>
-      <View
-        style={StyleSheet.flatten([
-          styles.statusChip,
-          soft ? styles.statusChipDemo : styles.statusChipLive,
-        ])}
-      >
-        <Text
-          style={StyleSheet.flatten([
-            styles.statusChipText,
-            soft ? styles.statusChipTextDemo : styles.statusChipTextLive,
-          ])}
-        >
-          {soft
-            ? t(locale, "trips.cardsSoftBadge")
-            : t(locale, "trips.listLive")}
-        </Text>
-      </View>
+      {soft ? (
+        <SoftFailBadge>{t(locale, "trips.cardsSoftBadge")}</SoftFailBadge>
+      ) : (
+        <SoftFailLiveBadge>{t(locale, "trips.listLive")}</SoftFailLiveBadge>
+      )}
     </View>
   );
 }

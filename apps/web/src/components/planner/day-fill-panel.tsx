@@ -17,6 +17,7 @@ import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -372,15 +373,11 @@ export function DayFillPanel({
             <span className="font-display text-lg tracking-tight text-ink">
               {t(locale, "planner.dayFill.title")}
             </span>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                mode === "live"
-                  ? "bg-river/12 text-river-deep"
-                  : "bg-mist text-ink-soft"
-              }`}
-            >
-              {badge}
-            </span>
+            {mode === "live" ? (
+              <SoftFailLiveBadge>{badge}</SoftFailLiveBadge>
+            ) : (
+              <SoftFailBadge>{badge}</SoftFailBadge>
+            )}
             {showSoftFail ? (
               <SoftFailBadge>
                 {t(locale, "planner.dayFill.softBadge")}
@@ -592,17 +589,15 @@ export function DayFillPanel({
                     <SectionEyebrow>
                       {t(locale, "planner.dayFill.previewEyebrow")}
                     </SectionEyebrow>
-                    <span
-                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                        proposal.mode === "live"
-                          ? "bg-river/12 text-river-deep"
-                          : "bg-mist text-ink-soft"
-                      }`}
-                    >
-                      {proposal.mode === "live"
-                        ? t(locale, "planner.dayFill.liveBadge")
-                        : t(locale, "planner.dayFill.demoBadge")}
-                    </span>
+                    {proposal.mode === "live" ? (
+                      <SoftFailLiveBadge>
+                        {t(locale, "planner.dayFill.liveBadge")}
+                      </SoftFailLiveBadge>
+                    ) : (
+                      <SoftFailBadge>
+                        {t(locale, "planner.dayFill.demoBadge")}
+                      </SoftFailBadge>
+                    )}
                   </div>
                   <h3 className="mt-1 font-display text-base tracking-tight text-ink">
                     {t(locale, "planner.dayFill.preview")}

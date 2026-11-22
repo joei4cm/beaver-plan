@@ -17,6 +17,7 @@ import { acceptInvite, previewInvite } from "../../src/api";
 import { SheetPresence } from "../../src/components/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashStyle,
@@ -212,14 +213,9 @@ export default function InviteScreen() {
                 {softOpen ? (
                   <SoftFailBadge>{t(locale, "invite.softBadge")}</SoftFailBadge>
                 ) : (
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.statusBadge,
-                      styles.statusBadgeLive,
-                    ])}
-                  >
+                  <SoftFailLiveBadge>
                     {t(locale, "invite.liveBadge")}
-                  </Text>
+                  </SoftFailLiveBadge>
                 )}
                 {preview ? (
                   <Text style={styles.roleChip}>
