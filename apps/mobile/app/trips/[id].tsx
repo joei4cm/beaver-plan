@@ -2456,11 +2456,11 @@ export default function TripDetailScreen() {
 
                 {/*
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
-                  wave 48 invite residual (BEA-461) + wave 51 presence pills craft
-                  (BEA-493) + wave 54 members roster residual (BEA-518) + wave 57
-                  presence pills residual (BEA-546): role/state type 1.4 · away
-                  inset · strip empty /80. SoftFailBadge · SoftFailSupport · mist
-                  band unchanged. Craft: ?presenceSoftFail=1 — never timber.
+                  wave 51/57 presence pills (#355/#389) + wave 60 residual
+                  (BEA-579): chip/empty tip-011 SheetPresence stagger · Live type
+                  1.4 · muted avatar /80 · name snug · meta /80. SoftFailBadge ·
+                  SoftFailSupport · mist band unchanged. Craft:
+                  ?presenceSoftFail=1 — never timber.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2576,7 +2576,7 @@ export default function TripDetailScreen() {
                       accessibilityRole="list"
                       accessibilityLabel={t(locale, "collab.members")}
                     >
-                      {members.slice(0, 4).map((m) => {
+                      {members.slice(0, 4).map((m, i) => {
                         const presence = presenceFor(m.role);
                         const pulseOpacity =
                           presence === "active"
@@ -2586,65 +2586,76 @@ export default function TripDetailScreen() {
                               })
                             : 1;
                         return (
-                          <View
+                          <SheetPresence
                             key={m.id}
-                            style={StyleSheet.flatten([
-                              styles.presenceChip,
-                              presence === "active"
-                                ? styles.presenceChipActive
-                                : null,
-                            ])}
-                            accessibilityLabel={`${m.displayName ?? m.userId} · ${t(locale, `collab.role.${m.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
+                            open
+                            delayMs={Math.min(i, 4) * 40 + 55}
+                            rise={8}
                           >
                             <View
                               style={StyleSheet.flatten([
-                                styles.presenceAvatar,
-                                m.role === "viewer"
-                                  ? styles.presenceAvatarMuted
+                                styles.presenceChip,
+                                presence === "active"
+                                  ? styles.presenceChipActive
                                   : null,
                               ])}
+                              accessibilityLabel={`${m.displayName ?? m.userId} · ${t(locale, `collab.role.${m.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
                             >
-                              <Text style={styles.presenceInitials}>
-                                {memberInitials(m.displayName ?? m.userId)}
-                              </Text>
-                              <Animated.View
+                              <View
                                 style={StyleSheet.flatten([
-                                  styles.presenceDot,
-                                  presence === "active"
-                                    ? styles.presenceDotActive
-                                    : presence === "idle"
-                                      ? styles.presenceDotIdle
-                                      : styles.presenceDotAway,
-                                  { opacity: pulseOpacity },
+                                  styles.presenceAvatar,
+                                  m.role === "viewer"
+                                    ? styles.presenceAvatarMuted
+                                    : null,
                                 ])}
-                              />
+                              >
+                                <Text style={styles.presenceInitials}>
+                                  {memberInitials(m.displayName ?? m.userId)}
+                                </Text>
+                                <Animated.View
+                                  style={StyleSheet.flatten([
+                                    styles.presenceDot,
+                                    presence === "active"
+                                      ? styles.presenceDotActive
+                                      : presence === "idle"
+                                        ? styles.presenceDotIdle
+                                        : styles.presenceDotAway,
+                                    { opacity: pulseOpacity },
+                                  ])}
+                                />
+                              </View>
+                              <Text
+                                style={styles.presenceName}
+                                numberOfLines={1}
+                              >
+                                {(m.displayName ?? m.userId).split(/\s+/)[0]}
+                              </Text>
+                              <Text
+                                style={StyleSheet.flatten([
+                                  styles.presenceRole,
+                                  m.role === "owner"
+                                    ? styles.presenceRoleOwner
+                                    : m.role === "editor"
+                                      ? styles.presenceRoleEditor
+                                      : styles.presenceRoleViewer,
+                                ])}
+                              >
+                                {t(locale, `collab.role.${m.role}`)}
+                              </Text>
                             </View>
-                            <Text style={styles.presenceName} numberOfLines={1}>
-                              {(m.displayName ?? m.userId).split(/\s+/)[0]}
-                            </Text>
-                            <Text
-                              style={StyleSheet.flatten([
-                                styles.presenceRole,
-                                m.role === "owner"
-                                  ? styles.presenceRoleOwner
-                                  : m.role === "editor"
-                                    ? styles.presenceRoleEditor
-                                    : styles.presenceRoleViewer,
-                              ])}
-                            >
-                              {t(locale, `collab.role.${m.role}`)}
-                            </Text>
-                          </View>
+                          </SheetPresence>
                         );
                       })}
                       {members.length === 0 ? (
-                        <Text style={styles.presenceEmpty}>
-                          {t(locale, "collab.presence.empty")}
-                        </Text>
+                        <SheetPresence open delayMs={70} rise={8}>
+                          <Text style={styles.presenceEmpty}>
+                            {t(locale, "collab.presence.empty")}
+                          </Text>
+                        </SheetPresence>
                       ) : null}
                     </View>
                     <View style={styles.collabMetaRow}>
-                      <Text style={styles.collabMeta}>
+                      <Text style={styles.presenceMeta}>
                         {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
                         {collabSeeded
                           ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
@@ -4282,6 +4293,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.inkSoft,
   },
+  /** Presence strip meta — web secondary `/80` ladder (BEA-579). */
+  presenceMeta: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 18,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
+  },
   liveDot: {
     width: 6,
     height: 6,
@@ -4367,11 +4386,12 @@ const styles = StyleSheet.create({
     /** Web bg-mist/70 */
     backgroundColor: `${colors.mist}B3`,
   },
+  /** Idle Live type — SoftFail Live / role bar 1.4 (BEA-579). */
   presenceStatusBadgeText: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   presenceStatusBadgeTextIdle: {
@@ -4446,7 +4466,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   presenceAvatarMuted: {
-    backgroundColor: colors.inkSoft,
+    /** Web bg-ink-soft/80 */
+    backgroundColor: `${colors.inkSoft}CC`,
   },
   presenceDot: {
     position: "absolute",
@@ -4483,9 +4504,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: -0.15,
+    /** Web chip name leading-snug (BEA-579). */
+    lineHeight: 16,
     color: colors.ink,
   },
-  /** Role pill on presence chips — wave 51 (BEA-493) · 1.4 bar (BEA-546). */
+  /** Role pill on presence chips — wave 51/57 · 1.4 bar kept (BEA-579). */
   presenceRole: {
     fontSize: 10,
     fontWeight: "700",
