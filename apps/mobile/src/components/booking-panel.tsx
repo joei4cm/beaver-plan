@@ -1614,9 +1614,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   draftCardFilled: {
-    /** Web border-river/30 (BEA-741). Fill wash left as rgba nest sibling. */
+    /** Web border-river/30 (BEA-741) · bg-river/[0.04] (BEA-744). */
     borderColor: `${colors.river}4D`,
-    backgroundColor: "rgba(47,107,255,0.04)",
+    backgroundColor: `${colors.river}0A`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
