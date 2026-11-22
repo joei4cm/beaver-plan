@@ -123,9 +123,10 @@ function MediaFrame({
 }
 
 /**
- * Entry photo strip chrome (BEA-225 after #124/#172):
+ * Entry photo strip chrome (BEA-225 after #124/#172 · BEA-514 gallery residual):
  * azure inset rail · count · lead frame · quieter empties to PHOTO_SLOT_MAX ·
- * tip-011 settle. SoftFailNotice lives on compose media rail (BEA-282).
+ * tip-011 settle · eyebrow 0.18em (compose media parity). SoftFailNotice lives
+ * on compose media rail (BEA-282) — not reopened here.
  */
 function EntryPhotoStrip({
   locale,
@@ -150,7 +151,7 @@ function EntryPhotoStrip({
     >
       <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/65 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
             {t(locale, "journal.photoStrip")}
           </p>
           <p className="truncate text-[11px] leading-snug text-ink-soft/80">
