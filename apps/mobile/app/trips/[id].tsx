@@ -4317,6 +4317,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: -0.5,
+    /** Web collab panel H2 `leading-snug` (#471 / BEA-737; Expo catch-up BEA-764). */
+    lineHeight: 28,
     color: colors.ink,
     marginBottom: 4,
   },
