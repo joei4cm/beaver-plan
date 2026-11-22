@@ -123,7 +123,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1` / `?searchSoftFail=1` / `?placeSoftFail=1` / `?daysSoftFail=1` / `?emptySoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1` / `?searchSoftFail=1` / `?placeSoftFail=1` / `?daysSoftFail=1` / `?emptySoftFail=1` / `?pinSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -147,6 +147,7 @@ export default function TripDetailScreen() {
     placeSoftFail: placeSoftFailParam,
     daysSoftFail: daysSoftFailParam,
     emptySoftFail: emptySoftFailParam,
+    pinSoftFail: pinSoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
@@ -163,6 +164,7 @@ export default function TripDetailScreen() {
     placeSoftFail?: string | string[];
     daysSoftFail?: string | string[];
     emptySoftFail?: string | string[];
+    pinSoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -193,6 +195,8 @@ export default function TripDetailScreen() {
   const daysSoftPreview = craftSoftFailOn(daysSoftFailParam);
   /** Craft preview: /trips/…?emptySoftFail=1 — SoftFail depth under empty Stops (BEA-429). */
   const emptySoftPreview = craftSoftFailOn(emptySoftFailParam);
+  /** Craft preview: /trips/…?pinSoftFail=1 — SoftFail depth under Offline pin (BEA-450). */
+  const pinSoftPreview = craftSoftFailOn(pinSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -1100,6 +1104,15 @@ export default function TripDetailScreen() {
   const daysSoftOpen =
     (daysSoftPreview || detailSoftNoise) && !inviteOpen;
   const daysSoftCopy = t(locale, "planner.days.softFail");
+  /**
+   * Expo Offline pin SoftFail depth (BEA-448 SoftFailSupport) + craft SoftFail
+   * query closeout (BEA-450): azure Offline pin SoftFail rail · SoftFailBadge
+   * Soft pin · SoftFailSupport · SoftFailNotice compact mist band · tip-011.
+   * Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin miss. Soft
+   * copy always offline.pinSoftFail — never timber / Failed to fetch.
+   */
+  const pinSoftOpen = pinSoftPreview || Boolean(pinError);
+  const pinSoftCopy = pinError ?? t(locale, "offline.pinSoftFail");
   const selectedDayIndex = dayId
     ? Math.max(1, days.findIndex((d) => d.id === dayId) + 1)
     : 0;
@@ -2119,19 +2132,21 @@ export default function TripDetailScreen() {
 
             <View style={styles.secondaryBlock}>
               {/*
-                SoftFailSupport residual (BEA-448 after #323): azure Offline pin
-                SoftFail rail · SoftFailBadge Soft pin · SoftFailSupport ·
-                SoftFailNotice compact mist band · tip-011 — SoftFail depth +
-                helpers kept. Soft copy never timber / Failed to fetch.
+                SoftFailSupport residual (BEA-448 after #323) + craft SoftFail
+                query closeout (BEA-450): azure Offline pin SoftFail rail ·
+                SoftFailBadge Soft pin · SoftFailSupport · SoftFailNotice
+                compact mist band · tip-011 — SoftFail depth + helpers kept.
+                Craft: ?pinSoftFail=1 — SoftFail depth without a pin miss.
+                Soft copy never timber / Failed to fetch.
               */}
               <View
                 style={StyleSheet.flatten([
                   styles.pinChrome,
-                  pinError ? styles.pinChromeSoft : null,
+                  pinSoftOpen ? styles.pinChromeSoft : null,
                 ])}
                 accessibilityLabel={t(locale, "offline.pinRail")}
               >
-                {pinError ? (
+                {pinSoftOpen ? (
                   <View style={styles.pinSoftRail}>
                     <View style={styles.pinSoftRailCopy}>
                       <Text style={styles.pinSoftEyebrow}>
@@ -2150,18 +2165,18 @@ export default function TripDetailScreen() {
                   </View>
                 ) : null}
                 <SoftFailNotice
-                  open={Boolean(pinError)}
+                  open={pinSoftOpen}
                   compact
                   style={styles.pinSoftFail}
-                  fallback={t(locale, "offline.pinSoftFail")}
+                  fallback={pinSoftCopy}
                 >
-                  {pinError ?? t(locale, "offline.pinSoftFail")}
+                  {pinSoftCopy}
                 </SoftFailNotice>
                 <View
                   style={StyleSheet.flatten([
                     styles.pinBody,
-                    pinError ? styles.pinBodySoft : null,
-                    pinError ? softFailMistWashStyle : null,
+                    pinSoftOpen ? styles.pinBodySoft : null,
+                    pinSoftOpen ? softFailMistWashStyle : null,
                   ])}
                 >
                   <Pressable
