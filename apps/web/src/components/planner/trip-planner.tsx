@@ -1151,17 +1151,20 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
 
           {/*
-            Transit filters SoftFail depth (BEA-358 after #129 / BEA-170) + craft
-            SoftFail query parity (BEA-423): azure mode rail · Soft mode badge ·
-            softSupport · compact SoftFail mist band (`border-b`) · tip-011
-            mist-wash — Craft: ?modeSoftFail=1. Yields while TransferSteps
-            SoftFail depth (BEA-378) / ?transferSoftFail=1 owns selected-stop
-            soft chrome — never timber / Failed to fetch.
+            Transit panel craft residual (BEA-462 / wave 48) + SoftFail depth
+            kept (BEA-358 / BEA-423): always-on azure Mode rail · Soft mode
+            badge · softSupport · compact SoftFail mist band (`border-b`) ·
+            tip-011 mist-wash + chip/CTA press — Craft: ?modeSoftFail=1.
+            Yields while TransferSteps SoftFail depth (BEA-378) /
+            ?transferSoftFail=1 owns selected-stop soft chrome — never timber
+            / Failed to fetch. No `/dev` gallery.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
               className={`relative flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 pt-2.5 pb-1.5 ${
-                modeSoftOpen ? softFailRailClass : ""
+                modeSoftOpen
+                  ? softFailRailClass
+                  : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]"
               }`}
             >
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
@@ -1217,7 +1220,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         type="button"
                         aria-pressed={on}
                         onClick={() => setTravelMode(m)}
-                        className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                        className={`rounded-bp-xs px-3.5 py-1.5 text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
                           on
                             ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                             : "text-ink-soft hover:text-river"
@@ -1232,7 +1235,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   type="button"
                   disabled={routing || dayStops.length < 2}
                   onClick={() => void generateRoutes()}
-                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {routing
                     ? t(locale, "planner.routing")
