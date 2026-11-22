@@ -1419,12 +1419,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops SoftFail depth (BEA-367 stop chips after #137 / BEA-355 empty /
-              BEA-348 drag):
-              azure Stops rail · Soft stops / Soft empty / Soft reorder badge ·
-              softSupport · compact SoftFail mist band · tip-011 mist-wash empty
-              body / chips — stop-drawer SoftFail (#257) / day-fill SoftFail
-              (#248) yield — never timber / Failed to fetch.
+              Stops list craft residual (BEA-478 / wave 50) + SoftFail kept
+              (BEA-367 chips / BEA-355 empty / BEA-348 drag): azure Stops rail ·
+              Soft stops / Soft empty / Soft reorder badge · softSupport ·
+              compact SoftFail mist band · tip-011 mist-wash · mist-track chip
+              press (duration-bp-fast + active:scale) · empty CTA press —
+              stop-drawer SoftFail (#257) / day-fill SoftFail (#248) yield —
+              never timber / Failed to fetch. No `/dev` gallery.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
@@ -1513,7 +1514,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           aria-pressed={on}
                           aria-label={`${t(locale, "planner.stops.chip").replace("{n}", String(i + 1))}: ${stop.place.name}`}
                           onClick={() => setSelectedStopId(stop.id)}
-                          className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                          className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
                             on
                               ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                               : "text-ink-soft hover:text-river"
@@ -1615,7 +1616,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             block: "nearest",
                           });
                         }}
-                        className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam active:scale-[0.98]"
                         style={{ animationDelay: "130ms" }}
                       >
                         {t(locale, "planner.emptyDayCta")}
