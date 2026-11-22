@@ -141,10 +141,12 @@ async function searchLocal(
  * #408 twin) · BookingOffersSkeleton `animate-preview-in` stagger twin of live
  * offers (#425 DayFillSkeleton pattern). Wave 64 (BEA-618): emptyResults
  * `leading-snug`. Wave 65 (BEA-642): sheet / suggest / results titles
- * `leading-snug` (day-fill #508/#544 twin; empty snug already #433). SoftFail
- * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
- * timber / Failed to fetch. No `/dev` gallery.
+ * `leading-snug` (day-fill #508/#544 twin; empty snug already #433). Wave 66
+ * (BEA-660): results-list offer provider meta `leading-snug text-ink-soft/80`
+ * (day-fill stop-walk + BookingLinkChips #395 twin). SoftFail stays under
+ * OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm
+ * SoftFail yields OTA (no double depth). Never timber / Failed to fetch. No
+ * `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -692,7 +694,7 @@ export function BookingPanel({
                               </span>
                             </span>
                           ) : null}
-                          <span className="text-xs text-ink-soft">
+                          <span className="text-xs leading-snug text-ink-soft/80">
                             {s.providerLabel}
                           </span>
                         </div>
