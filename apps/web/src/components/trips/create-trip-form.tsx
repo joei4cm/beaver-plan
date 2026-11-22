@@ -149,6 +149,12 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
     }
   }
 
+  /**
+   * Playbook Customize / new-trip detail — SoftFailNotice kept + wave 52 craft
+   * residual (BEA-500) beyond playbooks list #344: hero eyebrow 0.18em ·
+   * tip-011 submit press · shadow-bp-soft CTA. SoftFail untouched. No /dev.
+   * Expo has no /trips/new form (Use soft-creates).
+   */
   return (
     <div className="relative mx-auto max-w-xl px-6 pb-28 pt-6 md:px-10 md:pt-10">
       <div
@@ -157,10 +163,10 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
       />
 
       <div className="animate-rise">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
           Beaver Plan · 海狸旅行
         </p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-bold leading-snug tracking-tight text-ink md:text-5xl">
           {t(locale, "trips.create.title")}
         </h1>
         <p className="mt-3 max-w-md text-base leading-relaxed text-ink-soft">
@@ -263,7 +269,7 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="rounded-bp bg-river px-6 py-3 text-sm font-semibold text-foam transition hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-bp bg-river px-6 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
           >
             {busy
               ? t(locale, "trips.creating")
@@ -271,7 +277,7 @@ export function CreateTripForm({ locale, initialTemplateId }: Props) {
           </button>
           <Link
             href="/trips"
-            className="text-sm font-semibold text-ink-soft transition hover:text-river"
+            className="text-sm font-semibold text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
           >
             {t(locale, "trips.create.cancel")}
           </Link>
