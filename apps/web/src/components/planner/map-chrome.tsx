@@ -55,19 +55,13 @@ type Props = {
 
 /**
  * Komoot-style floating map chrome — thin rail, not a card stack.
- * Depth ladder (BEA-224 after #56/#98/#118):
- *   popovers (shadow-bp · z-30 · azure inset rail) → search primary →
- *   engine chip / tool rail → SoftFailNotice + transfer legend (field tools).
- * Floating SoftFailNotice depth (BEA-318 after #213) + SoftFail helper
- * adoption (BEA-390 after #284) + SoftFail yield (BEA-414 after #281) +
- * craft SoftFail query parity (BEA-422): `/trips/…?searchSoftFail=1` ·
- * `/trips/…?mapSoftFail=1` · `/trips/…?legendSoftFail=1` force SoftFail depth
- * under Places / Map / Transfer rails (mirrors #282 / wave 42). SoftFailBadge ·
- * SoftFailSupport · compact SoftFail mist band (border-b) · tip-011 mist-wash ·
- * yields to search SoftFail (#226) / legend SoftFail / basemap SoftFail when
- * open — locate SoftFail yields with the same unit (no double SoftFail).
- * Legend SoftFail depth (BEA-350 after #133) kept. SoftFail copy never timber /
- * Failed to fetch. No `/dev` SoftFail gallery.
+ * SoftFail depth kept (BEA-318 / BEA-390 / BEA-414 / BEA-422) + wave 49 craft
+ * residual (BEA-473): Lumen eyebrow tracking · tip-011 press settle · river/foam
+ * token insets (no hardcoded rgba). SoftFailBadge · SoftFailSupport · compact
+ * SoftFail mist band · tip-011 mist-wash unchanged. Craft SoftFail:
+ * `/trips/…?searchSoftFail=1` · `?mapSoftFail=1` · `?legendSoftFail=1`. Yields
+ * between Places / Map / Transfer / basemap (no double SoftFail). Soft copy
+ * never timber / Failed to fetch. No `/dev` gallery.
  */
 export function MapChrome({
   locale,
@@ -295,7 +289,7 @@ export function MapChrome({
               setEngineOpen((o) => !o);
               setLayersOpen(false);
             }}
-            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur-md transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+            className={`inline-flex w-fit max-w-[11rem] items-center gap-1.5 rounded-bp-sm border bg-foam/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-bp-soft backdrop-blur-md transition duration-bp ease-bp-out-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
               engineOpen
                 ? "border-river/45 text-river shadow-bp ring-2 ring-river/25"
                 : "border-[color:var(--bp-line)] text-ink hover:border-river/35 hover:text-river"
@@ -304,7 +298,7 @@ export function MapChrome({
             <span className="truncate">{engineLabel}</span>
             <EngineCaret open={engineOpen} />
           </button>
-          <span className="px-0.5 text-[11px] font-medium text-ink-soft/90 drop-shadow-[0_1px_0_rgba(255,255,255,0.65)]">
+          <span className="px-0.5 text-[11px] font-medium leading-relaxed text-ink-soft/90 drop-shadow-[0_1px_0_color-mix(in_srgb,var(--bp-foam)_65%,transparent)]">
             {modeLabel}
             <span className="mx-1 text-ink-soft/40" aria-hidden>
               ·
@@ -324,7 +318,7 @@ export function MapChrome({
               className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
               style={{ animationDelay: "40ms" }}
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.map.basemapEyebrow")}
               </p>
               <p className="mt-1 font-display text-sm font-semibold tracking-tight text-ink">
@@ -350,7 +344,7 @@ export function MapChrome({
                       type="button"
                       aria-pressed={active}
                       onClick={() => onPreferenceChange(opt)}
-                      className={`min-w-0 flex-1 rounded-bp-xs px-1.5 py-1.5 text-[11px] font-semibold transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`min-w-0 flex-1 rounded-bp-xs px-1.5 py-1.5 text-[11px] font-semibold transition duration-bp-fast ease-bp-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                         active
                           ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                           : "text-ink-soft hover:bg-foam/70 hover:text-river"
@@ -446,7 +440,7 @@ export function MapChrome({
               style={{ animationDelay: "40ms" }}
             >
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "planner.search.eyebrow")}
                 </span>
                 {hasResults ? (
@@ -466,7 +460,7 @@ export function MapChrome({
                     {t(locale, "planner.search.softSupport")}
                   </SoftFailSupport>
                 ) : (
-                  <span className="text-[11px] leading-snug text-ink-soft/80">
+                  <span className="text-[11px] leading-relaxed text-ink-soft/80">
                     {t(locale, "planner.search.support")}
                   </span>
                 )}
@@ -525,7 +519,7 @@ export function MapChrome({
                         aria-selected={selected}
                         onMouseEnter={() => setActiveIndex(i)}
                         onClick={() => onPickPlace(place)}
-                        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition duration-bp ease-bp-out-strong ${
+                        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition duration-bp ease-bp-out-strong active:scale-[0.995] ${
                           selected
                             ? "animate-stop-select bg-river/[0.06] shadow-[inset_3px_0_0_var(--bp-river)]"
                             : "hover:bg-mist/50"
@@ -572,7 +566,7 @@ export function MapChrome({
                 role="status"
                 aria-live="polite"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                   {t(locale, "planner.search.emptyEyebrow")}
                 </p>
                 <p className="font-display text-sm font-semibold tracking-tight text-ink">
@@ -619,7 +613,7 @@ export function MapChrome({
                 setLayersOpen((o) => !o);
                 setEngineOpen(false);
               }}
-              className={`flex h-10 w-10 items-center justify-center transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+              className={`flex h-10 w-10 items-center justify-center transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                 layersOpen ? "bg-mist/80 text-river" : "text-ink-soft"
               }`}
             >
@@ -633,7 +627,7 @@ export function MapChrome({
               type="button"
               aria-label={t(locale, "planner.map.locate")}
               onClick={handleLocate}
-              className="flex h-10 w-10 items-center justify-center text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+              className="flex h-10 w-10 items-center justify-center text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/70 hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
             >
               <LocateGlyph />
             </button>
@@ -653,7 +647,7 @@ export function MapChrome({
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 space-y-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "planner.map.layersEyebrow")}
                   </p>
                   <p className="font-display text-sm font-semibold tracking-tight text-ink">
@@ -687,10 +681,10 @@ export function MapChrome({
               ).map(([key, labelKey]) => (
                 <label
                   key={key}
-                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm transition duration-bp ease-bp-out-strong hover:bg-mist/50 ${
+                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm transition duration-bp ease-bp-out-strong hover:bg-mist/50 active:scale-[0.995] ${
                     layers[key]
                       ? "animate-stop-select bg-river/[0.04] font-medium text-ink shadow-[inset_3px_0_0_var(--bp-river)]"
-                      : "text-ink hover:shadow-[inset_3px_0_0_rgba(47,107,255,0.35)]"
+                      : "text-ink hover:shadow-[inset_3px_0_0_color-mix(in_srgb,var(--bp-river)_35%,transparent)]"
                   }`}
                 >
                   <input
@@ -730,7 +724,7 @@ export function MapChrome({
             style={{ animationDelay: "40ms" }}
           >
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.map.softEyebrow")}
               </span>
               <SoftFailSupport>
@@ -775,7 +769,7 @@ export function MapChrome({
             style={{ animationDelay: "40ms" }}
           >
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.map.legendEyebrow")}
               </span>
               <span className="text-[11px] font-medium text-ink-soft/80">
