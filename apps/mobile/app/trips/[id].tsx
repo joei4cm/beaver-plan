@@ -1486,6 +1486,11 @@ export default function TripDetailScreen() {
                             )}
                           </Text>
                         ) : null}
+                        <Text style={styles.searchSupport}>
+                          {searchDemo
+                            ? t(locale, "planner.search.softSupport")
+                            : t(locale, "planner.search.support")}
+                        </Text>
                       </View>
                       <View
                         style={StyleSheet.flatten([
@@ -1504,7 +1509,7 @@ export default function TripDetailScreen() {
                           ])}
                         >
                           {searchDemo
-                            ? t(locale, "planner.search.demoBadge")
+                            ? t(locale, "planner.search.softBadge")
                             : t(locale, "planner.search.liveBadge")}
                         </Text>
                       </View>
@@ -1592,12 +1597,14 @@ export default function TripDetailScreen() {
                     <SoftFailNotice
                       open={searchDemo && hasSearchResults}
                       compact
+                      style={styles.searchSoftFail}
                     >
-                      {t(locale, "planner.searchDemo")}
+                      {t(locale, "planner.search.softFail")}
                     </SoftFailNotice>
                     <SoftFailNotice
                       open={searchDemo && showSearchEmpty}
                       compact
+                      style={styles.searchSoftFail}
                     >
                       {t(locale, "planner.search.softFailEmpty")}
                     </SoftFailNotice>
@@ -3088,6 +3095,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: "rgba(100, 116, 139, 0.85)",
+  },
+  searchSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(15, 23, 42, 0.55)",
+    flexShrink: 1,
+  },
+  searchSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
   },
   searchBadge: {
     borderRadius: radius.xs,

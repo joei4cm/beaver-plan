@@ -538,7 +538,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 </p>
                 {canvasEmpty ? (
                   <span className="text-[11px] leading-snug text-ink-soft/80">
-                    {t(locale, "share.emptySupport")}
+                    {emptySoftOpen
+                      ? t(locale, "share.emptySoftSupport")
+                      : t(locale, "share.emptySupport")}
                   </span>
                 ) : null}
               </div>
@@ -550,7 +552,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       : "bg-river/12 text-river"
                   }`}
                 >
-                  {t(locale, "share.emptyBadge")}
+                  {emptySoftOpen
+                    ? t(locale, "share.emptySoftBadge")
+                    : t(locale, "share.emptyBadge")}
                 </span>
               ) : (
                 <p className="font-mono text-[10px] tracking-wide text-ink-soft">

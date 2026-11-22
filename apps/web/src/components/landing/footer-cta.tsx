@@ -22,7 +22,8 @@ type Props = {
   offlineNotice: string;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   liveBadge: string;
   bodyLabel: string;
 };
@@ -131,16 +132,16 @@ function FinaleRouteArt() {
 }
 
 /**
- * Finale SoftFail sheet — azure rail · Offline/Live · compact SoftFailNotice
- * under rail (`border-b`) · SheetPresence body (CTA · route plane).
- * Depth craft after #89 (BEA-311): SoftFail strip owns a clear mist band
- * between azure rail and finale CTA — never timber / Failed to fetch.
+ * Finale SoftFail sheet — azure rail · Soft finale / Live · softSupport ·
+ * compact SoftFailNotice under rail · SheetPresence body (CTA · route plane).
+ * Soft badge / softSupport depth (BEA-383 after BEA-311) — never timber.
  */
 function FooterSoftFailSheet({
   softOpen,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   liveBadge,
   offlineNotice,
   bodyLabel,
@@ -151,7 +152,8 @@ function FooterSoftFailSheet({
   softOpen: boolean;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   liveBadge: string;
   offlineNotice: string;
   bodyLabel: string;
@@ -171,7 +173,7 @@ function FooterSoftFailSheet({
             {sheetEyebrow}
           </span>
           <span className="text-[11px] leading-snug text-ink-soft/80">
-            {sheetSupport}
+            {softOpen ? softSupport : sheetSupport}
           </span>
         </div>
         <span
@@ -179,7 +181,7 @@ function FooterSoftFailSheet({
             softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
           }`}
         >
-          {softOpen ? offlineBadge : liveBadge}
+          {softOpen ? softBadge : liveBadge}
         </span>
       </header>
 
@@ -208,10 +210,9 @@ function FooterSoftFailSheet({
 }
 
 /**
- * Landing finale SoftFailNotice depth (BEA-311 after #89):
- * FooterSoftFailSheet · azure finale rail · Offline/Live badge · compact
- * SoftFailNotice mist band under rail · tip-011 rise stagger CTA + route plane —
- * SoftFail owned by the sheet (no floating notice). Never timber / Failed to fetch.
+ * Landing finale SoftFailNotice depth (BEA-383 Soft badge after BEA-311):
+ * FooterSoftFailSheet · azure finale rail · Soft finale / Live · softSupport ·
+ * compact SoftFailNotice · tip-011 CTA + route plane — never timber.
  */
 export function LandingFooterCta({
   brandPrimary,
@@ -229,7 +230,8 @@ export function LandingFooterCta({
   offlineNotice,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   liveBadge,
   bodyLabel,
 }: Props) {
@@ -257,15 +259,15 @@ export function LandingFooterCta({
 
       <div className="relative mx-auto max-w-6xl px-6 pt-20 md:px-10 md:pt-28">
         {/*
-          Finale SoftFail depth (BEA-311 after #89):
-          FooterSoftFailSheet · azure finale rail · Offline/Live · mist SoftFail band ·
-          tip-011 CTA + route plane — never timber.
+          Finale SoftFail Soft badge depth (BEA-383): Soft finale · softSupport ·
+          mist SoftFail band · tip-011 CTA + route plane — never timber.
         */}
         <FooterSoftFailSheet
           softOpen={softOpen}
           sheetEyebrow={sheetEyebrow}
           sheetSupport={sheetSupport}
-          offlineBadge={offlineBadge}
+          softSupport={softSupport}
+          softBadge={softBadge}
           liveBadge={liveBadge}
           offlineNotice={offlineNotice}
           bodyLabel={bodyLabel}

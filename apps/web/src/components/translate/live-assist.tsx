@@ -997,7 +997,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   </p>
                   {historyEmpty ? (
                     <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "translate.emptySupport")}
+                      {emptySoftOpen
+                        ? t(locale, "translate.emptySoftSupport")
+                        : t(locale, "translate.emptySupport")}
                     </span>
                   ) : null}
                 </div>

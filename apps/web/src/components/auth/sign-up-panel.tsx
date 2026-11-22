@@ -90,7 +90,9 @@ export function SignUpPanel({
               {t(locale, "auth.signUpSheetEyebrow")}
             </span>
             <span className="text-[11px] leading-snug text-ink-soft/80">
-              {t(locale, "auth.signUpSheetSupport")}
+              {softOpen
+                ? t(locale, "auth.signUpSoftSupport")
+                : t(locale, "auth.signUpSheetSupport")}
             </span>
           </div>
           <span

@@ -193,10 +193,12 @@ function StepRow({
 function LegCardHeader({
   locale,
   demoMode,
+  softOpen,
   view,
 }: {
   locale: Locale;
   demoMode: boolean;
+  softOpen: boolean;
   view?: Leg | null;
 }) {
   return (
@@ -208,20 +210,29 @@ function LegCardHeader({
         <View
           style={StyleSheet.flatten([
             styles.badge,
-            demoMode ? styles.badgeDemo : styles.badgeLive,
+            softOpen || demoMode ? styles.badgeDemo : styles.badgeLive,
           ])}
         >
           <Text
             style={StyleSheet.flatten([
               styles.badgeText,
-              demoMode ? styles.badgeTextDemo : styles.badgeTextLive,
+              softOpen || demoMode
+                ? styles.badgeTextDemo
+                : styles.badgeTextLive,
             ])}
           >
-            {demoMode
-              ? t(locale, "planner.transfer.demoBadge")
-              : t(locale, "planner.transfer.liveBadge")}
+            {softOpen
+              ? t(locale, "planner.transfer.softBadge")
+              : demoMode
+                ? t(locale, "planner.transfer.demoBadge")
+                : t(locale, "planner.transfer.liveBadge")}
           </Text>
         </View>
+        {softOpen ? (
+          <Text style={styles.softSupport}>
+            {t(locale, "planner.transfer.softSupport")}
+          </Text>
+        ) : null}
       </View>
       {view ? (
         <Text style={styles.headerMeta}>
@@ -239,10 +250,10 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit SoftFailNotice chrome (BEA-242 after web #93 / Expo #109):
- * azure header rail · Summary / Steps · compact SoftFailNotice ·
- * tip-011 SheetPresence rise · StyleSheet.flatten.
- * Soft-fail never timber / Failed to fetch. SoftFail owns demo badge chrome.
+ * Expo transit SoftFailNotice depth (BEA-383 Soft badge / softSupport):
+ * azure Transfer rail · Soft transfer badge · softSupport · compact SoftFail
+ * mist band · tip-011 SheetPresence rise · StyleSheet.flatten.
+ * Soft-fail never timber / Failed to fetch.
  */
 export function TransferSteps({
   leg,
@@ -259,7 +270,7 @@ export function TransferSteps({
   const hasSteps = Boolean(view && view.transitSteps.length > 0);
   const empty = Boolean(showEmpty && !leg);
   const open = Boolean(leg) || empty;
-  /** SoftFail owns demo chrome when Directions absent (selected stop). */
+  /** SoftFail owns Soft transfer chrome when Directions absent (selected stop). */
   const softOpen = demoMode && (showSoftFail || empty);
 
   return (
@@ -272,7 +283,15 @@ export function TransferSteps({
     >
       {empty ? (
         <>
-          <LegCardHeader locale={locale} demoMode={demoMode} />
+          <LegCardHeader
+            locale={locale}
+            demoMode={demoMode}
+            softOpen={softOpen}
+          />
+          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
+            {t(locale, "planner.transfer.softFailEmpty")}
+          </SoftFailNotice>
           <SheetPresence open delayMs={60} rise={8} style={styles.emptyBody}>
             <Text style={styles.emptyTitle}>
               {t(locale, "planner.transfer.emptyTitle")}
@@ -281,14 +300,19 @@ export function TransferSteps({
               {t(locale, "planner.transfer.emptyHint")}
             </Text>
           </SheetPresence>
-          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
-            {t(locale, "planner.transfer.softFailEmpty")}
-          </SoftFailNotice>
         </>
       ) : view ? (
         <>
-          <LegCardHeader locale={locale} demoMode={demoMode} view={view} />
+          <LegCardHeader
+            locale={locale}
+            demoMode={demoMode}
+            softOpen={softOpen}
+            view={view}
+          />
+          {/* SoftFail mist band under azure Transfer rail — tip-011 rise. */}
+          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
+            {t(locale, "planner.transfer.demoNotice")}
+          </SoftFailNotice>
 
           <View style={styles.sections}>
             <SheetPresence
@@ -335,11 +359,6 @@ export function TransferSteps({
               </SheetPresence>
             ) : null}
           </View>
-
-          {/* SoftFail owns footer — section-scoped under steps; tip-011 rise. */}
-          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
-            {t(locale, "planner.transfer.demoNotice")}
-          </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>
@@ -357,6 +376,15 @@ const styles = StyleSheet.create({
   },
   softFail: {
     marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  softSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(15, 23, 42, 0.55)",
+    flexShrink: 1,
   },
   header: {
     flexDirection: "row",

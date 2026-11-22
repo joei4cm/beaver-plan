@@ -182,7 +182,7 @@ export default async function HomePage() {
         softLiveBadge={t(locale, "landing.how.softLiveBadge")}
       />
 
-      {/* Below fold — FAQ SoftFail depth (BEA-293 · azure rail · mist SoftFail band · tip-011) */}
+      {/* Below fold — FAQ SoftFail Soft badge depth (BEA-383 · Soft FAQ · softSupport) */}
       <LandingFaq
         title={t(locale, "landing.faq.title")}
         support={t(locale, "landing.faq.support")}
@@ -192,11 +192,12 @@ export default async function HomePage() {
         filterLabel={t(locale, "landing.faq.filterLabel")}
         sheetEyebrow={t(locale, "landing.faq.sheetEyebrow")}
         sheetSupport={t(locale, "landing.faq.sheetSupport")}
-        offlineBadge={t(locale, "landing.faq.offlineBadge")}
+        softSupport={t(locale, "landing.faq.softSupport")}
+        softBadge={t(locale, "landing.faq.softBadge")}
         liveBadge={t(locale, "landing.faq.liveBadge")}
       />
 
-      {/* Finale SoftFail depth (BEA-311 · azure rail · mist SoftFail band · tip-011) */}
+      {/* Finale SoftFail Soft badge depth (BEA-383 · Soft finale · softSupport) */}
       <LandingFooterCta
         brandPrimary={brandPrimary}
         brandSecondary={brandSecondary}
@@ -213,7 +214,8 @@ export default async function HomePage() {
         offlineNotice={t(locale, "landing.finale.softOffline")}
         sheetEyebrow={t(locale, "landing.finale.sheetEyebrow")}
         sheetSupport={t(locale, "landing.finale.sheetSupport")}
-        offlineBadge={t(locale, "landing.finale.offlineBadge")}
+        softSupport={t(locale, "landing.finale.softSupport")}
+        softBadge={t(locale, "landing.finale.softBadge")}
         liveBadge={t(locale, "landing.finale.liveBadge")}
         bodyLabel={t(locale, "landing.finale.bodyLabel")}
       />
