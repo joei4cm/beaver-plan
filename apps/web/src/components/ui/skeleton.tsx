@@ -186,7 +186,7 @@ export function PlannerSkeleton() {
               <Skeleton className="h-10 w-full rounded-bp-sm" />
             </div>
           </div>
-          {/* Stops rail craft residual — azure Stops · header rise (BEA-567 / Mode #549) */}
+          {/* Stops rail craft residual — azure Stops · header + body rise (BEA-594 / Mode #549) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div
               className="animate-rise flex items-center justify-between gap-2 px-4 py-2.5"
@@ -201,8 +201,11 @@ export function PlannerSkeleton() {
             </div>
             {/* SoftFailNotice mist band under azure Stops rail — softSupport depth */}
             <Skeleton className="h-9 w-full rounded-none" />
-            {/* tip-011 mist-wash chip track while SoftFail owns depth */}
-            <div className={`${softFailMistWashClass} px-4 pb-2.5 pt-1`}>
+            {/* tip-011 mist-wash chip track while SoftFail owns depth — Mode body rise 70ms */}
+            <div
+              className={`animate-rise ${softFailMistWashClass} px-4 pb-2.5 pt-1`}
+              style={{ animationDelay: "70ms" }}
+            >
               <div className="flex gap-0.5 rounded-bp-sm bg-mist/70 p-1 shadow-[inset_3px_0_0_var(--bp-river)]">
                 <Skeleton className="h-8 w-24 rounded-bp-xs" />
                 <Skeleton className="h-8 w-20 rounded-bp-xs" />

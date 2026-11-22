@@ -2221,10 +2221,11 @@ export default function TripDetailScreen() {
                   ])}
                 >
                   {/*
-                    Empty-day craft residual (BEA-465) — web empty stop:
-                    river Stops eyebrow · display title · relaxed hint ·
-                    shadow-bp-soft CTA · tip-011 SheetPresence rise. SoftFail
-                    mist wash stays on the outer shell; SoftFail depth unchanged.
+                    Empty-day craft residual (BEA-594 beyond #402) — web empty:
+                    river Stops eyebrow · display title leading-snug (lineHeight
+                    28) · relaxed hint · shadow-bp-soft CTA · tip-011
+                    SheetPresence rise. SoftFail mist wash outer shell; SoftFail
+                    depth unchanged.
                   */}
                   <SheetPresence
                     open
@@ -5061,6 +5062,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     letterSpacing: -0.35,
+    /** Web emptyDay `leading-snug` · share/map/transfer empty ladder (BEA-594). */
+    lineHeight: 28,
     color: colors.ink,
   },
   emptyDayHint: {

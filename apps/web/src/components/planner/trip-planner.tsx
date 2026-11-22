@@ -1423,15 +1423,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops list craft residual (BEA-567 / wave 59 beyond #349) + SoftFail
+              Stops list craft residual (BEA-594 / wave 61 beyond #402) + SoftFail
               kept (BEA-367 chips / BEA-355 empty / BEA-348 drag): azure Stops
-              rail · eyebrow `0.65rem` / `0.18em` (Mode #370/#549) · header
-              `animate-rise` · Soft stops / Soft empty / Soft reorder badge ·
-              softSupport · compact SoftFail mist band · tip-011 mist-wash ·
-              mist-track chip press · empty CTA press · stop-row tip-011
-              `active:scale-[0.995]` (Places / Expo #381) — stop-drawer SoftFail
-              (#257) / day-fill SoftFail (#248) yield — never timber /
-              Failed to fetch. No `/dev` gallery.
+              rail · eyebrow `0.65rem` / `0.18em` · header `animate-rise` · Soft
+              stops / Soft empty / Soft reorder badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash · mist-track SheetPresence
+              body rise 70ms (Mode #549) · chip/empty CTA press · empty title
+              `leading-snug` · stop-row tip-011 `active:scale-[0.995]` + selected
+              display `leading-snug` — stop-drawer SoftFail (#257) / day-fill
+              SoftFail (#248) yield — never timber / Failed to fetch. No `/dev`
+              gallery.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
@@ -1497,70 +1498,73 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               </SoftFailNotice>
 
               {!dayEmpty ? (
-                <div
-                  className={`animate-rise px-4 pb-2.5 ${
-                    dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
-                  }`}
+                <SheetPresence
+                  open
                   style={{ animationDelay: "40ms" }}
+                  aria-label={t(locale, "planner.stops.filterLabel")}
                 >
                   <div
-                    className={`flex gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1 ${
-                      chipsSoftOpen
-                        ? "bg-mist/70 shadow-[inset_3px_0_0_var(--bp-river)]"
-                        : ""
+                    className={`animate-rise px-4 pb-2.5 ${
+                      dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
                     }`}
-                    role="group"
-                    aria-label={t(locale, "planner.stops.filterLabel")}
+                    style={{ animationDelay: "70ms" }}
                   >
-                    {dayStops.map((stop, i) => {
-                      const on = selectedStopId === stop.id;
-                      return (
-                        <button
-                          key={stop.id}
-                          type="button"
-                          aria-pressed={on}
-                          aria-label={`${t(locale, "planner.stops.chip").replace("{n}", String(i + 1))}: ${stop.place.name}`}
-                          onClick={() => setSelectedStopId(stop.id)}
-                          className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
-                            on
-                              ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-                              : "text-ink-soft hover:text-river"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-bp-xs text-[10px] font-bold tabular-nums ${
+                    <div
+                      className={`flex gap-0.5 overflow-x-auto rounded-bp-sm bg-mist/50 p-1 ${
+                        chipsSoftOpen
+                          ? "bg-mist/70 shadow-[inset_3px_0_0_var(--bp-river)]"
+                          : ""
+                      }`}
+                      role="group"
+                      aria-label={t(locale, "planner.stops.filterLabel")}
+                    >
+                      {dayStops.map((stop, i) => {
+                        const on = selectedStopId === stop.id;
+                        return (
+                          <button
+                            key={stop.id}
+                            type="button"
+                            aria-pressed={on}
+                            aria-label={`${t(locale, "planner.stops.chip").replace("{n}", String(i + 1))}: ${stop.place.name}`}
+                            onClick={() => setSelectedStopId(stop.id)}
+                            className={`inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs px-2.5 py-1.5 text-left text-sm font-semibold transition duration-bp-fast ease-bp-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 active:scale-[0.98] ${
                               on
-                                ? "bg-river text-foam"
-                                : "bg-ink/10 text-ink-soft"
+                                ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
+                                : "text-ink-soft hover:text-river"
                             }`}
                           >
-                            {i + 1}
-                          </span>
-                          <span className="min-w-0 truncate">
-                            {stop.place.name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-bp-xs text-[10px] font-bold tabular-nums ${
+                                on
+                                  ? "bg-river text-foam"
+                                  : "bg-ink/10 text-ink-soft"
+                              }`}
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="min-w-0 truncate">
+                              {stop.place.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-
-              {!dayEmpty ? (
-                <p
-                  className={`animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80 ${
-                    dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
-                  }`}
-                  style={{ animationDelay: "55ms" }}
-                >
-                  <span className="font-semibold uppercase tracking-[0.14em] text-river">
-                    {t(locale, "planner.stops.dragEyebrow")}
-                  </span>
-                  <span className="mx-1.5 text-ink-soft/40" aria-hidden>
-                    ·
-                  </span>
-                  {t(locale, "planner.stops.dragSupport")}
-                </p>
+                  <p
+                    className={`animate-rise px-4 pb-2.5 text-[11px] leading-snug text-ink-soft/80 ${
+                      dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
+                    }`}
+                    style={{ animationDelay: "85ms" }}
+                  >
+                    <span className="font-semibold uppercase tracking-[0.14em] text-river">
+                      {t(locale, "planner.stops.dragEyebrow")}
+                    </span>
+                    <span className="mx-1.5 text-ink-soft/40" aria-hidden>
+                      ·
+                    </span>
+                    {t(locale, "planner.stops.dragSupport")}
+                  </p>
+                </SheetPresence>
               ) : null}
             </div>
 
@@ -1600,7 +1604,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                         {t(locale, "planner.stops.eyebrow")}
                       </p>
                       <p
-                        className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]"
+                        className="animate-rise mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-[1.65rem]"
                         style={{ animationDelay: "70ms" }}
                       >
                         {t(locale, "planner.emptyDay")}
@@ -1688,8 +1692,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           <div
                             className={`min-w-0 truncate text-ink ${
                               selected
-                                ? "font-display text-base font-bold tracking-tight"
-                                : "font-semibold"
+                                ? "font-display text-base font-bold leading-snug tracking-tight"
+                                : "font-semibold leading-snug"
                             }`}
                           >
                             {stop.place.name}
