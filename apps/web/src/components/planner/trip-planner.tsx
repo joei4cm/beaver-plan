@@ -1436,16 +1436,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
-              Stops list craft residual (BEA-594 / wave 61 beyond #402) + SoftFail
-              kept (BEA-367 chips / BEA-355 empty / BEA-348 drag): azure Stops
-              rail · eyebrow `0.65rem` / `0.18em` · header `animate-rise` · Soft
-              stops / Soft empty / Soft reorder badge · softSupport · compact
-              SoftFail mist band · tip-011 mist-wash · mist-track SheetPresence
-              body rise 70ms (Mode #549) · chip/empty CTA press · empty title
-              `leading-snug` · stop-row tip-011 `active:scale-[0.995]` + selected
-              display `leading-snug` — stop-drawer SoftFail (#257) / day-fill
-              SoftFail (#248) yield — never timber / Failed to fetch. No `/dev`
-              gallery.
+              Stops list craft residual (BEA-594 / wave 61 beyond #402) + planner
+              drag residual (BEA-641 / wave 65 beyond #47 / #157): azure Stops
+              rail · eyebrow `0.65rem` / `0.18em` · Reorder hint same densify ·
+              header `animate-rise` · Soft stops / Soft empty / Soft reorder
+              badge · softSupport · compact SoftFail mist band · tip-011 mist-wash ·
+              mist-track SheetPresence body rise 70ms (Mode #549) · drag hint
+              85ms · chip/empty CTA press · empty title `leading-snug` · stop-row
+              tip-011 `active:scale-[0.995]` + selected display `leading-snug` —
+              SoftFail kept (BEA-367 chips / BEA-355 empty / BEA-348 drag) —
+              stop-drawer SoftFail (#257) / day-fill SoftFail (#248) yield —
+              never timber / Failed to fetch. No `/dev` gallery.
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
@@ -1569,7 +1570,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     }`}
                     style={{ animationDelay: "85ms" }}
                   >
-                    <span className="font-semibold uppercase tracking-[0.14em] text-river">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                       {t(locale, "planner.stops.dragEyebrow")}
                     </span>
                     <span className="mx-1.5 text-ink-soft/40" aria-hidden>
