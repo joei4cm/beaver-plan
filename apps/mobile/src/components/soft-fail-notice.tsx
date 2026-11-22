@@ -36,6 +36,10 @@ const easeIn = Easing.bezier(0.42, 0, 1, 1);
  * Mist wash + ink-soft copy — never timber, never raw "Failed to fetch".
  * Enter: easeRise + tip-011 ease-out (#46). Exit: paired ease-in rise-out (#87).
  * StyleSheet.flatten keeps RN Web Pressable/Link parents from choking on style arrays (#76).
+ *
+ * A11y depth (BEA-385): ARIA `role="status"` + `accessibilityLiveRegion="polite"`
+ * on the SoftFail mist band (parity with web role/status + aria-live). Focus-safe —
+ * non-focusable chrome so Soft badge · softSupport · tip-011 mist-band keep focus.
  */
 export function SoftFailNotice({
   children,
@@ -141,8 +145,11 @@ export function SoftFailNotice({
 
   return (
     <Animated.View
-      accessibilityRole="text"
+      role="status"
       accessibilityLiveRegion="polite"
+      accessible
+      accessibilityLabel={text}
+      importantForAccessibility="yes"
       style={StyleSheet.flatten([
         compact ? styles.compact : styles.notice,
         { opacity, transform: [{ translateY }] },
@@ -150,6 +157,8 @@ export function SoftFailNotice({
       ])}
     >
       <Text
+        accessible={false}
+        importantForAccessibility="no"
         style={StyleSheet.flatten([
           styles.text,
           compact ? styles.textCompact : null,
