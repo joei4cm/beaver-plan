@@ -1013,8 +1013,8 @@ export default function TripDetailScreen() {
       : t(locale, "collab.inviteDemoNotice");
 
   /**
-   * Expo collab timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
-   * wave 50 craft residual (BEA-479): eyebrow 1.8 · paper/inkSoft tokens.
+   * Expo collab SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
+   * craft residual: Timeline (BEA-479) + Comments preview eyebrow (BEA-487).
    * SoftFailBadge · SoftFailSupport · mist band · tip-011 mist-wash unchanged.
    * Craft: /trips/…?timelineSoftFail=1. Soft copy never timber / Failed to fetch.
    * Yields while invite SoftFail owns (no double depth). No `/dev` gallery.
@@ -4082,17 +4082,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 8,
   },
+  /** Comments preview eyebrow — wave 50 craft residual (BEA-487): 1.8 tracking. */
   collabSectionLabel: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.4,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
+  /** Azure rail @ 40% — matches web border-river/40 (colors.river #2F6BFF). */
   commentRail: {
     borderLeftWidth: 2,
-    borderLeftColor: "rgba(47,107,255,0.4)",
+    borderLeftColor: "rgba(47, 107, 255, 0.4)",
     paddingLeft: 10,
     gap: 2,
   },
