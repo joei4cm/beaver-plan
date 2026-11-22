@@ -14,7 +14,13 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+  softFailRailClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { BookingOffersSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
@@ -334,12 +340,10 @@ export function BookingPanel({
   );
 
   /**
-   * Confirm SoftFailNotice depth (BEA-345 after #184):
-   * azure Confirm rail · Soft/Live badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · tip-011 mist-wash pin body while soft · Confirm
-   * owns save soft-fail so OTA SoftFail (#246) yields (no double depth) ·
-   * Expo booking confirm SoftFail (BEA-340) stays out of scope. Soft copy
-   * never timber / Failed to fetch.
+   * Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345):
+   * SoftFailBadge Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
+   * softFailMistWashClass tip-011 · Confirm owns save soft-fail so OTA
+   * SoftFail yields (no double depth). Soft copy never timber / Failed to fetch.
    */
   const showConfirmSoftFail = confirmSoftFail;
   const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
@@ -357,14 +361,19 @@ export function BookingPanel({
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        OTA SoftFail depth (BEA-327 after #198):
-        azure sheet rail · Demo/Keys badge · Soft OTA badge · softSupport ·
-        tip-011 — Confirm SoftFail (#184/#345) still owns save soft-fail.
+        OTA SoftFail helpers (BEA-389 after #284 / depth BEA-327):
+        softFailRailClass · SoftFailBadge · SoftFailSupport · SoftFailNotice
+        tip-011 — Confirm SoftFail still owns save soft-fail.
       */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
+        className={[
+          "relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset",
+          showOtaSoftFail
+            ? softFailRailClass
+            : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
+        ].join(" ")}
         aria-expanded={open}
       >
         <div className="min-w-0">
@@ -385,9 +394,9 @@ export function BookingPanel({
               {badge}
             </span>
             {showOtaSoftFail ? (
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+              <SoftFailBadge>
                 {t(locale, "planner.booking.otaSoftBadge")}
-              </span>
+              </SoftFailBadge>
             ) : null}
             {suggestions.length > 0 ? (
               <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -402,9 +411,15 @@ export function BookingPanel({
               </span>
             ) : null}
           </div>
-          <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
-            {sheetSupportCopy}
-          </p>
+          {showOtaSoftFail ? (
+            <SoftFailSupport className="mt-0.5 block">
+              {sheetSupportCopy}
+            </SoftFailSupport>
+          ) : (
+            <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
+              {sheetSupportCopy}
+            </p>
+          )}
         </div>
         <span
           className={`shrink-0 text-river transition duration-bp ease-bp-in-out ${open ? "rotate-180" : ""}`}
@@ -420,20 +435,17 @@ export function BookingPanel({
         aria-label={t(locale, "planner.booking.title")}
       >
         {/* Compact SoftFail mist band under azure OTA rail — Confirm SoftFail yields. */}
-        <SoftFailNotice
-          open={showOtaSoftFail}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={showOtaSoftFail} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
 
         <div
-          className={`divide-y divide-[color:var(--bp-line)] ${
-            showOtaSoftFail
-              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-              : ""
-          }`}
+          className={[
+            "divide-y divide-[color:var(--bp-line)]",
+            showOtaSoftFail ? softFailMistWashClass : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
           {/* Search — mist-track filters · city / dates · azure CTA */}
           <section
@@ -677,10 +689,10 @@ export function BookingPanel({
           </section>
 
           {/*
-            Confirm SoftFail depth (BEA-345 after #184):
-            azure Confirm rail · Soft/Live badge · softSupport · compact
-            SoftFail mist band · tip-011 mist-wash pin body — OTA SoftFail
-            (#246) yields while Confirm owns; never timber.
+            Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345):
+            softFailRailClass · SoftFailBadge Soft/Live · SoftFailSupport ·
+            SoftFailNotice mist band · softFailMistWashClass tip-011 —
+            OTA SoftFail yields while Confirm owns; never timber.
           */}
           <section
             className="animate-rise px-4 py-4"
@@ -688,7 +700,14 @@ export function BookingPanel({
             aria-label={t(locale, "planner.booking.confirmEyebrow")}
           >
             <div className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
-              <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <div
+                className={[
+                  "relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] px-3 py-3",
+                  showConfirmSoftFail
+                    ? softFailRailClass
+                    : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
+                ].join(" ")}
+              >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <SectionEyebrow>
@@ -707,24 +726,28 @@ export function BookingPanel({
                         {t(locale, "planner.booking.confirmDirty")}
                       </span>
                     ) : null}
-                    <span
-                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                        showConfirmSoftFail
-                          ? "bg-mist text-ink-soft"
-                          : "bg-river/12 text-river"
-                      }`}
-                    >
-                      {showConfirmSoftFail
-                        ? t(locale, "planner.booking.confirmSoftBadge")
-                        : t(locale, "planner.booking.confirmSoftLiveBadge")}
-                    </span>
+                    {showConfirmSoftFail ? (
+                      <SoftFailBadge>
+                        {t(locale, "planner.booking.confirmSoftBadge")}
+                      </SoftFailBadge>
+                    ) : (
+                      <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                        {t(locale, "planner.booking.confirmSoftLiveBadge")}
+                      </span>
+                    )}
                   </div>
                   <h3 className="mt-1 font-display text-base tracking-tight text-ink">
                     {t(locale, "planner.booking.confirmTitle")}
                   </h3>
-                  <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-                    {confirmSupportCopy}
-                  </p>
+                  {showConfirmSoftFail ? (
+                    <SoftFailSupport className="mt-1 block">
+                      {confirmSupportCopy}
+                    </SoftFailSupport>
+                  ) : (
+                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                      {confirmSupportCopy}
+                    </p>
+                  )}
                 </div>
                 {stop ? (
                   <button
@@ -741,21 +764,18 @@ export function BookingPanel({
               </div>
 
               {/* Compact SoftFail mist band under azure Confirm rail — OTA SoftFail yields. */}
-              <SoftFailNotice
-                open={showConfirmSoftFail}
-                compact
-                className="border-b border-[color:var(--bp-line)]"
-              >
+              <SoftFailNotice open={showConfirmSoftFail} compact>
                 {t(locale, "planner.booking.confirmSoftFail")}
               </SoftFailNotice>
 
               <SheetPresence
                 open
-                className={`space-y-3 px-3 py-3 ${
-                  showConfirmSoftFail
-                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                    : ""
-                }`}
+                className={[
+                  "space-y-3 px-3 py-3",
+                  showConfirmSoftFail ? softFailMistWashClass : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 style={{ animationDelay: "40ms" }}
                 aria-label={t(locale, "planner.booking.confirmTitle")}
               >
