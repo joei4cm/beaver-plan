@@ -144,7 +144,8 @@ export function GoogleBasemap({
               text: String(index + 1),
               color: selected ? "#FFFFFF" : "#0F172A",
               fontWeight: "700",
-              fontSize: "11px",
+              // Active twin of .bp-map-marker--active (12px); idle stays 11px.
+              fontSize: selected ? "12px" : "11px",
             },
             icon: {
               path: g.SymbolPath.CIRCLE,

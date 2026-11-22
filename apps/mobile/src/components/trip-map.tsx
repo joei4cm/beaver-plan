@@ -118,6 +118,7 @@ function segmentsFromLine(
 /**
  * Interactive OSM/Esri slippy map for Expo (native + web).
  * Polylines are View segments (no react-native-svg) so Expo web stays stable.
+ * Stop markers: Lumen depth + tip-011 press parity with web .bp-map-marker (#68/#147 / BEA-614).
  */
 export function TripMap({
   stops,
@@ -294,32 +295,41 @@ export function TripMap({
       {stops.map((stop, index) => {
         const p = project(stop.place.lat, stop.place.lng);
         const selected = stop.id === selectedStopId;
-        const dim = selected ? 28 : 22;
+        // Web .bp-map-marker footprint twin — idle 22 / active 30 (#68/#147).
+        const dim = selected ? 30 : 22;
         return (
           <Pressable
             key={stop.id}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            accessibilityLabel={`Stop ${index + 1}`}
             onPress={() => onSelectStop?.(stop.id)}
-            style={{
-              position: "absolute",
-              left: p.x - dim / 2,
-              top: p.y - dim / 2,
-              width: dim,
-              height: dim,
-              borderRadius: dim / 2,
-              backgroundColor: selected ? colors.river : colors.foam,
-              borderWidth: 2.5,
-              borderColor: colors.river,
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 3,
-            }}
+            style={({ pressed }) => [
+              styles.stopMarker,
+              {
+                left: p.x - dim / 2,
+                top: p.y - dim / 2,
+                width: dim,
+                height: dim,
+                borderRadius: dim / 2,
+              },
+              selected ? styles.stopMarkerOn : null,
+              // tip-011 press — keep selected lift when scale presses.
+              pressed
+                ? selected
+                  ? styles.stopMarkerOnPressed
+                  : styles.stopMarkerPressed
+                : null,
+            ]}
           >
+            {selected ? (
+              <View style={styles.stopMarkerHalo} pointerEvents="none" />
+            ) : null}
             <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "800",
-                color: selected ? colors.foam : colors.ink,
-              }}
+              style={[
+                styles.stopMarkerLabel,
+                selected ? styles.stopMarkerLabelOn : null,
+              ]}
             >
               {index + 1}
             </Text>
@@ -376,6 +386,68 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
+  },
+  /*
+   * Map stop markers — Expo catch-up beyond web #68/#147 (BEA-614).
+   * Type: tabular-nums · 700 · active 12px. Motion: tip-011 press.
+   * Depth: Lumen cast shadow · riverDeep ring · soft halo · lift.
+   */
+  stopMarker: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.foam,
+    borderWidth: 2.5,
+    borderColor: colors.river,
+    zIndex: 3,
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  stopMarkerOn: {
+    backgroundColor: colors.river,
+    borderColor: colors.riverDeep,
+    zIndex: 6,
+    // Lifted pin twin of web translateY(-1px) + deeper cast.
+    transform: [{ translateY: -1 }],
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  /* tip-011 press — stopChip / Mode mist-track opacity+scale twin. */
+  stopMarkerPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
+  stopMarkerOnPressed: {
+    opacity: 0.92,
+    transform: [{ translateY: -1 }, { scale: 0.98 }],
+  },
+  stopMarkerHalo: {
+    position: "absolute",
+    left: -6,
+    top: -6,
+    right: -6,
+    bottom: -6,
+    borderRadius: 999,
+    backgroundColor: `${colors.river}38`,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.river}2E`,
+  },
+  stopMarkerLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    color: colors.ink,
+    zIndex: 1,
+  },
+  stopMarkerLabelOn: {
+    fontSize: 12,
+    color: colors.foam,
   },
   badge: {
     position: "absolute",

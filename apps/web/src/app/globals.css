@@ -284,6 +284,8 @@
     background: var(--bp-foam);
     color: var(--bp-ink);
     font: 700 11px/1 var(--bp-font-body);
+    /* After font shorthand — Places hit / Stops list index twin (tabular). */
+    font-variant-numeric: tabular-nums;
     cursor: pointer;
     pointer-events: auto;
     /* Layered Lumen elevation — soft contact + deep cast. */
