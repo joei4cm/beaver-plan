@@ -1465,12 +1465,13 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit filters SoftFail helpers (BEA-388 after #284 / BEA-342) +
-                craft SoftFail query parity (BEA-423): azure mode rail ·
+                Transit panel craft residual (BEA-462 / wave 48) + SoftFail
+                kept (BEA-388 / BEA-423): always-on azure Mode rail ·
                 SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
                 tip-011 mist-wash SheetPresence · StyleSheet.flatten. Craft:
                 ?modeSoftFail=1. Yields while TransferSteps /
                 ?transferSoftFail=1 owns. Never timber / Failed to fetch.
+                No `/dev` gallery.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -3125,15 +3126,11 @@ const styles = StyleSheet.create({
     color: colors.river,
     opacity: 0.9,
   },
-  /* Transit filter chips — mist-track · azure select (web #129). */
+  /* Transit panel Mode rail — azure inset · mist chips (web BEA-462). */
   modeFilter: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
     backgroundColor: "rgba(255, 255, 255, 0.95)",
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 10,
-    gap: 8,
   },
   modeFilterHead: {
     flexDirection: "row",
@@ -3141,15 +3138,16 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     columnGap: 8,
     rowGap: 4,
-    paddingHorizontal: 2,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   /** Soft azure mode rail wash when SoftFail owns depth (BEA-342). */
   modeFilterHeadSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
-    borderRadius: radius.xs,
-    marginHorizontal: -2,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
+    backgroundColor: "rgba(230, 236, 245, 0.35)",
   },
   modeEyebrow: {
     ...type.body,
@@ -3186,12 +3184,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     columnGap: 10,
     rowGap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 10,
   },
-  /** SoftFail mode body pad — mist density from softFailMistWashStyle (tip-011 /25). */
+  /** SoftFail mode body — mist density from softFailMistWashStyle (tip-011 /25). */
   modeFilterBodySoft: {
     borderRadius: radius.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
   },
   modeMistTrack: {
     flexDirection: "row",

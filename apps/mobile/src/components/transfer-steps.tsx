@@ -257,14 +257,13 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295) +
- * craft SoftFail query parity (BEA-423): `/trips/…?transferSoftFail=1` forces
- * SoftFail depth under Transfer (mirrors web + #282 / wave 42). SoftFailBadge
+ * Expo transit panel — SoftFail depth kept (BEA-396 / BEA-423) + wave 48 craft
+ * residual (BEA-462): Lumen tokens · SheetPresence Summary / Steps · azure
+ * Transfer rail. Craft SoftFail: `/trips/…?transferSoftFail=1`. SoftFailBadge
  * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · softFailBandStyle mist band ·
- * tip-011 softFailMistWashStyle Summary / Steps · SheetPresence. SoftFail copy
- * always softFail / softFailEmpty — never timber / Failed to fetch. Mode SoftFail
- * yields while TransferSteps owns selected-stop soft chrome (no double depth).
- * No `/dev` SoftFail gallery.
+ * tip-011 softFailMistWashStyle. SoftFail copy always softFail / softFailEmpty —
+ * never timber / Failed to fetch. Mode SoftFail yields while TransferSteps owns
+ * selected-stop soft chrome (no double depth). No `/dev` gallery.
  */
 export function TransferSteps({
   leg,
