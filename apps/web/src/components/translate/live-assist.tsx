@@ -1072,11 +1072,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           )}
 
           {/*
-            Empty SoftFail depth (BEA-310 after #81) + SoftFailSupport residual
-            (BEA-433) + craft SoftFail query residual (BEA-429 / Expo #301):
-            azure history rail · SoftFailBadge Soft empty · SoftFailSupport ·
-            compact SoftFailNotice mist band · SheetPresence empty body ·
-            tip-011. Craft: ?emptySoftFail=1 — never timber / Failed to fetch.
+            Empty SoftFail depth kept (BEA-310 / SoftFailSupport BEA-433 /
+            craft query BEA-429) + wave 51 list craft residual (BEA-491):
+            eyebrow 0.18em · mode chips 0.14em · tip-011 Speak press ·
+            source/target meta tracking. Empty CTAs already #351. SoftFail
+            reopen out of scope. Craft: ?emptySoftFail=1 — never timber /
+            Failed to fetch. No `/dev` gallery.
           */}
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1086,7 +1087,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             <header className="relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/60 px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6">
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "translate.history")}
                   </p>
                   {historyEmpty ? (
@@ -1203,7 +1204,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   >
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <span
-                        className={`rounded-bp-xs px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                        className={`rounded-bp-xs px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${
                           row.mode === "live"
                             ? "bg-river text-foam"
                             : row.mode === "offline"
@@ -1223,7 +1224,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                           onClick={() =>
                             void speakLocal(row.translatedText, targetLocale)
                           }
-                          className="bp-transition ml-auto text-[11px] font-medium uppercase tracking-[0.12em] text-river duration-bp-fast ease-bp-out hover:text-river-deep"
+                          className="ml-auto text-[11px] font-medium uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out hover:text-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                         >
                           {t(locale, "translate.speak")}
                         </button>
@@ -1231,7 +1232,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
                           {t(locale, "translate.source")}
                         </p>
                         <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
@@ -1239,7 +1240,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                         </p>
                       </div>
                       <div>
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                           {t(locale, "translate.target")}
                         </p>
                         <p className="mt-1.5 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl">
