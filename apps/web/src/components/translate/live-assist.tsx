@@ -189,21 +189,50 @@ function seedTurns(
     }));
 }
 
+/** Craft SoftFail query: `?…SoftFail=1` — SoftFail depth without a transport miss. */
+function craftSoftFailOn(param: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return new URLSearchParams(window.location.search).get(param) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function LiveAssist({ locale }: { locale: Locale }) {
   const queueStore = useMemo(() => createWebOfflineQueueStore(), []);
+  /** Craft SoftFail query residual (BEA-429): empty / talk / dual / banner. */
+  const [emptySoftPreview] = useState(() => craftSoftFailOn("emptySoftFail"));
+  const [talkSoftPreview] = useState(() => craftSoftFailOn("talkSoftFail"));
+  const [dualSoftPreview] = useState(() => craftSoftFailOn("dualSoftFail"));
+  const [bannerSoftPreview] = useState(() => craftSoftFailOn("bannerSoftFail"));
   const [status, setStatus] = useState<Status | null>(null);
   const [softNotice, setSoftNotice] = useState(false);
-  const [tab, setTab] = useState<Tab>("conversation");
+  /** Dual craft opens camera; empty/talk craft stay on conversation (no double depth). */
+  const [tab, setTab] = useState<Tab>(() =>
+    dualSoftPreview && !emptySoftPreview && !talkSoftPreview
+      ? "camera"
+      : "conversation",
+  );
   const [sourceLocale, setSourceLocale] = useState<TranslationLocale>("zh-CN");
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [draft, setDraft] = useState("");
-  /** Empty first paint — empty SoftFail owns history chrome (BEA-310). */
-  const [turns, setTurns] = useState<Turn[]>([]);
+  /**
+   * Empty first paint — empty SoftFail owns history chrome (BEA-310).
+   * Talk / banner craft seed demo turns so SoftFail can own (empty yields).
+   */
+  const [turns, setTurns] = useState<Turn[]>(() =>
+    (talkSoftPreview || bannerSoftPreview) && !emptySoftPreview
+      ? seedTurns("zh-CN", "en")
+      : [],
+  );
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [partialText, setPartialText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(0);
+  const [demoIndex, setDemoIndex] = useState(() =>
+    (talkSoftPreview || bannerSoftPreview) && !emptySoftPreview ? 2 : 0,
+  );
   const [online, setOnline] = useState(true);
   const [phrases, setPhrases] = useState<PhrasebookLookup[]>([]);
   const [phraseCategory, setPhraseCategory] =
@@ -236,42 +265,68 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   const brandSecondary = locale === "zh-CN" ? brand.en : brand.zh;
   const isDemo = !status || status.mode === "demo" || softNotice;
   /**
-   * Empty SoftFailNotice depth (BEA-310 after #81):
+   * Empty SoftFailNotice depth (BEA-310 after #81) + craft SoftFail query
+   * residual parity (BEA-429 / Expo #301):
    * empty owns compact SoftFail under azure history rail · Soft empty badge ·
    * emptySupport · emptySoftFail copy (never inherit Assist softNotice) ·
    * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
-   * Assist + Talk SoftFail yield while empty owns (no double depth). Soft copy
-   * never timber / Failed to fetch.
+   * Assist + Talk SoftFail yield while empty owns (no double depth). Craft:
+   * `/translate?emptySoftFail=1`. Soft copy never timber / Failed to fetch.
    */
   const historyEmpty = turns.length === 0;
   const emptyOwnsSoft = tab === "conversation" && historyEmpty;
   const emptySoftOpen = emptyOwnsSoft;
+  /** SoftFail copy owned by empty chrome — never inherit softNotice / timber. */
   const emptySoftCopy = t(locale, "translate.emptySoftFail");
+  /**
+   * Talk SoftFail + craft SoftFail query residual parity (BEA-429 / Expo #301):
+   * SoftFailNotice under Talk rail. Craft: `/translate?talkSoftFail=1` seeds
+   * demo turns so Talk SoftFail can own (empty yields). SoftFail copy always
+   * talkSoftFail when craft — never timber / Failed to fetch.
+   */
   const talkSoftOpen =
     tab === "conversation" &&
     !emptyOwnsSoft &&
-    Boolean(micDenied || error);
+    (talkSoftPreview || Boolean(micDenied || error));
+  const talkSoftCopy = talkSoftPreview
+    ? t(locale, "translate.talkSoftFail")
+    : micDenied
+      ? t(locale, "translate.permissionMic")
+      : (error ?? t(locale, "translate.error"));
+  /**
+   * Dual / camera SoftFail + craft SoftFail query residual parity (BEA-429 /
+   * Expo #301): SoftFailNotice under camera rail. Craft:
+   * `/translate?dualSoftFail=1` opens camera tab SoftFail. SoftFail copy
+   * always dualSoftFail when craft — never timber / Failed to fetch.
+   */
+  const dualSoftOpen =
+    tab === "camera" && (dualSoftPreview || cameraDenied);
+  const dualSoftCopy = dualSoftPreview
+    ? t(locale, "translate.dualSoftFail")
+    : t(locale, "translate.permissionCamera");
   /**
    * Offline banner SoftFailNotice depth (BEA-309 after #87; yield BEA-414) +
-   * SoftFailSupport residual (BEA-433): azure SoftFail sheet · SoftFailBadge /
-   * SoftFailLiveBadge · SoftFailSupport · compact SoftFailNotice (border-b) ·
-   * mist-wash status body · tip-011.
-   * SoftFail yields while empty history owns soft-fail; yields while Talk
-   * SoftFail or camera SoftFail owns (Expo #335 / #281 yield — no double
-   * SoftFail depth). Soft copy never timber / Failed to fetch.
+   * SoftFailSupport residual (BEA-433) + craft SoftFail query residual
+   * (BEA-429): azure SoftFail sheet · SoftFailBadge / SoftFailLiveBadge ·
+   * SoftFailSupport · compact SoftFailNotice (border-b) · mist-wash status
+   * body · tip-011. Craft: `/translate?bannerSoftFail=1`. SoftFail yields
+   * while empty history owns soft-fail; yields while Talk SoftFail or camera
+   * SoftFail owns (Expo #335 / #281 yield — no double SoftFail depth). Soft
+   * copy never timber / Failed to fetch.
    */
   const bannerSoftOpen =
-    isDemo &&
+    (bannerSoftPreview || isDemo) &&
     !emptyOwnsSoft &&
     !talkSoftOpen &&
-    !(tab === "camera" && cameraDenied);
-  const bannerSoftCopy =
-    softNotice && !online
+    !dualSoftOpen;
+  const bannerSoftCopy = bannerSoftPreview
+    ? t(locale, "translate.demoNotice")
+    : softNotice && !online
       ? t(locale, "translate.softOffline")
       : t(locale, "translate.demoNotice");
   const bannerBadge = !online
     ? t(locale, "translate.offlineBadge")
-    : isDemo
+    : bannerSoftPreview || isDemo
       ? t(locale, "translate.softBadge")
       : t(locale, "translate.liveBadge");
 
@@ -321,10 +376,28 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     const key = `${sourceLocale}|${targetLocale}`;
     if (seededPairRef.current === key) return;
     seededPairRef.current = key;
-    setTurns(seedTurns(sourceLocale, targetLocale));
-    setDemoIndex(2);
+    /** Empty SoftFail craft keeps history empty so empty SoftFail owns. */
+    if (emptySoftPreview && !talkSoftPreview && !bannerSoftPreview) {
+      setTurns([]);
+      setDemoIndex(0);
+    } else if (
+      (talkSoftPreview || bannerSoftPreview) &&
+      !emptySoftPreview
+    ) {
+      setTurns(seedTurns(sourceLocale, targetLocale));
+      setDemoIndex(2);
+    } else {
+      setTurns(seedTurns(sourceLocale, targetLocale));
+      setDemoIndex(2);
+    }
     setOverlay(null);
-  }, [sourceLocale, targetLocale]);
+  }, [
+    sourceLocale,
+    targetLocale,
+    emptySoftPreview,
+    talkSoftPreview,
+    bannerSoftPreview,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -804,10 +877,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
         {/*
           Offline banner SoftFail depth (BEA-309 after #87) + SoftFailSupport
-          residual (BEA-433): azure SoftFail sheet · SoftFailBadge /
-          SoftFailLiveBadge · SoftFailSupport · compact SoftFailNotice ·
-          mist-wash status chips · tip-011 — SoftFail yields while empty /
-          Talk / camera SoftFail own — never timber / Failed to fetch.
+          residual (BEA-433) + craft SoftFail residual (BEA-429): azure SoftFail
+          sheet · SoftFailBadge / SoftFailLiveBadge · SoftFailSupport · compact
+          SoftFailNotice · mist-wash status chips · tip-011. Craft:
+          ?bannerSoftFail=1 — SoftFail yields while empty / Talk / camera
+          SoftFail own — never timber / Failed to fetch.
         */}
         <div
           className="animate-rise mt-5 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -819,7 +893,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "translate.bannerEyebrow")}
               </span>
-              {isDemo ? (
+              {bannerSoftOpen ? (
                 <SoftFailSupport>
                   {t(locale, "translate.softSupport")}
                 </SoftFailSupport>
@@ -829,7 +903,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 </span>
               )}
             </div>
-            {!online || isDemo ? (
+            {!online || bannerSoftOpen ? (
               <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
                 {bannerBadge}
               </SoftFailBadge>
@@ -994,9 +1068,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
           {/*
             Empty SoftFail depth (BEA-310 after #81) + SoftFailSupport residual
-            (BEA-433): azure history rail · SoftFailBadge Soft empty ·
-            SoftFailSupport · compact SoftFailNotice mist band · SheetPresence
-            empty body · tip-011 rise — never timber / Failed to fetch.
+            (BEA-433) + craft SoftFail query residual (BEA-429 / Expo #301):
+            azure history rail · SoftFailBadge Soft empty · SoftFailSupport ·
+            compact SoftFailNotice mist band · SheetPresence empty body ·
+            tip-011. Craft: ?emptySoftFail=1 — never timber / Failed to fetch.
           */}
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1296,8 +1371,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 {t(locale, "translate.dualHint")}
               </p>
             </div>
-            <SoftFailNotice open={cameraDenied} className="max-w-sm">
-              {t(locale, "translate.permissionCamera")}
+            {/* Dual SoftFail craft: ?dualSoftFail=1 — SoftFail under camera rail. */}
+            <SoftFailNotice open={dualSoftOpen} className="max-w-sm">
+              {dualSoftCopy}
             </SoftFailNotice>
           </div>
 
@@ -1492,11 +1568,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           </div>
 
           <div className="space-y-3 px-6 py-4 md:px-10">
-            {/* Talk SoftFail yields while empty history owns soft-fail (no double depth). */}
+            {/* Talk SoftFail yields while empty history owns soft-fail. Craft: ?talkSoftFail=1. */}
             <SoftFailNotice open={talkSoftOpen} className="max-w-xl">
-              {micDenied
-                ? t(locale, "translate.permissionMic")
-                : (error ?? t(locale, "translate.error"))}
+              {talkSoftCopy}
             </SoftFailNotice>
 
             <div className="flex flex-col gap-3 sm:flex-row">
