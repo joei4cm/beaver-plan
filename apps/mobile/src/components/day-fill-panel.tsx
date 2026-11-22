@@ -52,6 +52,8 @@ type Props = {
     stops: Stop[];
   }) => void;
   onError: (message: string) => void;
+  /** Craft SoftFail query: `/trips/…?dayFillSoftFail=1` (BEA-408 / #282 parity). */
+  craftSoftFail?: boolean;
 };
 
 type StatusResponse = {
@@ -124,12 +126,15 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo smart day-fill SoftFailNotice depth (BEA-360 after #101 / web #248;
- * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284):
+ * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284) + craft SoftFail
+ * query parity (BEA-408): `/trips/…?dayFillSoftFail=1` forces SoftFail under
+ * the Day fill rail (mirrors web + #282 stops/drag craft queries).
  * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · soft rail
  * wash · compact SoftFail mist band · softFailMistWash tip-011 body ·
  * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
  * Failed to fetch. Yields web planner day-fill SoftFail (#248); Expo day
- * tabs SoftFail (#230) stays on Days rail (no double depth).
+ * tabs SoftFail (#230) stays on Days rail (no double depth). No `/dev`
+ * SoftFail gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -141,6 +146,7 @@ export function DayFillPanel({
   onApplied,
   onLocalApplied,
   onError,
+  craftSoftFail = false,
 }: Props) {
   const [open, setOpen] = useState(true);
   const [interests, setInterests] =
@@ -156,6 +162,22 @@ export function DayFillPanel({
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [softDemo, setSoftDemo] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  /**
+   * Craft SoftFail query parity with web (`?dayFillSoftFail=1`) — prefer Expo
+   * Router param from trip detail (#282); fall back to window search (Expo web).
+   */
+  const [windowDayFillSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("dayFillSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  const dayFillSoftPreview = craftSoftFail || windowDayFillSoftPreview;
   const bodyAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
   const previewAnim = useRef(new Animated.Value(0)).current;
 
@@ -342,19 +364,23 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice depth (BEA-360 after #101; helpers BEA-400):
+   * Day-fill SoftFailNotice depth (BEA-360 after #101; helpers BEA-400) +
+   * craft SoftFail query parity (BEA-408):
    * azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport · compact
    * SoftFail mist band (`border-b`) · softFailMistWash tip-011 body. SoftFail
    * copy always softFail / demoNotice / applySoftFail (never timber / Failed
-   * to fetch). Expo day tabs SoftFail (#230) stays on Days — no double depth.
+   * to fetch). Craft: /trips/…?dayFillSoftFail=1 — forces softFail under Day
+   * fill. Expo day tabs SoftFail (#230) stays on Days — no double depth.
    */
-  const softCopy =
-    notice ??
-    (softDemo
-      ? t(locale, "planner.dayFill.softFail")
-      : demoMode
-        ? t(locale, "planner.dayFill.demoNotice")
-        : null);
+  const softFailCopy = t(locale, "planner.dayFill.softFail");
+  const softCopy = dayFillSoftPreview
+    ? softFailCopy
+    : (notice ??
+      (softDemo
+        ? softFailCopy
+        : demoMode
+          ? t(locale, "planner.dayFill.demoNotice")
+          : null));
   const showSoftFail = Boolean(softCopy);
   const sheetSupportCopy = showSoftFail
     ? t(locale, "planner.dayFill.softSupport")
@@ -393,9 +419,10 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail depth (BEA-360 / helpers BEA-400):
-        azure Day fill rail · SoftFailBadge Soft fill · SoftFailSupport ·
-        softFailMistWash tip-011 — never timber / Failed to fetch. Yields web #248.
+        Day-fill SoftFail depth (BEA-360 / helpers BEA-400) + craft SoftFail
+        query parity (BEA-408): azure Day fill rail · SoftFailBadge Soft fill ·
+        SoftFailSupport · softFailMistWash tip-011 — craft ?dayFillSoftFail=1.
+        Never timber / Failed to fetch. Yields web #248.
       */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
