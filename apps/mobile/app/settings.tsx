@@ -43,7 +43,7 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
   return raw === "1";
 }
 
-/** River uppercase eyebrow — 0.28em tracking parity with web #162. */
+/** River uppercase eyebrow — 0.18em tracking (web BEA-463 / booking parity). */
 function SectionEyebrow({ children }: { children: string }) {
   return <Text style={styles.sectionEyebrow}>{children}</Text>;
 }
@@ -76,10 +76,13 @@ function Segmented<T extends string>({
             onPress={() => onChange(opt)}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            style={StyleSheet.flatten([
-              styles.chip,
-              active ? styles.chipActive : null,
-            ])}
+            style={({ pressed }) =>
+              StyleSheet.flatten([
+                styles.chip,
+                active ? styles.chipActive : null,
+                pressed ? styles.chipPressed : null,
+              ])
+            }
           >
             <Text
               style={StyleSheet.flatten([
@@ -97,14 +100,10 @@ function Segmented<T extends string>({
 }
 
 /**
- * Expo settings SoftFail helper adoption (BEA-395 after #284 / depth #222) +
- * craft SoftFail query parity (BEA-403):
- * SoftFailBadge · SoftFailSupport · softFailBandStyle · softFailMistWashStyle ·
- * compact SoftFail mist band under azure Device rail · tip-011 SheetPresence
- * mist-wash Language / Maps · StyleSheet.flatten. Craft:
+ * Expo settings section chrome residual (BEA-463): Lumen type / motion / tokens
+ * after SoftFail closeout. SoftFail depth untouched (helpers · craft query ·
+ * mist band · SheetPresence Language / Maps). Craft:
  * /settings?settingsSoftFail=1 — SoftFail depth without a resolve miss.
- * SoftFail copy always softFail (never timber / Failed to fetch) — prefs still
- * save locally.
  */
 export default function SettingsScreen() {
   const { settingsSoftFail: settingsSoftFailParam } = useLocalSearchParams<{
@@ -453,13 +452,16 @@ export default function SettingsScreen() {
                     }
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
-                    style={StyleSheet.flatten([
-                      styles.shareRow,
-                      selected ? styles.shareRowSelected : null,
-                      index === SHARE_TEMPLATES.length - 1
-                        ? styles.shareRowLast
-                        : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.shareRow,
+                        selected ? styles.shareRowSelected : null,
+                        index === SHARE_TEMPLATES.length - 1
+                          ? styles.shareRowLast
+                          : null,
+                        pressed ? styles.shareRowPressed : null,
+                      ])
+                    }
                   >
                     <Text
                       style={StyleSheet.flatten([
@@ -520,8 +522,9 @@ const styles = StyleSheet.create({
   sky: {
     ...StyleSheet.absoluteFillObject,
     height: 280,
-    backgroundColor: "#DBE8FF",
-    opacity: 0.55,
+    /** Soft river wash — Lumen token (web hero color-mix parity). */
+    backgroundColor: colors.river,
+    opacity: 0.1,
   },
   skyOrb: {
     position: "absolute",
@@ -530,7 +533,8 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: "rgba(96, 165, 250, 0.18)",
+    backgroundColor: colors.focus,
+    opacity: 0.18,
   },
   pageHeader: {
     marginBottom: 8,
@@ -539,7 +543,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.8,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 10,
@@ -550,7 +554,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -1,
     color: colors.ink,
-    lineHeight: 42,
+    lineHeight: 40,
   },
   support: {
     ...type.body,
@@ -564,7 +568,8 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 8,
     fontSize: 13,
-    color: "rgba(100, 116, 139, 0.85)",
+    lineHeight: 18,
+    color: colors.inkSoft,
   },
   prefsSheet: {
     marginTop: 28,
@@ -572,7 +577,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: colors.foam,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -587,7 +592,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingHorizontal: 16,
@@ -613,14 +618,14 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(100, 116, 139, 0.85)",
+    color: colors.inkSoft,
   },
   softSupportShrink: {
     flexShrink: 1,
     minWidth: 0,
   },
   sheetRailSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    backgroundColor: colors.paper,
   },
   statusBadge: {
     borderRadius: radius.xs,
@@ -663,7 +668,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.8,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -674,6 +679,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.4,
     color: colors.ink,
+    lineHeight: 28,
   },
   sectionSupport: {
     ...type.body,
@@ -696,6 +702,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     paddingHorizontal: 14,
     paddingVertical: 9,
+  },
+  chipPressed: {
+    transform: [{ scale: 0.98 }],
   },
   chipActive: {
     backgroundColor: colors.foam,
@@ -728,7 +737,7 @@ const styles = StyleSheet.create({
     gap: 14,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    borderLeftWidth: 2,
+    borderLeftWidth: 3,
     borderLeftColor: "transparent",
     paddingLeft: 12,
     paddingVertical: 18,
@@ -736,6 +745,9 @@ const styles = StyleSheet.create({
   shareRowSelected: {
     borderLeftColor: colors.river,
     backgroundColor: "rgba(47, 107, 255, 0.04)",
+  },
+  shareRowPressed: {
+    transform: [{ scale: 0.995 }],
   },
   shareRowLast: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -760,6 +772,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
+    lineHeight: 22,
   },
   shareNameSelected: {
     color: colors.river,
@@ -773,9 +786,9 @@ const styles = StyleSheet.create({
   },
   shareBadge: {
     ...type.body,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
     marginTop: 4,

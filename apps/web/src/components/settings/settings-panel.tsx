@@ -68,7 +68,7 @@ function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(opt)}
-            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold transition duration-bp ease-bp-out-strong ${CHIP_FOCUS} ${
+            className={`rounded-bp-xs px-3.5 py-2 text-sm font-semibold transition duration-bp ease-bp-out-strong active:scale-[0.98] ${CHIP_FOCUS} ${
               active
                 ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                 : "text-ink-soft hover:bg-foam/70 hover:text-river"
@@ -82,23 +82,19 @@ function Segmented<T extends string>({
   );
 }
 
+/** River uppercase eyebrow — 0.18em tracking (booking / place-intel parity). */
 function SectionEyebrow({ children }: { children: string }) {
   return (
-    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
       {children}
     </p>
   );
 }
 
 /**
- * Settings SoftFail helper adoption (BEA-395 after #284 / depth #255) +
- * craft SoftFail query parity (BEA-403):
- * SoftFailBadge · SoftFailSupport · softFailRailClass · softFailMistWashClass ·
- * compact SoftFail mist band under azure Device rail · tip-011 mist-wash
- * Language / Maps · Hero SoftFail yields while section owns (no double depth).
- * Craft: /settings?settingsSoftFail=1 — SoftFail depth without a resolve miss.
- * SoftFail copy always softFail (never timber / Failed to fetch) — prefs
- * still save locally.
+ * Settings section chrome residual (BEA-463): Lumen type / motion / tokens on
+ * prefs sheet after SoftFail closeout. SoftFail depth untouched
+ * (helpers · craft query · mist band · hero yield).
  */
 export function SettingsPanel({ locale: initialLocale }: Props) {
   const router = useRouter();
@@ -198,22 +194,22 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] opacity-90"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 70% 55% at 12% 0%, rgba(47,107,255,0.14), transparent 58%),
-            radial-gradient(ellipse 50% 40% at 88% 8%, rgba(96,165,250,0.12), transparent 52%),
-            linear-gradient(180deg, #dbe8ff 0%, transparent 70%)
+            radial-gradient(ellipse 70% 55% at 12% 0%, color-mix(in srgb, var(--bp-river) 14%, transparent), transparent 58%),
+            radial-gradient(ellipse 50% 40% at 88% 8%, color-mix(in srgb, var(--bp-focus) 12%, transparent), transparent 52%),
+            linear-gradient(180deg, color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam)) 0%, transparent 70%)
           `,
         }}
       />
 
       <header className="animate-rise">
         <SectionEyebrow>{t(locale, "settings.eyebrow")}</SectionEyebrow>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-bold leading-none tracking-tight text-ink md:text-5xl">
           {t(locale, "settings.title")}
         </h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-soft">
           {t(locale, "settings.support")}
         </p>
-        <p className="mt-2 text-sm text-ink-soft/80">
+        <p className="mt-2 text-sm leading-snug text-ink-soft/80">
           {brandName} · {t(locale, "settings.localHint")}
         </p>
         {/* Hero SoftFail yields while prefs section owns soft-fail (no double depth). */}
@@ -289,7 +285,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
               </SectionEyebrow>
               <h2
                 id="settings-locale-heading"
-                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
               >
                 {t(locale, "settings.locale")}
               </h2>
@@ -327,7 +323,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
               </SectionEyebrow>
               <h2
                 id="settings-map-heading"
-                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
               >
                 {t(locale, "settings.mapEngine")}
               </h2>
@@ -347,7 +343,10 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
             />
 
             {statusCopy ? (
-              <p className="mt-4 animate-rise text-sm leading-relaxed text-ink-soft">
+              <p
+                className="mt-4 animate-rise text-sm leading-relaxed text-ink-soft"
+                style={{ animationDelay: "40ms" }}
+              >
                 {statusCopy}
               </p>
             ) : null}
@@ -365,7 +364,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
               </SectionEyebrow>
               <h2
                 id="settings-distance-heading"
-                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
               >
                 {t(locale, "settings.distance")}
               </h2>
@@ -396,7 +395,7 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
               </SectionEyebrow>
               <h2
                 id="settings-share-heading"
-                className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink"
+                className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink"
               >
                 {t(locale, "settings.shareTemplate")}
               </h2>
@@ -417,10 +416,10 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
                       onClick={() =>
                         applyPatch({ shareImageTemplateId: tpl.id })
                       }
-                      className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 pl-3 text-left transition duration-bp ease-bp-out-strong ${CHIP_FOCUS} ${
+                      className={`group flex w-full items-baseline gap-4 border-t border-[color:var(--bp-line)] py-5 pl-3 text-left transition duration-bp ease-bp-out-strong active:scale-[0.995] ${CHIP_FOCUS} ${
                         selected
                           ? "animate-stop-select bg-river/[0.04] text-river shadow-[inset_3px_0_0_var(--bp-river)]"
-                          : "text-ink hover:bg-mist/20 hover:text-river hover:shadow-[inset_3px_0_0_rgba(47,107,255,0.35)]"
+                          : "text-ink hover:bg-mist/20 hover:text-river hover:shadow-[inset_3px_0_0_var(--bp-river)]"
                       }`}
                     >
                       <span
@@ -433,15 +432,15 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block font-display text-lg font-semibold tracking-tight transition duration-bp-fast ease-bp-out md:text-xl">
+                        <span className="block font-display text-lg font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out md:text-xl">
                           {name}
                         </span>
-                        <span className="mt-1 block text-sm text-ink-soft">
+                        <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
                           {blurb}
                         </span>
                       </span>
                       {selected ? (
-                        <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-river">
+                        <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river">
                           {t(locale, "settings.selected")}
                         </span>
                       ) : null}
