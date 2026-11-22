@@ -94,7 +94,7 @@ function EntryIndexMark({ n, active }: { n: number; active?: boolean }) {
   );
 }
 
-/** Craft SoftFail query parity with web (`?composeSoftFail=1` / `?entriesSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?composeSoftFail=1` / `?entriesSoftFail=1` / `?emptySoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -105,16 +105,20 @@ export default function JournalScreen() {
     id,
     composeSoftFail: composeSoftFailParam,
     entriesSoftFail: entriesSoftFailParam,
+    emptySoftFail: emptySoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     composeSoftFail?: string | string[];
     entriesSoftFail?: string | string[];
+    emptySoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…/journal?composeSoftFail=1 — SoftFail depth under Compose. */
   const composeSoftPreview = craftSoftFailOn(composeSoftFailParam);
   /** Craft preview: /trips/…/journal?entriesSoftFail=1 — SoftFail depth under Soft entries. */
   const entriesSoftPreview = craftSoftFailOn(entriesSoftFailParam);
+  /** Craft preview: /trips/…/journal?emptySoftFail=1 — SoftFail depth under Soft empty. */
+  const emptySoftPreview = craftSoftFailOn(emptySoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -417,19 +421,31 @@ export default function JournalScreen() {
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
   /**
+   * Empty SoftFail helpers (web #231 / BEA-391) + craft SoftFail query parity
+   * (BEA-437; replaces BEA-428): azure Entries rail · SoftFailBadge Soft empty ·
+   * SoftFailSupport · emptySoftFail copy · compact SoftFail mist band · tip-011
+   * mist-wash empty body. Craft: /trips/…/journal?emptySoftFail=1 — SoftFail
+   * Soft empty depth without hunting an empty day. SoftFail copy always
+   * emptySoftFail — never timber / Failed to fetch. SoftFail depth + helpers
+   * kept. No `/dev` SoftFail gallery.
+   */
+  const entryEmpty = visible.length === 0 || emptySoftPreview;
+  const emptyOwnsSoft = entryEmpty;
+  const emptySoftOpen = emptyOwnsSoft;
+  const emptySoftCopy = t(locale, "journal.emptySoftFail");
+  const emptySoftSupportCopy = t(locale, "journal.emptySoftSupport");
+  /**
    * Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft SoftFail
    * query parity (BEA-424): azure Entries rail · SoftFailBadge Soft entries ·
    * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
    * mist-wash SheetPresence · StyleSheet.flatten. Craft:
    * /trips/…/journal?entriesSoftFail=1 — SoftFail depth without API down.
    * SoftFail copy always softFail / softOffline — never timber / Failed to
-   * fetch. Yields while empty SoftFail (#231) would own the Entries rail (no
-   * double depth). Compose SoftFail (#247) keeps its own Compose rail —
+   * fetch. Yields while empty SoftFail (#231 / BEA-437 craft) owns the Entries
+   * rail (no double depth). Compose SoftFail (#247) keeps its own Compose rail —
    * different azure rail. SoftFail depth + helpers kept. No `/dev` SoftFail
    * gallery.
    */
-  const entryEmpty = visible.length === 0;
-  const emptyOwnsSoft = entryEmpty;
   const entryOwnsSoft =
     (entriesSoftPreview || demoSeeded || softNotice) && !emptyOwnsSoft;
   const showListSoftFail = entryOwnsSoft;
@@ -445,9 +461,11 @@ export default function JournalScreen() {
    * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
    * mist-wash SheetPresence · StyleSheet.flatten. Craft:
    * /trips/…/journal?composeSoftFail=1 — SoftFail depth without a media miss.
-   * SoftFail copy always composeSoftFail — never timber / Failed to fetch.
+   * Yields while empty SoftFail (#231 / BEA-437 craft) owns Entries (no double
+   * depth). SoftFail copy always composeSoftFail — never timber / Failed to fetch.
    */
-  const composeOwnsSoft = composeSoftFail || composeSoftPreview;
+  const composeOwnsSoft =
+    (composeSoftFail || composeSoftPreview) && !emptyOwnsSoft;
   const showComposeSoftFail = composeOwnsSoft;
   /** Compose SoftFail copy owned by azure rail — never inherit noise / timber. */
   const composeSoftCopy = t(locale, "journal.composeSoftFail");
@@ -530,16 +548,20 @@ export default function JournalScreen() {
             <View style={styles.listPane}>
               {/*
                 Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft
-                SoftFail query parity (BEA-424): azure Entries rail · SoftFailBadge
-                Soft entries · SoftFailSupport · compact SoftFail mist band ·
-                tip-011 mist-wash body. Craft: ?entriesSoftFail=1 — never timber /
-                Failed to fetch. Yields while empty SoftFail (#231) owns Entries;
-                Compose SoftFail (#247) stays on Compose.
+                SoftFail query parity (BEA-424 / BEA-437): azure Entries rail ·
+                SoftFailBadge Soft empty/entries · SoftFailSupport · compact
+                SoftFail mist band · tip-011 mist-wash body. Craft:
+                ?emptySoftFail=1 · ?entriesSoftFail=1 — never timber / Failed to
+                fetch. Yields: empty owns while empty / craft; Soft entries
+                yields while empty / compose owns. Compose SoftFail (#247) stays
+                on Compose.
               */}
               <View
                 style={StyleSheet.flatten([
                   styles.listHead,
-                  showListSoftFail ? styles.listHeadSoft : null,
+                  emptySoftOpen || showListSoftFail
+                    ? styles.listHeadSoft
+                    : null,
                 ])}
               >
                 <View style={styles.listHeadTop}>
@@ -552,27 +574,37 @@ export default function JournalScreen() {
                         String(activeDayIndex + 1),
                       )}
                     </Text>
-                    {showListSoftFail ? (
+                    {emptySoftOpen ? (
+                      <SoftFailSupport numberOfLines={2}>
+                        {emptySoftSupportCopy}
+                      </SoftFailSupport>
+                    ) : showListSoftFail ? (
                       <SoftFailSupport numberOfLines={2}>
                         {listSoftSupportCopy}
                       </SoftFailSupport>
                     ) : null}
                   </View>
                   <View style={styles.listBadges}>
-                    {showListSoftFail ? (
+                    {emptySoftOpen ? (
+                      <SoftFailBadge>
+                        {t(locale, "journal.emptySoftBadge")}
+                      </SoftFailBadge>
+                    ) : showListSoftFail ? (
                       <SoftFailBadge>
                         {t(locale, "journal.softBadge")}
                       </SoftFailBadge>
                     ) : null}
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                        {t(locale, "journal.entryCount").replace(
-                          "{n}",
-                          String(visible.length),
-                        )}
-                      </Text>
-                    </View>
-                    {stopId ? (
+                    {emptySoftOpen ? null : (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {t(locale, "journal.entryCount").replace(
+                            "{n}",
+                            String(visible.length),
+                          )}
+                        </Text>
+                      </View>
+                    )}
+                    {stopId && !emptySoftOpen ? (
                       <View style={styles.badge}>
                         <Text style={styles.badgeText}>
                           {t(locale, "journal.entryLinked")}
@@ -584,13 +616,25 @@ export default function JournalScreen() {
                 <Text style={styles.daySectionTitle}>
                   {activeDay?.note ?? activeDay?.date ?? trip?.title ?? "—"}
                 </Text>
-                {showListSoftFail ? null : (
+                {emptySoftOpen ? (
+                  <Text style={styles.entryDetailHint}>
+                    {t(locale, "journal.emptyHint")}
+                  </Text>
+                ) : showListSoftFail ? null : (
                   <Text style={styles.entryDetailHint}>
                     {`${activeDay?.date ? `${activeDay.date} · ` : ""}${t(locale, "journal.entryDetailHint")}`}
                   </Text>
                 )}
               </View>
 
+              {/* Compact SoftFail mist band under azure Entries rail — empty owns emptySoftFail; Soft entries yields. Craft: ?emptySoftFail=1. */}
+              <SoftFailNotice
+                open={emptySoftOpen}
+                compact
+                style={styles.listSoftFail}
+              >
+                {emptySoftCopy}
+              </SoftFailNotice>
               {/* Compact SoftFail mist band under azure Entries rail — never timber. */}
               <SoftFailNotice
                 open={showListSoftFail}
@@ -606,7 +650,7 @@ export default function JournalScreen() {
                 rise={10}
                 delayMs={40}
                 style={StyleSheet.flatten([
-                  showListSoftFail
+                  emptySoftOpen || showListSoftFail
                     ? StyleSheet.flatten([
                         softFailMistWashStyle,
                         styles.listBodyWashPad,
@@ -615,7 +659,9 @@ export default function JournalScreen() {
                 ])}
                 accessibilityLabel={t(locale, "journal.listEyebrow")}
               >
-                {visible.map((entry, index) => {
+                {entryEmpty
+                  ? null
+                  : visible.map((entry, index) => {
                   const stop = stops.find((s) => s.id === entry.stopId);
                   const scrubMatch = Boolean(
                     stopId && entry.stopId === stopId,
@@ -745,8 +791,13 @@ export default function JournalScreen() {
                   );
                 })}
 
-                {visible.length === 0 ? (
-                  <View style={styles.empty}>
+                {entryEmpty ? (
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.empty,
+                      emptySoftOpen ? styles.emptySoft : null,
+                    ])}
+                  >
                     <Text style={styles.emptyTitle}>
                       {t(locale, "journal.empty")}
                     </Text>
@@ -1336,6 +1387,15 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 4,
     maxWidth: 360,
+  },
+  /** Mist-wash empty stage inset when SoftFail owns (translate historyEmptyStageSoft parity). */
+  emptySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   emptyTitle: {
     ...type.display,
