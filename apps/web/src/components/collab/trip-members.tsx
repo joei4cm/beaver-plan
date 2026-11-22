@@ -56,13 +56,12 @@ function presenceFor(member: TripMember): PresenceState {
 }
 
 /**
- * Presence + invite SoftFail helpers (BEA-392 after #284 / yield #281) + craft
- * SoftFail query parity (BEA-420): `/trips/…?presenceSoftFail=1` ·
- * `/trips/…?inviteSoftFail=1` force SoftFail depth under Presence / Invite
- * rails (mirrors Expo + #282 / wave 42). SoftFailBadge · SoftFailSupport ·
- * SoftFailNotice mist band · tip-011 kept. Invite SoftFail yields presence
- * (no double depth). Soft copy never timber / Failed to fetch. No `/dev`
- * SoftFail gallery.
+ * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
+ * #281) + wave 48 craft residual (BEA-461): Lumen eyebrow tracking · tip-011
+ * presence list settle · Invite/Copy `active:scale` · mist spine tokens.
+ * SoftFailBadge · SoftFailSupport · mist band unchanged. Invite SoftFail
+ * yields presence (no double depth). Soft copy never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -420,7 +419,7 @@ export function TripMembersBar({
               <button
                 type="button"
                 onClick={() => void createInvite()}
-                className="animate-rise rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp-sm bg-river px-3.5 py-1.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 style={{ animationDelay: "100ms" }}
               >
                 {t(locale, "collab.invite")}
@@ -428,7 +427,7 @@ export function TripMembersBar({
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 style={{ animationDelay: "115ms" }}
               >
                 {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
@@ -508,11 +507,11 @@ export function TripMembersBar({
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "collab.inviteCodeEyebrow")}
             >
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.inviteCodeEyebrow")}
               </p>
               <p
-                className="animate-rise mt-2 font-display text-base tracking-tight text-ink"
+                className="animate-rise mt-2 font-display text-base font-semibold tracking-tight text-ink md:text-lg"
                 style={{ animationDelay: "80ms" }}
               >
                 {t(locale, "collab.shareHint")}
@@ -527,7 +526,7 @@ export function TripMembersBar({
                 <button
                   type="button"
                   onClick={() => void copyInvite()}
-                  className="rounded-bp-sm bg-river px-3.5 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                  className="rounded-bp-sm bg-river px-3.5 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 >
                   {copied
                     ? t(locale, "collab.copied")
@@ -548,7 +547,7 @@ export function TripMembersBar({
           )}
         </div>
 
-        {/* Presence list sheet — azure rail · mist spine · tip-011 rise */}
+        {/* Presence list sheet — azure rail · mist spine tokens · tip-011 rise */}
         <div className="border-t border-[color:var(--bp-line)]">
           <header className="flex flex-wrap items-center justify-between gap-2 bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -563,7 +562,9 @@ export function TripMembersBar({
               </span>
             </div>
             {members.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
+              <span
+                className={`inline-flex items-center gap-1.5 transition duration-bp-fast ease-bp-out ${softFailLiveBadgeClass}`}
+              >
                 <span
                   className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
                   aria-hidden
@@ -573,55 +574,73 @@ export function TripMembersBar({
             ) : null}
           </header>
 
-          <ul
-            className="relative space-y-0.5 px-3 py-3 before:absolute before:bottom-4 before:left-[1.65rem] before:top-4 before:w-px before:bg-mist before:content-['']"
-            role="list"
+          <SheetPresence
+            open
+            className="relative px-3 py-3"
+            style={{ animationDelay: "55ms" }}
             aria-label={t(locale, "collab.presence.listEyebrow")}
           >
-            {members.map((m, i) => {
-              const presence = presenceFor(m);
-              return (
-                <li
-                  key={m.id}
-                  className="animate-rise relative z-[1] flex items-center justify-between gap-3 rounded-bp-sm px-2 py-2 transition duration-bp-fast ease-bp-out hover:bg-mist/40"
-                  style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <PresenceAvatar
-                      member={m}
-                      size="md"
-                      presence={presence}
-                    />
-                    <div className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-ink">
-                        {m.displayName ?? m.userId}
-                      </span>
-                      <span
-                        className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[10px] font-semibold leading-4 ${PRESENCE_PILL[presence]}`}
-                      >
-                        {t(locale, `collab.presence.${presence}`)}
-                      </span>
-                    </div>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[11px] font-semibold ${ROLE_CHIP[m.role]}`}
+            {/* Mist spine — Lumen river/mist mix (timeline track parity) */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute bottom-7 left-[1.65rem] top-7 w-px"
+              style={{
+                background:
+                  "color-mix(in srgb, var(--bp-mist) 72%, var(--bp-river))",
+              }}
+            />
+            <ul
+              className="relative m-0 list-none space-y-0.5"
+              role="list"
+              aria-label={t(locale, "collab.presence.listEyebrow")}
+            >
+              {members.map((m, i) => {
+                const presence = presenceFor(m);
+                return (
+                  <li
+                    key={m.id}
+                    className="animate-rise relative z-[1] flex items-center justify-between gap-3 rounded-bp-sm px-2 py-2 transition duration-bp-fast ease-bp-out hover:bg-mist/40"
+                    style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
                   >
-                    {t(locale, `collab.role.${m.role}`)}
-                  </span>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <PresenceAvatar
+                        member={m}
+                        size="md"
+                        presence={presence}
+                      />
+                      <div className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-ink">
+                          {m.displayName ?? m.userId}
+                        </span>
+                        <span
+                          className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[10px] font-semibold leading-4 ${PRESENCE_PILL[presence]}`}
+                        >
+                          {t(locale, `collab.presence.${presence}`)}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[11px] font-semibold ${ROLE_CHIP[m.role]}`}
+                    >
+                      {t(locale, `collab.role.${m.role}`)}
+                    </span>
+                  </li>
+                );
+              })}
+              {pending && members.length === 0 ? (
+                <li className="px-2 py-2 text-sm text-ink-soft">
+                  {t(locale, "collab.loading")}
                 </li>
-              );
-            })}
-            {pending && members.length === 0 ? (
-              <li className="px-2 py-2 text-sm text-ink-soft">
-                {t(locale, "collab.loading")}
-              </li>
-            ) : null}
-            {!pending && members.length === 0 ? (
-              <li className="animate-fade px-2 py-3 text-sm text-ink-soft">
-                {t(locale, "collab.presence.empty")}
-              </li>
-            ) : null}
-          </ul>
+              ) : null}
+              {!pending && members.length === 0 ? (
+                <li className="animate-fade space-y-1 px-2 py-3">
+                  <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                    {t(locale, "collab.presence.empty")}
+                  </p>
+                </li>
+              ) : null}
+            </ul>
+          </SheetPresence>
         </div>
       </SheetPresence>
     </div>
@@ -644,7 +663,7 @@ function PresenceChip({
     <span
       role="listitem"
       title={`${member.displayName ?? member.userId} · ${t(locale, `collab.role.${member.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
-      className={`animate-rise inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs py-1 pl-1 pr-2 transition duration-bp-fast ease-bp-out focus-within:ring-2 focus-within:ring-focus/35 ${
+      className={`animate-rise inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs py-1 pl-1 pr-2 transition duration-bp-fast ease-bp-out active:scale-[0.98] focus-within:ring-2 focus-within:ring-focus/35 ${
         active
           ? "bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
           : "text-ink-soft hover:bg-foam/70 hover:text-river"

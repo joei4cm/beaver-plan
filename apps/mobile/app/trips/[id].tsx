@@ -2231,10 +2231,10 @@ export default function TripDetailScreen() {
                 </Text>
 
                 {/*
-                  Presence SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
-                  query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
-                  softFailBandStyle · softFailMistWashStyle · yields invite sheet.
-                  Craft: ?presenceSoftFail=1 — never timber / Failed to fetch.
+                  Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
+                  wave 48 craft residual (BEA-461): active chip elevation · Invite
+                  foam/95 · code eyebrow tracking. SoftFailBadge · SoftFailSupport ·
+                  mist band unchanged. Craft: ?presenceSoftFail=1 — never timber.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2461,10 +2461,10 @@ export default function TripDetailScreen() {
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
                   {/*
-                    Invite SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
-                    query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
-                    softFailBandStyle · softFailMistWashStyle · presence SoftFail
-                    yields. Craft: ?inviteSoftFail=1 — never timber / Failed to fetch.
+                    Invite SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
+                    wave 48 craft residual (BEA-461): foam/95 sheet · code eyebrow
+                    tracking · shareHint display weight. SoftFailBadge ·
+                    SoftFailSupport · mist band unchanged. Craft: ?inviteSoftFail=1.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -3872,7 +3872,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
   },
   presenceChipActive: {
-    borderColor: "rgba(47,107,255,0.35)",
+    borderColor: "rgba(47, 107, 255, 0.28)",
+    shadowColor: colors.river,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   presenceAvatar: {
     position: "relative",
@@ -4138,7 +4142,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     shadowColor: colors.ink,
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -4224,15 +4228,15 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.4,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
   inviteShareHint: {
     ...type.display,
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: -0.2,
+    fontSize: 17,
+    fontWeight: "600",
+    letterSpacing: -0.25,
     color: colors.ink,
   },
   inviteShareHintMuted: {
