@@ -1183,7 +1183,11 @@ export default function TripDetailScreen() {
         >
           <View style={styles.skyWash} pointerEvents="none" />
 
-          {/* Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice · #46 */}
+          {/*
+            Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice ·
+            tip-011 rise. Craft residual (BEA-465): display weight 700 · brand
+            0.65rem tracking · soft-shadow primary CTA · pressed scale.
+          */}
           <Animated.View
             style={StyleSheet.flatten([styles.header, riseStyle])}
           >
@@ -1226,11 +1230,16 @@ export default function TripDetailScreen() {
             ) : null}
             <View style={styles.actionRow}>
               <Pressable
-                style={StyleSheet.flatten([
-                  styles.actionBtn,
-                  styles.actionPrimary,
-                ])}
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.actionBtn,
+                    styles.actionPrimary,
+                    pressed ? styles.actionBtnPressed : null,
+                  ])
+                }
                 onPress={() => router.push(`/trips/${tripId}/share`)}
+                accessibilityRole="button"
+                accessibilityLabel={t(locale, "mobile.share")}
               >
                 <Text
                   style={StyleSheet.flatten([
@@ -1242,11 +1251,16 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                style={StyleSheet.flatten([
-                  styles.actionBtn,
-                  styles.actionOutline,
-                ])}
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.actionBtn,
+                    styles.actionOutline,
+                    pressed ? styles.actionBtnPressed : null,
+                  ])
+                }
                 onPress={() => router.push(`/trips/${tripId}/journal`)}
+                accessibilityRole="button"
+                accessibilityLabel={t(locale, "mobile.journal")}
               >
                 <Text
                   style={StyleSheet.flatten([
@@ -1258,8 +1272,15 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                style={StyleSheet.flatten([styles.actionBtn])}
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.actionBtn,
+                    pressed ? styles.actionBtnPressed : null,
+                  ])
+                }
                 onPress={() => router.push("/translate")}
+                accessibilityRole="button"
+                accessibilityLabel={t(locale, "mobile.translate")}
               >
                 <Text style={styles.actionLabel}>
                   {t(locale, "mobile.translate")}
@@ -2039,23 +2060,46 @@ export default function TripDetailScreen() {
                     stopsSoftOpen ? softFailMistWashStyle : null,
                   ])}
                 >
-                  <Text style={styles.emptyDayTitle}>
-                    {t(locale, "planner.emptyDay")}
-                  </Text>
-                  <Text style={styles.emptyDayHint}>
-                    {t(locale, "planner.emptyDayHint")}
-                  </Text>
-                  <Pressable
-                    style={StyleSheet.flatten([styles.emptyDayCta])}
-                    onPress={() => {
-                      setSearchOpen(true);
-                      searchInputRef.current?.focus();
-                    }}
+                  {/*
+                    Empty-day craft residual (BEA-465) — web empty stop:
+                    river Stops eyebrow · display title · relaxed hint ·
+                    shadow-bp-soft CTA · tip-011 SheetPresence rise. SoftFail
+                    mist wash stays on the outer shell; SoftFail depth unchanged.
+                  */}
+                  <SheetPresence
+                    open
+                    delayMs={40}
+                    rise={8}
+                    accessibilityLabel={t(locale, "planner.emptyDay")}
                   >
-                    <Text style={styles.emptyDayCtaText}>
-                      {t(locale, "planner.emptyDayCta")}
+                    <Text style={styles.emptyDayEyebrow}>
+                      {t(locale, "planner.stops.eyebrow")}
                     </Text>
-                  </Pressable>
+                    <Text style={styles.emptyDayTitle}>
+                      {t(locale, "planner.emptyDay")}
+                    </Text>
+                    <Text style={styles.emptyDayHint}>
+                      {t(locale, "planner.emptyDayHint")}
+                    </Text>
+                    <Pressable
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.emptyDayCta,
+                          pressed ? styles.emptyDayCtaPressed : null,
+                        ])
+                      }
+                      onPress={() => {
+                        setSearchOpen(true);
+                        searchInputRef.current?.focus();
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(locale, "planner.emptyDayCta")}
+                    >
+                      <Text style={styles.emptyDayCtaText}>
+                        {t(locale, "planner.emptyDayCta")}
+                      </Text>
+                    </Pressable>
+                  </SheetPresence>
                 </View>
               )}
 
@@ -2782,9 +2826,9 @@ const styles = StyleSheet.create({
   brandLine: {
     ...type.body,
     flexShrink: 1,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.4,
+    letterSpacing: 2.6,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -2821,16 +2865,16 @@ const styles = StyleSheet.create({
   title: {
     ...type.display,
     fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.9,
+    fontWeight: "700",
+    letterSpacing: -0.7,
     color: colors.ink,
     marginBottom: 8,
   },
   support: {
     ...type.body,
     fontSize: 14,
-    lineHeight: 20,
-    color: colors.inkSoft,
+    lineHeight: 22,
+    color: "rgba(100, 116, 139, 0.92)",
     marginBottom: 16,
     maxWidth: 360,
   },
@@ -2847,9 +2891,18 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: "center",
   },
+  actionBtnPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
   actionPrimary: {
     backgroundColor: colors.river,
     borderColor: colors.river,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   actionOutline: {
     backgroundColor: colors.foam,
@@ -2860,6 +2913,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontWeight: "600",
     fontSize: 13,
+    letterSpacing: 0.2,
   },
   actionPrimaryLabel: {
     color: colors.foam,
@@ -2900,6 +2954,12 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
     overflow: "hidden",
+    /* Lumen soft elevation — web map|list shadow-bp */
+    shadowColor: colors.ink,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   /* Azure Days chrome — web .bp-day-tabs-chrome (BEA-258 / #188). */
   daysChrome: {
@@ -3229,6 +3289,11 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
     overflow: "hidden",
+    shadowColor: colors.ink,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   searchSheetHead: {
     flexDirection: "row",
@@ -3237,9 +3302,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    paddingLeft: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: "rgba(244, 246, 250, 0.8)",
+    /* Azure Places inset — web map-chrome Places rail */
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   searchSheetHeadText: {
     flexDirection: "row",
@@ -3254,7 +3323,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.6,
     textTransform: "uppercase",
-    color: colors.inkSoft,
+    color: colors.river,
   },
   searchCount: {
     ...type.body,
@@ -4322,33 +4391,52 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     maxWidth: 360,
   },
+  emptyDayEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
   emptyDayTitle: {
     ...type.display,
-    fontSize: 22,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    marginTop: 8,
+    fontSize: 24,
+    fontWeight: "600",
+    letterSpacing: -0.35,
     color: colors.ink,
   },
   emptyDayHint: {
     ...type.body,
     marginTop: 8,
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 22,
     color: colors.inkSoft,
   },
   emptyDayCta: {
-    marginTop: 16,
+    marginTop: 18,
     alignSelf: "flex-start",
     backgroundColor: colors.river,
     paddingHorizontal: 16,
     paddingVertical: 11,
     borderRadius: radius.md,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  emptyDayCtaPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   emptyDayCtaText: {
     ...type.body,
     color: colors.foam,
     fontSize: 14,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
   retry: {
     marginTop: 8,
