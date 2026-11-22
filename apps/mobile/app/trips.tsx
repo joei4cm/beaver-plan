@@ -295,11 +295,11 @@ function TripsListRail({
 }
 
 /**
- * Azure inset Playbooks rail — SoftFailBadge Soft playbooks + SoftFailSupport
- * when SoftFail owns (BEA-398 helpers after #284 / BEA-372 depth; web #245
- * parity). Soft azure head wash while soft. Empty SoftFail (#233) stays on
- * Start; cards SoftFail (#259) stays on Trips (yield / no overlap). Soft copy
- * never timber / Failed to fetch.
+ * Azure inset Playbooks rail — SoftFail depth kept (BEA-398 / BEA-372) + wave
+ * 49 craft residual (BEA-471): foam/paper sheet tokens · Use press settle.
+ * SoftFailBadge Soft playbooks · SoftFailSupport unchanged. Empty SoftFail
+ * stays on Start; cards SoftFail stays on Trips (yield). Soft copy never
+ * timber / Failed to fetch.
  */
 function PlaybooksRail({
   count,
@@ -410,14 +410,12 @@ function TemplatesListSkeleton() {
 }
 
 /**
- * Expo home SoftFailNotice (BEA-307 empty + BEA-341 cards + BEA-398 playbooks
- * SoftFail helpers after #284 / BEA-372 depth) + craft SoftFail query parity
- * (BEA-425 after #298 / BEA-405 playbooks): Empty / cards SoftFail rails +
- * playbooks SoftFail. Craft: /trips?emptySoftFail=1 · /trips?cardsSoftFail=1 ·
- * /trips?playbooksSoftFail=1 force SoftFail depth under Start / Trips /
- * Playbooks (mirrors web + #282). SoftFail never timber / Failed to fetch.
- * SoftFail yields across empty / cards / playbooks sheets (no double depth).
- * SoftFail depth + helpers kept. No /dev gallery.
+ * Expo trips home — SoftFail depth kept (empty / cards / playbooks) + wave 49
+ * playbooks craft residual (BEA-471): section eyebrow 1.8 tracking · foam/
+ * paper/inkSoft/river sheet tokens · Use tip-011 press. SoftFail helpers ·
+ * craft queries · mist band unchanged. Craft: /trips?playbooksSoftFail=1
+ * (also emptySoftFail / cardsSoftFail). SoftFail never timber / Failed to
+ * fetch. SoftFail yields across sheets. No /dev gallery.
  */
 export default function TripsScreen() {
   const router = useRouter();
@@ -950,12 +948,6 @@ export default function TripsScreen() {
                         playbooksSoftOpen ? styles.templateRowSoft : null,
                         first ? styles.templateRowFirst : null,
                       ]);
-                      const useStyle = busy
-                        ? StyleSheet.flatten([
-                            styles.useTpl,
-                            styles.useTplBusy,
-                          ])
-                        : styles.useTpl;
                       return (
                         <View key={tpl.id} style={tplRowStyle}>
                           <DenseIndexMark n={index + 1} />
@@ -968,7 +960,15 @@ export default function TripsScreen() {
                               {t(locale, "trips.stopUnit")}
                             </Text>
                             <Pressable
-                              style={useStyle}
+                              style={({ pressed }) =>
+                                StyleSheet.flatten([
+                                  styles.useTpl,
+                                  busy ? styles.useTplBusy : null,
+                                  pressed && !busy
+                                    ? styles.useTplPressed
+                                    : null,
+                                ])
+                              }
                               disabled={busy || Boolean(creatingId)}
                               onPress={() => void useTemplate(tpl.id)}
                             >
@@ -1117,7 +1117,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 10,
@@ -1127,6 +1127,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
+    lineHeight: 28,
     color: colors.ink,
     marginBottom: 6,
   },
@@ -1143,8 +1144,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    // Soft Lumen lift — paper sheet over Mist topo
+    backgroundColor: colors.foam,
+    // Soft Lumen lift — foam sheet over Mist topo (settings #338 parity)
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -1159,7 +1160,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingHorizontal: 14,
@@ -1167,7 +1168,7 @@ const styles = StyleSheet.create({
   },
   /** Soft azure Trips rail wash when SoftFail owns depth (BEA-341). */
   listRailSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.92)",
+    backgroundColor: colors.paper,
   },
   listRailCopy: {
     flexDirection: "row",
@@ -1190,7 +1191,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100, 116, 139, 0.85)",
+    color: colors.inkSoft,
     flexShrink: 1,
   },
   /** Layout-only shrink for SoftFailSupport beside azure Playbooks rail. */
@@ -1278,9 +1279,9 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "600",
-    color: "rgba(100, 116, 139, 0.85)",
+    color: colors.inkSoft,
     textDecorationLine: "underline",
-    textDecorationColor: "rgba(100, 116, 139, 0.35)",
+    textDecorationColor: colors.inkSoft,
   },
   seedSampleBlock: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1290,9 +1291,9 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
-    color: "rgba(47, 107, 255, 0.8)",
+    color: colors.river,
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 4,
@@ -1447,7 +1448,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     lineHeight: 17,
-    color: "rgba(100, 116, 139, 0.92)",
+    color: colors.inkSoft,
   },
   templateStats: {
     ...type.body,
@@ -1456,7 +1457,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: "rgba(47, 107, 255, 0.8)",
+    color: colors.river,
   },
   rowCta: {
     ...type.body,
@@ -1475,6 +1476,10 @@ const styles = StyleSheet.create({
   },
   useTplBusy: {
     opacity: 0.45,
+  },
+  /** Tip 011 — Use press settle (settings/day-fill residual parity). */
+  useTplPressed: {
+    transform: [{ scale: 0.98 }],
   },
   useTplText: {
     ...type.body,
