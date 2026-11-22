@@ -55,6 +55,15 @@ function presenceFor(member: TripMember): PresenceState {
   return "away";
 }
 
+/**
+ * Presence + invite SoftFail helpers (BEA-392 after #284 / yield #281) + craft
+ * SoftFail query parity (BEA-420): `/trips/…?presenceSoftFail=1` ·
+ * `/trips/…?inviteSoftFail=1` force SoftFail depth under Presence / Invite
+ * rails (mirrors Expo + #282 / wave 42). SoftFailBadge · SoftFailSupport ·
+ * SoftFailNotice mist band · tip-011 kept. Invite SoftFail yields presence
+ * (no double depth). Soft copy never timber / Failed to fetch. No `/dev`
+ * SoftFail gallery.
+ */
 export function TripMembersBar({
   tripId,
   locale,
@@ -79,10 +88,56 @@ export function TripMembersBar({
   const [pending, startTransition] = useTransition();
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [softOffline, setSoftOffline] = useState(false);
+  /** Craft preview: /trips/…?presenceSoftFail=1 — SoftFail depth under Presence. */
+  const [presenceSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("presenceSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?inviteSoftFail=1 — SoftFail depth under Invite. */
+  const [inviteSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("inviteSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     onInviteOpenChange?.(open);
   }, [open, onInviteOpenChange]);
+
+  /** Craft SoftFail: `?inviteSoftFail=1` opens invite sheet with demo code. */
+  useEffect(() => {
+    if (!inviteSoftPreview) return;
+    setLastInvite((prev) =>
+      prev ?? {
+        invite: {
+          id: "invite-demo",
+          tripId,
+          code: "BP-DEMO42",
+          role: inviteRole,
+          createdBy: "demo-user",
+          createdAt: new Date().toISOString(),
+          useCount: 0,
+        },
+        code: "BP-DEMO42",
+        inviteUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/invite/BP-DEMO42`,
+        path: "/invite/BP-DEMO42",
+      },
+    );
+    setOpen(true);
+  }, [inviteSoftPreview, tripId, inviteRole]);
 
   const applySeed = useCallback(
     (opts?: { soft?: boolean }) => {
@@ -189,27 +244,31 @@ export function TripMembersBar({
   const canInvite = yourRole === "owner" || yourRole === "editor";
   const visible = members.slice(0, 5);
   const overflow = Math.max(0, members.length - visible.length);
-  const softOpen = demoSeeded || softOffline;
   /**
-   * Presence SoftFail helper adoption / yield (BEA-392 after #284 / #281):
-   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
-   * chips own as one unit. Invite sheet open → SoftFail chrome yields (no
-   * double depth). Soft copy never timber / Failed to fetch.
+   * Presence SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+   * parity (BEA-420): SoftFailBadge · SoftFailSupport · mist SoftFail band ·
+   * tip-011 mist-wash chips. Craft: /trips/…?presenceSoftFail=1. Invite sheet
+   * open → SoftFail chrome yields (no double depth). Soft copy never timber /
+   * Failed to fetch.
    */
-  const presenceSoftOpen = softOpen && !open;
-  const presenceSoftCopy = softOffline
-    ? t(locale, "collab.presenceSoftFail")
-    : t(locale, "collab.presenceDemoNotice");
+  const presenceSoftOpen =
+    (demoSeeded || softOffline || presenceSoftPreview) && !open;
+  const presenceSoftCopy =
+    softOffline || presenceSoftPreview
+      ? t(locale, "collab.presenceSoftFail")
+      : t(locale, "collab.presenceDemoNotice");
   /**
-   * Invite SoftFail helper adoption (BEA-392 after #284 / #241):
-   * SoftFailBadge · SoftFailSupport · compact SoftFail under azure rail ·
-   * mist-wash tip-011 SheetPresence code. Presence SoftFail yields while
-   * invite open (#281). Soft copy never timber / Failed to fetch.
+   * Invite SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+   * parity (BEA-420): SoftFailBadge · SoftFailSupport · compact SoftFail under
+   * azure rail · mist-wash tip-011. Craft: /trips/…?inviteSoftFail=1. Presence
+   * SoftFail yields while invite open. Soft copy never timber / Failed to fetch.
    */
-  const inviteSoftOpen = softOpen && open;
-  const inviteSoftCopy = softOffline
-    ? t(locale, "collab.inviteSoftFail")
-    : t(locale, "collab.inviteDemoNotice");
+  const inviteSoftOpen =
+    (demoSeeded || softOffline || inviteSoftPreview) && open;
+  const inviteSoftCopy =
+    softOffline || inviteSoftPreview
+      ? t(locale, "collab.inviteSoftFail")
+      : t(locale, "collab.inviteDemoNotice");
   const hardError =
     error && !isPlannerNoiseError(new Error(error)) ? error : null;
   const activeCount = members.filter((m) => presenceFor(m) === "active").length;
@@ -217,9 +276,9 @@ export function TripMembersBar({
   return (
     <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
       {/*
-        Presence SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
-        SoftFailSupport · softFailMistWashClass · compact SoftFailNotice —
-        never timber.
+        Presence SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+        parity (BEA-420): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
+        compact SoftFailNotice. Craft: ?presenceSoftFail=1 — never timber.
       */}
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
         <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
@@ -386,9 +445,10 @@ export function TripMembersBar({
       ) : null}
 
       {/*
-        Invite SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
-        SoftFailSupport · softFailMistWashClass · presence SoftFail yields —
-        never timber / Failed to fetch.
+        Invite SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+        parity (BEA-420): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
+        presence SoftFail yields. Craft: ?inviteSoftFail=1 — never timber /
+        Failed to fetch.
       */}
       <SheetPresence
         open={open}

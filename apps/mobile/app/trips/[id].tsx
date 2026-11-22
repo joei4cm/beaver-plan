@@ -123,7 +123,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -138,6 +138,9 @@ export default function TripDetailScreen() {
     dayFillSoftFail: dayFillSoftFailParam,
     otaSoftFail: otaSoftFailParam,
     confirmSoftFail: confirmSoftFailParam,
+    presenceSoftFail: presenceSoftFailParam,
+    inviteSoftFail: inviteSoftFailParam,
+    timelineSoftFail: timelineSoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
@@ -145,6 +148,9 @@ export default function TripDetailScreen() {
     dayFillSoftFail?: string | string[];
     otaSoftFail?: string | string[];
     confirmSoftFail?: string | string[];
+    presenceSoftFail?: string | string[];
+    inviteSoftFail?: string | string[];
+    timelineSoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -157,6 +163,12 @@ export default function TripDetailScreen() {
   const otaSoftPreview = craftSoftFailOn(otaSoftFailParam);
   /** Craft preview: /trips/…?confirmSoftFail=1 — SoftFail depth under booking Confirm (BEA-418). */
   const confirmSoftPreview = craftSoftFailOn(confirmSoftFailParam);
+  /** Craft preview: /trips/…?presenceSoftFail=1 — SoftFail depth under Presence (BEA-420). */
+  const presenceSoftPreview = craftSoftFailOn(presenceSoftFailParam);
+  /** Craft preview: /trips/…?inviteSoftFail=1 — SoftFail depth under Invite (BEA-420). */
+  const inviteSoftPreview = craftSoftFailOn(inviteSoftFailParam);
+  /** Craft preview: /trips/…?timelineSoftFail=1 — SoftFail depth under Timeline (BEA-420). */
+  const timelineSoftPreview = craftSoftFailOn(timelineSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -337,6 +349,12 @@ export default function TripDetailScreen() {
     setInviteCopied(false);
     setInviteOpen(true);
   }
+
+  /** Craft SoftFail: `?inviteSoftFail=1` opens invite sheet with demo code. */
+  useEffect(() => {
+    if (!inviteSoftPreview) return;
+    seedDemoInvite();
+  }, [inviteSoftPreview]);
 
   async function onInvite() {
     setError(null);
@@ -927,43 +945,49 @@ export default function TripDetailScreen() {
     ],
   };
 
-  const collabSoftOpen = collabSeeded || collabSoftOffline;
   /**
-   * Presence SoftFail helper adoption / yield (BEA-392 after #284 / #281):
-   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
-   * chips. Yields while invite sheet SoftFail owns — no double depth.
-   * SoftFail copy never timber / Failed to fetch.
+   * Presence SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+   * parity (BEA-420): SoftFailBadge · SoftFailSupport · mist SoftFail band ·
+   * tip-011 mist-wash chips. Craft: /trips/…?presenceSoftFail=1. Yields while
+   * invite sheet SoftFail owns — no double depth. SoftFail copy never timber /
+   * Failed to fetch.
    */
-  const presenceSoftOpen = collabSoftOpen && !inviteOpen;
-  const presenceSoftCopy = collabSoftOffline
-    ? t(locale, "collab.presenceSoftFail")
-    : t(locale, "collab.presenceDemoNotice");
+  const presenceSoftOpen =
+    (collabSeeded || collabSoftOffline || presenceSoftPreview) && !inviteOpen;
+  const presenceSoftCopy =
+    collabSoftOffline || presenceSoftPreview
+      ? t(locale, "collab.presenceSoftFail")
+      : t(locale, "collab.presenceDemoNotice");
   const presenceActiveCount = members.filter(
     (m) => presenceFor(m.role) === "active",
   ).length;
   /**
-   * Invite SoftFail helper adoption (BEA-392 after #284 / #228):
-   * SoftFailBadge · SoftFailSupport · compact SoftFail under azure rail.
-   * Presence SoftFail yields while invite open (#281). Soft copy never
-   * timber / Failed to fetch.
+   * Invite SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
+   * parity (BEA-420): SoftFailBadge · SoftFailSupport · compact SoftFail under
+   * azure rail. Craft: /trips/…?inviteSoftFail=1. Presence SoftFail yields while
+   * invite open. Soft copy never timber / Failed to fetch.
    */
-  const inviteSoftOpen = collabSoftOpen;
-  const inviteSoftCopy = collabSoftOffline
-    ? t(locale, "collab.inviteSoftFail")
-    : t(locale, "collab.inviteDemoNotice");
+  const inviteSoftOpen =
+    collabSeeded || collabSoftOffline || inviteSoftPreview;
+  const inviteSoftCopy =
+    collabSoftOffline || inviteSoftPreview
+      ? t(locale, "collab.inviteSoftFail")
+      : t(locale, "collab.inviteDemoNotice");
 
   /**
-   * Expo collab timeline SoftFail helper adoption (BEA-392 after #284 / #279):
-   * SoftFailBadge · SoftFailSupport · compact SoftFail mist band · tip-011
-   * mist-wash track · StyleSheet.flatten · Lumen tokens. SoftFail copy never
-   * timber / Failed to fetch. Yields while invite SoftFail owns (no double
-   * depth).
+   * Expo collab timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
+   * query parity (BEA-420): SoftFailBadge · SoftFailSupport · compact SoftFail
+   * mist band · tip-011 mist-wash track. Craft: /trips/…?timelineSoftFail=1.
+   * SoftFail copy never timber / Failed to fetch. Yields while invite SoftFail
+   * owns (no double depth).
    */
-  const timelineSoftNoise = collabSeeded || collabSoftOffline;
+  const timelineSoftNoise =
+    collabSeeded || collabSoftOffline || timelineSoftPreview;
   const timelineSoftOpen = timelineSoftNoise && !inviteOpen;
-  const timelineSoftCopy = collabSoftOffline
-    ? t(locale, "collab.panel.timelineSoftFail")
-    : t(locale, "collab.panel.timelineDemoNotice");
+  const timelineSoftCopy =
+    collabSoftOffline || timelineSoftPreview
+      ? t(locale, "collab.panel.timelineSoftFail")
+      : t(locale, "collab.panel.timelineDemoNotice");
   const timelineSupportCopy = timelineSoftOpen
     ? t(locale, "collab.panel.timelineSoftSupport")
     : t(locale, "collab.panel.timelineSupport");
@@ -2084,10 +2108,10 @@ export default function TripDetailScreen() {
                 </Text>
 
                 {/*
-                  Presence SoftFail helpers (BEA-392 after #284 / yield #281):
-                  SoftFailBadge · SoftFailSupport · softFailBandStyle ·
-                  softFailMistWashStyle · yields invite sheet. Never timber /
-                  Failed to fetch.
+                  Presence SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
+                  query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
+                  softFailBandStyle · softFailMistWashStyle · yields invite sheet.
+                  Craft: ?presenceSoftFail=1 — never timber / Failed to fetch.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2314,10 +2338,10 @@ export default function TripDetailScreen() {
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
                   {/*
-                    Invite SoftFail helpers (BEA-392 after #284 / yield #281):
-                    SoftFailBadge · SoftFailSupport · softFailBandStyle ·
-                    softFailMistWashStyle · presence SoftFail yields. Never timber /
-                    Failed to fetch.
+                    Invite SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
+                    query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
+                    softFailBandStyle · softFailMistWashStyle · presence SoftFail
+                    yields. Craft: ?inviteSoftFail=1 — never timber / Failed to fetch.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -2496,10 +2520,11 @@ export default function TripDetailScreen() {
                     accessibilityLabel={t(locale, "collab.panel.tab.activity")}
                   >
                     {/*
-                      Timeline SoftFail helpers (BEA-392 after #284 / yield #281):
-                      SoftFailBadge · SoftFailSupport · softFailBandStyle ·
-                      softFailMistWashStyle · yields invite SoftFail while sheet
-                      open · never timber / Failed to fetch.
+                      Timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
+                      query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
+                      softFailBandStyle · softFailMistWashStyle · yields invite
+                      SoftFail while sheet open. Craft: ?timelineSoftFail=1 —
+                      never timber / Failed to fetch.
                     */}
                     <View
                       style={StyleSheet.flatten([
