@@ -12,7 +12,12 @@ import {
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { SheetPresence } from "@/components/ui/sheet-presence";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 
 type Props = {
   leg: Leg | null;
@@ -212,23 +217,21 @@ function LegCardHeader({
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
             {t(locale, "planner.transfer.title")}
           </span>
-          <span
-            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              softOpen || demoMode
-                ? "bg-mist text-ink-soft"
-                : "bg-river/12 text-river-deep"
-            }`}
-          >
-            {softOpen
-              ? t(locale, "planner.transfer.softBadge")
-              : demoMode
-                ? t(locale, "planner.transfer.demoBadge")
-                : t(locale, "planner.transfer.liveBadge")}
-          </span>
-          {softOpen ? (
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {t(locale, "planner.transfer.softSupport")}
+          {softOpen || demoMode ? (
+            <SoftFailBadge>
+              {softOpen
+                ? t(locale, "planner.transfer.softBadge")
+                : t(locale, "planner.transfer.demoBadge")}
+            </SoftFailBadge>
+          ) : (
+            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition">
+              {t(locale, "planner.transfer.liveBadge")}
             </span>
+          )}
+          {softOpen ? (
+            <SoftFailSupport>
+              {t(locale, "planner.transfer.softSupport")}
+            </SoftFailSupport>
           ) : null}
         </div>
         {view ? (
@@ -248,7 +251,8 @@ function LegCardHeader({
 }
 
 /**
- * Transit leg SoftFailNotice depth (BEA-378 after #93 / #121 / Soft badge #280):
+ * Transit leg SoftFailNotice depth (BEA-378 after #93 / #121 / Soft badge #280;
+ * SoftFailBadge / SoftFailSupport helpers BEA-387 after #284):
  * azure Transfer rail · Soft transfer badge · softSupport · compact SoftFail
  * mist band under rail (`border-b`) · tip-011 mist-wash Summary / Steps ·
  * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
@@ -312,9 +316,7 @@ export function TransferSteps({
 
           <div
             className={`animate-fade space-y-1.5 px-3 py-4 ${
-              softOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              softOpen ? softFailMistWashClass : ""
             }`}
             style={{ animationDelay: "60ms" }}
           >
@@ -351,9 +353,7 @@ export function TransferSteps({
 
           <div
             className={`divide-y divide-[color:var(--bp-line)] ${
-              softOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              softOpen ? softFailMistWashClass : ""
             }`}
           >
             <section
