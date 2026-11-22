@@ -112,6 +112,19 @@ export function TripsHome({ locale }: Props) {
     {},
   );
   const [hydrated, setHydrated] = useState(false);
+  /** Craft preview: /trips?playbooksSoftFail=1 — SoftFail depth under Playbooks without API down. */
+  const [playbooksSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get(
+          "playbooksSoftFail",
+        ) === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
 
   const load = useCallback(async () => {
     let remoteTrips: Trip[] | null = null;
@@ -228,14 +241,15 @@ export function TripsHome({ locale }: Props) {
     ? t(locale, "trips.seedSoftSupport")
     : t(locale, "trips.seedSupport");
   /**
-   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-324):
-   * SoftFailBadge Soft playbooks · SoftFailSupport · SoftFail mist band
-   * (`border-b`) · tip-011 softFailMistWashClass body while soft · Empty +
-   * catalog share the same SoftFail strip. Seed SoftFail (#201/#334) stays
-   * on Start rail (no overlap / yield). Soft copy never timber / Failed to
-   * fetch.
+   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-324) + craft SoftFail
+   * query parity (BEA-405): SoftFailBadge Soft playbooks · SoftFailSupport ·
+   * SoftFail mist band (`border-b`) · tip-011 softFailMistWashClass body
+   * while soft · Empty + catalog share the same SoftFail strip. Craft:
+   * /trips?playbooksSoftFail=1 — mirrors Expo. Seed SoftFail (#201/#334)
+   * stays on Start rail (no overlap / yield). Soft copy never timber /
+   * Failed to fetch. No /dev SoftFail gallery.
    */
-  const playbooksSoftOpen = templatesSoft;
+  const playbooksSoftOpen = templatesSoft || playbooksSoftPreview;
   const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
   const playbooksSoftSupportCopy = t(locale, "trips.playbooksSoftSupport");
 
@@ -571,9 +585,10 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.templatesRail")}
           >
             {/*
-              Empty playbooks SoftFail helpers (BEA-398 after #284 / BEA-324):
-              azure rail · SoftFailBadge Soft playbooks · SoftFailSupport ·
-              compact SoftFail mist band · tip-011 softFailMistWashClass CTA ·
+              Empty playbooks SoftFail helpers (BEA-398 after #284 / BEA-324) +
+              craft SoftFail query parity (BEA-405): azure rail · SoftFailBadge
+              Soft playbooks · SoftFailSupport · compact SoftFail mist band ·
+              tip-011 softFailMistWashClass CTA · Craft: ?playbooksSoftFail=1 ·
               never timber. Seed SoftFail (#201/#334) stays on Start (yield /
               no overlap).
             */}
@@ -629,10 +644,11 @@ export function TripsHome({ locale }: Props) {
             aria-label={t(locale, "trips.templatesRail")}
           >
             {/*
-              Playbooks SoftFail helpers (BEA-398 after #284 / BEA-324):
-              azure rail · SoftFailBadge Soft playbooks · SoftFailSupport ·
-              compact SoftFail mist band · tip-011 softFailMistWashClass body ·
-              denser marks · Use/Customize — never timber / Failed to fetch.
+              Playbooks SoftFail helpers (BEA-398 after #284 / BEA-324) + craft
+              SoftFail query parity (BEA-405): azure rail · SoftFailBadge Soft
+              playbooks · SoftFailSupport · compact SoftFail mist band ·
+              tip-011 softFailMistWashClass body · denser marks · Use/Customize
+              · Craft: ?playbooksSoftFail=1 — never timber / Failed to fetch.
               Seed SoftFail (#201/#334) stays on Start (yield / no overlap).
             */}
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] sm:px-5">
