@@ -900,7 +900,11 @@ export function BookingPanel({
   );
 }
 
-/** Compact booking chips on a stop list row — mist-track · #46 focus. */
+/**
+ * Compact booking chips on a stop list row — mist-track · foam ring · tip-011
+ * press (presence pills / Mode mist chips sibling). Beyond OTA #362 / Confirm
+ * #350 — SoftFail stays on those rails.
+ */
 export function BookingLinkChips({
   links,
   locale,
@@ -923,7 +927,7 @@ export function BookingLinkChips({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex max-w-full items-center gap-1 rounded-bp-xs bg-foam px-2 py-1 text-[11px] font-semibold text-river shadow-bp-soft ring-1 ring-river/20 bp-transition hover:ring-river/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+          className="inline-flex max-w-full items-center gap-1 rounded-bp-xs bg-foam px-2 py-1 text-[11px] font-semibold text-river shadow-bp-soft ring-1 ring-river/20 transition duration-bp-fast ease-bp-out-strong hover:ring-river/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
         >
           <span>{kindLabel(locale, link.kind)}</span>
           {link.providerLabel ? (
