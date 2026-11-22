@@ -60,8 +60,8 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
 
 /**
  * Expo invite sheet — SoftFail depth kept (BEA-392 / BEA-420 / #228) + wave 48
- * craft residual (BEA-461) + wave 53 residual (BEA-506): paper/inkSoft/sky
- * token alphas · tip-011 Join press · trip title lineHeight. SoftFailBadge ·
+ * craft residual (BEA-461) + wave 53 residual (BEA-506) + wave 56 residual
+ * (BEA-543): sheet eyebrow letterSpacing 1.8 (web 0.18em). SoftFailBadge ·
  * SoftFailSupport · mist band unchanged. Soft-fail never timber / Failed to
  * fetch. No `/dev` gallery.
  */
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },

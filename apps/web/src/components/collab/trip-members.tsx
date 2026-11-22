@@ -61,10 +61,10 @@ function presenceFor(member: TripMember): PresenceState {
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
- * residual (BEA-518): companions list row inset · empty `leading-snug` ·
- * roster chrome type bar. SoftFailBadge · SoftFailSupport · mist band
- * unchanged. Invite SoftFail yields presence (no double depth). Soft copy never
- * timber / Failed to fetch. No `/dev` gallery.
+ * (BEA-518) + wave 56 invite residual (BEA-543): invite sheet eyebrow `0.18em` ·
+ * empty shareHint rise + `/80` · URL rise. SoftFailBadge · SoftFailSupport ·
+ * mist band unchanged. Invite SoftFail yields presence (no double depth). Soft
+ * copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -430,7 +430,7 @@ export function TripMembersBar({
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                className="animate-rise rounded-bp-sm px-3 py-1.5 text-sm text-ink-soft/80 transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 style={{ animationDelay: "115ms" }}
               >
                 {open ? t(locale, "collab.hide") : t(locale, "collab.show")}
@@ -461,7 +461,7 @@ export function TripMembersBar({
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.inviteEyebrow")}
               </span>
               {inviteSoftOpen ? (
@@ -537,14 +537,14 @@ export function TripMembersBar({
                 </button>
               </div>
               <p
-                className="animate-fade mt-2.5 break-all text-xs leading-relaxed text-ink-soft/80"
+                className="animate-rise mt-2.5 break-all text-xs leading-relaxed text-ink-soft/80"
                 style={{ animationDelay: "160ms" }}
               >
                 {lastInvite.inviteUrl}
               </p>
             </SheetPresence>
           ) : (
-            <p className="animate-fade text-sm text-ink-soft">
+            <p className="animate-rise text-sm leading-snug text-ink-soft/80">
               {t(locale, "collab.shareHint")}
             </p>
           )}

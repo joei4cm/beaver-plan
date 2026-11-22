@@ -2680,10 +2680,10 @@ export default function TripDetailScreen() {
                 >
                   {/*
                     Invite SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
-                    wave 48 craft residual (BEA-461) + wave 53 residual (BEA-506):
-                    paper/inkSoft/foam token alphas · tip-011 Invite/Copy press ·
-                    shareHint lineHeight. SoftFailBadge · SoftFailSupport · mist
-                    band unchanged. Craft: ?inviteSoftFail=1.
+                    wave 48 (BEA-461) + wave 53 (BEA-506) + wave 56 residual
+                    (BEA-543): sheet eyebrow 1.8 · empty shareHint inkSoft/80 +
+                    lineHeight. SoftFailBadge · SoftFailSupport · mist band
+                    unchanged. Craft: ?inviteSoftFail=1.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -4661,7 +4661,8 @@ const styles = StyleSheet.create({
   inviteToggleLabel: {
     ...type.body,
     fontSize: 13,
-    color: colors.inkSoft,
+    /** Web Show/Hide secondary ladder */
+    color: `${colors.inkSoft}CC`,
   },
   /* tip-011 press — parity with web Invite/Copy active:scale-[0.98] (BEA-506). */
   inviteCtaPressed: {
@@ -4708,7 +4709,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -4777,7 +4778,9 @@ const styles = StyleSheet.create({
   inviteShareHintMuted: {
     ...type.body,
     fontSize: 14,
-    color: colors.inkSoft,
+    lineHeight: 20,
+    /** Web empty shareHint text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   inviteCodeRow: {
     flexDirection: "row",
