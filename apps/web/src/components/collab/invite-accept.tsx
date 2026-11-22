@@ -42,9 +42,10 @@ function demoPreview(code: string): Preview {
 
 /**
  * Invite accept sheet — SoftFail depth kept (BEA-392 / BEA-420 / #241) + wave 48
- * craft residual (BEA-461) + wave 53 residual (BEA-506): preview title
- * `leading-snug` · tip-011 Join press kept. SoftFailBadge · SoftFailSupport ·
- * mist band unchanged. Never timber / Failed to fetch. No `/dev` gallery.
+ * craft residual (BEA-461) + wave 53 residual (BEA-506) + wave 56 residual
+ * (BEA-543): page title `leading-snug` · sheet eyebrow `0.18em`. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. Never timber / Failed to fetch. No
+ * `/dev` gallery.
  */
 export function InviteAccept({
   code,
@@ -170,7 +171,7 @@ export function InviteAccept({
       <p className="animate-fade text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
         {brandName}
       </p>
-      <h1 className="animate-rise mt-3 font-display text-4xl font-extrabold tracking-tight text-ink md:text-5xl">
+      <h1 className="animate-rise mt-3 font-display text-4xl font-extrabold leading-snug tracking-tight text-ink md:text-5xl">
         {t(locale, "invite.title")}
       </h1>
       <p
@@ -201,7 +202,7 @@ export function InviteAccept({
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "invite.sheetEyebrow")}
               </span>
               {softOpen ? (
