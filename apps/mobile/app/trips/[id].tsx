@@ -1330,12 +1330,15 @@ export default function TripDetailScreen() {
 
             <View style={styles.sheet}>
               {/*
-                Day tabs craft residual (BEA-611 / wave 63) + SoftFail helpers
-                kept (BEA-388 after #284 / BEA-299): azure Days rail · eyebrow
-                letterSpacing 1.8 (Mode/Stops twin) · SoftFailBadge ·
+                Day tabs craft residual (BEA-649 / wave 66 beyond #426) +
+                SoftFail helpers kept (BEA-388 after #284 / BEA-299): azure
+                Days rail · Lumen hex-alpha paper/mist/foam/river/inkSoft
+                (Mode #549 / Stops twin) · selected badge / list hint
+                letterSpacing 1.4 · eyebrow 1.8 · SoftFailBadge ·
                 SoftFailSupport · SoftFailNotice mist band · tip-011
                 SheetPresence mist tabs · date lineHeight snug · SoftFail
                 yields while invite open. Never timber / Failed to fetch.
+                No `/dev` gallery. Not Mode / stops / day-fill.
               */}
               <View
                 style={styles.daysChrome}
@@ -3298,11 +3301,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-  /* Azure Days chrome — web .bp-day-tabs-chrome (BEA-258 / #188). */
+  /* Azure Days chrome — web .bp-day-tabs-chrome (BEA-258 / #188 / BEA-649). */
   daysChrome: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web paper/70 — Lumen paper hex-alpha (Mode/Stops twin). */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3339,13 +3343,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web ink-soft/80. */
+    color: `${colors.inkSoft}CC`,
   },
   daysSupport: {
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web ink-soft/80. */
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
   },
   /** Layout-only shrink for SoftFailSupport beside azure rail titles. */
@@ -3354,15 +3360,17 @@ const styles = StyleSheet.create({
   },
   daysSelectedBadge: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** Web river/12. */
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  /* Mode/Stops selected badge 1.4 / web Days tracking-[0.14em] (BEA-649). */
   daysSelectedBadgeText: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3370,17 +3378,18 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(100, 116, 139, 0.55)",
+    /** Web ink-soft/55. */
+    color: `${colors.inkSoft}8C`,
   },
   dayRow: {
-    /* Mist wash rail — not full pill (web .bp-day-tab-rail--underline). */
-    backgroundColor: "rgba(230, 236, 245, 0.62)",
+    /* Mist wash rail — web mist 62% underline track (not Mode mist/50 chips). */
+    backgroundColor: `${colors.mist}9E`,
   },
-  /** Azure inset mist track when Days SoftFail open (depth craft). */
+  /** Azure inset mist track when Days SoftFail open (depth craft · token form only). */
   dayRowSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.78)",
+    backgroundColor: `${colors.mist}C7`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3420,8 +3429,8 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   dayChipActive: {
-    /* Foam / river wash — web selected tab. */
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    /* Foam / river wash — web selected tab foam 88%. */
+    backgroundColor: `${colors.foam}E0`,
   },
   dayChipEyebrow: {
     ...type.body,

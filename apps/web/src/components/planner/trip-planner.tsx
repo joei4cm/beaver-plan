@@ -1311,12 +1311,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             {drawerSoftCopy}
           </SoftFailNotice>
           {/*
-            Day tabs craft residual (BEA-611 / wave 63 beyond #66 / #188) +
-            SoftFail yield kept (BEA-343): azure Days rail · eyebrow
-            `0.65rem` / `0.18em` · header `animate-rise` · mist underline
-            SheetPresence body rise 70ms (Mode #549 / Stops #594) · tip-011
-            settle — SoftFail stays under Itinerary when drawer owns; empty
-            SoftFail stays under Stops. Never timber. No `/dev` gallery.
+            Day tabs craft residual (BEA-611 / #426) + Expo hex-alpha /
+            badge twin (BEA-649 / wave 66) + SoftFail yield kept (BEA-343):
+            azure Days rail · eyebrow `0.65rem` / `0.18em` · header
+            `animate-rise` · mist underline SheetPresence body rise 70ms
+            (Mode #549 / Stops #594) · tip-011 settle — SoftFail stays under
+            Itinerary when drawer owns; empty SoftFail stays under Stops.
+            Never timber. No `/dev` gallery. Not Mode / stops / day-fill.
           */}
           <div
             className={`bp-day-tabs-chrome ${
