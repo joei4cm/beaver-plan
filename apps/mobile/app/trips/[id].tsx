@@ -1660,6 +1660,10 @@ export default function TripDetailScreen() {
                               String(results.length),
                             )}
                           </Text>
+                        ) : showSearchEmpty ? (
+                          <Text style={styles.searchCount}>
+                            {t(locale, "planner.search.emptyCount")}
+                          </Text>
                         ) : null}
                         {searchOwnsSoftFail ? (
                           <SoftFailSupport style={styles.softSupportShrink}>
@@ -1702,13 +1706,16 @@ export default function TripDetailScreen() {
                               accessibilityState={{ selected }}
                               onPress={() => void addPlace(place)}
                               onPressIn={() => setActiveIndex(i)}
-                              style={StyleSheet.flatten([
-                                styles.searchHit,
-                                selected ? styles.searchHitSelected : null,
-                                i === results.length - 1
-                                  ? styles.searchHitLast
-                                  : null,
-                              ])}
+                              style={({ pressed }) =>
+                                StyleSheet.flatten([
+                                  styles.searchHit,
+                                  selected ? styles.searchHitSelected : null,
+                                  i === results.length - 1
+                                    ? styles.searchHitLast
+                                    : null,
+                                  pressed ? styles.searchHitPressed : null,
+                                ])
+                              }
                             >
                               <View
                                 style={StyleSheet.flatten([
@@ -3352,7 +3359,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3378,6 +3385,10 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 11,
+  },
+  /* tip-011 press — parity with web Places active:scale-[0.995] (#341) */
+  searchHitPressed: {
+    transform: [{ scale: 0.995 }],
   },
   searchHitSelected: {
     backgroundColor: "rgba(47, 107, 255, 0.1)",
