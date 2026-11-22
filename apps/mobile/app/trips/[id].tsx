@@ -120,7 +120,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -133,11 +133,15 @@ export default function TripDetailScreen() {
     stopsSoftFail: stopsSoftFailParam,
     dragSoftFail: dragSoftFailParam,
     dayFillSoftFail: dayFillSoftFailParam,
+    otaSoftFail: otaSoftFailParam,
+    confirmSoftFail: confirmSoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
     dragSoftFail?: string | string[];
     dayFillSoftFail?: string | string[];
+    otaSoftFail?: string | string[];
+    confirmSoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -146,6 +150,10 @@ export default function TripDetailScreen() {
   const dragSoftPreview = craftSoftFailOn(dragSoftFailParam);
   /** Craft preview: /trips/…?dayFillSoftFail=1 — SoftFail depth under Day fill (BEA-408). */
   const dayFillSoftPreview = craftSoftFailOn(dayFillSoftFailParam);
+  /** Craft preview: /trips/…?otaSoftFail=1 — SoftFail depth under booking OTA (BEA-418). */
+  const otaSoftPreview = craftSoftFailOn(otaSoftFailParam);
+  /** Craft preview: /trips/…?confirmSoftFail=1 — SoftFail depth under booking Confirm (BEA-418). */
+  const confirmSoftPreview = craftSoftFailOn(confirmSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -1983,6 +1991,8 @@ export default function TripDetailScreen() {
                   }
                   destinationHint={trip.destination}
                   defaultOpen
+                  craftOtaSoftFail={otaSoftPreview}
+                  craftConfirmSoftFail={confirmSoftPreview}
                   onSaved={(nextStop) => {
                     setStops((prev) =>
                       prev.map((s) => (s.id === nextStop.id ? nextStop : s)),

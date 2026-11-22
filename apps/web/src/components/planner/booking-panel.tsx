@@ -130,6 +130,14 @@ async function searchLocal(
   };
 }
 
+/**
+ * Booking SoftFail helpers (BEA-389 after #284) + craft SoftFail query parity
+ * (BEA-418): `/trips/…?otaSoftFail=1` · `/trips/…?confirmSoftFail=1` force
+ * SoftFail depth under OTA / Confirm rails (mirrors Expo + #282 / wave 42).
+ * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band · tip-011 kept.
+ * Confirm SoftFail yields OTA SoftFail (no double depth). Soft copy never
+ * timber / Failed to fetch. No `/dev` SoftFail gallery.
+ */
 export function BookingPanel({
   tripId,
   locale,
@@ -149,6 +157,29 @@ export function BookingPanel({
   const [softDemo, setSoftDemo] = useState(false);
   /** Save soft-fail stays under the Confirm rail — never timber Failed to fetch. */
   const [confirmSoftFail, setConfirmSoftFail] = useState(false);
+  /** Craft preview: /trips/…?otaSoftFail=1 — SoftFail depth under OTA rail. */
+  const [otaSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("otaSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?confirmSoftFail=1 — SoftFail depth under Confirm. */
+  const [confirmSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("confirmSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [searched, setSearched] = useState(false);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [city, setCity] = useState(destinationHint ?? "");
@@ -327,11 +358,21 @@ export function BookingPanel({
   }
 
   const isConfigured = status?.mode === "configured" && !softDemo;
-  const softCopy = softDemo
-    ? t(locale, "planner.booking.softFail")
-    : status?.mode === "demo"
-      ? t(locale, "planner.booking.demoNotice")
-      : null;
+  /**
+   * OTA SoftFail helpers (BEA-389 after #284 / depth BEA-327) + craft SoftFail
+   * query parity (BEA-418): SoftFailBadge · SoftFailSupport · SoftFailNotice
+   * mist band · softFailMistWashClass tip-011. Craft: /trips/…?otaSoftFail=1
+   * forces softFail under OTA. Confirm SoftFail yields OTA (no double depth).
+   * Soft copy never timber / Failed to fetch.
+   */
+  const softFailCopy = t(locale, "planner.booking.softFail");
+  const softCopy = otaSoftPreview
+    ? softFailCopy
+    : softDemo
+      ? softFailCopy
+      : status?.mode === "demo"
+        ? t(locale, "planner.booking.demoNotice")
+        : null;
   const badge = isConfigured
     ? t(locale, "planner.booking.configuredBadge")
     : t(locale, "planner.booking.demoBadge");
@@ -341,13 +382,15 @@ export function BookingPanel({
   );
 
   /**
-   * Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345):
-   * SoftFailBadge Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
-   * softFailMistWashClass tip-011 · Confirm owns save soft-fail so OTA
-   * SoftFail yields (no double depth). Soft copy never timber / Failed to fetch.
+   * Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345) + craft
+   * SoftFail query parity (BEA-418): SoftFailBadge Soft/Live · SoftFailSupport ·
+   * SoftFailNotice mist band · softFailMistWashClass tip-011. Craft:
+   * /trips/…?confirmSoftFail=1 — SoftFail depth under Confirm without a save
+   * miss. Confirm owns save soft-fail so OTA SoftFail yields (no double depth).
+   * Soft copy never timber / Failed to fetch.
    */
-  const showConfirmSoftFail = confirmSoftFail;
-  const showOtaSoftFail = Boolean(softCopy) && !confirmSoftFail;
+  const showConfirmSoftFail = confirmSoftPreview || confirmSoftFail;
+  const showOtaSoftFail = Boolean(softCopy) && !showConfirmSoftFail;
   const sheetSupportCopy = showOtaSoftFail
     ? t(locale, "planner.booking.softSupport")
     : stop
@@ -362,9 +405,10 @@ export function BookingPanel({
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        OTA SoftFail helpers (BEA-389 after #284 / depth BEA-327):
-        softFailRailClass · SoftFailBadge · SoftFailSupport · SoftFailNotice
-        tip-011 — Confirm SoftFail still owns save soft-fail.
+        OTA SoftFail helpers (BEA-389 after #284 / depth BEA-327) + craft SoftFail
+        query parity (BEA-418): softFailRailClass · SoftFailBadge · SoftFailSupport ·
+        SoftFailNotice tip-011. Craft: ?otaSoftFail=1 — Confirm SoftFail still
+        owns save soft-fail.
       */}
       <button
         type="button"
@@ -686,10 +730,11 @@ export function BookingPanel({
           </section>
 
           {/*
-            Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345):
-            softFailRailClass · SoftFailBadge Soft/Live · SoftFailSupport ·
-            SoftFailNotice mist band · softFailMistWashClass tip-011 —
-            OTA SoftFail yields while Confirm owns; never timber.
+            Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345) + craft
+            SoftFail query parity (BEA-418): softFailRailClass · SoftFailBadge
+            Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
+            softFailMistWashClass tip-011. Craft: ?confirmSoftFail=1 — OTA
+            SoftFail yields while Confirm owns; never timber.
           */}
           <section
             className="animate-rise px-4 py-4"
