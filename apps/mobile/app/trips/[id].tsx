@@ -2801,9 +2801,9 @@ export default function TripDetailScreen() {
                       </SheetPresence>
                     )}
                     {/*
-                      Members roster / companions list — wave 54 residual
-                      (BEA-518): list eyebrow rail · tip-011 row rise · token
-                      alphas. SoftFail untouched. Beyond invite #366 / pills #355.
+                      Members roster / companions list — wave 54 (#373) + wave 58
+                      residual (BEA-562): empty tip-011 rise · name lineHeight.
+                      SoftFail untouched. Beyond #373 / invite #391 / pills #389.
                     */}
                     <View
                       style={styles.inviteMemberList}
@@ -2924,6 +2924,13 @@ export default function TripDetailScreen() {
                           </SheetPresence>
                         );
                       })}
+                      {members.length === 0 ? (
+                        <SheetPresence open delayMs={40} rise={8}>
+                          <Text style={styles.inviteMemberEmpty}>
+                            {t(locale, "collab.presence.empty")}
+                          </Text>
+                        </SheetPresence>
+                      ) : null}
                     </View>
                   </View>
                 </SheetPresence>
@@ -4945,7 +4952,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.15,
+    /** Web roster name leading-snug. */
+    lineHeight: 18,
     color: colors.ink,
+  },
+  /** Companions empty — web font-display empty + tip-011 rise (BEA-562). */
+  inviteMemberEmpty: {
+    ...type.display,
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: -0.15,
+    lineHeight: 18,
+    color: colors.ink,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
 
   hint: {
