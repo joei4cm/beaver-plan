@@ -145,8 +145,11 @@ async function searchLocal(
  * (BEA-660): results-list offer provider meta `leading-snug text-ink-soft/80`
  * (day-fill stop-walk + BookingLinkChips #395 twin). Wave 69 Confirm title
  * (BEA-717): `leading-snug` twin of sheet / suggest / results titles (#441).
- * SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
+ * Wave 73 (BEA-789): provider Use-link + Confirm draft Open CTA color settle
+ * → `ease-bp-out-strong` (BookingLinkChips / Search·Open-external·Save /
+ * tip-011 / #484–#488 twin). SoftFail stays under OTA / Confirm rails; craft
+ * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
+ * double depth). SoftFail Soft / Confirm nest hex / prefer LIVE leave. Never
  * timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
@@ -595,7 +598,7 @@ export function BookingPanel({
             </button>
           </section>
 
-          {/* Results — ranked offers with azure deep-link out */}
+          {/* Results — ranked offers · Open-external / Use-link out-strong (BEA-789) */}
           <section
             className="animate-rise space-y-3 px-4 py-4"
             style={{ animationDelay: "70ms" }}
@@ -712,7 +715,7 @@ export function BookingPanel({
                           <button
                             type="button"
                             onClick={() => applySuggestion(s)}
-                            className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                            className="rounded-bp-sm border border-river/35 bg-foam px-2.5 py-1.5 text-xs font-medium text-river transition duration-bp-fast ease-bp-out-strong hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                           >
                             {t(locale, "planner.booking.useLink")}
                           </button>
@@ -742,10 +745,13 @@ export function BookingPanel({
 
           {/*
             Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345) + craft
-            SoftFail query parity (BEA-418): softFailRailClass · SoftFailBadge
-            Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
-            softFailMistWashClass tip-011. Craft: ?confirmSoftFail=1 — OTA
-            SoftFail yields while Confirm owns; never timber.
+            SoftFail query parity (BEA-418) + Confirm Open CTA color settle
+            (BEA-789 / wave 73): softFailRailClass · SoftFailBadge Soft/Live ·
+            SoftFailSupport · SoftFailNotice mist band · softFailMistWashClass
+            tip-011 · draft Open `ease-bp-out-strong` (BookingLinkChips /
+            tip-011 / #484–#488 twin). Craft: ?confirmSoftFail=1 — OTA SoftFail
+            yields while Confirm owns; never timber. SoftFail Soft / Confirm
+            nest hex leave · not Export (#486) · HoldMic (#488).
           */}
           <section
             className="animate-rise px-4 py-4"
@@ -860,7 +866,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => openExternal(row.url.trim())}
-                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out-strong hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                             >
                               {t(locale, "planner.booking.open")}
                             </button>
