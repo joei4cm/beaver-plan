@@ -143,10 +143,11 @@ async function searchLocal(
  * `leading-snug`. Wave 65 (BEA-642): sheet / suggest / results titles
  * `leading-snug` (day-fill #508/#544 twin; empty snug already #433). Wave 66
  * (BEA-660): results-list offer provider meta `leading-snug text-ink-soft/80`
- * (day-fill stop-walk + BookingLinkChips #395 twin). SoftFail stays under
- * OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm
- * SoftFail yields OTA (no double depth). Never timber / Failed to fetch. No
- * `/dev` gallery.
+ * (day-fill stop-walk + BookingLinkChips #395 twin). Wave 69 Confirm title
+ * (BEA-717): `leading-snug` twin of sheet / suggest / results titles (#441).
+ * SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -788,7 +789,7 @@ export function BookingPanel({
                       </SoftFailLiveBadge>
                     )}
                   </div>
-                  <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                  <h3 className="mt-1 font-display text-base leading-snug tracking-tight text-ink">
                     {t(locale, "planner.booking.confirmTitle")}
                   </h3>
                   {showConfirmSoftFail ? (
