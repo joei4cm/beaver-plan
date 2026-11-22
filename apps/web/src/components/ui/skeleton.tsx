@@ -123,9 +123,9 @@ export function PlannerSkeleton() {
               <Skeleton className="h-6 w-16 rounded-bp" />
             </div>
           </div>
-          {/* Mode filter craft residual — azure Mode rail · mist chips · generate CTA (BEA-462) */}
+          {/* Mode rail craft residual — azure Mode rail · mist chips · generate CTA (BEA-511 / #337) */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95">
-            <div className="flex items-baseline gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 pt-2.5 pb-1.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="animate-rise flex items-baseline gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 pt-2.5 pb-1.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <Skeleton className="h-2.5 w-12" />
               <Skeleton className="h-2.5 w-28" />
               <Skeleton className="h-5 w-20 rounded-bp-xs" />

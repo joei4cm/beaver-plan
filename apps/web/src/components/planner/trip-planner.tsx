@@ -1151,23 +1151,25 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
 
           {/*
-            Transit panel craft residual (BEA-462 / wave 48) + SoftFail depth
-            kept (BEA-358 / BEA-423): always-on azure Mode rail · Soft mode
-            badge · softSupport · compact SoftFail mist band (`border-b`) ·
-            tip-011 mist-wash + chip/CTA press — Craft: ?modeSoftFail=1.
-            Yields while TransferSteps SoftFail depth (BEA-378) /
-            ?transferSoftFail=1 owns selected-stop soft chrome — never timber
-            / Failed to fetch. No `/dev` gallery.
+            Transit Mode rail craft residual (BEA-511 / wave 53) beyond #337 /
+            Transfer #358 + SoftFail depth kept (BEA-358 / BEA-423): azure Mode
+            rail · eyebrow `0.65rem` / `0.18em` · header `animate-rise` · Soft
+            mode badge · softSupport · compact SoftFail mist band · tip-011
+            mist-wash + chip/CTA press — Craft: ?modeSoftFail=1. Yields while
+            TransferSteps SoftFail depth (BEA-378) / ?transferSoftFail=1 owns
+            selected-stop soft chrome — never timber / Failed to fetch. No
+            `/dev` gallery.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
-              className={`relative flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 pt-2.5 pb-1.5 ${
+              className={`animate-rise relative flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[color:var(--bp-line)] px-4 pt-2.5 pb-1.5 ${
                 modeSoftOpen
                   ? softFailRailClass
                   : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]"
               }`}
+              style={{ animationDelay: "40ms" }}
             >
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.mode.eyebrow")}
               </span>
               <SoftFailSupport>{modeSupportCopy}</SoftFailSupport>
@@ -1176,7 +1178,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   {t(locale, "planner.mode.softBadge")}
                 </SoftFailBadge>
               ) : (
-                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river">
                   {t(locale, `planner.mode.${travelMode}`)} ·{" "}
                   {t(locale, "planner.mode.selected")}
                 </span>
@@ -1252,7 +1254,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   </p>
                 )}
                 {demoShell && dayLegs.length > 0 && (
-                  <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
                     {t(locale, "planner.transfer.demoBadge")}
                   </span>
                 )}

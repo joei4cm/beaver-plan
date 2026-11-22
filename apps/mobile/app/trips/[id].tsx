@@ -1481,13 +1481,14 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit panel craft residual (BEA-462 / wave 48) + SoftFail
-                kept (BEA-388 / BEA-423) + trip-detail Mode generate press
-                (BEA-503): always-on azure Mode rail · SoftFailBadge ·
-                SoftFailSupport · SoftFailNotice mist band · tip-011 mist-wash
-                SheetPresence · generate tip-011 press. Craft: ?modeSoftFail=1.
-                Yields while TransferSteps / ?transferSoftFail=1 owns. Never
-                timber / Failed to fetch. No `/dev` gallery.
+                Transit Mode rail craft residual (BEA-511 / wave 53) beyond
+                #337 / Transfer #358 + SoftFail kept (BEA-388 / BEA-423) +
+                Mode generate press (BEA-503): azure Mode rail · eyebrow
+                tracking 1.8 · SoftFailBadge · SoftFailSupport · SoftFailNotice
+                mist band · tip-011 mist-wash SheetPresence · generate tip-011
+                press. Craft: ?modeSoftFail=1. Yields while TransferSteps /
+                ?transferSoftFail=1 owns. Never timber / Failed to fetch. No
+                `/dev` gallery.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -3208,7 +3209,7 @@ const styles = StyleSheet.create({
     color: colors.river,
     opacity: 0.9,
   },
-  /* Transit panel Mode rail — azure inset · mist chips (web BEA-462). */
+  /* Transit Mode rail — azure inset · mist chips (web BEA-511 / #337). */
   modeFilter: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
@@ -3226,16 +3227,19 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 246, 250, 0.7)",
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
   },
   /** Soft azure mode rail wash when SoftFail owns depth (BEA-342). */
   modeFilterHeadSoft: {
     backgroundColor: "rgba(230, 236, 245, 0.35)",
   },
+  /** Mode rail eyebrow — Transfer #358 tracking 1.8 parity (BEA-511). */
   modeEyebrow: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3256,7 +3260,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
   },
