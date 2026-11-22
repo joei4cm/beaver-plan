@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Leg, TransitStep } from "@beaver/core";
 import {
   formatDistance,
@@ -37,6 +37,11 @@ type Props = {
    * no leg / no transit steps yet (selected stop only).
    */
   showEmpty?: boolean;
+  /**
+   * Craft SoftFail query: `/trips/…?transferSoftFail=1` (BEA-423 / #282 parity).
+   * Prefer parent prop from trip planner; fall back to window search.
+   */
+  craftSoftFail?: boolean;
 };
 
 /** Azure section eyebrow — matches place-intel / booking depth chrome. */
@@ -252,12 +257,14 @@ function LegCardHeader({
 }
 
 /**
- * Transit leg SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295):
- * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact
- * SoftFail mist band under rail (`border-b`) · tip-011 mist-wash Summary /
- * Steps · SheetPresence. SoftFail copy always softFail / softFailEmpty —
- * never timber / Failed to fetch. Mode SoftFail (#272) yields while
- * TransferSteps owns selected-stop soft chrome (no double depth).
+ * Transit leg SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295) +
+ * craft SoftFail query parity (BEA-423): `/trips/…?transferSoftFail=1` forces
+ * SoftFail depth under Transfer (mirrors Expo + #282 / wave 42). SoftFailBadge
+ * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact SoftFail mist band
+ * under rail (`border-b`) · tip-011 mist-wash Summary / Steps · SheetPresence.
+ * SoftFail copy always softFail / softFailEmpty — never timber / Failed to
+ * fetch. Mode SoftFail (#272) yields while TransferSteps owns selected-stop
+ * soft chrome (no double depth). No `/dev` SoftFail gallery.
  */
 export function TransferSteps({
   leg,
@@ -266,6 +273,7 @@ export function TransferSteps({
   demoMode = false,
   showSoftFail = false,
   showEmpty = false,
+  craftSoftFail = false,
 }: Props) {
   const snapRef = useRef<Leg | null>(null);
   if (leg) snapRef.current = leg;
@@ -274,8 +282,30 @@ export function TransferSteps({
   const hasSteps = Boolean(view && view.transitSteps.length > 0);
   const empty = Boolean(showEmpty && !leg);
   const open = Boolean(leg) || empty;
+  /**
+   * Craft SoftFail query parity with Expo (`?transferSoftFail=1`) — prefer
+   * parent prop from trip planner (#282); fall back to window search.
+   */
+  const [windowTransferSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("transferSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  const transferSoftPreview = craftSoftFail || windowTransferSoftPreview;
+  /**
+   * SoftFail depth (BEA-378) + craft SoftFail query parity (BEA-423): Soft
+   * transfer chrome when Directions absent / craft `?transferSoftFail=1`.
+   * Mode SoftFail yields while this owns (no double depth).
+   */
   const softOpen =
-    demoMode && (showSoftFail || variant === "panel" || empty);
+    transferSoftPreview ||
+    (demoMode && (showSoftFail || variant === "panel" || empty));
   const softCopy = empty
     ? t(locale, "planner.transfer.softFailEmpty")
     : t(locale, "planner.transfer.softFail");
@@ -295,13 +325,14 @@ export function TransferSteps({
       {empty ? (
         <>
           {/*
-            SoftFail depth (BEA-378): azure Transfer rail · Soft transfer ·
-            softSupport · tip-011 — SoftFail under rail; transit filters (#272)
-            SoftFail yields while this owns selected-stop soft chrome.
+            SoftFail depth (BEA-378) + craft SoftFail query parity (BEA-423):
+            azure Transfer rail · Soft transfer · softSupport · tip-011 —
+            SoftFail under rail; Craft: ?transferSoftFail=1. Mode SoftFail
+            (#272) yields while this owns selected-stop soft chrome.
           */}
           <LegCardHeader
             locale={locale}
-            demoMode={demoMode}
+            demoMode={demoMode || transferSoftPreview}
             softOpen={softOpen}
           />
 
@@ -331,13 +362,14 @@ export function TransferSteps({
       ) : view ? (
         <>
           {/*
-            SoftFail depth (BEA-378): azure Transfer rail · Soft transfer ·
-            softSupport · tip-011 mist-wash — SoftFail under rail; Mode SoftFail
-            (#272) yields while TransferSteps owns (no double depth).
+            SoftFail depth (BEA-378) + craft SoftFail query parity (BEA-423):
+            azure Transfer rail · Soft transfer · softSupport · tip-011
+            mist-wash — SoftFail under rail; Craft: ?transferSoftFail=1. Mode
+            SoftFail (#272) yields while TransferSteps owns (no double depth).
           */}
           <LegCardHeader
             locale={locale}
-            demoMode={demoMode}
+            demoMode={demoMode || transferSoftPreview}
             softOpen={softOpen}
             view={view}
           />

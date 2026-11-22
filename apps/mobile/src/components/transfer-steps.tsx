@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import type { Leg, TransitStep } from "@beaver/core";
 import {
@@ -36,6 +36,11 @@ type Props = {
    * no leg / no transit steps yet (selected stop only).
    */
   showEmpty?: boolean;
+  /**
+   * Craft SoftFail query: `/trips/…?transferSoftFail=1` (BEA-423 / #282 parity).
+   * Prefer parent prop from trip detail; fall back to window search (Expo web).
+   */
+  craftSoftFail?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -252,12 +257,14 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295):
- * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport ·
- * softFailBandStyle mist band · tip-011 softFailMistWashStyle Summary / Steps ·
- * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
- * Failed to fetch. Mode SoftFail yields while TransferSteps owns selected-stop
- * soft chrome (no double depth).
+ * Expo transit SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295) +
+ * craft SoftFail query parity (BEA-423): `/trips/…?transferSoftFail=1` forces
+ * SoftFail depth under Transfer (mirrors web + #282 / wave 42). SoftFailBadge
+ * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · softFailBandStyle mist band ·
+ * tip-011 softFailMistWashStyle Summary / Steps · SheetPresence. SoftFail copy
+ * always softFail / softFailEmpty — never timber / Failed to fetch. Mode SoftFail
+ * yields while TransferSteps owns selected-stop soft chrome (no double depth).
+ * No `/dev` SoftFail gallery.
  */
 export function TransferSteps({
   leg,
@@ -265,6 +272,7 @@ export function TransferSteps({
   demoMode = false,
   showSoftFail = false,
   showEmpty = false,
+  craftSoftFail = false,
   style,
 }: Props) {
   const snapRef = useRef<Leg | null>(null);
@@ -274,8 +282,28 @@ export function TransferSteps({
   const hasSteps = Boolean(view && view.transitSteps.length > 0);
   const empty = Boolean(showEmpty && !leg);
   const open = Boolean(leg) || empty;
-  /** SoftFail owns Soft transfer chrome when Directions absent (selected stop). */
-  const softOpen = demoMode && (showSoftFail || empty);
+  /**
+   * Craft SoftFail query parity with web (`?transferSoftFail=1`) — prefer Expo
+   * Router param from trip detail (#282); fall back to window search (Expo web).
+   */
+  const [windowTransferSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("transferSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  const transferSoftPreview = craftSoftFail || windowTransferSoftPreview;
+  /**
+   * SoftFail owns Soft transfer chrome when Directions absent / craft
+   * `?transferSoftFail=1` (selected stop). Mode SoftFail yields while this owns.
+   */
+  const softOpen =
+    transferSoftPreview || (demoMode && (showSoftFail || empty));
 
   return (
     <SheetPresence
@@ -289,10 +317,10 @@ export function TransferSteps({
         <>
           <LegCardHeader
             locale={locale}
-            demoMode={demoMode}
+            demoMode={demoMode || transferSoftPreview}
             softOpen={softOpen}
           />
-          {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
+          {/* Compact SoftFail under azure rail — Craft: ?transferSoftFail=1. */}
           <SoftFailNotice open={softOpen} compact style={softFailBandStyle}>
             {t(locale, "planner.transfer.softFailEmpty")}
           </SoftFailNotice>
@@ -317,11 +345,11 @@ export function TransferSteps({
         <>
           <LegCardHeader
             locale={locale}
-            demoMode={demoMode}
+            demoMode={demoMode || transferSoftPreview}
             softOpen={softOpen}
             view={view}
           />
-          {/* SoftFail mist band under azure Transfer rail — tip-011 rise. */}
+          {/* SoftFail mist band under azure Transfer rail — Craft: ?transferSoftFail=1. */}
           <SoftFailNotice open={softOpen} compact style={softFailBandStyle}>
             {t(locale, "planner.transfer.softFail")}
           </SoftFailNotice>

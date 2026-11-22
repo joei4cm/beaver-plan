@@ -123,7 +123,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -141,6 +141,8 @@ export default function TripDetailScreen() {
     presenceSoftFail: presenceSoftFailParam,
     inviteSoftFail: inviteSoftFailParam,
     timelineSoftFail: timelineSoftFailParam,
+    modeSoftFail: modeSoftFailParam,
+    transferSoftFail: transferSoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
@@ -151,6 +153,8 @@ export default function TripDetailScreen() {
     presenceSoftFail?: string | string[];
     inviteSoftFail?: string | string[];
     timelineSoftFail?: string | string[];
+    modeSoftFail?: string | string[];
+    transferSoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -169,6 +173,10 @@ export default function TripDetailScreen() {
   const inviteSoftPreview = craftSoftFailOn(inviteSoftFailParam);
   /** Craft preview: /trips/…?timelineSoftFail=1 — SoftFail depth under Timeline (BEA-420). */
   const timelineSoftPreview = craftSoftFailOn(timelineSoftFailParam);
+  /** Craft preview: /trips/…?modeSoftFail=1 — SoftFail depth under Mode rail (BEA-423). */
+  const modeSoftPreview = craftSoftFailOn(modeSoftFailParam);
+  /** Craft preview: /trips/…?transferSoftFail=1 — SoftFail depth under Transfer (BEA-423). */
+  const transferSoftPreview = craftSoftFailOn(transferSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -1070,12 +1078,13 @@ export default function TripDetailScreen() {
     : undefined;
 
   /**
-   * Expo transit filters SoftFailNotice depth (BEA-342 after #221 / BEA-289):
-   * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
-   * own selected-stop soft chrome. Soft mode badge · softSupport · compact
-   * SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence ·
-   * StyleSheet.flatten. SoftFail yields while TransferSteps owns (no double
-   * depth). Soft copy never timber / Failed to fetch.
+   * Expo transit filters SoftFailNotice depth (BEA-342 after #221 / BEA-289) +
+   * craft SoftFail query parity (BEA-423): Mode rail owns SoftFail when demo
+   * legs exist / `?modeSoftFail=1` and TransferSteps does not own selected-stop
+   * soft chrome. Soft mode badge · softSupport · compact SoftFail mist band
+   * (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
+   * SoftFail yields while TransferSteps / `?transferSoftFail=1` owns (no double
+   * depth). Soft copy never timber / Failed to fetch. No `/dev` SoftFail gallery.
    */
   const selectedStopIndex = selectedStopId
     ? dayStops.findIndex((s) => s.id === selectedStopId)
@@ -1083,13 +1092,15 @@ export default function TripDetailScreen() {
   const selectedOutgoingLeg = selectedStopId
     ? dayLegs.find((l) => l.fromStopId === selectedStopId)
     : undefined;
-  const transitSoftOwns =
-    routingDemo &&
+  const transferSurfaceOpen =
     selectedStopIndex >= 0 &&
     (Boolean(selectedOutgoingLeg) ||
       (!routing && selectedStopIndex < dayStops.length - 1));
+  const transitSoftOwns =
+    transferSurfaceOpen && (transferSoftPreview || routingDemo);
   const modeSoftOpen =
-    routingDemo && dayLegs.length > 0 && !transitSoftOwns;
+    !transitSoftOwns &&
+    (modeSoftPreview || (routingDemo && dayLegs.length > 0));
   const modeSoftCopy = t(locale, "planner.mode.softFail");
   const modeSoftSupport = t(locale, "planner.mode.softSupport");
 
@@ -1390,11 +1401,12 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Transit filters SoftFail helpers (BEA-388 after #284 / BEA-342):
-                azure mode rail · SoftFailBadge · SoftFailSupport ·
-                SoftFailNotice mist band · tip-011 mist-wash SheetPresence ·
-                StyleSheet.flatten. Yields while TransferSteps owns. Never
-                timber / Failed to fetch.
+                Transit filters SoftFail helpers (BEA-388 after #284 / BEA-342) +
+                craft SoftFail query parity (BEA-423): azure mode rail ·
+                SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
+                tip-011 mist-wash SheetPresence · StyleSheet.flatten. Craft:
+                ?modeSoftFail=1. Yields while TransferSteps /
+                ?transferSoftFail=1 owns. Never timber / Failed to fetch.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -1926,6 +1938,7 @@ export default function TripDetailScreen() {
                             !leg &&
                             index < dayStops.length - 1
                           }
+                          craftSoftFail={selected && transferSoftPreview}
                         />
                       )}
                       {(stop.bookingLinks ?? []).length > 0 ? (

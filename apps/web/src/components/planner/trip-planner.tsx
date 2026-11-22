@@ -144,6 +144,29 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       return false;
     }
   });
+  /** Craft preview: /trips/…?modeSoftFail=1 — SoftFail depth under Mode rail (BEA-423). */
+  const [modeSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("modeSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?transferSoftFail=1 — SoftFail depth under Transfer (BEA-423). */
+  const [transferSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("transferSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [pending, startTransition] = useTransition();
   const [duplicating, setDuplicating] = useState(false);
   const [copyJournal, setCopyJournal] = useState(false);
@@ -290,13 +313,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     : t(locale, "planner.shareSupport");
 
   /**
-   * Transit filters SoftFailNotice depth (BEA-358 after #129 / BEA-170):
-   * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
-   * own selected-stop soft chrome. Soft mode badge · softSupport · compact
-   * SoftFail mist band (`border-b`) · tip-011 mist-wash. SoftFail yields while
-   * TransferSteps SoftFail depth (BEA-378 / #272 yield) owns (no double depth).
-   * Soft copy always mode.softFail — never timber / Failed to fetch. Expo
-   * transit filters SoftFail (#256) stays out of scope.
+   * Transit filters SoftFailNotice depth (BEA-358 after #129 / BEA-170) + craft
+   * SoftFail query parity (BEA-423): Mode rail owns SoftFail when demo legs
+   * exist / `?modeSoftFail=1` and TransferSteps does not own selected-stop soft
+   * chrome. Soft mode badge · softSupport · compact SoftFail mist band
+   * (`border-b`) · tip-011 mist-wash. SoftFail yields while TransferSteps
+   * SoftFail depth (BEA-378 / #272 yield) / `?transferSoftFail=1` owns (no
+   * double depth). Soft copy always mode.softFail — never timber / Failed to
+   * fetch. No `/dev` SoftFail gallery.
    */
   const selectedStopIndex = selectedStopId
     ? dayStops.findIndex((s) => s.id === selectedStopId)
@@ -304,13 +328,16 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const selectedOutgoingLeg = selectedStopId
     ? dayLegs.find((l) => l.fromStopId === selectedStopId)
     : undefined;
-  const transitSoftOwns =
-    demoShell &&
+  const transferSurfaceOpen =
     selectedStopIndex >= 0 &&
     (Boolean(selectedOutgoingLeg) ||
       (!routing && selectedStopIndex < dayStops.length - 1));
+  const transitSoftOwns =
+    transferSurfaceOpen &&
+    (transferSoftPreview || demoShell);
   const modeSoftOpen =
-    demoShell && dayLegs.length > 0 && !transitSoftOwns;
+    !transitSoftOwns &&
+    (modeSoftPreview || (demoShell && dayLegs.length > 0));
   const modeSoftCopy = t(locale, "planner.mode.softFail");
   const modeSupportCopy = modeSoftOpen
     ? t(locale, "planner.mode.softSupport")
@@ -1077,12 +1104,12 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           </div>
 
           {/*
-            Transit filters SoftFail depth (BEA-358 after #129 / BEA-170):
-            azure mode rail · Soft mode badge · softSupport · compact SoftFail
-            mist band (`border-b`) · tip-011 mist-wash — yields while
-            TransferSteps SoftFail depth (BEA-378) owns selected-stop soft
-            chrome — never timber / Failed to fetch. Expo transit filters
-            SoftFail (#256) out of scope.
+            Transit filters SoftFail depth (BEA-358 after #129 / BEA-170) + craft
+            SoftFail query parity (BEA-423): azure mode rail · Soft mode badge ·
+            softSupport · compact SoftFail mist band (`border-b`) · tip-011
+            mist-wash — Craft: ?modeSoftFail=1. Yields while TransferSteps
+            SoftFail depth (BEA-378) / ?transferSoftFail=1 owns selected-stop
+            soft chrome — never timber / Failed to fetch.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
@@ -1691,6 +1718,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                                     !leg &&
                                     ctx.index < dayStops.length - 1
                                   }
+                                  craftSoftFail={transferSoftPreview}
                                 />
                               )}
                               {routing &&
