@@ -60,8 +60,9 @@ function presenceFor(member: TripMember): PresenceState {
 /**
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
- * (BEA-493) + wave 53 invite residual (BEA-506): shareHint `leading-snug` ·
- * tip-011 Invite/Copy press kept. SoftFailBadge · SoftFailSupport · mist band
+ * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
+ * residual (BEA-518): companions list row inset · empty `leading-snug` ·
+ * roster chrome type bar. SoftFailBadge · SoftFailSupport · mist band
  * unchanged. Invite SoftFail yields presence (no double depth). Soft copy never
  * timber / Failed to fetch. No `/dev` gallery.
  */
@@ -306,12 +307,12 @@ export function TripMembersBar({
           <div className="flex flex-wrap items-center gap-1.5">
             {yourRole ? (
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${ROLE_CHIP[yourRole]}`}
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] bp-transition ${ROLE_CHIP[yourRole]}`}
               >
                 {t(locale, `collab.role.${yourRole}`)}
               </span>
             ) : null}
-            <span className="rounded-bp-xs bg-mist/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-soft">
+            <span className="rounded-bp-xs bg-mist/80 px-1.5 py-0.5 text-[0.65rem] font-medium tabular-nums text-ink-soft">
               v{tripVersion}
             </span>
             {presenceSoftOpen ? (
@@ -376,7 +377,7 @@ export function TripMembersBar({
             ))}
             {overflow > 0 ? (
               <span
-                className="animate-rise inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[11px] font-semibold text-ink-soft"
+                className="animate-rise inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[0.65rem] font-semibold tabular-nums tracking-tight text-ink-soft"
                 style={{ animationDelay: "115ms" }}
               >
                 +{overflow}
@@ -549,7 +550,11 @@ export function TripMembersBar({
           )}
         </div>
 
-        {/* Presence list sheet — azure rail · mist spine tokens · tip-011 rise */}
+        {/*
+          Members roster / companions list — wave 54 residual (BEA-518): row
+          inset hover · empty leading-snug. SoftFail untouched. Beyond invite
+          #366 / presence pills #355.
+        */}
         <div className="border-t border-[color:var(--bp-line)]">
           <header className="flex flex-wrap items-center justify-between gap-2 bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -601,7 +606,7 @@ export function TripMembersBar({
                 return (
                   <li
                     key={m.id}
-                    className="animate-rise relative z-[1] flex items-center justify-between gap-3 rounded-bp-sm px-2 py-2 transition duration-bp-fast ease-bp-out hover:bg-mist/40"
+                    className="animate-rise relative z-[1] flex items-center justify-between gap-3 rounded-bp-sm px-2 py-2 transition duration-bp-fast ease-bp-out-strong hover:bg-mist/40 hover:shadow-[inset_2px_0_0_var(--bp-river)]"
                     style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
@@ -636,7 +641,7 @@ export function TripMembersBar({
               ) : null}
               {!pending && members.length === 0 ? (
                 <li className="animate-fade space-y-1 px-2 py-3">
-                  <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                  <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                     {t(locale, "collab.presence.empty")}
                   </p>
                 </li>

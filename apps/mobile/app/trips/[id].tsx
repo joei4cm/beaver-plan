@@ -2327,7 +2327,8 @@ export default function TripDetailScreen() {
                 {/*
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
                   wave 48 invite residual (BEA-461) + wave 51 presence pills craft
-                  (BEA-493): eyebrow 1.8 · chip/role type · list status pills.
+                  (BEA-493) + wave 54 members roster residual (BEA-518): paper /
+                  mist / inkSoft / river token alphas on presence chrome.
                   SoftFailBadge · SoftFailSupport · mist band unchanged. Craft:
                   ?presenceSoftFail=1 — never timber.
                 */}
@@ -2675,11 +2676,69 @@ export default function TripDetailScreen() {
                         </Text>
                       </SheetPresence>
                     )}
-                    <View style={styles.inviteMemberList}>
-                      {members.map((m) => {
+                    {/*
+                      Members roster / companions list — wave 54 residual
+                      (BEA-518): list eyebrow rail · tip-011 row rise · token
+                      alphas. SoftFail untouched. Beyond invite #366 / pills #355.
+                    */}
+                    <View
+                      style={styles.inviteMemberList}
+                      accessibilityLabel={t(
+                        locale,
+                        "collab.presence.listEyebrow",
+                      )}
+                    >
+                      <View style={styles.inviteMemberListHeader}>
+                        <View style={styles.inviteMemberListTitles}>
+                          <Text style={styles.inviteMemberListEyebrow}>
+                            {t(locale, "collab.presence.listEyebrow")}
+                          </Text>
+                          <Text style={styles.inviteMemberListCount}>
+                            {t(locale, "collab.presence.count").replace(
+                              "{n}",
+                              String(members.length),
+                            )}
+                          </Text>
+                        </View>
+                        {members.length > 0 ? (
+                          <View
+                            style={StyleSheet.flatten([
+                              styles.presenceStatusBadge,
+                              softFailLiveBadgeStyle,
+                            ])}
+                          >
+                            <Animated.View
+                              style={StyleSheet.flatten([
+                                styles.liveDot,
+                                {
+                                  opacity: presencePulse.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0.45, 1],
+                                  }),
+                                },
+                              ])}
+                            />
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.presenceStatusBadgeText,
+                                softFailLiveBadgeLabelStyle,
+                              ])}
+                            >
+                              {t(locale, "collab.presence.live")}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      {members.map((m, i) => {
                         const presence = presenceFor(m.role);
                         return (
-                          <View key={m.id} style={styles.inviteMemberRow}>
+                          <SheetPresence
+                            key={m.id}
+                            open
+                            delayMs={Math.min(i, 6) * 35}
+                            rise={8}
+                          >
+                          <View style={styles.inviteMemberRow}>
                             <View style={styles.inviteMemberLeft}>
                               <View
                                 style={StyleSheet.flatten([
@@ -2738,6 +2797,7 @@ export default function TripDetailScreen() {
                               {t(locale, `collab.role.${m.role}`)}
                             </Text>
                           </View>
+                          </SheetPresence>
                         );
                       })}
                     </View>
@@ -3946,7 +4006,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 — wave 54 roster residual (BEA-518). */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -3962,7 +4023,8 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
   },
   presenceRailCopy: {
     flexDirection: "row",
@@ -3987,13 +4049,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   presenceSupport: {
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
   },
   presenceRailBadges: {
@@ -4011,7 +4075,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   presenceStatusBadgeIdle: {
-    backgroundColor: "rgba(230, 236, 245, 0.7)",
+    /** Web bg-mist/70 */
+    backgroundColor: `${colors.mist}B3`,
   },
   presenceStatusBadgeText: {
     ...type.body,
@@ -4021,7 +4086,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   presenceStatusBadgeTextIdle: {
-    color: "rgba(100, 116, 139, 0.7)",
+    /** Web text-ink-soft/70 */
+    color: `${colors.inkSoft}B3`,
   },
   presenceBody: {
     paddingHorizontal: 10,
@@ -4035,11 +4101,13 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: radius.sm,
     padding: 4,
-    backgroundColor: "rgba(230, 236, 245, 0.5)",
+    /** Web bg-mist/50 */
+    backgroundColor: `${colors.mist}80`,
   },
   /** Azure inset mist track when Presence SoftFail open. */
   presenceTrackSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.72)",
+    /** Web bg-mist/72 */
+    backgroundColor: `${colors.mist}B8`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -4065,7 +4133,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
   },
   presenceChipActive: {
-    borderColor: "rgba(47, 107, 255, 0.28)",
+    /** Web ring-river/25–28 */
+    borderColor: `${colors.river}47`,
     shadowColor: colors.river,
     shadowOpacity: 0.14,
     shadowRadius: 7,
@@ -4141,14 +4210,15 @@ const styles = StyleSheet.create({
     color: colors.foam,
   },
   presenceRoleEditor: {
-    backgroundColor: "rgba(47,107,255,0.12)",
+    /** Web bg-river/12 */
+    backgroundColor: `${colors.river}1F`,
     color: colors.riverDeep,
   },
   presenceRoleViewer: {
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
-  /** List status pills — web PRESENCE_PILL parity (BEA-493). */
+  /** List status pills — web PRESENCE_PILL parity (BEA-493) · token alphas (BEA-518). */
   presenceStatePill: {
     ...type.body,
     alignSelf: "flex-start",
@@ -4163,13 +4233,15 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   presenceStateActive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
+    /** Web bg-river/12 */
+    backgroundColor: `${colors.river}1F`,
     color: colors.riverDeep,
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
   },
   presenceStateIdle: {
-    backgroundColor: "rgba(96,165,250,0.15)",
+    /** Web bg-focus/15 */
+    backgroundColor: `${colors.focus}26`,
     color: colors.riverDeep,
     borderLeftWidth: 2,
     borderLeftColor: colors.focus,
@@ -4527,15 +4599,56 @@ const styles = StyleSheet.create({
   inviteMemberList: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    paddingTop: 10,
-    gap: 4,
+    marginHorizontal: -14,
+    marginBottom: -14,
+    gap: 0,
+  },
+  /** Companions list rail — web listEyebrow header parity (BEA-518). */
+  inviteMemberListHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+    rowGap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  inviteMemberListTitles: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: 8,
+    rowGap: 2,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  inviteMemberListEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  inviteMemberListCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: `${colors.inkSoft}CC`,
   },
   inviteMemberRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
   inviteMemberLeft: {
     flexDirection: "row",
