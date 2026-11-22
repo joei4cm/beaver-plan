@@ -408,7 +408,7 @@ export function PlaceIntelSkeleton() {
     <div
       aria-busy="true"
       aria-live="polite"
-      className="mt-3 overflow-hidden rounded-bp-sm border border-river/25 bg-foam shadow-bp"
+      className="mt-3 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
     >
       <div className="relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]">
         <div className="flex items-start justify-between gap-2">
