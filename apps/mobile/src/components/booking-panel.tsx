@@ -129,10 +129,12 @@ async function searchLocal(
  * offerCard `--bp-line` + soft shadow · offerTitle display 14.
  * Wave 50 Confirm residual (BEA-481): tip-011 press on Confirm save / open
  * chip · draftKind tracking 1.4 (web `0.14em`). Wave 52 (BEA-502): tip-011
- * press on OTA Search / Open / Use link (reuse `ctaPressed`). SoftFail stays
- * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
- * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to
- * fetch. No `/dev` gallery.
+ * press on OTA Search / Open / Use link (reuse `ctaPressed`). Wave 63
+ * (BEA-613): headerEyebrow letterSpacing 1.8 · header/loading/empty meta
+ * inkSoft@CC (day-fill #408 twin) · skeleton SheetPresence `80+i*40` / rise 8
+ * twin of live offers (#425 pattern). SoftFail stays under OTA / Confirm
+ * rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields
+ * OTA (no double depth). Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -673,8 +675,16 @@ export function BookingPanel({
                 rise={8}
                 style={styles.loadingBlock}
               >
-                <View style={styles.skeletonCard} />
-                <View style={styles.skeletonCard} />
+                {[0, 1].map((i) => (
+                  <SheetPresence
+                    key={i}
+                    open={open}
+                    delayMs={80 + i * 40}
+                    rise={8}
+                  >
+                    <View style={styles.skeletonCard} />
+                  </SheetPresence>
+                ))}
                 <Text style={styles.loadingHint}>
                   {t(locale, "planner.booking.loadingHint")}
                 </Text>
@@ -1015,7 +1025,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    /** Web sheet eyebrow 0.18em bar (BEA-613 / day-fill #408 twin). */
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -1035,9 +1046,10 @@ const styles = StyleSheet.create({
   },
   headerSupport: {
     ...type.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: colors.inkSoft,
+    fontSize: 11,
+    lineHeight: 16,
+    /** Web sheet meta ink-soft/80 (BEA-613 / day-fill twin). */
+    color: `${colors.inkSoft}CC`,
   },
   chevron: {
     ...type.body,
@@ -1177,7 +1189,9 @@ const styles = StyleSheet.create({
   loadingHint: {
     ...type.body,
     fontSize: 12,
-    color: colors.inkSoft,
+    lineHeight: 16,
+    /** Web loadingHint ink-soft/80 (BEA-613 / day-fill twin). */
+    color: `${colors.inkSoft}CC`,
   },
   emptyLadder: {
     gap: 6,
@@ -1205,7 +1219,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     lineHeight: 19,
-    color: colors.inkSoft,
+    /** Web emptyHint ink-soft/80 (BEA-613 / day-fill twin). */
+    color: `${colors.inkSoft}CC`,
   },
   resultsList: {
     gap: 10,

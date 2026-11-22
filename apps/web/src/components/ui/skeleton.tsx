@@ -535,7 +535,11 @@ export function PlaceIntelSkeleton() {
   );
 }
 
-/** Tip 017 — OTA offer rows while booking search soft-fetches. */
+/**
+ * Tip 017 — OTA offer rows while booking search soft-fetches.
+ * Wave 63 (BEA-613): `animate-preview-in` + `80 + i*40` twin of live offers
+ * (day-fill DayFillSkeleton rise stagger pattern from #425).
+ */
 export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <ul
@@ -546,7 +550,8 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
       {Array.from({ length: rows }).map((_, i) => (
         <li
           key={i}
-          className="overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft"
+          className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft"
+          style={{ animationDelay: `${80 + i * 40}ms` }}
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1 space-y-2">
