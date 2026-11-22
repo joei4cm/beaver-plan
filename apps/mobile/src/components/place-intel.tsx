@@ -64,11 +64,13 @@ function SectionEyebrow({ children }: { children: string }) {
  * SoftFail helper adoption (BEA-390 after #284) + craft SoftFail query parity
  * (BEA-422): azure Place intel rail · SoftFailBadge · SoftFailSupport · soft
  * rail wash · compact SoftFail mist band under rail · softFailMistWash tip-011
- * body · StyleSheet.flatten · Lumen tokens. Craft: `/trips/…?placeSoftFail=1`
- * forces SoftFail depth under Place intel (mirrors web + #282). SoftFail stays
- * under Place intel rail — never timber / Failed to fetch. No `/dev` SoftFail
- * gallery. Web map SoftFail craft queries land in the same BEA-422 PR; Expo
- * trip SoftFail rails stay with BEA-388 except search SoftFail craft.
+ * body · StyleSheet.flatten · Lumen tokens. Wave 57 residual (BEA-551):
+ * paper/mist/river/inkSoft hex-alpha · mist Snapshot/Categories tracks · foam
+ * rating/hours/tag chips · title lineHeight · support inkSoft/80 — parity with
+ * web #329 + BEA-551 type ladder. Craft: `/trips/…?placeSoftFail=1` forces
+ * SoftFail depth under Place intel (mirrors web + #282). SoftFail stays under
+ * Place intel rail — never timber / Failed to fetch. No `/dev` SoftFail
+ * gallery.
  */
 export function PlaceIntel({
   details,
@@ -233,13 +235,16 @@ export function PlaceIntel({
                 open={open}
                 delayMs={60}
                 rise={8}
-                style={styles.section}
+                style={StyleSheet.flatten([
+                  styles.section,
+                  softOpen ? null : styles.snapshotSection,
+                ])}
                 accessibilityLabel={t(locale, "planner.place.snapshotEyebrow")}
               >
                 <SectionEyebrow>
                   {t(locale, "planner.place.snapshotEyebrow")}
                 </SectionEyebrow>
-                <View style={styles.snapshotRow}>
+                <View style={styles.snapshotTrack}>
                   {view.rating != null ? (
                     <View style={styles.ratingChip}>
                       <Text style={styles.ratingStar} accessibilityElementsHidden>
@@ -254,12 +259,14 @@ export function PlaceIntel({
                     </View>
                   ) : null}
                   {hours ? (
-                    <Text style={styles.hours}>
-                      <Text style={styles.hoursLabel}>
-                        {t(locale, "planner.place.hours")}{" "}
+                    <View style={styles.hoursChip}>
+                      <Text style={styles.hours}>
+                        <Text style={styles.hoursLabel}>
+                          {t(locale, "planner.place.hours")}{" "}
+                        </Text>
+                        <Text style={styles.hoursValue}>{hours}</Text>
                       </Text>
-                      <Text style={styles.hoursValue}>{hours}</Text>
-                    </Text>
+                    </View>
                   ) : null}
                 </View>
                 {extraHours.length > 0 ? (
@@ -285,7 +292,7 @@ export function PlaceIntel({
                 <SectionEyebrow>
                   {t(locale, "planner.place.tags")}
                 </SectionEyebrow>
-                <View style={styles.tagRow}>
+                <View style={styles.tagTrack}>
                   {tags.map((tag) => (
                     <Text key={tag} style={styles.tagChip}>
                       {interestLabel(locale, tag)}
@@ -347,15 +354,16 @@ const styles = StyleSheet.create({
   header: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web azure rail `bg-paper/80`. */
+    backgroundColor: `${colors.paper}CC`,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
-  /** Soft azure Place intel rail wash when SoftFail owns depth (BEA-359). */
+  /** Soft azure Place intel rail wash when SoftFail owns depth (BEA-359) — token only. */
   headerSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    backgroundColor: `${colors.paper}D9`,
   },
   headerText: {
     minWidth: 0,
@@ -380,20 +388,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,
+    lineHeight: 20,
     color: colors.ink,
   },
   headerSupport: {
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.inkSoft,
+    /** Web support `text-ink-soft/80`. */
+    color: `${colors.inkSoft}CC`,
   },
   headerCount: {
     ...type.body,
     fontSize: 11,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100,116,139,0.8)",
+    color: `${colors.inkSoft}CC`,
   },
   pinEyebrow: {
     ...type.body,
@@ -401,7 +411,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(100,116,139,0.7)",
+    color: `${colors.inkSoft}B3`,
   },
   sections: {
     borderTopWidth: 0,
@@ -413,6 +423,10 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
     gap: 8,
   },
+  /** Web Snapshot section `bg-mist/25` when SoftFail is idle. */
+  snapshotSection: {
+    backgroundColor: `${colors.mist}40`,
+  },
   sectionEyebrow: {
     ...type.body,
     fontSize: 10,
@@ -421,34 +435,43 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
-  snapshotRow: {
+  /** Web mist Snapshot track `bg-mist/50 p-1`. */
+  snapshotTrack: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.mist}80`,
+    padding: 4,
   },
   ratingChip: {
     flexDirection: "row",
     alignItems: "baseline",
     gap: 4,
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    backgroundColor: colors.foam,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.river,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.river}33`,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
   },
   ratingStar: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    color: "rgba(47,107,255,0.8)",
+    color: `${colors.river}CC`,
   },
   ratingValue: {
     ...type.display,
     fontSize: 14,
     fontWeight: "800",
     letterSpacing: -0.2,
+    lineHeight: 18,
     color: colors.river,
   },
   srOnly: {
@@ -457,19 +480,28 @@ const styles = StyleSheet.create({
     height: 1,
     opacity: 0,
   },
+  /** Web hours foam chip `bg-foam/95` + `--bp-line` ring. */
+  hoursChip: {
+    flexShrink: 1,
+    borderRadius: radius.xs,
+    backgroundColor: `${colors.foam}F2`,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   hours: {
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
     color: colors.inkSoft,
-    flexShrink: 1,
   },
   hoursLabel: {
     fontWeight: "600",
-    color: "rgba(100, 116, 139, 0.85)",
+    color: `${colors.inkSoft}D9`,
   },
   hoursValue: {
-    color: "rgba(15, 23, 42, 0.85)",
+    color: `${colors.ink}D9`,
   },
   extraHours: {
     gap: 2,
@@ -480,37 +512,46 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.inkSoft,
   },
-  tagRow: {
+  /** Web Categories mist track `bg-mist/50 p-1`. */
+  tagTrack: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 2,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.mist}80`,
+    padding: 4,
   },
   tagChip: {
     ...type.body,
     overflow: "hidden",
     borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.2)",
-    backgroundColor: "rgba(47,107,255,0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderColor: `${colors.river}33`,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     fontSize: 11,
     fontWeight: "600",
-    color: colors.riverDeep,
+    color: colors.river,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
   },
   summary: {
     ...type.body,
     fontSize: 14,
     lineHeight: 21,
-    color: "rgba(15, 23, 42, 0.9)",
+    color: `${colors.ink}E6`,
   },
   noteSection: {
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.4)",
-    borderLeftWidth: 3,
+    /** Web Note `bg-paper/50` + inset river. */
+    backgroundColor: `${colors.paper}80`,
+    borderLeftWidth: 2,
     borderLeftColor: colors.river,
     gap: 6,
   },
@@ -518,7 +559,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
   },
   skeletonRoot: {
     marginTop: 10,
@@ -528,10 +569,15 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
     gap: 0,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   skeletonHeader: {
     height: 36,
-    backgroundColor: "rgba(230,236,245,0.85)",
+    /** Web skeleton azure rail `bg-paper/80`. */
+    backgroundColor: `${colors.paper}CC`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -540,7 +586,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginVertical: 10,
     borderRadius: radius.xs,
-    backgroundColor: "rgba(230,236,245,0.7)",
+    backgroundColor: `${colors.mist}B3`,
   },
   skeletonShort: {
     height: 40,

@@ -66,8 +66,10 @@ function SectionEyebrow({ children }: { children: string }) {
  * Map place intel sheet — SoftFail depth kept (BEA-333 / BEA-390 / BEA-422) +
  * wave 47 craft residual (BEA-453): nested shell `--bp-line` + `shadow-bp-soft`
  * matching TransferSteps in the stop drawer (no double river elevation).
- * SoftFail stays under Place intel rail; craft `/trips/…?placeSoftFail=1`.
- * Never timber / Failed to fetch. No `/dev` gallery.
+ * Wave 57 residual (BEA-551): title `leading-snug` · support `ink-soft/80`
+ * ladder (day-fill / transfer / map-search bar). SoftFail stays under Place
+ * intel rail; craft `/trips/…?placeSoftFail=1`. Never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export function PlaceIntel({
   details,
@@ -189,7 +191,7 @@ export function PlaceIntel({
                     </span>
                   )}
                 </div>
-                <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                   {view.name}
                 </p>
                 {softOpen ? (
@@ -197,7 +199,7 @@ export function PlaceIntel({
                     {sheetSupportCopy}
                   </SoftFailSupport>
                 ) : (
-                  <p className="truncate text-[11px] leading-snug text-ink-soft">
+                  <p className="truncate text-[11px] leading-snug text-ink-soft/80">
                     {sheetSupportCopy}
                   </p>
                 )}
