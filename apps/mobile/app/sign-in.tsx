@@ -42,10 +42,10 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
 
 /**
  * Expo auth / WeChat sheet — SoftFail depth kept (BEA-392 / BEA-421 / #269) +
- * wave 49 craft residual (BEA-472): Lumen sky tokens · eyebrow tracking ·
- * foam/95 sheet · tip-011 WeChat/demo CTA press. SoftFailBadge · SoftFailSupport ·
- * mist band · WeChat SoftFail yield unchanged. Craft: /sign-in?signInSoftFail=1 —
- * SoftFail copy never timber / Failed to fetch. No `/dev` gallery.
+ * wave 49 craft residual (BEA-472) + wave 54 auth landing residual (BEA-522):
+ * Lumen `colors.*` hex alphas · title lineHeight · tip-011 CTA opacity.
+ * SoftFailBadge · SoftFailSupport · mist band · WeChat SoftFail yield unchanged.
+ * Craft: /sign-in?signInSoftFail=1 — SoftFail copy never timber. No `/dev` gallery.
  */
 export default function SignInScreen() {
   const { signInSoftFail: signInSoftFailParam } = useLocalSearchParams<{
@@ -241,7 +241,12 @@ function ClerkProviders({
       ) : null}
       <Link href="/trips" asChild>
         <Pressable
-          style={styles.linkRow}
+          style={({ pressed }) =>
+            StyleSheet.flatten([
+              styles.linkRow,
+              pressed ? styles.linkPressed : null,
+            ])
+          }
           accessibilityRole="link"
         >
           <Text style={styles.linkLabel}>← {t(locale, "nav.trips")}</Text>
@@ -358,7 +363,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 180,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    /** Web river wash @ 0.1 — invite #366 token alpha */
+    backgroundColor: `${colors.river}1A`,
   },
   skyOrb: {
     position: "absolute",
@@ -367,7 +373,8 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: "rgba(96, 165, 250, 0.14)",
+    /** Web focus orb @ 0.14 */
+    backgroundColor: `${colors.focus}24`,
   },
   content: {
     paddingHorizontal: 24,
@@ -394,6 +401,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "800",
     letterSpacing: -0.9,
+    lineHeight: 42,
     color: colors.ink,
   },
   support: {
@@ -410,7 +418,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    /** Web bg-foam/95 */
+    backgroundColor: `${colors.foam}F2`,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -424,14 +433,16 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   sheetRailSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    /** Web bg-paper/85 */
+    backgroundColor: `${colors.paper}D9`,
   },
   sheetRailCopy: {
     flexDirection: "row",
@@ -453,7 +464,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(100, 116, 139, 0.85)",
+    color: `${colors.inkSoft}D9`,
   },
   /** Mist SoftFail strip under azure rail — border-b before mist body. */
   sheetSoftFail: {
@@ -465,6 +476,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 18,
     gap: 14,
+    /** SoftFail mist wash — leave rgba (same as #366). */
     backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
   providersBody: {
@@ -483,6 +495,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     letterSpacing: -0.5,
+    lineHeight: 30,
     color: colors.ink,
   },
   providersCopy: {
@@ -509,6 +522,7 @@ const styles = StyleSheet.create({
     gap: 14,
     overflow: "hidden",
     borderRadius: radius.sm,
+    /** SoftFail mist inset — leave rgba. */
     backgroundColor: "rgba(230, 236, 245, 0.42)",
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -531,6 +545,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     letterSpacing: -0.5,
+    lineHeight: 30,
     color: colors.ink,
   },
   demoBody: {
@@ -568,7 +583,9 @@ const styles = StyleSheet.create({
   ctaDisabled: {
     opacity: 0.7,
   },
+  /* tip-011 press — opacity parity with invite #366. */
   ctaPressed: {
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
   },
   ctaLabel: {
@@ -580,6 +597,10 @@ const styles = StyleSheet.create({
   linkRow: {
     alignSelf: "flex-start",
     paddingVertical: 6,
+  },
+  linkPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   linkLabel: {
     ...type.body,
