@@ -435,13 +435,11 @@ export default function JournalScreen() {
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
   /**
-   * Empty SoftFail helpers (web #231 / BEA-391) + craft SoftFail query parity
-   * (BEA-437; replaces BEA-428): azure Entries rail · SoftFailBadge Soft empty ·
-   * SoftFailSupport · emptySoftFail copy · compact SoftFail mist band · tip-011
-   * mist-wash empty body. Craft: /trips/…/journal?emptySoftFail=1 — SoftFail
-   * Soft empty depth without hunting an empty day. SoftFail copy always
-   * emptySoftFail — never timber / Failed to fetch. SoftFail depth + helpers
-   * kept. No `/dev` SoftFail gallery.
+   * SoftFail depth kept (web #231 / BEA-391 / BEA-437) + wave 49 craft residual
+   * (BEA-476): entries/compose Lumen type · tip-011 press · paper/foam tokens.
+   * SoftFailBadge Soft empty · SoftFailSupport · mist band · tip-011 mist-wash
+   * unchanged. Craft: /trips/…/journal?emptySoftFail=1. Soft copy always
+   * emptySoftFail — never timber / Failed to fetch. No `/dev` gallery.
    */
   const entryEmpty = visible.length === 0 || emptySoftPreview;
   const emptyOwnsSoft = entryEmpty;
@@ -449,16 +447,12 @@ export default function JournalScreen() {
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
   const emptySoftSupportCopy = t(locale, "journal.emptySoftSupport");
   /**
-   * Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft SoftFail
-   * query parity (BEA-424): azure Entries rail · SoftFailBadge Soft entries ·
-   * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
-   * mist-wash SheetPresence · StyleSheet.flatten. Craft:
-   * /trips/…/journal?entriesSoftFail=1 — SoftFail depth without API down.
-   * SoftFail copy always softFail / softOffline — never timber / Failed to
-   * fetch. Yields while empty SoftFail (#231 / BEA-437 craft) owns the Entries
-   * rail (no double depth). Compose SoftFail (#247) keeps its own Compose rail —
-   * different azure rail. SoftFail depth + helpers kept. No `/dev` SoftFail
-   * gallery.
+   * SoftFail depth kept (BEA-391 / BEA-370 / BEA-424) + wave 49 craft residual
+   * (BEA-476). SoftFailBadge Soft entries · SoftFailSupport · mist band ·
+   * tip-011 mist-wash unchanged. Craft: /trips/…/journal?entriesSoftFail=1.
+   * Soft copy always softFail / softOffline — never timber / Failed to fetch.
+   * Yields while empty SoftFail owns Entries; Compose SoftFail keeps Compose
+   * rail. No `/dev` gallery.
    */
   const entryOwnsSoft =
     (entriesSoftPreview || demoSeeded || softNotice) && !emptyOwnsSoft;
@@ -470,13 +464,12 @@ export default function JournalScreen() {
       : t(locale, "journal.softFail");
   const listSoftSupportCopy = t(locale, "journal.softSupport");
   /**
-   * Compose SoftFail helpers (BEA-391 after #284 / BEA-322) + craft SoftFail
-   * query parity (BEA-424): azure Compose rail · SoftFailBadge Soft media ·
-   * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
-   * mist-wash SheetPresence · StyleSheet.flatten. Craft:
-   * /trips/…/journal?composeSoftFail=1 — SoftFail depth without a media miss.
-   * Yields while empty SoftFail (#231 / BEA-437 craft) owns Entries (no double
-   * depth). SoftFail copy always composeSoftFail — never timber / Failed to fetch.
+   * SoftFail depth kept (BEA-391 / BEA-322 / BEA-424) + wave 49 craft residual
+   * (BEA-476): compose eyebrow 1.8 · tip-011 press · foam media rail tokens.
+   * SoftFailBadge Soft media · SoftFailSupport · mist band · tip-011 mist-wash
+   * unchanged. Craft: /trips/…/journal?composeSoftFail=1. Yields while empty
+   * SoftFail owns Entries. Soft copy always composeSoftFail — never timber /
+   * Failed to fetch. No `/dev` gallery.
    */
   const composeOwnsSoft =
     (composeSoftFail || composeSoftPreview) && !emptyOwnsSoft;
@@ -513,7 +506,7 @@ export default function JournalScreen() {
           </Animated.View>
 
           <Animated.View style={StyleSheet.flatten([styles.sheet, riseStyle])}>
-            {/* Day tabs — tip 015 mist rail + river active (web #80 / planner #66). */}
+            {/* Day tabs — tip 015 mist rail + river active · tip-011 press (BEA-476). */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -530,10 +523,13 @@ export default function JournalScreen() {
                     onPress={() => setDayId(day.id)}
                     accessibilityRole="tab"
                     accessibilityState={{ selected: active }}
-                    style={StyleSheet.flatten([
-                      styles.dayChip,
-                      active ? styles.dayChipActive : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.dayChip,
+                        active ? styles.dayChipActive : null,
+                        pressed ? styles.pressScale : null,
+                      ])
+                    }
                   >
                     <Text
                       style={StyleSheet.flatten([
@@ -561,14 +557,13 @@ export default function JournalScreen() {
 
             <View style={styles.listPane}>
               {/*
-                Entry SoftFail helpers (BEA-391 after #284 / BEA-370) + craft
-                SoftFail query parity (BEA-424 / BEA-437): azure Entries rail ·
-                SoftFailBadge Soft empty/entries · SoftFailSupport · compact
-                SoftFail mist band · tip-011 mist-wash body. Craft:
-                ?emptySoftFail=1 · ?entriesSoftFail=1 — never timber / Failed to
-                fetch. Yields: empty owns while empty / craft; Soft entries
-                yields while empty / compose owns. Compose SoftFail (#247) stays
-                on Compose.
+                SoftFail kept (BEA-391 / BEA-370 / BEA-424 / BEA-437) + wave 49
+                craft (BEA-476): Entries eyebrow 1.8 · tip-011 entry press ·
+                paper rail tokens. SoftFailBadge Soft empty/entries ·
+                SoftFailSupport · mist band · tip-011 mist-wash unchanged.
+                Craft: ?emptySoftFail=1 · ?entriesSoftFail=1. Soft copy never
+                timber / Failed to fetch. Empty owns while empty; Soft entries
+                yields while empty; Compose SoftFail stays on Compose.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -695,11 +690,14 @@ export default function JournalScreen() {
                       accessibilityState={{ selected: scrubMatch }}
                       accessibilityLabel={`${t(locale, "journal.entryEyebrow")} ${String(index + 1).padStart(2, "0")} · ${placeLabel}`}
                       onPress={selectEntry}
-                      style={StyleSheet.flatten([
-                        styles.entry,
-                        scrubMatch ? styles.entrySelected : null,
-                        isLast ? styles.entryLast : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.entry,
+                          scrubMatch ? styles.entrySelected : null,
+                          isLast ? styles.entryLast : null,
+                          pressed ? styles.entryPressScale : null,
+                        ])
+                      }
                     >
                       <EntryIndexMark n={index + 1} active={scrubMatch} />
                       <View style={styles.entryBodyCol}>
@@ -819,7 +817,14 @@ export default function JournalScreen() {
                       {t(locale, "journal.emptyHint")}
                     </Text>
                     <Pressable
-                      style={StyleSheet.flatten([styles.emptyCta])}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(locale, "journal.emptyCta")}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.emptyCta,
+                          pressed ? styles.pressScale : null,
+                        ])
+                      }
                       onPress={() => composeRef.current?.focus()}
                     >
                       <Text style={styles.emptyCtaText}>
@@ -837,12 +842,12 @@ export default function JournalScreen() {
             </View>
 
             {/*
-              Compose SoftFail helpers (BEA-391 after #284 / BEA-322) + craft
-              SoftFail query parity (BEA-424): foam compose · azure head ·
-              SoftFailBadge Soft media · SoftFailSupport · compact SoftFail mist
-              band · tip-011 mist-wash body. Craft: ?composeSoftFail=1 — never
-              timber / Failed to fetch. Own Compose rail; Entries SoftFail
-              (BEA-370) owns the Entries rail — not overlapping chrome.
+              SoftFail kept (BEA-391 / BEA-322 / BEA-424) + wave 49 craft
+              (BEA-476): compose eyebrow 1.8 · tip-011 bind/photo/save press ·
+              foam/paper tokens. SoftFailBadge Soft media · SoftFailSupport ·
+              mist band · tip-011 mist-wash unchanged. Craft: ?composeSoftFail=1.
+              Soft copy never timber / Failed to fetch. Own Compose rail;
+              Entries SoftFail owns Entries — not overlapping chrome.
             */}
             <View
               style={styles.compose}
@@ -915,10 +920,13 @@ export default function JournalScreen() {
                     accessibilityRole="tab"
                     accessibilityState={{ selected: stopId === "" }}
                     onPress={() => setStopId("")}
-                    style={StyleSheet.flatten([
-                      styles.bindChip,
-                      stopId === "" ? styles.bindChipOn : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.bindChip,
+                        stopId === "" ? styles.bindChipOn : null,
+                        pressed ? styles.pressScale : null,
+                      ])
+                    }
                   >
                     <Text
                       style={StyleSheet.flatten([
@@ -937,10 +945,13 @@ export default function JournalScreen() {
                         accessibilityRole="tab"
                         accessibilityState={{ selected: on }}
                         onPress={() => setStopId(s.id)}
-                        style={StyleSheet.flatten([
-                          styles.bindChip,
-                          on ? styles.bindChipOn : null,
-                        ])}
+                        style={({ pressed }) =>
+                          StyleSheet.flatten([
+                            styles.bindChip,
+                            on ? styles.bindChipOn : null,
+                            pressed ? styles.pressScale : null,
+                          ])
+                        }
                       >
                         <Text
                           style={StyleSheet.flatten([
@@ -967,9 +978,9 @@ export default function JournalScreen() {
                 />
 
                 {/*
-                  Compose media rail craft residual (BEA-455) — web #124 nested
-                  foam card · azure inset · photoSlots eyebrow · count · lead
-                  frame. SoftFail depth kept elsewhere; no SoftFail reopen here.
+                  Compose media rail — BEA-455 nested foam + wave 49 (BEA-476)
+                  tip-011 photo drop press · foam/paper tokens. SoftFail depth
+                  kept elsewhere; no SoftFail reopen here.
                 */}
                 <View
                   style={styles.composeMediaRail}
@@ -1011,10 +1022,15 @@ export default function JournalScreen() {
                   </View>
 
                   <Pressable
-                    style={styles.photoDrop}
                     onPress={() => void capture()}
                     accessibilityRole="button"
                     accessibilityLabel={t(locale, "journal.addPhotos")}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.photoDrop,
+                        pressed ? styles.pressScale : null,
+                      ])
+                    }
                   >
                     <Text style={styles.photoDropTitle}>
                       {t(locale, "journal.addPhotos")}
@@ -1067,22 +1083,31 @@ export default function JournalScreen() {
                 ) : null}
 
                 <Pressable
-                  style={StyleSheet.flatten([
-                    styles.primary,
-                    saving ||
-                    (!body.trim() &&
-                      pendingMedia.length === 0 &&
-                      pendingLocal.length === 0)
-                      ? styles.disabled
-                      : null,
-                  ])}
                   disabled={
                     saving ||
                     (!body.trim() &&
                       pendingMedia.length === 0 &&
                       pendingLocal.length === 0)
                   }
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    saving
+                      ? t(locale, "journal.saving")
+                      : t(locale, "journal.save")
+                  }
                   onPress={() => void save()}
+                  style={({ pressed }) => {
+                    const idle =
+                      saving ||
+                      (!body.trim() &&
+                        pendingMedia.length === 0 &&
+                        pendingLocal.length === 0);
+                    return StyleSheet.flatten([
+                      styles.primary,
+                      idle ? styles.disabled : null,
+                      pressed && !idle ? styles.pressScale : null,
+                    ]);
+                  }}
                 >
                   <Text style={styles.primaryLabel}>
                     {saving
@@ -1114,7 +1139,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     ...type.body,
     fontSize: 11,
-    letterSpacing: 2.4,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -1131,7 +1156,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 14,
     fontSize: 11,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.inkSoft,
     fontWeight: "600",
@@ -1142,13 +1167,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     letterSpacing: -0.4,
+    lineHeight: 30,
     color: colors.ink,
   },
   support: {
     ...type.body,
     marginTop: 10,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     color: colors.inkSoft,
     maxWidth: 360,
   },
@@ -1162,7 +1188,7 @@ const styles = StyleSheet.create({
   dayRail: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
   },
   dayRailContent: {
     gap: 4,
@@ -1195,6 +1221,15 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   dayChipLabelActive: { color: colors.foam },
+  /** tip-011 press — web active:scale-[0.98] (BEA-476). */
+  pressScale: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
+  /** Softer press on entry rows (share-row parity). */
+  entryPressScale: {
+    transform: [{ scale: 0.995 }],
+  },
   listPane: {
     paddingHorizontal: 18,
     paddingTop: 18,
@@ -1205,7 +1240,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
     marginBottom: 0,
-    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    backgroundColor: colors.paper,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingLeft: 12,
@@ -1213,7 +1248,7 @@ const styles = StyleSheet.create({
   },
   /** Softer azure Entries rail wash while SoftFail owns. */
   listHeadSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    backgroundColor: colors.paper,
   },
   listHeadTop: {
     flexDirection: "row",
@@ -1233,7 +1268,7 @@ const styles = StyleSheet.create({
   listEyebrow: {
     ...type.body,
     fontSize: 11,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -1272,7 +1307,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 8,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: colors.inkSoft,
   },
   /** Mist SoftFail strip under azure Entries rail — border-b before tip-011 body. */
@@ -1408,7 +1443,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(47, 107, 255, 0.8)",
+    color: colors.river,
+    opacity: 0.8,
     fontWeight: "700",
   },
   photoSlotsLabel: {
@@ -1416,7 +1452,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(100, 116, 139, 0.7)",
+    color: colors.inkSoft,
+    opacity: 0.7,
     fontWeight: "600",
     marginBottom: 8,
   },
@@ -1478,6 +1515,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 11,
     borderRadius: radius.md,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   emptyCtaText: {
     ...type.body,
@@ -1489,12 +1530,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    backgroundColor: colors.paper,
   },
   composeHeader: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderLeftWidth: 3,
@@ -1502,7 +1543,7 @@ const styles = StyleSheet.create({
   },
   /** Softer azure rail wash while SoftFail owns Compose. */
   composeHeaderSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    backgroundColor: colors.paper,
   },
   composeHeaderTop: {
     flexDirection: "row",
@@ -1522,7 +1563,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -1531,13 +1572,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     letterSpacing: -0.35,
+    lineHeight: 30,
     color: colors.ink,
   },
   composeHint: {
     ...type.body,
     marginTop: 6,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: colors.inkSoft,
     flexShrink: 1,
   },
@@ -1610,14 +1652,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
     textAlignVertical: "top",
   },
-  /** Nested foam media rail — web #124 compose chrome (BEA-455). */
+  /** Nested foam media rail — web #124 compose chrome (BEA-455 / BEA-476). */
   composeMediaRail: {
     marginTop: 14,
     overflow: "hidden",
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    backgroundColor: colors.foam,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -1633,7 +1675,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -1648,7 +1690,7 @@ const styles = StyleSheet.create({
   composeMediaEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -1657,8 +1699,8 @@ const styles = StyleSheet.create({
     ...type.body,
     flexShrink: 1,
     fontSize: 11,
-    lineHeight: 15,
-    color: "rgba(100, 116, 139, 0.85)",
+    lineHeight: 16,
+    color: colors.inkSoft,
   },
   composeMediaCount: {
     borderRadius: radius.xs,
