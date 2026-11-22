@@ -451,30 +451,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderTopWidth: 0,
   },
-  statusBadge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  statusBadgeSoft: {
-    backgroundColor: colors.mist,
-  },
-  statusBadgeLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
-  statusBadgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-  },
-  statusBadgeTextSoft: {
-    color: colors.inkSoft,
-  },
-  statusBadgeTextLive: {
-    color: colors.river,
-  },
   sheetBody: {
     paddingHorizontal: 18,
     paddingVertical: 18,

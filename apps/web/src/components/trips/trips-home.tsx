@@ -8,6 +8,7 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -537,17 +538,15 @@ export function TripsHome({ locale }: Props) {
                       )}
                 </span>
               </div>
-              <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  listSoft && !seedOwnsSoft
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river"
-                }`}
-              >
-                {listSoft && !seedOwnsSoft
-                  ? t(locale, "trips.cardsSoftBadge")
-                  : t(locale, "trips.listLive")}
-              </span>
+              {listSoft && !seedOwnsSoft ? (
+                <SoftFailBadge>
+                  {t(locale, "trips.cardsSoftBadge")}
+                </SoftFailBadge>
+              ) : (
+                <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+                  {t(locale, "trips.listLive")}
+                </SoftFailLiveBadge>
+              )}
             </header>
 
             {/*

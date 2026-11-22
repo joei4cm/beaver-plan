@@ -466,25 +466,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  statusBadge: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.xs,
-    overflow: "hidden",
-  },
-  statusBadgeSoft: {
-    color: colors.inkSoft,
-    backgroundColor: colors.mist,
-  },
-  statusBadgeLive: {
-    color: colors.river,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
-  },
   roleChip: {
     ...type.body,
     fontSize: 10,
