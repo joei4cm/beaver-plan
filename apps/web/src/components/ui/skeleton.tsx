@@ -347,8 +347,22 @@ export function ShareStudioSkeleton() {
       </div>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         <div className="flex flex-col items-center">
-          {/* Canvas empty chrome — azure rail · SoftFailNotice slot · empty frame */}
-          <div className="w-full max-w-[440px] space-y-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-mist/40 p-4 md:p-5">
+          {/* Canvas chrome — tokenized foam/paper/river wash · azure rail · SoftFail slot */}
+          <div
+            className="relative w-full max-w-[440px] space-y-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] p-4 shadow-bp-soft md:p-5"
+            style={{
+              backgroundImage:
+                "radial-gradient(ellipse 85% 60% at 18% -5%, color-mix(in srgb, var(--bp-river) 16%, transparent), transparent 55%), linear-gradient(165deg, var(--bp-foam) 0%, var(--bp-paper) 48%, color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam)) 130%)",
+            }}
+          >
+            <span
+              aria-hidden
+              className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-river"
+              style={{
+                boxShadow:
+                  "0 0 12px color-mix(in srgb, var(--bp-river) 35%, transparent)",
+              }}
+            />
             <div className="flex items-center justify-between gap-2 pl-2">
               <div className="flex items-baseline gap-2">
                 <Skeleton className="h-2.5 w-20" />
@@ -360,6 +374,7 @@ export function ShareStudioSkeleton() {
             <Skeleton className="mt-3 aspect-[9/16] w-full max-w-[400px] rounded-bp" />
           </div>
           <Skeleton className="mt-4 h-4 w-56" />
+          <Skeleton className="mt-1 h-3 w-28" />
         </div>
         {/* Control sheet SoftFail depth — azure rail · SoftFail · mist tip-011 body */}
         <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
