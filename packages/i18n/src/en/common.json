@@ -724,6 +724,8 @@
   "offline.savedLocal": "Saved offline — will sync when online",
   "offline.cachedRead": "Reading pinned cache",
   "offline.limits": "Offline limits: trip cache + journal queue only; no Baidu/Google offline tile packs; conflicts use last-write-wins with trip version.",
+  "offline.pinSoftFail": "Soft pin — trip cache soft-failed locally; pin chrome stays under this rail until storage is available. Never a Failed to fetch crash.",
+  "offline.syncSoftFail": "Soft sync — journal queue stays local under this rail until reconnect. Never a Failed to fetch crash.",
   "planner.booking.title": "Bookings",
   "planner.booking.sheetEyebrow": "OTA",
   "planner.booking.support": "Search stays & tickets, open the provider, or pin a deep link on a stop.",
