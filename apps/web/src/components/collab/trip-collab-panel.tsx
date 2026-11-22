@@ -41,10 +41,11 @@ function newLocalId(prefix: string) {
  * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
  * yield #281) + wave 50–55 craft (#347 / #352 / #378) + wave 59 thread residual
  * (BEA-565): list loading rise/`/80` · empty/author snug · row out-strong.
- * Compose (#378) + SoftFailBadge · SoftFailSupport · SoftFailNotice mist band
- * unchanged. Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on
- * Activity; invite SoftFail yields timeline (no double depth). Soft copy never
- * timber / Failed to fetch. No `/dev` gallery.
+ * Wave 69 panel brand eyebrow (BEA-721): `0.28em` → `0.26em` twin of trip
+ * header brand (#375). Compose (#378) + SoftFailBadge · SoftFailSupport ·
+ * SoftFailNotice mist band unchanged. Craft: `/trips/…?timelineSoftFail=1`.
+ * Panel SoftFail yields on Activity; invite SoftFail yields timeline (no
+ * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripCollabPanel({
   tripId,
@@ -319,7 +320,7 @@ export function TripCollabPanel({
     <section className="animate-rise border-t border-[color:var(--bp-line)] bg-gradient-to-b from-foam/80 to-transparent">
       <header className="flex flex-wrap items-end justify-between gap-4 px-1 pb-5 pt-8 md:px-0">
         <div className="min-w-0 max-w-xl">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
             {t(locale, "collab.panel.eyebrow")}
           </p>
           <h2 className="mt-2 font-display text-[clamp(1.6rem,3vw,2.1rem)] font-extrabold tracking-[-0.03em] text-ink">
