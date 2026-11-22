@@ -40,7 +40,8 @@ type Props = {
  * Journal day timeline scrub — Lumen Route azure thumb/track under day tabs.
  * SoftFail helpers (BEA-391 after #284): SoftFailBadge / SoftFailSupport ·
  * tip-011 mist-wash. Soft copy never timber / Failed to fetch.
- * Same craft as planner #86: tip 011 (#46) settle, overshoot press, keyboard slider.
+ * Craft residual (BEA-496): idle rail paper/70 + azure inset matching planner
+ * scrub (#332) — SoftFail path unchanged. Tip 011 settle · keyboard slider.
  */
 export function JournalDayScrub({
   locale,
@@ -151,7 +152,9 @@ export function JournalDayScrub({
   return (
     <div
       className={`bp-day-scrub border-b border-[color:var(--bp-line)] ${
-        softOpen ? softFailRailClass : "bg-paper/50"
+        softOpen
+          ? softFailRailClass
+          : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]"
       }`}
     >
       {/*
