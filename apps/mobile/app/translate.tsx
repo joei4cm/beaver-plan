@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as FileSystem from "expo-file-system";
@@ -59,6 +59,12 @@ import { type } from "../src/theme";
 
 /** Tip 011 — shared #46 rise easing (match Expo settings / trips). */
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
+
+/** Craft SoftFail query parity (`?emptySoftFail=1` / `?talkSoftFail=1` / `?dualSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
 
 const uiLocale = "zh-CN" as const;
 
@@ -119,20 +125,50 @@ function seedTurns(
 }
 
 export default function TranslateScreen() {
-  const [tab, setTab] = useState<Tab>("conversation");
+  const {
+    emptySoftFail: emptySoftFailParam,
+    talkSoftFail: talkSoftFailParam,
+    dualSoftFail: dualSoftFailParam,
+  } = useLocalSearchParams<{
+    emptySoftFail?: string | string[];
+    talkSoftFail?: string | string[];
+    dualSoftFail?: string | string[];
+  }>();
+  /** Craft preview: /translate?emptySoftFail=1 — SoftFail depth under history. */
+  const emptySoftPreview = craftSoftFailOn(emptySoftFailParam);
+  /** Craft preview: /translate?talkSoftFail=1 — SoftFail depth under Talk. */
+  const talkSoftPreview = craftSoftFailOn(talkSoftFailParam);
+  /** Craft preview: /translate?dualSoftFail=1 — SoftFail depth under dual. */
+  const dualSoftPreview = craftSoftFailOn(dualSoftFailParam);
+
+  /** Dual craft opens Lens; empty/talk craft stay on conversation (no double depth). */
+  const [tab, setTab] = useState<Tab>(() =>
+    dualSoftPreview && !emptySoftPreview && !talkSoftPreview
+      ? "camera"
+      : "conversation",
+  );
   const [sourceLocale, setSourceLocale] = useState<TranslationLocale>("zh-CN");
   const [targetLocale, setTargetLocale] = useState<TranslationLocale>("en");
   const [status, setStatus] = useState<TranslationStatus | null>(null);
   const [softNotice, setSoftNotice] = useState(true);
   const [online, setOnline] = useState(isDeviceOnline);
-  /** Empty first paint — empty SoftFail owns history chrome (BEA-229). */
-  const [turns, setTurns] = useState<TurnRow[]>([]);
+  /**
+   * Empty first paint — empty SoftFail owns history chrome (BEA-229).
+   * Talk craft seeds demo turns so Talk SoftFail can own (empty yields).
+   */
+  const [turns, setTurns] = useState<TurnRow[]>(() =>
+    talkSoftPreview && !emptySoftPreview
+      ? seedTurns("zh-CN", "en")
+      : [],
+  );
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [micDenied, setMicDenied] = useState(false);
-  const [demoIndex, setDemoIndex] = useState(0);
+  const [demoIndex, setDemoIndex] = useState(() =>
+    talkSoftPreview && !emptySoftPreview ? 2 : 0,
+  );
   const [facing, setFacing] = useState<Facing>("back");
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [overlay, setOverlay] = useState<{
@@ -163,73 +199,93 @@ export default function TranslateScreen() {
   const camDenied = Boolean(camPermission && !camPermission.granted);
 
   /**
-   * Expo Talk empty SoftFailNotice depth (BEA-351 after #178 / BEA-229):
+   * Expo Talk empty SoftFailNotice depth (BEA-351 after #178 / BEA-229) +
+   * craft SoftFail query parity (BEA-407):
    * foam history rail · azure head · Soft empty badge · softSupport ·
    * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
    * SheetPresence empty body · StyleSheet.flatten. Soft-fail never timber /
    * Failed to fetch. Talk SoftFail (#249) yields while empty owns (no double
-   * depth). SoftFail copy always emptySoftFail / permission / softOffline
-   * (never inherit softNotice timber).
+   * depth). Craft: /translate?emptySoftFail=1. SoftFail copy always
+   * emptySoftFail / permission / softOffline (never inherit softNotice timber).
    */
   const historyEmpty = turns.length === 0;
   const emptyOwnsSoft = tab === "conversation" && historyEmpty;
+  /** Empty SoftFail always owns when empty; craft forces SoftFail emptySoftFail copy. */
   const emptySoftOpen = emptyOwnsSoft;
   /** SoftFail copy owned by empty chrome — never inherit softNotice / timber. */
-  const emptySoftCopy = softNotice && !online
-    ? t(uiLocale, "translate.softOffline")
-    : micDenied
-      ? t(uiLocale, "translate.permissionMic")
-      : t(uiLocale, "translate.emptySoftFail");
+  const emptySoftCopy = emptySoftPreview
+    ? t(uiLocale, "translate.emptySoftFail")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : micDenied
+        ? t(uiLocale, "translate.permissionMic")
+        : t(uiLocale, "translate.emptySoftFail");
   const emptySoftSupport = t(uiLocale, "translate.emptySoftSupport");
 
   /**
-   * Expo Talk SoftFailNotice depth (BEA-326 after #199 / BEA-266):
+   * Expo Talk SoftFailNotice depth (BEA-326 after #199 / BEA-266) +
+   * craft SoftFail query parity (BEA-407):
    * foam talk rail · azure head · Soft talk badge · softSupport ·
    * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
    * SheetPresence compose/mic · StyleSheet.flatten. Soft-fail never timber /
    * Failed to fetch. Yields while empty SoftFail depth (#178 / BEA-351) owns;
-   * yields to Lens SoftFail (#237) on camera tab (no double depth). SoftFail
-   * copy always talkSoftFail / permission / softOffline (never inherit
-   * softNotice timber).
+   * yields to Lens SoftFail (#237) on camera tab (no double depth). Craft:
+   * /translate?talkSoftFail=1. SoftFail copy always talkSoftFail / permission /
+   * softOffline (never inherit softNotice timber).
    */
   const talkSoftOpen =
     tab === "conversation" &&
     !emptyOwnsSoft &&
-    (isDemo || micDenied || Boolean(error) || softNotice);
+    (talkSoftPreview ||
+      isDemo ||
+      micDenied ||
+      Boolean(error) ||
+      softNotice);
   /** SoftFail copy owned by Talk chrome — never inherit softNotice / timber. */
-  const talkSoftCopy = softNotice && !online
-    ? t(uiLocale, "translate.softOffline")
-    : isDemo || (error && isNoiseError(new Error(error)))
-      ? t(uiLocale, "translate.talkSoftFail")
-      : micDenied
-        ? t(uiLocale, "translate.permissionMic")
-        : error
-          ? t(uiLocale, "translate.error")
-          : t(uiLocale, "translate.talkSoftFail");
+  const talkSoftCopy = talkSoftPreview
+    ? t(uiLocale, "translate.talkSoftFail")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : isDemo || (error && isNoiseError(new Error(error)))
+        ? t(uiLocale, "translate.talkSoftFail")
+        : micDenied
+          ? t(uiLocale, "translate.permissionMic")
+          : error
+            ? t(uiLocale, "translate.error")
+            : t(uiLocale, "translate.talkSoftFail");
   const talkSoftSupport = t(uiLocale, "translate.talkSupport");
 
   /**
-   * Expo translate dual SoftFailNotice depth (BEA-335 after #202 / copy #219):
+   * Expo translate dual SoftFailNotice depth (BEA-335 after #202 / copy #219) +
+   * craft SoftFail query parity (BEA-407):
    * foam dual rail · azure head · Soft dual badge · softSupport ·
    * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
    * SheetPresence stage · StyleSheet.flatten. Soft-fail never timber /
    * Failed to fetch. Yields to Talk SoftFail (#249) on conversation tab;
    * Lens SoftFail (#237) SoftFailNotice display yields while Dual SoftFail
-   * owns dual SoftFail chrome (no double depth). SoftFail copy always
-   * dualSoftFail / permission / softOffline (never inherit softNotice timber).
+   * owns dual SoftFail chrome (no double depth). Craft:
+   * /translate?dualSoftFail=1. SoftFail copy always dualSoftFail / permission /
+   * softOffline (never inherit softNotice timber).
    */
   const dualSoftOpen =
-    tab === "camera" && (isDemo || camDenied || Boolean(error) || softNotice);
+    tab === "camera" &&
+    (dualSoftPreview ||
+      isDemo ||
+      camDenied ||
+      Boolean(error) ||
+      softNotice);
   /** SoftFail copy owned by Dual chrome — never inherit softNotice / timber. */
-  const dualSoftCopy = softNotice && !online
-    ? t(uiLocale, "translate.softOffline")
-    : isDemo || (error && isNoiseError(new Error(error)))
-      ? t(uiLocale, "translate.dualSoftFail")
-      : camDenied
-        ? t(uiLocale, "translate.permissionCamera")
-        : error
-          ? t(uiLocale, "translate.error")
-          : t(uiLocale, "translate.dualSoftFail");
+  const dualSoftCopy = dualSoftPreview
+    ? t(uiLocale, "translate.dualSoftFail")
+    : softNotice && !online
+      ? t(uiLocale, "translate.softOffline")
+      : isDemo || (error && isNoiseError(new Error(error)))
+        ? t(uiLocale, "translate.dualSoftFail")
+        : camDenied
+          ? t(uiLocale, "translate.permissionCamera")
+          : error
+            ? t(uiLocale, "translate.error")
+            : t(uiLocale, "translate.dualSoftFail");
   const dualSoftSupport = t(uiLocale, "translate.dualSupport");
 
   useEffect(() => {
@@ -898,10 +954,10 @@ export default function TranslateScreen() {
             ) : null}
 
             {/*
-              Empty SoftFail depth (BEA-351 after #178):
-              Soft empty · softSupport · mist SoftFail band · tip-011 mist-wash
-              empty body — never timber / Failed to fetch. Talk SoftFail (#249)
-              yields while empty owns.
+              Empty SoftFail depth (BEA-351 after #178) + craft SoftFail query
+              parity (BEA-407): Soft empty · softSupport · mist SoftFail band ·
+              tip-011 mist-wash empty body. Craft: ?emptySoftFail=1. Talk SoftFail
+              (#249) yields while empty owns — never timber / Failed to fetch.
             */}
             <Animated.View
               style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
@@ -1109,10 +1165,11 @@ export default function TranslateScreen() {
               accessibilityLabel={t(uiLocale, "translate.talkRail")}
             >
               {/*
-                Talk SoftFail depth (BEA-326 after #199):
-                Soft talk · softSupport · mist SoftFail band · tip-011 mist-wash
-                compose/mic — never timber / Failed to fetch. Yields to empty
-                SoftFail depth (BEA-351) / Lens SoftFail (#237).
+                Talk SoftFail depth (BEA-326 after #199) + craft SoftFail query
+                parity (BEA-407): Soft talk · softSupport · mist SoftFail band ·
+                tip-011 mist-wash compose/mic. Craft: ?talkSoftFail=1. Yields to
+                empty SoftFail depth (BEA-351) / Lens SoftFail (#237). Soft copy
+                never timber / Failed to fetch.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -1292,10 +1349,11 @@ export default function TranslateScreen() {
             accessibilityLabel={t(uiLocale, "translate.mode.camera")}
           >
             {/*
-              Dual SoftFail depth (BEA-335 after #202 / #219):
-              Soft dual · softSupport · mist SoftFail band · tip-011 mist-wash
-              stage — never timber / Failed to fetch. Yields to Talk SoftFail
-              (#249); Lens SoftFail (#237) SoftFailNotice yields while Dual owns.
+              Dual SoftFail depth (BEA-335 after #202 / #219) + craft SoftFail
+              query parity (BEA-407): Soft dual · softSupport · mist SoftFail
+              band · tip-011 mist-wash stage. Craft: ?dualSoftFail=1. Yields to
+              Talk SoftFail (#249); Lens SoftFail (#237) SoftFailNotice yields
+              while Dual owns. Soft copy never timber / Failed to fetch.
             */}
             <View
               style={StyleSheet.flatten([
