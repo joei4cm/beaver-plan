@@ -970,12 +970,12 @@ export default function TranslateScreen() {
             ) : null}
 
             {/*
-              Empty SoftFail depth kept (BEA-351 / craft query BEA-407) + wave 51
-              list craft residual (BEA-491): eyebrow 1.8 · mode chips 1.4 ·
-              tip-011 Speak press · source/target meta tracking. Empty CTAs
-              already #351. SoftFail reopen out of scope. Craft: ?emptySoftFail=1.
-              Talk SoftFail (#249) yields while empty owns — never timber /
-              Failed to fetch. No `/dev` gallery.
+              SoftFail depth kept (BEA-351 / craft query BEA-407) + wave 51 list
+              craft (#353 / BEA-491) + wave 57 residual (BEA-548): historyHead
+              paper@0.6 · empty eyebrow 1.8 · empty title snug · count chip 1.4 ·
+              empty CTA tip-011. SoftFail reopen out of scope. Craft:
+              ?emptySoftFail=1. Talk SoftFail (#249) yields while empty owns —
+              never timber / Failed to fetch. No `/dev` gallery.
             */}
             <Animated.View
               style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
@@ -1071,7 +1071,12 @@ export default function TranslateScreen() {
                     <SheetPresence open delayMs={130} rise={6}>
                       <View style={styles.historyEmptyCtas}>
                         <Pressable
-                          style={StyleSheet.flatten([styles.emptyCtaPrimary])}
+                          style={({ pressed }) =>
+                            StyleSheet.flatten([
+                              styles.emptyCtaPrimary,
+                              pressed ? styles.dualPressScale : null,
+                            ])
+                          }
                           onPress={() => focusComposer("mic")}
                           accessibilityRole="button"
                         >
@@ -1080,10 +1085,13 @@ export default function TranslateScreen() {
                           </Text>
                         </Pressable>
                         <Pressable
-                          style={StyleSheet.flatten([
-                            styles.emptyCtaSecondary,
-                            busy ? styles.disabled : null,
-                          ])}
+                          style={({ pressed }) =>
+                            StyleSheet.flatten([
+                              styles.emptyCtaSecondary,
+                              busy ? styles.disabled : null,
+                              pressed && !busy ? styles.dualPressScale : null,
+                            ])
+                          }
                           onPress={() => void runTurn({})}
                           disabled={busy}
                           accessibilityRole="button"
@@ -2056,7 +2064,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.72)",
+    /** Web history bg-paper/60 — Lumen paper @ 0.6 (BEA-548; SoftFail wash untouched). */
+    backgroundColor: `${colors.paper}99`,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -2091,7 +2100,8 @@ const styles = StyleSheet.create({
     color: colors.riverDeep,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1,
+    /** Mode-chip / web count tracking parity (BEA-548). */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   /** Mist SoftFail strip under azure history rail — border-b before mist body. */
@@ -2119,10 +2129,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
   },
+  /** Empty stage eyebrow — stage / Dual meta 1.8 bar (BEA-548 beyond #353). */
   historyEmptyEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -2132,6 +2143,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 24,
     fontWeight: "700",
+    /** Web empty title leading-snug parity (BEA-548). */
+    lineHeight: 28,
     letterSpacing: -0.4,
   },
   historyEmptyHint: {

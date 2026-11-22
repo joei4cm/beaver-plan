@@ -1076,12 +1076,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           )}
 
           {/*
-            Empty SoftFail depth kept (BEA-310 / SoftFailSupport BEA-433 /
-            craft query BEA-429) + wave 51 list craft residual (BEA-491):
-            eyebrow 0.18em · mode chips 0.14em · tip-011 Speak press ·
-            source/target meta tracking. Empty CTAs already #351. SoftFail
-            reopen out of scope. Craft: ?emptySoftFail=1 — never timber /
-            Failed to fetch. No `/dev` gallery.
+            SoftFail depth kept (BEA-310 / SoftFailSupport BEA-433 /
+            craft query BEA-429) + wave 51 list craft (#353 / BEA-491) +
+            wave 57 residual (BEA-548): count chip 0.14em · empty title
+            leading-snug. SoftFail reopen out of scope. Craft:
+            ?emptySoftFail=1 — never timber / Failed to fetch. No `/dev`
+            gallery.
           */}
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1123,7 +1123,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   </SoftFailLiveBadge>
                 )
               ) : (
-                <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
+                <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-river-deep">
                   {t(locale, "translate.historyCount").replace(
                     "{n}",
                     String(turns.length),
@@ -1161,7 +1161,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   {t(locale, "translate.history")}
                 </p>
                 <p
-                  className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+                  className="animate-rise mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-3xl"
                   style={{ animationDelay: "70ms" }}
                 >
                   {t(locale, "translate.empty")}
