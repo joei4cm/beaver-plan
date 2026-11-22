@@ -20,12 +20,11 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
- * Sign-in SoftFail helper adoption (BEA-392 after #284 / depth #238) + craft
- * SoftFail query parity (BEA-421): SoftFailBadge · SoftFailSupport ·
- * softFailMistWashClass · compact SoftFail mist band under azure rail ·
- * WeChat SoftFail yield (no double depth). Craft: /sign-in?signInSoftFail=1 —
- * SoftFail depth without a Clerk/API miss. SoftFail copy never timber /
- * Failed to fetch. No `/dev` SoftFail gallery.
+ * Sign-in / WeChat sheet — SoftFail depth kept (BEA-392 / BEA-421 / #238) +
+ * wave 49 craft residual (BEA-472): Lumen sky tokens · eyebrow tracking ·
+ * tip-011 WeChat/demo CTA press. SoftFailBadge · SoftFailSupport · mist band ·
+ * WeChat SoftFail yield unchanged. Craft: /sign-in?signInSoftFail=1 — SoftFail
+ * copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function SignInPanel({
   locale,
@@ -91,15 +90,15 @@ export function SignInPanel({
         className="animate-drift pointer-events-none absolute inset-0 -z-10 opacity-80"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 72% 52% at 18% 18%, rgba(47,107,255,0.18), transparent 55%),
-            radial-gradient(ellipse 48% 38% at 92% 8%, rgba(96,165,250,0.14), transparent 50%),
-            linear-gradient(180deg, #dbe8ff 0%, transparent 68%)
+            radial-gradient(ellipse 72% 52% at 18% 18%, color-mix(in srgb, var(--bp-river) 16%, transparent), transparent 55%),
+            radial-gradient(ellipse 48% 38% at 92% 8%, color-mix(in srgb, var(--bp-focus) 14%, transparent), transparent 50%),
+            linear-gradient(180deg, color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam)) 0%, transparent 68%)
           `,
         }}
       />
 
       <header className="animate-rise max-w-xl">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
           {t(locale, "auth.eyebrow")} · {brand.en}
         </p>
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
@@ -111,10 +110,10 @@ export function SignInPanel({
       </header>
 
       {/*
-        SoftFail helper adoption (BEA-392) + craft SoftFail query parity
-        (BEA-421): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
-        compact SoftFailNotice · WeChat SoftFail yield. Craft:
-        ?signInSoftFail=1 — never timber.
+        SoftFail kept (BEA-392 / BEA-421) + wave 49 craft residual (BEA-472):
+        Lumen sky · 0.18em eyebrows · tip-011 CTA press. SoftFailBadge ·
+        SoftFailSupport · mist · WeChat yield. Craft: ?signInSoftFail=1 —
+        never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -168,7 +167,7 @@ export function SignInPanel({
                 }`}
                 aria-labelledby="auth-providers-heading"
               >
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "auth.providersEyebrow")}
                 </p>
                 <h2
@@ -192,7 +191,7 @@ export function SignInPanel({
                 {clerkReady && wechatEnabled ? (
                   <Link
                     href="/sign-in?strategy=oauth_wechat"
-                    className={`mt-4 inline-flex rounded-bp-sm border border-river/40 bg-foam/80 px-3.5 py-2 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-foam ${FOCUS}`}
+                    className={`mt-4 inline-flex rounded-bp-sm border border-river/40 bg-foam/80 px-3.5 py-2 text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-foam active:scale-[0.98] ${FOCUS}`}
                   >
                     {t(locale, "auth.wechat")}
                   </Link>
@@ -265,7 +264,7 @@ function DemoAuthSheet({
       aria-labelledby="auth-demo-heading"
     >
       <div className="border-b border-[color:var(--bp-line)] bg-paper/70 px-5 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
           {t(locale, "auth.setupEyebrow")}
         </p>
       </div>
@@ -293,13 +292,13 @@ function DemoAuthSheet({
         <div className="flex flex-wrap gap-3">
           <Link
             href="/trips/sample-kyoto"
-            className={`inline-flex rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam bp-transition hover:bg-river-deep ${FOCUS}`}
+            className={`inline-flex rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] ${FOCUS}`}
           >
             {t(locale, "trips.openSample")}
           </Link>
           <Link
             href="/sign-up"
-            className={`inline-flex rounded-bp-sm border border-river/40 bg-foam/80 px-3.5 py-2.5 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-foam ${FOCUS}`}
+            className={`inline-flex rounded-bp-sm border border-river/40 bg-foam/80 px-3.5 py-2.5 text-sm font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-foam active:scale-[0.98] ${FOCUS}`}
           >
             {t(locale, "nav.signUp")}
           </Link>

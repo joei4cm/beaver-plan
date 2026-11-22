@@ -41,13 +41,11 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
 }
 
 /**
- * Expo auth SoftFail helper adoption (BEA-392 after #284 / depth #269) + craft
- * SoftFail query parity (BEA-421): SoftFailBadge · SoftFailSupport ·
- * softFailMistWashStyle · compact SoftFail mist band under azure rail ·
- * WeChat SoftFail yield (no double depth). Craft: /sign-in?signInSoftFail=1 —
- * SoftFail depth without a Clerk/API miss. SoftFail copy never timber /
- * Failed to fetch. No `/dev` SoftFail gallery. Web sign-up SoftFail is sibling
- * scope (Expo has no sign-up screen).
+ * Expo auth / WeChat sheet — SoftFail depth kept (BEA-392 / BEA-421 / #269) +
+ * wave 49 craft residual (BEA-472): Lumen sky tokens · eyebrow tracking ·
+ * foam/95 sheet · tip-011 WeChat/demo CTA press. SoftFailBadge · SoftFailSupport ·
+ * mist band · WeChat SoftFail yield unchanged. Craft: /sign-in?signInSoftFail=1 —
+ * SoftFail copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export default function SignInScreen() {
   const { signInSoftFail: signInSoftFailParam } = useLocalSearchParams<{
@@ -140,9 +138,10 @@ export default function SignInScreen() {
         </Animated.View>
 
         {/*
-          SoftFail helper adoption (BEA-392) + craft SoftFail query parity
-          (BEA-421): SoftFailBadge · SoftFailSupport · softFailMistWashStyle ·
-          WeChat SoftFail yield. Craft: ?signInSoftFail=1 — never timber.
+          SoftFail kept (BEA-392 / BEA-421) + wave 49 craft residual (BEA-472):
+          Lumen sky · eyebrow tracking · foam/95 · tip-011 CTA press.
+          SoftFailBadge · SoftFailSupport · WeChat yield. Craft:
+          ?signInSoftFail=1 — never timber.
         */}
         <SheetPresence
           open
@@ -270,7 +269,15 @@ function DemoAuthSheet({ soft }: { soft?: boolean }) {
         <Text style={styles.step}>3. {t(locale, "auth.demoStep3")}</Text>
       </View>
       <Link href="/trips/sample-kyoto" asChild>
-        <Pressable style={styles.cta} accessibilityRole="button">
+        <Pressable
+          style={({ pressed }) =>
+            StyleSheet.flatten([
+              styles.cta,
+              pressed ? styles.ctaPressed : null,
+            ])
+          }
+          accessibilityRole="button"
+        >
           <Text style={styles.ctaLabel}>{t(locale, "trips.openSample")}</Text>
         </Pressable>
       </Link>
@@ -315,10 +322,13 @@ function WeChatButton({
   return (
     <View style={styles.wechatBlock}>
       <Pressable
-        style={StyleSheet.flatten([
-          styles.cta,
-          busy ? styles.ctaDisabled : null,
-        ])}
+        style={({ pressed }) =>
+          StyleSheet.flatten([
+            styles.cta,
+            busy ? styles.ctaDisabled : null,
+            pressed && !busy ? styles.ctaPressed : null,
+          ])
+        }
         onPress={onPress}
         disabled={busy}
         accessibilityRole="button"
@@ -348,7 +358,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 180,
-    backgroundColor: "rgba(219, 232, 255, 0.55)",
+    backgroundColor: "rgba(47, 107, 255, 0.1)",
   },
   skyOrb: {
     position: "absolute",
@@ -357,7 +367,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: "rgba(47, 107, 255, 0.14)",
+    backgroundColor: "rgba(96, 165, 250, 0.14)",
   },
   content: {
     paddingHorizontal: 24,
@@ -372,9 +382,9 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...type.body,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.8,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     marginBottom: 12,
@@ -390,7 +400,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 12,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 23,
     color: colors.inkSoft,
     maxWidth: 420,
   },
@@ -400,7 +410,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -464,14 +474,14 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
   providersTitle: {
     ...type.display,
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: "600",
     letterSpacing: -0.5,
     color: colors.ink,
   },
@@ -512,14 +522,14 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
   demoTitle: {
     ...type.display,
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: "600",
     letterSpacing: -0.5,
     color: colors.ink,
   },
@@ -557,6 +567,9 @@ const styles = StyleSheet.create({
   },
   ctaDisabled: {
     opacity: 0.7,
+  },
+  ctaPressed: {
+    transform: [{ scale: 0.98 }],
   },
   ctaLabel: {
     ...type.body,
