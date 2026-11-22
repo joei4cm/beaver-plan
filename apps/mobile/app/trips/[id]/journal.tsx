@@ -394,20 +394,30 @@ export default function JournalScreen() {
   ];
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - previewMedia.length);
   /**
+   * Entry SoftFailNotice depth (BEA-370 after #140):
+   * azure Entries rail · Soft entries badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
+   * SoftFail copy always softFail / softOffline — never timber / Failed to fetch.
+   * Yields while empty SoftFail (#231) would own the Entries rail (no double depth).
+   * Compose SoftFail (#247) keeps its own Compose rail — different azure rail.
+   */
+  const entryEmpty = visible.length === 0;
+  const emptyOwnsSoft = entryEmpty;
+  const entryOwnsSoft =
+    (demoSeeded || softNotice) && !emptyOwnsSoft;
+  const showListSoftFail = entryOwnsSoft;
+  const listSoftCopy =
+    softNotice && !isDeviceOnline()
+      ? t(locale, "journal.softOffline")
+      : t(locale, "journal.softFail");
+  /**
    * Compose SoftFailNotice depth (BEA-322 after #204 / BEA-273):
    * azure Compose rail · Soft media badge · softSupport · compact SoftFail
    * mist band (`border-b`) · tip-011 mist-wash SheetPresence · StyleSheet.flatten.
-   * Compose owns soft-fail so list yields (no double depth with nested SoftFail).
    * SoftFail copy always composeSoftFail — never timber / Failed to fetch.
    */
   const composeOwnsSoft = composeSoftFail;
   const showComposeSoftFail = composeOwnsSoft;
-  const showListSoftFail =
-    (demoSeeded || softNotice) && !composeOwnsSoft;
-  const listSoftCopy =
-    softNotice && !isDeviceOnline()
-      ? t(locale, "journal.softOffline")
-      : t(locale, "journal.demoNotice");
   /** Compose SoftFail copy owned by azure rail — never inherit noise / timber. */
   const composeSoftCopy = t(locale, "journal.composeSoftFail");
   const hardComposeError =
@@ -486,8 +496,19 @@ export default function JournalScreen() {
             </ScrollView>
 
             <View style={styles.listPane}>
-              {/* Entry list chrome — azure rail · count · stop-linked · SoftFail (#134) */}
-              <View style={styles.listHead}>
+              {/*
+                Entry SoftFail depth (BEA-370 after #140):
+                azure Entries rail · Soft entries badge · softSupport ·
+                compact SoftFail mist band · tip-011 mist-wash body —
+                never timber / Failed to fetch. Yields while empty SoftFail
+                (#231) owns Entries; Compose SoftFail (#247) stays on Compose.
+              */}
+              <View
+                style={StyleSheet.flatten([
+                  styles.listHead,
+                  showListSoftFail ? styles.listHeadSoft : null,
+                ])}
+              >
                 <View style={styles.listHeadTop}>
                   <Text style={styles.listEyebrow}>
                     {t(locale, "journal.listEyebrow")}
@@ -498,6 +519,13 @@ export default function JournalScreen() {
                     )}
                   </Text>
                   <View style={styles.listBadges}>
+                    {showListSoftFail ? (
+                      <View style={styles.listSoftBadge}>
+                        <Text style={styles.listSoftBadgeText}>
+                          {t(locale, "journal.softBadge")}
+                        </Text>
+                      </View>
+                    ) : null}
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>
                         {t(locale, "journal.entryCount").replace(
@@ -519,11 +547,13 @@ export default function JournalScreen() {
                   {activeDay?.note ?? activeDay?.date ?? trip?.title ?? "—"}
                 </Text>
                 <Text style={styles.entryDetailHint}>
-                  {activeDay?.date ? `${activeDay.date} · ` : ""}
-                  {t(locale, "journal.entryDetailHint")}
+                  {showListSoftFail
+                    ? t(locale, "journal.softSupport")
+                    : `${activeDay?.date ? `${activeDay.date} · ` : ""}${t(locale, "journal.entryDetailHint")}`}
                 </Text>
               </View>
 
+              {/* Compact SoftFail mist band under azure Entries rail — never timber. */}
               <SoftFailNotice
                 open={showListSoftFail}
                 compact
@@ -537,6 +567,9 @@ export default function JournalScreen() {
                 key={`entries-${dayId ?? "all"}`}
                 rise={10}
                 delayMs={40}
+                style={StyleSheet.flatten([
+                  showListSoftFail ? styles.listBodyWash : null,
+                ])}
                 accessibilityLabel={t(locale, "journal.listEyebrow")}
               >
                 {visible.map((entry, index) => {
@@ -699,7 +732,8 @@ export default function JournalScreen() {
               Compose SoftFail depth (BEA-322 after #204 / BEA-273):
               foam compose · azure head · Soft media badge · softSupport ·
               compact SoftFail mist band · tip-011 mist-wash body —
-              never timber / Failed to fetch. List SoftFail yields while compose owns.
+              never timber / Failed to fetch. Own Compose rail; Entries SoftFail
+              (BEA-370) owns the Entries rail — not overlapping chrome.
             */}
             <View
               style={styles.compose}
@@ -1012,12 +1046,16 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    marginBottom: 8,
+    marginBottom: 0,
     backgroundColor: "rgba(244, 246, 250, 0.55)",
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingLeft: 12,
     marginHorizontal: -4,
+  },
+  /** Softer azure Entries rail wash while SoftFail owns. */
+  listHeadSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
   listHeadTop: {
     flexDirection: "row",
@@ -1056,6 +1094,20 @@ const styles = StyleSheet.create({
     color: colors.riverDeep,
     fontVariant: ["tabular-nums"],
   },
+  listSoftBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  listSoftBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
   daySectionTitle: {
     ...type.display,
     marginTop: 8,
@@ -1071,9 +1123,20 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
+  /** Mist SoftFail strip under azure Entries rail — border-b before tip-011 body. */
   listSoftFail: {
-    marginBottom: 4,
+    marginBottom: 0,
     marginHorizontal: -4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  /** Mist wash on tip-011 entry body while SoftFail owns the Entries rail. */
+  listBodyWash: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
+    marginHorizontal: -4,
+    paddingHorizontal: 4,
+    borderRadius: radius.sm,
   },
   entry: {
     flexDirection: "row",
