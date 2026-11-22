@@ -1202,10 +1202,11 @@ export default function TripDetailScreen() {
 
           {/*
             Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice ·
-            tip-011 rise. Craft residual (BEA-465 / BEA-503 / BEA-524): display
+            tip-011 rise. Craft residual beyond #375 / BEA-524 (BEA-556): display
             weight 700 · brand 0.65rem tracking · title lineHeight 40 · support
-            inkSoft · paper@0.55 wash (web paper/55) · soft-shadow primary CTA ·
-            pressed scale. SoftFail rails unchanged.
+            inkSoft@CC (Mode / web secondary ladder) · Journal foam@CC (web
+            foam/80) · paper@0.55 wash · soft-shadow primary · tip-011 press.
+            SoftFail rails unchanged.
           */}
           <Animated.View
             style={StyleSheet.flatten([styles.header, riseStyle])}
@@ -3140,7 +3141,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 14,
     lineHeight: 22,
-    color: colors.inkSoft,
+    /** Web secondary / Mode support ladder `ink-soft/80` (BEA-556 beyond #375). */
+    color: `${colors.inkSoft}CC`,
     marginBottom: 16,
     maxWidth: 360,
   },
@@ -3153,7 +3155,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    /** Foam @ 0.8 — row wash parity with Journal outline (BEA-556). */
+    backgroundColor: `${colors.foam}CC`,
     paddingVertical: 13,
     alignItems: "center",
   },
@@ -3171,7 +3174,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionOutline: {
-    backgroundColor: colors.foam,
+    /** Foam @ 0.8 — web Journal `bg-foam/80` (BEA-556 beyond #375). */
+    backgroundColor: `${colors.foam}CC`,
     /** River @ 0.4 — token alpha (BEA-524). */
     borderColor: `${colors.river}66`,
   },
