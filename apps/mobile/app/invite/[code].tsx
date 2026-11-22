@@ -60,9 +60,10 @@ function craftSoftFailOn(value: string | string[] | undefined): boolean {
 
 /**
  * Expo invite sheet — SoftFail depth kept (BEA-392 / BEA-420 / #228) + wave 48
- * craft residual (BEA-461): Lumen sky tokens · eyebrow tracking · display title
- * weight. SoftFailBadge · SoftFailSupport · mist band unchanged. Soft-fail never
- * timber / Failed to fetch. No `/dev` gallery.
+ * craft residual (BEA-461) + wave 53 residual (BEA-506): paper/inkSoft/sky
+ * token alphas · tip-011 Join press · trip title lineHeight. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. Soft-fail never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export default function InviteScreen() {
   const { code: raw, inviteSoftFail: inviteSoftFailParam } =
@@ -316,10 +317,13 @@ export default function InviteScreen() {
 
                   <SheetPresence open delayMs={200} rise={8} style={styles.ctaRow}>
                     <Pressable
-                      style={StyleSheet.flatten([
-                        styles.cta,
-                        joining ? styles.ctaDisabled : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.cta,
+                          joining ? styles.ctaDisabled : null,
+                          pressed && !joining ? styles.ctaPressed : null,
+                        ])
+                      }
                       disabled={joining}
                       onPress={() => void join()}
                       accessibilityRole="button"
@@ -355,7 +359,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 160,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    /** Web river wash @ 0.1 */
+    backgroundColor: `${colors.river}1A`,
   },
   skyOrb: {
     position: "absolute",
@@ -364,7 +369,8 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: "rgba(96, 165, 250, 0.14)",
+    /** Web focus orb @ 0.14 */
+    backgroundColor: `${colors.focus}24`,
   },
   center: {
     flex: 1,
@@ -391,7 +397,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.8,
     textTransform: "uppercase",
-    color: "rgba(47, 107, 255, 0.8)",
+    color: `${colors.river}CC`,
     marginBottom: 10,
   },
   title: {
@@ -399,6 +405,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: "800",
     letterSpacing: -0.8,
+    lineHeight: 40,
     color: colors.ink,
     marginBottom: 10,
   },
@@ -416,7 +423,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    /** Web bg-foam/95 */
+    backgroundColor: `${colors.foam}F2`,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -430,7 +438,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderLeftWidth: 3,
@@ -456,7 +465,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(71, 85, 105, 0.8)",
+    color: `${colors.inkSoft}CC`,
   },
   sheetBadges: {
     flexDirection: "row",
@@ -471,7 +480,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.riverDeep,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.xs,
@@ -524,6 +533,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "600",
     letterSpacing: -0.6,
+    lineHeight: 34,
     color: colors.ink,
   },
   meta: {
@@ -541,7 +551,7 @@ const styles = StyleSheet.create({
     fontFamily: "monospace",
     letterSpacing: 1.2,
     color: colors.riverDeep,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.xs,
@@ -563,6 +573,11 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
+  /* tip-011 press — parity with web Join active:scale-[0.98] (BEA-506). */
+  ctaPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
   ctaDisabled: {
     opacity: 0.5,
   },
@@ -576,7 +591,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: "rgba(71, 85, 105, 0.8)",
+    color: `${colors.inkSoft}CC`,
   },
   error: {
     ...type.body,

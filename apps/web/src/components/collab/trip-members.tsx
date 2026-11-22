@@ -60,10 +60,10 @@ function presenceFor(member: TripMember): PresenceState {
 /**
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
- * craft residual (BEA-493): status pill inset tokens · chip type/motion ·
- * eyebrow `0.18em` bar. SoftFailBadge · SoftFailSupport · mist band unchanged.
- * Invite SoftFail yields presence (no double depth). Soft copy never timber /
- * Failed to fetch. No `/dev` gallery.
+ * (BEA-493) + wave 53 invite residual (BEA-506): shareHint `leading-snug` ·
+ * tip-011 Invite/Copy press kept. SoftFailBadge · SoftFailSupport · mist band
+ * unchanged. Invite SoftFail yields presence (no double depth). Soft copy never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -513,7 +513,7 @@ export function TripMembersBar({
                 {t(locale, "collab.inviteCodeEyebrow")}
               </p>
               <p
-                className="animate-rise mt-2 font-display text-base font-semibold tracking-tight text-ink md:text-lg"
+                className="animate-rise mt-2 font-display text-base font-semibold leading-snug tracking-tight text-ink md:text-lg"
                 style={{ animationDelay: "80ms" }}
               >
                 {t(locale, "collab.shareHint")}
