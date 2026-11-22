@@ -322,7 +322,7 @@ export function MapChrome({
               </p>
             </div>
 
-            <SoftFailNotice open={softFail} compact>
+            <SoftFailNotice open={softFail} compact band="footer">
               {t(locale, "planner.map.softFail")}
             </SoftFailNotice>
           </SheetPresence>
