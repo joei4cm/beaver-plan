@@ -250,8 +250,9 @@ function EmptyRail({ soft }: { soft: boolean }) {
 }
 
 /**
- * Azure inset trip-cards rail — Soft cards badge + softSupport when SoftFail
- * owns (BEA-341 depth after #211 / BEA-316). Soft azure head wash while soft.
+ * Azure inset trip-cards rail — SoftFailBadge Soft cards + SoftFailSupport
+ * when SoftFail owns (BEA-341 depth after #211 / BEA-316; SoftFailSupport
+ * residual BEA-433). Soft azure head wash while soft.
  */
 function TripsListRail({
   count,
@@ -271,11 +272,15 @@ function TripsListRail({
         <Text style={styles.listRailLabel}>
           {t(locale, "trips.listRail")}
         </Text>
-        <Text style={styles.listRailCount}>
-          {soft
-            ? t(locale, "trips.cardsSoftSupport")
-            : t(locale, "trips.listCount").replace("{n}", String(count))}
-        </Text>
+        {soft ? (
+          <SoftFailSupport style={styles.softSupportShrink} numberOfLines={1}>
+            {t(locale, "trips.cardsSoftSupport")}
+          </SoftFailSupport>
+        ) : (
+          <Text style={styles.listRailCount}>
+            {t(locale, "trips.listCount").replace("{n}", String(count))}
+          </Text>
+        )}
       </View>
       {soft ? (
         <SoftFailBadge>{t(locale, "trips.cardsSoftBadge")}</SoftFailBadge>
