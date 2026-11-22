@@ -423,8 +423,11 @@ export function ShareStudioSkeleton() {
                 ))}
               </div>
             </div>
-            {/* Nested Export rail — azure inset · SoftFail slot · dual CTA heights */}
-            <div className="mt-2 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
+            {/* Nested Export rail — live section animate-rise 100ms parity (BEA-616) */}
+            <div
+              className="animate-rise mt-2 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
+              style={{ animationDelay: "100ms" }}
+            >
               <div className="relative flex items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
                 <div className="min-w-0 space-y-1.5">
                   <Skeleton className="h-2.5 w-12" />

@@ -610,10 +610,12 @@ export default function ShareScreen() {
             {/*
               Export SoftFail helpers (BEA-397 after #284 / depth BEA-365) +
               craft SoftFail query parity (BEA-404) + wave 52 craft residual
-              (BEA-501): Export gap 12 · paper/inkSoft tokens · tip-011 press
-              0.98 · secondary ink/90 settle. SoftFail rails unchanged. Craft:
-              ?exportSoftFail=1 · ?studioSoftFail=1 — never timber / Failed to
-              fetch. No /dev SoftFail gallery.
+              (BEA-501) + wave 63 residual (BEA-616): Export gap 12 ·
+              paper/inkSoft tokens · tip-011 press 0.98 · secondary ink/90 ·
+              exportSupport inkSoft@CC (template twin). SoftFail rails
+              unchanged. Craft: ?exportSoftFail=1 · ?studioSoftFail=1 — never
+              timber / Failed to fetch. No /dev SoftFail gallery. Not share
+              canvas (#419) / template (#427).
             */}
             <SheetPresence
               open
@@ -1181,7 +1183,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     lineHeight: 19,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 — template support twin (BEA-616) */
+    color: `${colors.inkSoft}CC`,
   },
   /** SoftFailSupport keeps flex shrink beside Export title while Soft owns. */
   exportSupportSoft: {

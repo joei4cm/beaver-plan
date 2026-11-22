@@ -1018,11 +1018,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
             {/*
               Export SoftFail helpers (BEA-397 after #284 / depth BEA-331) + craft
-              SoftFail query parity (BEA-404) + wave 52 craft residual (BEA-501):
-              tip-011 active:scale-[0.98] on Download / System share / Refresh ·
-              Export title leading-snug. SoftFail rails unchanged. Craft:
-              ?exportSoftFail=1 — Studio SoftFail (#243) yields while Export owns
-              — never timber / Failed to fetch. No /dev gallery.
+              SoftFail query parity (BEA-404) + wave 52 craft residual (BEA-501) +
+              wave 63 residual (BEA-616): tip-011 press · Export title leading-snug ·
+              Export support ink-soft/80 (template twin) · skeleton Export rise 100ms.
+              SoftFail rails unchanged. Craft: ?exportSoftFail=1 — Studio SoftFail
+              (#243) yields while Export owns — never timber / Failed to fetch.
+              No /dev gallery. Not share canvas (#419) / template (#427).
             */}
             <section
               className="animate-rise border-t border-[color:var(--bp-line)] pt-5"
@@ -1046,7 +1047,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                         {exportSupportCopy}
                       </SoftFailSupport>
                     ) : (
-                      <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                      <p className="mt-1 text-xs leading-relaxed text-ink-soft/80">
                         {exportSupportCopy}
                       </p>
                     )}
