@@ -249,13 +249,18 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     !emptyOwnsSoft &&
     Boolean(micDenied || error);
   /**
-   * Offline banner SoftFailNotice depth (BEA-309 after #87):
+   * Offline banner SoftFailNotice depth (BEA-309 after #87; yield BEA-414):
    * azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
    * compact SoftFailNotice (border-b) · mist-wash status body · tip-011.
-   * SoftFail yields while empty history owns soft-fail (no double depth).
-   * Soft copy never timber / Failed to fetch.
+   * SoftFail yields while empty history owns soft-fail; yields while Talk
+   * SoftFail or camera SoftFail owns (Expo #335 / #281 yield — no double
+   * SoftFail depth). Soft copy never timber / Failed to fetch.
    */
-  const bannerSoftOpen = isDemo && !emptyOwnsSoft;
+  const bannerSoftOpen =
+    isDemo &&
+    !emptyOwnsSoft &&
+    !talkSoftOpen &&
+    !(tab === "camera" && cameraDenied);
   const bannerSoftCopy =
     softNotice && !online
       ? t(locale, "translate.softOffline")
@@ -797,7 +802,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           Offline banner SoftFail depth (BEA-309 after #87):
           azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
           compact SoftFailNotice · mist-wash status chips · tip-011 —
-          SoftFail yields while empty history owns soft-fail —
+          SoftFail yields while empty / Talk / camera SoftFail own —
           never timber / Failed to fetch.
         */}
         <div
@@ -827,7 +832,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             </span>
           </div>
 
-          {/* Compact SoftFail under azure rail — yields while empty owns soft-fail. */}
+          {/* Compact SoftFail under azure rail — yields while empty / Talk / camera SoftFail own. */}
           <SoftFailNotice
             open={bannerSoftOpen}
             compact
