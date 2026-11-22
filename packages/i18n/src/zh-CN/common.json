@@ -464,6 +464,7 @@
   "planner.transfer.loadingHint": "正在绘制步行 · 乘车 · 换乘分段…",
   "planner.transfer.summaryEyebrow": "摘要",
   "planner.transfer.stepsEyebrow": "分段",
+  "planner.transfer.emptyEyebrow": "空结果",
   "planner.transfer.emptyTitle": "还没有换乘步骤",
   "planner.transfer.emptyHint": "生成路线后会绘制步行 · 乘车 · 换乘分段。",
   "planner.transfer.softFailEmpty": "柔和换乘空态 — Directions 离线或密钥未配置。该站点暂无演示换乘步骤；有路线时走柔和京都脚本。绝不是 Failed to fetch 崩溃。",

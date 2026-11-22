@@ -346,11 +346,16 @@ export function TransferSteps({
           </SoftFailNotice>
 
           <div
-            className={`animate-fade space-y-1.5 px-3 py-4 ${
+            className={`animate-rise space-y-1.5 px-3 py-4 ${
               softOpen ? softFailMistWashClass : ""
             }`}
             style={{ animationDelay: "60ms" }}
+            role="status"
+            aria-live="polite"
           >
+            <SectionEyebrow>
+              {t(locale, "planner.transfer.emptyEyebrow")}
+            </SectionEyebrow>
             <p className="font-display text-sm font-semibold tracking-tight text-ink">
               {t(locale, "planner.transfer.emptyTitle")}
             </p>

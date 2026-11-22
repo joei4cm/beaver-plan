@@ -417,7 +417,12 @@ export function TripCollabPanel({
                 </li>
               ) : null}
               {!showLoading && visibleComments.length === 0 ? (
-                <li className="animate-fade list-none px-1 py-5">
+                <li
+                  className="animate-rise list-none px-1 py-5"
+                  style={{ animationDelay: "40ms" }}
+                  role="status"
+                  aria-live="polite"
+                >
                   <p className="font-display text-base font-semibold tracking-tight text-ink">
                     {t(locale, "collab.panel.emptyComments")}
                   </p>

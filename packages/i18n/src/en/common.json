@@ -464,6 +464,7 @@
   "planner.transfer.loadingHint": "Drawing walk · ride · transfer segments…",
   "planner.transfer.summaryEyebrow": "Summary",
   "planner.transfer.stepsEyebrow": "Steps",
+  "planner.transfer.emptyEyebrow": "Empty",
   "planner.transfer.emptyTitle": "No transfer steps yet",
   "planner.transfer.emptyHint": "Generate a route to draw walk · ride · transfer segments for this stop.",
   "planner.transfer.softFailEmpty": "Soft transfer empty — Directions offline or keys absent. No demo transfer steps for this stop yet; Soft Kyoto script when a route is available. Never a Failed to fetch crash.",

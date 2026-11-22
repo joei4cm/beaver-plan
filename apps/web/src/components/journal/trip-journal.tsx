@@ -1081,7 +1081,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 aria-label={t(locale, "journal.empty")}
               >
                 <p
-                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river"
                   style={{ animationDelay: "40ms" }}
                 >
                   {t(locale, "journal.listEyebrow")}
