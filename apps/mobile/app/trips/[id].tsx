@@ -87,6 +87,8 @@ const SEARCH_DEBOUNCE_MS = 220;
 /** Tip 011 — shared #46 motion easings (match Expo cards #67). */
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 const easePop = Easing.bezier(0.34, 1.56, 0.64, 1);
+/** Tip 015 travel — matches `motion.easeInOut` / web `--bp-ease-in-out`. */
+const easeInOut = Easing.bezier(0.42, 0, 0.58, 1);
 
 function formatTripSupport(trip: Trip): string {
   const parts: string[] = [];
@@ -570,17 +572,19 @@ export default function TripDetailScreen() {
         dayUnderlineReady.current = true;
         return;
       }
+      /* Tip-015 twin of web `.animate-tab-indicator`: left rides ease-in-out;
+       * width catches with ease-out-strong so the leading edge leads (BEA-771). */
       Animated.parallel([
         Animated.timing(dayUnderlineLeft, {
           toValue: left,
           duration: motion.durationMdMs,
-          easing: Easing.inOut(Easing.ease),
+          easing: easeInOut,
           useNativeDriver: false,
         }),
         Animated.timing(dayUnderlineWidth, {
           toValue: width,
           duration: motion.durationMdMs,
-          easing: Easing.inOut(Easing.ease),
+          easing: easeRise,
           useNativeDriver: false,
         }),
       ]).start();
