@@ -1631,6 +1631,14 @@ export default function TripDetailScreen() {
                 </SheetPresence>
               </View>
 
+              {/*
+                Places search SoftFail kept (BEA-422 / #356) + wave 55 residual
+                (BEA-534): tip-011 SheetPresence rise · Lumen hex-alpha paper /
+                inkSoft / river · foam input. SoftFailBadge · SoftFailSupport ·
+                mist band unchanged. Craft: ?searchSoftFail=1 — SoftFail depth
+                when sheet open. Soft copy never timber / Failed to fetch. No
+                `/dev` gallery.
+              */}
               <View style={styles.searchWrap}>
                 <TextInput
                   ref={searchInputRef}
@@ -1660,143 +1668,147 @@ export default function TripDetailScreen() {
                     accessibilityRole="list"
                     accessibilityLabel={t(locale, "planner.search.eyebrow")}
                   >
-                    <View style={styles.searchSheetHead}>
-                      <View style={styles.searchSheetHeadText}>
-                        <Text style={styles.searchEyebrow}>
-                          {t(locale, "planner.search.eyebrow")}
-                        </Text>
-                        {hasSearchResults ? (
-                          <Text style={styles.searchCount}>
-                            {t(locale, "planner.search.resultsCount").replace(
-                              "{n}",
-                              String(results.length),
-                            )}
+                    <SheetPresence open delayMs={40} rise={8}>
+                      <View style={styles.searchSheetHead}>
+                        <View style={styles.searchSheetHeadText}>
+                          <Text style={styles.searchEyebrow}>
+                            {t(locale, "planner.search.eyebrow")}
                           </Text>
-                        ) : showSearchEmpty ? (
-                          <Text style={styles.searchCount}>
-                            {t(locale, "planner.search.emptyCount")}
-                          </Text>
-                        ) : null}
+                          {hasSearchResults ? (
+                            <Text style={styles.searchCount}>
+                              {t(locale, "planner.search.resultsCount").replace(
+                                "{n}",
+                                String(results.length),
+                              )}
+                            </Text>
+                          ) : showSearchEmpty ? (
+                            <Text style={styles.searchCount}>
+                              {t(locale, "planner.search.emptyCount")}
+                            </Text>
+                          ) : null}
+                          {searchOwnsSoftFail ? (
+                            <SoftFailSupport style={styles.softSupportShrink}>
+                              {t(locale, "planner.search.softSupport")}
+                            </SoftFailSupport>
+                          ) : (
+                            <Text style={styles.searchSupport}>
+                              {t(locale, "planner.search.support")}
+                            </Text>
+                          )}
+                        </View>
                         {searchOwnsSoftFail ? (
-                          <SoftFailSupport style={styles.softSupportShrink}>
-                            {t(locale, "planner.search.softSupport")}
-                          </SoftFailSupport>
+                          <SoftFailBadge>
+                            {t(locale, "planner.search.softBadge")}
+                          </SoftFailBadge>
+                        ) : searchDemo ? (
+                          <SoftFailBadge>
+                            {t(locale, "planner.search.demoBadge")}
+                          </SoftFailBadge>
                         ) : (
-                          <Text style={styles.searchSupport}>
-                            {t(locale, "planner.search.support")}
-                          </Text>
+                          <SoftFailLiveBadge>
+                            {t(locale, "planner.search.liveBadge")}
+                          </SoftFailLiveBadge>
                         )}
                       </View>
-                      {searchOwnsSoftFail ? (
-                        <SoftFailBadge>
-                          {t(locale, "planner.search.softBadge")}
-                        </SoftFailBadge>
-                      ) : searchDemo ? (
-                        <SoftFailBadge>
-                          {t(locale, "planner.search.demoBadge")}
-                        </SoftFailBadge>
-                      ) : (
-                        <SoftFailLiveBadge>
-                          {t(locale, "planner.search.liveBadge")}
-                        </SoftFailLiveBadge>
-                      )}
-                    </View>
+                    </SheetPresence>
 
-                    {hasSearchResults ? (
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.searchHits,
-                          searchOwnsSoftFail ? softFailMistWashStyle : null,
-                        ])}
-                      >
-                        {results.map((place, i) => {
-                          const selected = i === activeIndex;
-                          return (
-                            <Pressable
-                              key={place.enginePlaceId}
-                              accessibilityRole="button"
-                              accessibilityState={{ selected }}
-                              onPress={() => void addPlace(place)}
-                              onPressIn={() => setActiveIndex(i)}
-                              style={({ pressed }) =>
-                                StyleSheet.flatten([
-                                  styles.searchHit,
-                                  selected ? styles.searchHitSelected : null,
-                                  i === results.length - 1
-                                    ? styles.searchHitLast
-                                    : null,
-                                  pressed ? styles.searchHitPressed : null,
-                                ])
-                              }
-                            >
-                              <View
-                                style={StyleSheet.flatten([
-                                  styles.searchHitIndex,
-                                  selected
-                                    ? styles.searchHitIndexSelected
-                                    : null,
-                                ])}
+                    <SheetPresence open delayMs={70} rise={6}>
+                      {hasSearchResults ? (
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.searchHits,
+                            searchOwnsSoftFail ? softFailMistWashStyle : null,
+                          ])}
+                        >
+                          {results.map((place, i) => {
+                            const selected = i === activeIndex;
+                            return (
+                              <Pressable
+                                key={place.enginePlaceId}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected }}
+                                onPress={() => void addPlace(place)}
+                                onPressIn={() => setActiveIndex(i)}
+                                style={({ pressed }) =>
+                                  StyleSheet.flatten([
+                                    styles.searchHit,
+                                    selected ? styles.searchHitSelected : null,
+                                    i === results.length - 1
+                                      ? styles.searchHitLast
+                                      : null,
+                                    pressed ? styles.searchHitPressed : null,
+                                  ])
+                                }
                               >
-                                <Text
+                                <View
                                   style={StyleSheet.flatten([
-                                    styles.searchHitIndexText,
+                                    styles.searchHitIndex,
                                     selected
-                                      ? styles.searchHitIndexTextSelected
+                                      ? styles.searchHitIndexSelected
                                       : null,
                                   ])}
                                 >
-                                  {i + 1}
-                                </Text>
-                              </View>
-                              <View style={styles.searchHitBody}>
-                                <Text style={styles.searchHitName}>
-                                  {place.name}
-                                </Text>
-                                {place.address ? (
-                                  <Text style={styles.searchHitAddr}>
-                                    {place.address}
+                                  <Text
+                                    style={StyleSheet.flatten([
+                                      styles.searchHitIndexText,
+                                      selected
+                                        ? styles.searchHitIndexTextSelected
+                                        : null,
+                                    ])}
+                                  >
+                                    {i + 1}
                                   </Text>
-                                ) : null}
-                              </View>
-                              <Text
-                                style={StyleSheet.flatten([
-                                  styles.searchHitHint,
-                                  selected
-                                    ? styles.searchHitHintSelected
-                                    : null,
-                                ])}
-                              >
-                                {t(locale, "planner.search.addHint")}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
-                    ) : showSearchEmpty ? (
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.searchEmpty,
-                          searchOwnsSoftFail ? softFailMistWashStyle : null,
-                        ])}
-                        accessibilityRole="summary"
-                      >
-                        <Text style={styles.searchEmptyEyebrow}>
-                          {t(locale, "planner.search.emptyEyebrow")}
-                        </Text>
-                        <Text style={styles.searchEmptyTitle}>
-                          {t(locale, "planner.search.emptyTitle")}
-                        </Text>
-                        <Text style={styles.searchEmptyHint}>
-                          {t(locale, "planner.search.emptyHint")}
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={styles.searchLoading}>
-                        <Text style={styles.searchLoadingText}>
-                          {t(locale, "planner.search")}…
-                        </Text>
-                      </View>
-                    )}
+                                </View>
+                                <View style={styles.searchHitBody}>
+                                  <Text style={styles.searchHitName}>
+                                    {place.name}
+                                  </Text>
+                                  {place.address ? (
+                                    <Text style={styles.searchHitAddr}>
+                                      {place.address}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                                <Text
+                                  style={StyleSheet.flatten([
+                                    styles.searchHitHint,
+                                    selected
+                                      ? styles.searchHitHintSelected
+                                      : null,
+                                  ])}
+                                >
+                                  {t(locale, "planner.search.addHint")}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      ) : showSearchEmpty ? (
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.searchEmpty,
+                            searchOwnsSoftFail ? softFailMistWashStyle : null,
+                          ])}
+                          accessibilityRole="summary"
+                        >
+                          <Text style={styles.searchEmptyEyebrow}>
+                            {t(locale, "planner.search.emptyEyebrow")}
+                          </Text>
+                          <Text style={styles.searchEmptyTitle}>
+                            {t(locale, "planner.search.emptyTitle")}
+                          </Text>
+                          <Text style={styles.searchEmptyHint}>
+                            {t(locale, "planner.search.emptyHint")}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.searchLoading}>
+                          <Text style={styles.searchLoadingText}>
+                            {t(locale, "planner.search")}…
+                          </Text>
+                        </View>
+                      )}
+                    </SheetPresence>
 
                     <SoftFailNotice
                       open={searchOwnsSoftFail && hasSearchResults}
@@ -3525,7 +3537,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.paper,
+    /** Web bg-foam/95 — wave 55 Places residual. */
+    backgroundColor: `${colors.foam}F2`,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -3560,7 +3573,8 @@ const styles = StyleSheet.create({
     paddingLeft: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.8)",
+    /** Web bg-paper/80 — Lumen hex-alpha (BEA-534). */
+    backgroundColor: `${colors.paper}CC`,
     /* Azure Places inset — web map-chrome Places rail */
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
@@ -3584,13 +3598,15 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "600",
-    color: "rgba(100, 116, 139, 0.85)",
+    /** Web ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   searchSupport: {
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(15, 23, 42, 0.55)",
+    /** Web ink-soft/80 — was ink@0.55 rgba. */
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
   },
   searchHits: {
@@ -3608,7 +3624,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.995 }],
   },
   searchHitSelected: {
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    /** Web bg-river/[0.06] ≈ river@0.1 wash kept for selected depth. */
+    backgroundColor: `${colors.river}1A`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     paddingLeft: 9,
@@ -3645,12 +3662,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
+    lineHeight: 20,
     color: colors.ink,
   },
   searchHitAddr: {
     ...type.body,
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 18,
     color: colors.inkSoft,
   },
   searchHitHint: {
@@ -3660,7 +3678,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.1,
     textTransform: "uppercase",
-    color: "rgba(100, 116, 139, 0.5)",
+    /** Web ink-soft/50 */
+    color: `${colors.inkSoft}80`,
   },
   searchHitHintSelected: {
     color: colors.river,
@@ -3676,20 +3695,23 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.8,
     textTransform: "uppercase",
-    color: "rgba(47,107,255,0.8)",
+    /** Web text-river/80 */
+    color: `${colors.river}CC`,
   },
   searchEmptyTitle: {
     ...type.display,
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
+    lineHeight: 20,
     color: colors.ink,
   },
   searchEmptyHint: {
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    /** Web ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   searchLoading: {
     paddingHorizontal: 14,
@@ -3698,7 +3720,8 @@ const styles = StyleSheet.create({
   searchLoadingText: {
     ...type.body,
     fontSize: 12,
-    color: colors.inkSoft,
+    lineHeight: 18,
+    color: `${colors.inkSoft}CC`,
   },
   /* Stop list chrome — azure rail · mist-track chips · stop-card residual (BEA-529). */
   stopsChrome: {
