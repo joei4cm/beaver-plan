@@ -506,7 +506,11 @@ export default function JournalScreen() {
           </Animated.View>
 
           <Animated.View style={StyleSheet.flatten([styles.sheet, riseStyle])}>
-            {/* Day tabs — tip 015 mist rail + river active · tip-011 press (BEA-476). */}
+            {/*
+              Day strip / chips (BEA-496 beyond #333 / #346): azure inset paper
+              rail · Day meta 1.8 · tip-011 press. SoftFail stays on Entries /
+              Compose rails.
+            */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -1185,10 +1189,13 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.foam,
   },
+  /** Azure day strip — web journal day chips / paper/70 inset (BEA-496). */
   dayRail: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: colors.paper,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
   },
   dayRailContent: {
     gap: 4,
@@ -1207,7 +1214,7 @@ const styles = StyleSheet.create({
   dayChipMeta: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.inkSoft,
     fontWeight: "700",
@@ -1219,9 +1226,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: colors.ink,
+    fontVariant: ["tabular-nums"],
   },
   dayChipLabelActive: { color: colors.foam },
-  /** tip-011 press — web active:scale-[0.98] (BEA-476). */
+  /** tip-011 press — web active:scale-[0.98] (BEA-476 / BEA-496). */
   pressScale: {
     opacity: 0.92,
     transform: [{ scale: 0.98 }],

@@ -910,9 +910,14 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
         className="animate-rise relative mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
         style={{ animationDelay: "40ms" }}
       >
+        {/*
+          Day strip / chips (BEA-496 beyond #333 / #346): azure inset · paper/70 ·
+          tip-015 pill indicator · tip-011 press · Day eyebrow 0.18em. SoftFail
+          stays on scrub / entries / compose / photo strip rails.
+        */}
         <div
           ref={dayTabsRef}
-          className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/60 p-1"
+          className="relative flex gap-0 overflow-x-auto border-b border-[color:var(--bp-line)] bg-paper/70 p-1 shadow-[inset_3px_0_0_var(--bp-river)]"
           role="tablist"
           aria-label={t(locale, "journal.eyebrow")}
           onKeyDown={onDayTabsKeyDown}
@@ -943,10 +948,10 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   else dayTabRefs.current.delete(day.id);
                 }}
                 onClick={() => selectDay(day.id)}
-                className="bp-day-tab relative z-[1] shrink-0 rounded-bp-sm px-5 py-3 text-left"
+                className="bp-day-tab relative z-[1] shrink-0 rounded-bp-sm px-5 py-3 text-left active:scale-[0.98]"
               >
                 <span
-                  className={`block text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                  className={`block text-[10px] font-semibold uppercase tracking-[0.18em] ${
                     active ? "opacity-90" : "opacity-70"
                   }`}
                 >

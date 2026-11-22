@@ -233,7 +233,8 @@ export function JournalSkeleton() {
         </div>
       </div>
       <div className="mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp">
-        <div className="flex gap-1 border-b border-[color:var(--bp-line)] bg-paper/60 p-1">
+        {/* Day strip chrome — azure inset · paper/70 (BEA-496) */}
+        <div className="flex gap-1 border-b border-[color:var(--bp-line)] bg-paper/70 p-1 shadow-[inset_3px_0_0_var(--bp-river)]">
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
