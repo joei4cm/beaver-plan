@@ -8,7 +8,12 @@ import {
 } from "@beaver/core";
 import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { PlaceIntelSkeleton } from "@/components/ui/skeleton";
 
@@ -57,12 +62,13 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Map place intel SoftFailNotice depth (BEA-333 after #200):
- * azure inset rail · Soft intel badge · softSupport · compact SoftFail mist
- * band under rail · mist-wash tip-011 body · Snapshot / Categories / About /
- * Note rise stagger. SoftFail stays under Place intel rail — map search
- * (#226) / floating (#242) SoftFail own map chrome when open (no double
- * depth). Never timber / Failed to fetch.
+ * Map place intel SoftFailNotice depth (BEA-333 after #200) + SoftFail helper
+ * adoption (BEA-390 after #284):
+ * azure inset rail · SoftFailBadge · SoftFailSupport · compact SoftFail mist
+ * band under rail · softFailMistWash tip-011 body · Snapshot / Categories /
+ * About / Note rise stagger. SoftFail stays under Place intel rail — map
+ * search (#226) / floating (#242) SoftFail own map chrome when open (no
+ * double depth). Never timber / Failed to fetch.
  */
 export function PlaceIntel({
   details,
@@ -124,10 +130,10 @@ export function PlaceIntel({
       {view ? (
         <>
           {/*
-            SoftFail depth (BEA-333 after #200): azure Place intel rail · Soft
-            intel badge · softSupport · tip-011 mist-wash — SoftFail under
-            rail; map search (#226) / floating (#242) SoftFail stay on map
-            chrome when open (no double depth).
+            SoftFail depth (BEA-333 / BEA-390): azure Place intel rail ·
+            SoftFailBadge · SoftFailSupport · tip-011 mist-wash — SoftFail
+            under rail; map search (#226) / floating (#242) SoftFail stay on
+            map chrome when open (no double depth).
           */}
           <header
             className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -151,9 +157,9 @@ export function PlaceIntel({
                       : t(locale, "planner.place.liveBadge")}
                   </span>
                   {softOpen ? (
-                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    <SoftFailBadge>
                       {t(locale, "planner.place.softBadge")}
-                    </span>
+                    </SoftFailBadge>
                   ) : null}
                   {showTags ? (
                     <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -168,13 +174,15 @@ export function PlaceIntel({
                 <p className="font-display text-sm font-semibold tracking-tight text-ink">
                   {view.name}
                 </p>
-                <p
-                  className={`truncate text-[11px] leading-snug ${
-                    softOpen ? "text-ink-soft/80" : "text-ink-soft"
-                  }`}
-                >
-                  {sheetSupportCopy}
-                </p>
+                {softOpen ? (
+                  <SoftFailSupport className="block truncate">
+                    {sheetSupportCopy}
+                  </SoftFailSupport>
+                ) : (
+                  <p className="truncate text-[11px] leading-snug text-ink-soft">
+                    {sheetSupportCopy}
+                  </p>
+                )}
               </div>
               <PinGlyph className="mt-0.5 shrink-0 text-river" />
             </div>
@@ -184,16 +192,14 @@ export function PlaceIntel({
           <SoftFailNotice
             open={softOpen}
             compact
-            className="border-b border-[color:var(--bp-line)]"
+            fallback={t(locale, "planner.place.softFail")}
           >
             {t(locale, "planner.place.softFail")}
           </SoftFailNotice>
 
           <div
             className={`divide-y divide-[color:var(--bp-line)] ${
-              softOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              softOpen ? softFailMistWashClass : ""
             }`}
           >
             {showSnapshot ? (

@@ -9,7 +9,13 @@ import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { colors, radius } from "@beaver/ui-tokens";
 import { type } from "../theme";
 import { SheetPresence } from "./sheet-presence";
-import { SoftFailNotice } from "./soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailBandStyle,
+  softFailMistWashStyle,
+} from "./soft-fail-notice";
 
 type Props = {
   details: PlaceDetails | null;
@@ -51,12 +57,13 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Expo place intel SoftFailNotice depth (BEA-359 after #108 / web #251):
- * azure Place intel rail · Soft intel badge · softSupport · soft rail wash ·
- * compact SoftFail mist band under rail · tip-011 mist-wash body ·
+ * Expo place intel SoftFailNotice depth (BEA-359 after #108 / web #251) +
+ * SoftFail helper adoption (BEA-390 after #284):
+ * azure Place intel rail · SoftFailBadge · SoftFailSupport · soft rail wash ·
+ * compact SoftFail mist band under rail · softFailMistWash tip-011 body ·
  * StyleSheet.flatten · Lumen tokens. SoftFail stays under Place intel rail
- * — never timber / Failed to fetch. Web map place intel SoftFail (#251)
- * stays out of scope.
+ * — never timber / Failed to fetch. Web map SoftFail helpers land in the
+ * same BEA-390 PR; Expo trip SoftFail rails stay with BEA-388.
  */
 export function PlaceIntel({
   details,
@@ -128,9 +135,9 @@ export function PlaceIntel({
       {view ? (
         <>
           {/*
-            SoftFail depth (BEA-359 after #108): azure Place intel rail · Soft
-            intel badge · softSupport · soft rail wash · tip-011 — SoftFail
-            under rail. Web map place intel SoftFail (#251) stays out of scope.
+            SoftFail depth (BEA-359 / BEA-390): azure Place intel rail ·
+            SoftFailBadge · SoftFailSupport · soft rail wash · tip-011 —
+            SoftFail under rail. Expo trip SoftFail rails stay with BEA-388.
           */}
           <View
             style={StyleSheet.flatten([
@@ -161,11 +168,9 @@ export function PlaceIntel({
                   </Text>
                 </View>
                 {softOpen ? (
-                  <View style={styles.softBadge}>
-                    <Text style={styles.softBadgeLabel}>
-                      {t(locale, "planner.place.softBadge")}
-                    </Text>
-                  </View>
+                  <SoftFailBadge>
+                    {t(locale, "planner.place.softBadge")}
+                  </SoftFailBadge>
                 ) : null}
                 {showTags ? (
                   <Text style={styles.headerCount}>{tagCountLabel}</Text>
@@ -176,15 +181,15 @@ export function PlaceIntel({
                 )}
               </View>
               <Text style={styles.headerName}>{view.name}</Text>
-              <Text
-                style={StyleSheet.flatten([
-                  styles.headerSupport,
-                  softOpen ? styles.headerSupportSoft : null,
-                ])}
-                numberOfLines={2}
-              >
-                {sheetSupportCopy}
-              </Text>
+              {softOpen ? (
+                <SoftFailSupport numberOfLines={2}>
+                  {sheetSupportCopy}
+                </SoftFailSupport>
+              ) : (
+                <Text style={styles.headerSupport} numberOfLines={2}>
+                  {sheetSupportCopy}
+                </Text>
+              )}
             </View>
           </View>
 
@@ -192,7 +197,8 @@ export function PlaceIntel({
           <SoftFailNotice
             open={softOpen}
             compact
-            style={styles.softFailBand}
+            style={softFailBandStyle}
+            fallback={t(locale, "planner.place.softFail")}
           >
             {t(locale, "planner.place.softFail")}
           </SoftFailNotice>
@@ -200,7 +206,7 @@ export function PlaceIntel({
           <View
             style={StyleSheet.flatten([
               styles.sections,
-              softOpen ? styles.sectionsSoft : null,
+              softOpen ? softFailMistWashStyle : null,
             ])}
           >
             {showSnapshot ? (
@@ -363,9 +369,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.inkSoft,
   },
-  headerSupportSoft: {
-    color: "rgba(100, 116, 139, 0.85)",
-  },
   headerCount: {
     ...type.body,
     fontSize: 11,
@@ -405,32 +408,8 @@ const styles = StyleSheet.create({
   badgeTextLive: {
     color: colors.riverDeep,
   },
-  softBadge: {
-    borderRadius: radius.xs,
-    backgroundColor: colors.mist,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  softBadgeLabel: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: colors.inkSoft,
-  },
-  /** Mist SoftFail strip under azure Place intel rail — border-b before tip-011 body. */
-  softFailBand: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    borderTopWidth: 0,
-  },
   sections: {
     borderTopWidth: 0,
-  },
-  /** Mist-wash tip-011 sheet body when SoftFail owns the Place intel rail. */
-  sectionsSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   section: {
     paddingHorizontal: 12,
