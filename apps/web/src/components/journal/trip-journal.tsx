@@ -715,6 +715,16 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     "{max}",
     String(PHOTO_SLOT_MAX),
   );
+  /**
+   * Journal day scrub SoftFailNotice depth (BEA-368 after #103):
+   * SoftFail under azure scrub rail · Soft scrub badge · softSupport ·
+   * tip-011 mist-wash track. Own rail under day tabs — sibling to compose
+   * SoftFail (#264) / empty SoftFail (#231) / photo strip SoftFail (#244)
+   * (those SoftFails stay on their rails; no double SoftFail on scrub).
+   * Soft copy never timber / Failed to fetch. Expo journal out of scope.
+   */
+  const scrubSoftShell = demoSeeded || softNotice || composeSoftFail;
+  const scrubSoftOpen = scrubSoftShell && dayStops.length > 0;
   const showListSoftFail =
     !emptyOwnsSoft && !composeOwnsSoft && (demoSeeded || softNotice);
   const listSoftOpen = showListSoftFail;
@@ -865,6 +875,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           stops={dayStops}
           selectedStopId={stopId || null}
           onSelectStop={setStopId}
+          softOpen={scrubSoftOpen}
         />
 
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
