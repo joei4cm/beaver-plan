@@ -127,11 +127,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
- * wave 48 craft residual (BEA-467): river sheet eyebrow · day-count chip ·
- * foam mist-track select (booking OTA parity) · empty river eyebrow ·
- * tip-011 CTA press. SoftFailBadge · SoftFailSupport · mist band unchanged.
- * SoftFail copy never timber / Failed to fetch. Yields web #248; Expo day
- * tabs SoftFail (#230) stays on Days. No `/dev` gallery.
+ * wave 48 (#340) + wave 53 craft residual (BEA-508): paper/inkSoft/river
+ * token alphas · stop-row gap 12 · prefs/empty/day title lineHeights.
+ * SoftFailBadge · SoftFailSupport · mist band unchanged. SoftFail copy never
+ * timber / Failed to fetch. Yields web #248; Expo day tabs SoftFail (#230)
+ * stays on Days. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -416,9 +416,9 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48 craft
-        (BEA-467): azure Day fill rail · river sheet eyebrow · day count ·
-        foam mist-track select · SoftFailBadge Soft fill · SoftFailSupport ·
+        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48 (#340) +
+        wave 53 craft (BEA-508): azure Day fill rail · paper/inkSoft/river
+        tokens · stop-row gap 12 · SoftFailBadge Soft fill · SoftFailSupport ·
         softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Never timber.
       */}
       <Pressable
@@ -842,7 +842,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(248, 250, 252, 0.92)",
+    /** Web bg-foam/92 — Lumen foam @ 0.92 */
+    backgroundColor: `${colors.foam}EB`,
     shadowColor: colors.ink,
     shadowOpacity: 0.05,
     shadowRadius: 14,
@@ -859,11 +860,13 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.river,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    /** Web bg-paper soft wash — Lumen paper @ 0.55 */
+    backgroundColor: `${colors.paper}8C`,
   },
   /** Soft azure Day fill rail wash when SoftFail owns depth (BEA-360). */
   headerSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    /** Web paper/85 when Soft owns */
+    backgroundColor: `${colors.paper}D9`,
   },
   headerText: {
     flex: 1,
@@ -886,6 +889,7 @@ const styles = StyleSheet.create({
   title: {
     ...type.display,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
@@ -895,7 +899,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
-    color: "rgba(100, 116, 139, 0.8)",
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   support: {
     ...type.body,
@@ -922,7 +927,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   prefs: {
-    gap: 14,
+    /** Web space-y-3 */
+    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
@@ -931,7 +937,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   stageSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.12)",
+    /** Mist tip-011 wash @ 0.12 */
+    backgroundColor: `${colors.mist}1F`,
   },
   sectionEyebrow: {
     ...type.body,
@@ -945,6 +952,7 @@ const styles = StyleSheet.create({
     ...type.display,
     marginTop: 4,
     fontSize: 16,
+    lineHeight: 22,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
@@ -970,7 +978,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 4,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(230, 236, 245, 0.55)",
+    /** Web bg-mist/50 — Lumen mist @ 0.55 */
+    backgroundColor: `${colors.mist}8C`,
     padding: 4,
   },
   interestChip: {
@@ -986,7 +995,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.25)",
+    /** Web ring-river/25 */
+    borderColor: `${colors.river}40`,
   },
   chipPressed: {
     opacity: 0.92,
@@ -1002,7 +1012,8 @@ const styles = StyleSheet.create({
     color: colors.river,
   },
   prefsGrid: {
-    gap: 14,
+    /** Web gap-4 */
+    gap: 16,
   },
   field: {
     gap: 0,
@@ -1012,7 +1023,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    /** Web bg-paper/80 — foam @ 0.85 */
+    backgroundColor: `${colors.foam}D9`,
     color: colors.ink,
     fontSize: 14,
     paddingHorizontal: 12,
@@ -1070,7 +1082,8 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
   },
   loadingBlock: {
-    gap: 10,
+    /** Web space-y-2 */
+    gap: 8,
   },
   skeletonCard: {
     overflow: "hidden",
@@ -1084,7 +1097,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1093,19 +1107,19 @@ const styles = StyleSheet.create({
     width: 56,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(47, 107, 255, 0.18)",
+    backgroundColor: `${colors.river}2E`,
   },
   skeletonTitle: {
     width: 112,
     height: 14,
     borderRadius: 4,
-    backgroundColor: "rgba(15, 23, 42, 0.1)",
+    backgroundColor: `${colors.ink}1A`,
   },
   skeletonLine: {
     width: "72%",
     height: 10,
     borderRadius: 4,
-    backgroundColor: "rgba(15, 23, 42, 0.07)",
+    backgroundColor: `${colors.ink}12`,
   },
   skeletonDay: {
     flexDirection: "row",
@@ -1120,13 +1134,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 12,
     borderRadius: 4,
-    backgroundColor: "rgba(15, 23, 42, 0.1)",
+    backgroundColor: `${colors.ink}1A`,
   },
   skeletonNote: {
     width: 120,
     height: 18,
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    backgroundColor: `${colors.river}1F`,
   },
   loadingHint: {
     ...type.body,
@@ -1145,12 +1159,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.6,
     textTransform: "uppercase",
-    color: "rgba(47, 107, 255, 0.8)",
+    /** Web text-river/80 */
+    color: `${colors.river}CC`,
   },
   emptyTitle: {
     ...type.display,
     marginTop: 6,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
@@ -1183,7 +1199,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
@@ -1195,7 +1212,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 6,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: colors.inkSoft,
   },
   dayBlock: {
@@ -1214,6 +1231,7 @@ const styles = StyleSheet.create({
   dayTitle: {
     ...type.display,
     fontSize: 14,
+    lineHeight: 20,
     fontWeight: "700",
     letterSpacing: -0.15,
     color: colors.ink,
@@ -1229,7 +1247,7 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
     overflow: "hidden",
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    backgroundColor: `${colors.river}1A`,
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
     paddingHorizontal: 8,
@@ -1239,12 +1257,14 @@ const styles = StyleSheet.create({
     color: colors.river,
   },
   stopList: {
+    /** Web mt-2.5 */
     marginTop: 10,
     gap: 8,
   },
   stopRow: {
     flexDirection: "row",
-    gap: 10,
+    /** Web gap-3 — 4px grid */
+    gap: 12,
     alignItems: "flex-start",
   },
   stopMarker: {
@@ -1254,7 +1274,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    backgroundColor: `${colors.river}1F`,
   },
   stopMarkerLabel: {
     ...type.body,
