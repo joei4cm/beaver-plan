@@ -28,6 +28,7 @@ import {
   SoftFailBadge,
   SoftFailLiveBadge,
   SoftFailNotice,
+  SoftFailSupport,
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
@@ -251,9 +252,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
     !emptyOwnsSoft &&
     Boolean(micDenied || error);
   /**
-   * Offline banner SoftFailNotice depth (BEA-309 after #87; yield BEA-414):
-   * azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
-   * compact SoftFailNotice (border-b) · mist-wash status body · tip-011.
+   * Offline banner SoftFailNotice depth (BEA-309 after #87; yield BEA-414) +
+   * SoftFailSupport residual (BEA-433): azure SoftFail sheet · SoftFailBadge /
+   * SoftFailLiveBadge · SoftFailSupport · compact SoftFailNotice (border-b) ·
+   * mist-wash status body · tip-011.
    * SoftFail yields while empty history owns soft-fail; yields while Talk
    * SoftFail or camera SoftFail owns (Expo #335 / #281 yield — no double
    * SoftFail depth). Soft copy never timber / Failed to fetch.
@@ -801,11 +803,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </p>
 
         {/*
-          Offline banner SoftFail depth (BEA-309 after #87):
-          azure SoftFail sheet · Soft/Offline/Live badge · softSupport ·
-          compact SoftFailNotice · mist-wash status chips · tip-011 —
-          SoftFail yields while empty / Talk / camera SoftFail own —
-          never timber / Failed to fetch.
+          Offline banner SoftFail depth (BEA-309 after #87) + SoftFailSupport
+          residual (BEA-433): azure SoftFail sheet · SoftFailBadge /
+          SoftFailLiveBadge · SoftFailSupport · compact SoftFailNotice ·
+          mist-wash status chips · tip-011 — SoftFail yields while empty /
+          Talk / camera SoftFail own — never timber / Failed to fetch.
         */}
         <div
           className="animate-rise mt-5 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -817,11 +819,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "translate.bannerEyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {isDemo
-                  ? t(locale, "translate.softSupport")
-                  : t(locale, "translate.bannerSupport")}
-              </span>
+              {isDemo ? (
+                <SoftFailSupport>
+                  {t(locale, "translate.softSupport")}
+                </SoftFailSupport>
+              ) : (
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "translate.bannerSupport")}
+                </span>
+              )}
             </div>
             {!online || isDemo ? (
               <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
@@ -987,10 +993,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           )}
 
           {/*
-            Empty SoftFail depth (BEA-310 after #81):
-            azure history rail · Soft empty badge · emptySupport ·
-            compact SoftFailNotice mist band · SheetPresence empty body ·
-            tip-011 rise — never timber / Failed to fetch.
+            Empty SoftFail depth (BEA-310 after #81) + SoftFailSupport residual
+            (BEA-433): azure history rail · SoftFailBadge Soft empty ·
+            SoftFailSupport · compact SoftFailNotice mist band · SheetPresence
+            empty body · tip-011 rise — never timber / Failed to fetch.
           */}
           <section
             className="animate-rise mt-8 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
@@ -1004,11 +1010,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     {t(locale, "translate.history")}
                   </p>
                   {historyEmpty ? (
-                    <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {emptySoftOpen
-                        ? t(locale, "translate.emptySoftSupport")
-                        : t(locale, "translate.emptySupport")}
-                    </span>
+                    emptySoftOpen ? (
+                      <SoftFailSupport>
+                        {t(locale, "translate.emptySoftSupport")}
+                      </SoftFailSupport>
+                    ) : (
+                      <span className="text-[11px] leading-snug text-ink-soft/80">
+                        {t(locale, "translate.emptySupport")}
+                      </span>
+                    )
                   ) : null}
                 </div>
                 <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
@@ -1018,17 +1028,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 </p>
               </div>
               {historyEmpty ? (
-                <span
-                  className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                    emptySoftOpen
-                      ? "bg-mist text-ink-soft"
-                      : "bg-river/12 text-river"
-                  }`}
-                >
-                  {emptySoftOpen
-                    ? t(locale, "translate.emptySoftBadge")
-                    : t(locale, "translate.emptyBadge")}
-                </span>
+                emptySoftOpen ? (
+                  <SoftFailBadge>
+                    {t(locale, "translate.emptySoftBadge")}
+                  </SoftFailBadge>
+                ) : (
+                  <SoftFailLiveBadge>
+                    {t(locale, "translate.emptyBadge")}
+                  </SoftFailLiveBadge>
+                )
               ) : (
                 <span className="rounded-bp-xs bg-mist px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-river-deep">
                   {t(locale, "translate.historyCount").replace(
