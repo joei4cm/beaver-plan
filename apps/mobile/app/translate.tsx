@@ -2323,7 +2323,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    /** Web sticky Talk bg-foam/92 — Lumen foam @ 0.92 (BEA-623; SoftFail untouched). */
+    backgroundColor: `${colors.foam}EB`,
     overflow: "hidden",
     shadowColor: colors.shadowDeep,
     shadowOpacity: 0.08,
@@ -2341,7 +2342,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.72)",
+    /** Web Talk idle bg-paper/70 — Lumen paper @ 0.70 (BEA-623; Pair/History/Dual twin class). SoftFail wash untouched. */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
