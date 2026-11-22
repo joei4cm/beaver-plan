@@ -29,7 +29,12 @@ import {
 } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { ShareStudioSkeleton } from "@/components/ui/skeleton";
 import { apiBase, apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
@@ -399,14 +404,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * SoftFailNotice depth (BEA-331 after #192 / BEA-315 #243):
-   * empty canvas owns SoftFail under azure canvas rail ·
-   * Studio sheet owns softDemo under azure Studio rail ·
-   * Soft studio badge · softSupport · compact SoftFail mist band (`border-b`) ·
-   * mist tip-011 body while soft · Export owns exportSoftFail under Export rail ·
-   * Soft export badge · exportSoftSupport · Export mist tip-011 CTA wash ·
-   * Studio SoftFail yields while Export owns (no double depth). Soft copy never
-   * timber / Failed to fetch.
+   * SoftFail helpers (BEA-397 after #284 / depth BEA-331 + BEA-315 #243):
+   * SoftFailBadge Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
+   * softFailMistWashClass tip-011 · empty canvas owns SoftFail under azure
+   * canvas rail · Studio sheet owns softDemo under azure Studio rail · Export
+   * owns exportSoftFail under Export rail · Studio SoftFail yields while Export
+   * owns (no double depth). Soft copy never timber / Failed to fetch.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
@@ -515,9 +518,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         {/*
-          Empty SoftFail chrome (BEA-240 after #149/#171/#175):
-          azure canvas rail · Open badge · compact SoftFailNotice ·
-          SheetPresence empty body · tip-011 rise — never timber.
+          Empty SoftFail helpers (BEA-397 after #284 / BEA-240):
+          azure canvas rail · SoftFailBadge Soft/Open · SoftFailSupport ·
+          SoftFailNotice mist band · softFailMistWashClass tip-011 —
+          never timber / Failed to fetch.
         */}
         <section className="animate-rise flex flex-col items-center">
           <div
@@ -537,25 +541,23 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   {t(locale, "share.canvasEyebrow")}
                 </p>
                 {canvasEmpty ? (
-                  <span className="text-[11px] leading-snug text-ink-soft/80">
+                  <SoftFailSupport>
                     {emptySoftOpen
                       ? t(locale, "share.emptySoftSupport")
                       : t(locale, "share.emptySupport")}
-                  </span>
+                  </SoftFailSupport>
                 ) : null}
               </div>
               {canvasEmpty ? (
-                <span
-                  className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                    emptySoftOpen
-                      ? "bg-mist text-ink-soft"
-                      : "bg-river/12 text-river"
-                  }`}
-                >
-                  {emptySoftOpen
-                    ? t(locale, "share.emptySoftBadge")
-                    : t(locale, "share.emptyBadge")}
-                </span>
+                emptySoftOpen ? (
+                  <SoftFailBadge>
+                    {t(locale, "share.emptySoftBadge")}
+                  </SoftFailBadge>
+                ) : (
+                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+                    {t(locale, "share.emptyBadge")}
+                  </span>
+                )
               ) : (
                 <p className="font-mono text-[10px] tracking-wide text-ink-soft">
                   {active.width}×{active.height} · {SHARE_EXPORT_SCALE}× PNG
@@ -606,9 +608,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 <SheetPresence
                   open
                   className={`flex h-full flex-col items-start justify-center px-6 py-8 ${
-                    emptySoftOpen
-                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                      : ""
+                    emptySoftOpen ? softFailMistWashClass : ""
                   }`}
                   style={{ animationDelay: "40ms" }}
                   aria-label={t(locale, "share.empty")}
@@ -665,9 +665,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         </section>
 
         {/*
-          Studio SoftFail depth (BEA-315 after #210):
-          azure Studio rail · Soft studio badge · softSupport ·
-          compact SoftFail mist band (`border-b`) · mist tip-011 body while soft —
+          Studio SoftFail helpers (BEA-397 after #284 / depth BEA-315):
+          azure Studio rail · SoftFailBadge Soft studio / Demo · SoftFailSupport ·
+          SoftFailNotice mist band · softFailMistWashClass tip-011 —
           Empty + Export SoftFail ownership yield (no double depth) —
           never timber / Failed to fetch.
         */}
@@ -682,23 +682,19 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "share.sheetEyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {sheetSupportCopy}
-              </span>
+              <SoftFailSupport>{sheetSupportCopy}</SoftFailSupport>
             </div>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                sheetSoftOpen || softDemo || exportSoftFail || emptyOwnsSoft
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river"
-              }`}
-            >
-              {sheetSoftOpen
-                ? t(locale, "share.softBadge")
-                : softDemo || exportSoftFail || emptyOwnsSoft
-                  ? t(locale, "share.demoBadge")
-                  : t(locale, "share.liveBadge")}
-            </span>
+            {sheetSoftOpen || softDemo || exportSoftFail || emptyOwnsSoft ? (
+              <SoftFailBadge>
+                {sheetSoftOpen
+                  ? t(locale, "share.softBadge")
+                  : t(locale, "share.demoBadge")}
+              </SoftFailBadge>
+            ) : (
+              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                {t(locale, "share.liveBadge")}
+              </span>
+            )}
           </header>
 
           {/* Compact SoftFail under azure Studio rail — yields while empty / Export own. */}
@@ -712,9 +708,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
           <div
             className={`animate-rise space-y-5 px-4 py-4 ${
-              sheetSoftOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              sheetSoftOpen ? softFailMistWashClass : ""
             }`}
             style={{ animationDelay: "70ms" }}
           >
@@ -954,9 +948,9 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             ) : null}
 
             {/*
-              Export SoftFail depth (BEA-331 after #192):
-              azure Export rail · Soft export badge · exportSoftSupport ·
-              compact SoftFail mist band (`border-b`) · mist tip-011 CTA wash ·
+              Export SoftFail helpers (BEA-397 after #284 / depth BEA-331):
+              azure Export rail · SoftFailBadge Soft export / Live · SoftFailSupport ·
+              SoftFailNotice mist band · softFailMistWashClass tip-011 —
               Studio SoftFail (#243) yields while Export owns — never timber /
               Failed to fetch.
             */}
@@ -977,21 +971,25 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     >
                       {t(locale, "share.export")}
                     </h2>
-                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-                      {exportSupportCopy}
-                    </p>
+                    {exportOwnsSoft ? (
+                      <SoftFailSupport className="mt-1 block">
+                        {exportSupportCopy}
+                      </SoftFailSupport>
+                    ) : (
+                      <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                        {exportSupportCopy}
+                      </p>
+                    )}
                   </div>
-                  <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                      exportOwnsSoft
-                        ? "bg-mist text-ink-soft"
-                        : "bg-river/12 text-river"
-                    }`}
-                  >
-                    {exportOwnsSoft
-                      ? t(locale, "share.exportSoftBadge")
-                      : t(locale, "share.liveBadge")}
-                  </span>
+                  {exportOwnsSoft ? (
+                    <SoftFailBadge>
+                      {t(locale, "share.exportSoftBadge")}
+                    </SoftFailBadge>
+                  ) : (
+                    <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                      {t(locale, "share.liveBadge")}
+                    </span>
+                  )}
                 </div>
 
                 {/* Compact SoftFail under azure Export rail — never timber / Failed to fetch. */}
@@ -1006,9 +1004,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 <SheetPresence
                   open
                   className={`flex flex-col gap-2.5 px-3 py-3 ${
-                    exportOwnsSoft
-                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                      : ""
+                    exportOwnsSoft ? softFailMistWashClass : ""
                   }`}
                   style={{ animationDelay: "40ms" }}
                   role="group"

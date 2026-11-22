@@ -34,7 +34,12 @@ import { colors, motion, radius } from "@beaver/ui-tokens";
 import { t } from "@beaver/i18n";
 import { fetchTrip, isApiSoftFail, renderShare } from "../../../src/api";
 import { SheetPresence } from "../../../src/components/sheet-presence";
-import { SoftFailNotice } from "../../../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashStyle,
+} from "../../../src/components/soft-fail-notice";
 import { type } from "../../../src/theme";
 import {
   patchUserPrefs,
@@ -296,11 +301,10 @@ export default function ShareScreen() {
   const active = SHARE_TEMPLATES.find((x) => x.id === templateId)!;
 
   /**
-   * SoftFailNotice depth (BEA-365 after #126/#169):
-   * azure Export rail · Soft export / Soft studio badge · softSupport ·
-   * soft rail wash · compact SoftFail mist band (`border-b`) ·
-   * tip-011 mist-wash CTAs · StyleSheet.flatten · never timber /
-   * Failed to fetch. Export SoftFail owns when exportSoftFail;
+   * SoftFail helpers (BEA-397 after #284 / depth BEA-365):
+   * SoftFailBadge Soft export / Soft studio · SoftFailSupport · SoftFailNotice
+   * mist band · softFailMistWashStyle tip-011 · StyleSheet.flatten · never
+   * timber / Failed to fetch. Export SoftFail owns when exportSoftFail;
    * softDemo (load/render) SoftFail under Export while Export yields to it
    * when only softDemo (Expo has no Studio SoftFail rail). Web share
    * export SoftFail (#255) / share studio SoftFail (#243) stay out of scope.
@@ -313,11 +317,9 @@ export default function ShareScreen() {
     : studioSoftOpen
       ? t(locale, "share.softSupport")
       : t(locale, "share.exportSupport");
-  const exportBadgeCopy = exportOwnsSoft
+  const exportSoftBadgeCopy = exportOwnsSoft
     ? t(locale, "share.exportSoftBadge")
-    : studioSoftOpen
-      ? t(locale, "share.softBadge")
-      : t(locale, "share.liveBadge");
+    : t(locale, "share.softBadge");
   /** SoftFail copy owned by azure Export rail — never timber / Failed to fetch. */
   const exportSoftCopy = exportOwnsSoft
     ? t(locale, "share.exportSoftFail")
@@ -578,11 +580,11 @@ export default function ShareScreen() {
             </View>
 
             {/*
-              Export SoftFail depth (BEA-365 after #126/#169):
-              azure Export rail · Soft export / Soft studio badge · softSupport ·
-              soft rail wash · compact SoftFail mist band (`border-b`) ·
-              tip-011 mist-wash CTAs · StyleSheet.flatten — never timber /
-              Failed to fetch. Web #255 / #243 stay out of scope.
+              Export SoftFail helpers (BEA-397 after #284 / depth BEA-365):
+              azure Export rail · SoftFailBadge Soft export / Soft studio ·
+              SoftFailSupport · SoftFailNotice mist band · softFailMistWashStyle
+              tip-011 · StyleSheet.flatten — never timber / Failed to fetch.
+              Web #255 / #243 stay out of scope.
             */}
             <SheetPresence
               open
@@ -612,20 +614,28 @@ export default function ShareScreen() {
                     >
                       {t(locale, "share.export")}
                     </Text>
-                    <Text style={styles.exportSupport}>
-                      {exportSupportCopy}
-                    </Text>
+                    {softOpen ? (
+                      <SoftFailSupport style={styles.exportSupportSoft}>
+                        {exportSupportCopy}
+                      </SoftFailSupport>
+                    ) : (
+                      <Text style={styles.exportSupport}>
+                        {exportSupportCopy}
+                      </Text>
+                    )}
                   </View>
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.exportBadge,
-                      softOpen
-                        ? styles.exportBadgeSoft
-                        : styles.exportBadgeLive,
-                    ])}
-                  >
-                    {exportBadgeCopy}
-                  </Text>
+                  {softOpen ? (
+                    <SoftFailBadge>{exportSoftBadgeCopy}</SoftFailBadge>
+                  ) : (
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.exportBadge,
+                        styles.exportBadgeLive,
+                      ])}
+                    >
+                      {t(locale, "share.liveBadge")}
+                    </Text>
+                  )}
                 </View>
 
                 {/* Compact SoftFail mist band under azure Export rail. */}
@@ -640,7 +650,7 @@ export default function ShareScreen() {
                 <View
                   style={StyleSheet.flatten([
                     styles.exportActions,
-                    softOpen ? styles.exportActionsSoft : null,
+                    softOpen ? softFailMistWashStyle : null,
                   ])}
                   accessibilityRole="toolbar"
                   accessibilityLabel={t(locale, "share.export")}
@@ -1076,6 +1086,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
+  /** SoftFailSupport keeps flex shrink beside Export title while Soft owns. */
+  exportSupportSoft: {
+    flexShrink: 1,
+  },
   exportBadge: {
     ...type.body,
     alignSelf: "flex-start",
@@ -1087,10 +1101,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: radius.xs,
     overflow: "hidden",
-  },
-  exportBadgeSoft: {
-    backgroundColor: colors.mist,
-    color: colors.inkSoft,
   },
   exportBadgeLive: {
     backgroundColor: "rgba(47,107,255,0.12)",
@@ -1108,10 +1118,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 14,
-  },
-  /** Mist-wash tip-011 CTA body when SoftFail owns the Export rail (BEA-365). */
-  exportActionsSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   primary: {
     backgroundColor: colors.river,
