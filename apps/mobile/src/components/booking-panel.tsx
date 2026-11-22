@@ -125,11 +125,13 @@ async function searchLocal(
 
 /**
  * Expo booking OTA sheet — SoftFail depth kept (BEA-389 / BEA-349 / BEA-418) +
- * wave 48 craft residual (BEA-460): root / confirmRail soft elevation matching
- * day-fill · offerCard `--bp-line` + soft shadow · offerTitle display 14.
- * SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
- * timber / Failed to fetch. No `/dev` gallery.
+ * wave 48 craft residual (BEA-460): root / confirmRail soft elevation ·
+ * offerCard `--bp-line` + soft shadow · offerTitle display 14.
+ * Wave 50 Confirm residual (BEA-481): tip-011 press on Confirm save / open
+ * chip · draftKind tracking 1.4 (web `0.14em`). SoftFail stays under OTA /
+ * Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm
+ * SoftFail yields OTA (no double depth). Never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -834,10 +836,15 @@ export function BookingPanel({
                 </View>
                 {stop ? (
                   <Pressable
-                    style={StyleSheet.flatten([
-                      styles.saveBtn,
-                      saving || !isDirty ? styles.searchBtnBusy : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.saveBtn,
+                        saving || !isDirty ? styles.searchBtnBusy : null,
+                        pressed && !(saving || !isDirty)
+                          ? styles.ctaPressed
+                          : null,
+                      ])
+                    }
                     disabled={saving || !isDirty}
                     onPress={() => void save()}
                     accessibilityRole="button"
@@ -892,7 +899,12 @@ export function BookingPanel({
                           </Text>
                           {filled ? (
                             <Pressable
-                              style={StyleSheet.flatten([styles.openChip])}
+                              style={({ pressed }) =>
+                                StyleSheet.flatten([
+                                  styles.openChip,
+                                  pressed ? styles.chipPressed : null,
+                                ])
+                              }
                               onPress={() => openExternal(row.url.trim())}
                               accessibilityRole="button"
                             >
@@ -1421,7 +1433,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
@@ -1432,6 +1444,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(47,107,255,0.08)",
     paddingHorizontal: 8,
     paddingVertical: 4,
+  },
+  /** tip-011 press — day-fill chip sibling (BEA-481). */
+  chipPressed: {
+    transform: [{ scale: 0.98 }],
   },
   openChipLabel: {
     ...type.body,
@@ -1460,6 +1476,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
+  },
+  /** tip-011 press — day-fill CTA sibling (BEA-481). */
+  ctaPressed: {
+    transform: [{ scale: 0.98 }],
   },
   saveBtnLabel: {
     ...type.body,
