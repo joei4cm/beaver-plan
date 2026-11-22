@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   DAY_FILL_INTERESTS,
   type DayFillInterest,
@@ -64,12 +64,14 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Map place intel SoftFailNotice depth (BEA-333 after #200) + SoftFail helper
- * adoption (BEA-390 after #284):
+ * adoption (BEA-390 after #284) + craft SoftFail query parity (BEA-422):
  * azure inset rail · SoftFailBadge · SoftFailSupport · compact SoftFail mist
  * band under rail · softFailMistWash tip-011 body · Snapshot / Categories /
- * About / Note rise stagger. SoftFail stays under Place intel rail — map
- * search (#226) / floating (#242) SoftFail own map chrome when open (no
- * double depth). Never timber / Failed to fetch.
+ * About / Note rise stagger. Craft: `/trips/…?placeSoftFail=1` forces SoftFail
+ * depth under Place intel without a Places miss. SoftFail stays under Place
+ * intel rail — map search (#226) / floating (#242) SoftFail own map chrome when
+ * open (no double depth). Never timber / Failed to fetch. No `/dev` SoftFail
+ * gallery.
  */
 export function PlaceIntel({
   details,
@@ -78,6 +80,18 @@ export function PlaceIntel({
   demoMode,
   userNote,
 }: Props) {
+  /** Craft preview: /trips/…?placeSoftFail=1 — SoftFail depth under Place intel. */
+  const [placeSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("placeSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const snapRef = useRef<{
     details: PlaceDetails;
     userNote?: string;
@@ -110,7 +124,13 @@ export function PlaceIntel({
   const showTags = tags.length > 0;
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
-  const softOpen = open && demo;
+  /**
+   * SoftFail depth (BEA-333 / BEA-390) + craft SoftFail query parity (BEA-422):
+   * Soft intel badge · softSupport · SoftFail under azure Place intel rail ·
+   * tip-011 mist-wash. Craft: /trips/…?placeSoftFail=1. SoftFail copy always
+   * softFail — never timber / Failed to fetch.
+   */
+  const softOpen = open && (demo || placeSoftPreview);
   const sheetSupportCopy = softOpen
     ? t(locale, "planner.place.softSupport")
     : view?.address
@@ -131,10 +151,11 @@ export function PlaceIntel({
       {view ? (
         <>
           {/*
-            SoftFail depth (BEA-333 / BEA-390): azure Place intel rail ·
-            SoftFailBadge · SoftFailSupport · tip-011 mist-wash — SoftFail
-            under rail; map search (#226) / floating (#242) SoftFail stay on
-            map chrome when open (no double depth).
+            SoftFail depth (BEA-333 / BEA-390) + craft SoftFail query parity
+            (BEA-422): azure Place intel rail · SoftFailBadge · SoftFailSupport ·
+            tip-011 mist-wash. Craft: ?placeSoftFail=1 — SoftFail under rail;
+            map search (#226) / floating (#242) SoftFail stay on map chrome when
+            open (no double depth).
           */}
           <header
             className="animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"

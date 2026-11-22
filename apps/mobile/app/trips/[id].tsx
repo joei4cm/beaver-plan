@@ -123,7 +123,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1` / `?searchSoftFail=1` / `?placeSoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -143,6 +143,8 @@ export default function TripDetailScreen() {
     timelineSoftFail: timelineSoftFailParam,
     modeSoftFail: modeSoftFailParam,
     transferSoftFail: transferSoftFailParam,
+    searchSoftFail: searchSoftFailParam,
+    placeSoftFail: placeSoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
@@ -155,6 +157,8 @@ export default function TripDetailScreen() {
     timelineSoftFail?: string | string[];
     modeSoftFail?: string | string[];
     transferSoftFail?: string | string[];
+    searchSoftFail?: string | string[];
+    placeSoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -177,6 +181,10 @@ export default function TripDetailScreen() {
   const modeSoftPreview = craftSoftFailOn(modeSoftFailParam);
   /** Craft preview: /trips/…?transferSoftFail=1 — SoftFail depth under Transfer (BEA-423). */
   const transferSoftPreview = craftSoftFailOn(transferSoftFailParam);
+  /** Craft preview: /trips/…?searchSoftFail=1 — SoftFail depth under Places search (BEA-422). */
+  const searchSoftPreview = craftSoftFailOn(searchSoftFailParam);
+  /** Craft preview: /trips/…?placeSoftFail=1 — SoftFail depth under Place intel (BEA-422). */
+  const placeSoftPreview = craftSoftFailOn(placeSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -928,6 +936,15 @@ export default function TripDetailScreen() {
     searchOpen &&
     searchQ.length > 0 &&
     (hasSearchResults || showSearchEmpty || searching);
+  /**
+   * Places search SoftFail helpers + craft SoftFail query parity (BEA-422):
+   * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band · tip-011
+   * mist-wash. Craft: /trips/…?searchSoftFail=1 forces SoftFail under Places
+   * when the sheet is open (mirrors web map-chrome). SoftFail copy never
+   * timber / Failed to fetch.
+   */
+  const searchOwnsSoftFail =
+    (searchDemo || searchSoftPreview) && searchSheetOpen;
 
   const riseStyle = {
     opacity: rise,
@@ -1580,7 +1597,7 @@ export default function TripDetailScreen() {
                             )}
                           </Text>
                         ) : null}
-                        {searchDemo ? (
+                        {searchOwnsSoftFail ? (
                           <SoftFailSupport style={styles.softSupportShrink}>
                             {t(locale, "planner.search.softSupport")}
                           </SoftFailSupport>
@@ -1590,9 +1607,13 @@ export default function TripDetailScreen() {
                           </Text>
                         )}
                       </View>
-                      {searchDemo ? (
+                      {searchOwnsSoftFail ? (
                         <SoftFailBadge>
                           {t(locale, "planner.search.softBadge")}
+                        </SoftFailBadge>
+                      ) : searchDemo ? (
+                        <SoftFailBadge>
+                          {t(locale, "planner.search.demoBadge")}
                         </SoftFailBadge>
                       ) : (
                         <SoftFailLiveBadge>
@@ -1602,7 +1623,12 @@ export default function TripDetailScreen() {
                     </View>
 
                     {hasSearchResults ? (
-                      <View style={styles.searchHits}>
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.searchHits,
+                          searchOwnsSoftFail ? softFailMistWashStyle : null,
+                        ])}
+                      >
                         {results.map((place, i) => {
                           const selected = i === activeIndex;
                           return (
@@ -1664,7 +1690,12 @@ export default function TripDetailScreen() {
                         })}
                       </View>
                     ) : showSearchEmpty ? (
-                      <View style={styles.searchEmpty}>
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.searchEmpty,
+                          searchOwnsSoftFail ? softFailMistWashStyle : null,
+                        ])}
+                      >
                         <Text style={styles.searchEmptyTitle}>
                           {t(locale, "planner.search.emptyTitle")}
                         </Text>
@@ -1681,14 +1712,14 @@ export default function TripDetailScreen() {
                     )}
 
                     <SoftFailNotice
-                      open={searchDemo && hasSearchResults}
+                      open={searchOwnsSoftFail && hasSearchResults}
                       compact
                       style={softFailBandStyle}
                     >
                       {t(locale, "planner.search.softFail")}
                     </SoftFailNotice>
                     <SoftFailNotice
-                      open={searchDemo && showSearchEmpty}
+                      open={searchOwnsSoftFail && showSearchEmpty}
                       compact
                       style={softFailBandStyle}
                     >
@@ -1920,6 +1951,7 @@ export default function TripDetailScreen() {
                           loading={placeDetailsLoading}
                           locale={locale}
                           demoMode={placeDetailsMode === "demo"}
+                          craftPlaceSoftFail={placeSoftPreview}
                           userNote={stop.userNote}
                         />
                       ) : null}
