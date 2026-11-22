@@ -67,9 +67,11 @@ function SectionEyebrow({ children }: { children: string }) {
  * wave 47 craft residual (BEA-453): nested shell `--bp-line` + `shadow-bp-soft`
  * matching TransferSteps in the stop drawer (no double river elevation).
  * Wave 57 residual (BEA-551): title `leading-snug` · support `ink-soft/80`
- * ladder (day-fill / transfer / map-search bar). SoftFail stays under Place
- * intel rail; craft `/trips/…?placeSoftFail=1`. Never timber / Failed to
- * fetch. No `/dev` gallery.
+ * ladder (day-fill / transfer / map-search bar). Wave 61 residual (BEA-589):
+ * sheet eyebrow `0.65rem`/`0.18em` · Note `ink-soft/80` (Expo #392 note
+ * parity · day-fill / transfer sheet-eyebrow ladder). SoftFail stays under
+ * Place intel rail; craft `/trips/…?placeSoftFail=1`. Never timber / Failed
+ * to fetch. No `/dev` gallery.
  */
 export function PlaceIntel({
   details,
@@ -162,7 +164,7 @@ export function PlaceIntel({
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "planner.place.sheetEyebrow")}
                   </span>
                   {softOpen || demo ? (
@@ -322,7 +324,7 @@ export function PlaceIntel({
                 <SectionEyebrow>
                   {t(locale, "planner.place.note")}
                 </SectionEyebrow>
-                <p className="text-xs leading-relaxed text-ink-soft">{note}</p>
+                <p className="text-xs leading-relaxed text-ink-soft/80">{note}</p>
               </section>
             ) : null}
           </div>
