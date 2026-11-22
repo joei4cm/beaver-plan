@@ -410,12 +410,12 @@ function TemplatesListSkeleton() {
 }
 
 /**
- * Expo trips home — SoftFail depth kept (empty / cards / playbooks) + wave 49
- * playbooks craft residual (BEA-471): section eyebrow 1.8 tracking · foam/
- * paper/inkSoft/river sheet tokens · Use tip-011 press. SoftFail helpers ·
- * craft queries · mist band unchanged. Craft: /trips?playbooksSoftFail=1
- * (also emptySoftFail / cardsSoftFail). SoftFail never timber / Failed to
- * fetch. SoftFail yields across sheets. No /dev gallery.
+ * Expo trips home — SoftFail depth kept (empty / cards / playbooks) + wave 51
+ * home tabs / chrome residual (BEA-494 beyond #330 / #344): hero + seed CTA
+ * tip-011 press · tripMeta inkSoft token. SoftFail helpers · craft queries ·
+ * mist band unchanged. Craft: /trips?playbooksSoftFail=1 (also emptySoftFail /
+ * cardsSoftFail). SoftFail never timber / Failed to fetch. SoftFail yields
+ * across sheets. No /dev gallery.
  */
 export default function TripsScreen() {
   const router = useRouter();
@@ -644,10 +644,13 @@ export default function TripsScreen() {
           <Text style={styles.body}>{t(locale, "trips.support")}</Text>
           <View style={styles.ctaRow}>
             <Pressable
-              style={StyleSheet.flatten([
-                styles.solidCta,
-                newBusy ? styles.ctaBusy : null,
-              ])}
+              style={({ pressed }) =>
+                StyleSheet.flatten([
+                  styles.solidCta,
+                  newBusy ? styles.ctaBusy : null,
+                  pressed && !newBusy ? styles.ctaPressed : null,
+                ])
+              }
               disabled={newBusy}
               onPress={startNewTrip}
               accessibilityRole="button"
@@ -657,7 +660,12 @@ export default function TripsScreen() {
             </Pressable>
             <Link href="/trips/sample-kyoto" asChild>
               <Pressable
-                style={styles.outlineCta}
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.outlineCta,
+                    pressed ? styles.ctaPressed : null,
+                  ])
+                }
                 accessibilityRole="link"
                 accessibilityLabel={t(locale, "trips.openSample")}
               >
@@ -668,7 +676,12 @@ export default function TripsScreen() {
             </Link>
             <Link href="/settings" asChild>
               <Pressable
-                style={styles.ghostCta}
+                style={({ pressed }) =>
+                  StyleSheet.flatten([
+                    styles.ghostCta,
+                    pressed ? styles.ctaPressed : null,
+                  ])
+                }
                 accessibilityRole="link"
                 accessibilityLabel={t(locale, "nav.settings")}
               >
@@ -743,10 +756,13 @@ export default function TripsScreen() {
                   accessibilityLabel={t(locale, "trips.seedActions")}
                 >
                   <Pressable
-                    style={StyleSheet.flatten([
-                      styles.solidCta,
-                      newBusy ? styles.ctaBusy : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.solidCta,
+                        newBusy ? styles.ctaBusy : null,
+                        pressed && !newBusy ? styles.ctaPressed : null,
+                      ])
+                    }
                     disabled={newBusy}
                     onPress={startNewTrip}
                     accessibilityRole="button"
@@ -758,7 +774,12 @@ export default function TripsScreen() {
                   </Pressable>
                   <Link href="/trips/sample-kyoto" asChild>
                     <Pressable
-                      style={styles.outlineCta}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.outlineCta,
+                          pressed ? styles.ctaPressed : null,
+                        ])
+                      }
                       accessibilityRole="link"
                       accessibilityLabel={t(locale, "trips.openSample")}
                     >
@@ -768,7 +789,12 @@ export default function TripsScreen() {
                     </Pressable>
                   </Link>
                   <Pressable
-                    style={styles.seedPlaybooksHint}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.seedPlaybooksHint,
+                        pressed ? styles.ctaPressed : null,
+                      ])
+                    }
                     onPress={() =>
                       scrollRef.current?.scrollTo({
                         y: Math.max(0, playbooksY.current - 12),
@@ -964,9 +990,7 @@ export default function TripsScreen() {
                                 StyleSheet.flatten([
                                   styles.useTpl,
                                   busy ? styles.useTplBusy : null,
-                                  pressed && !busy
-                                    ? styles.useTplPressed
-                                    : null,
+                                  pressed && !busy ? styles.ctaPressed : null,
                                 ])
                               }
                               disabled={busy || Boolean(creatingId)}
@@ -1034,6 +1058,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: "800",
     letterSpacing: -0.8,
+    lineHeight: 40,
     color: colors.ink,
     marginBottom: 10,
   },
@@ -1089,6 +1114,10 @@ const styles = StyleSheet.create({
   },
   ctaBusy: {
     opacity: 0.45,
+  },
+  /** Tip 011 — hero / seed CTA press settle (settings / Use residual parity). */
+  ctaPressed: {
+    transform: [{ scale: 0.98 }],
   },
   errorBanner: {
     marginTop: 16,
@@ -1441,7 +1470,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     lineHeight: 17,
-    color: "rgba(100, 116, 139, 0.92)",
+    color: colors.inkSoft,
   },
   rowMeta: {
     ...type.body,
@@ -1476,10 +1505,6 @@ const styles = StyleSheet.create({
   },
   useTplBusy: {
     opacity: 0.45,
-  },
-  /** Tip 011 — Use press settle (settings/day-fill residual parity). */
-  useTplPressed: {
-    transform: [{ scale: 0.98 }],
   },
   useTplText: {
     ...type.body,
