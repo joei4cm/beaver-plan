@@ -1488,9 +1488,12 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
+  /** Foam dark residual (BEA-568): Soft-shaped mist chip — ink/70 + line ring parity SoftFail Soft badge. */
   pendingChip: {
     borderRadius: radius.xs,
     backgroundColor: colors.mist,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -1498,9 +1501,9 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: colors.inkSoft,
+    color: "rgba(15, 23, 42, 0.7)",
   },
   entryBody: {
     ...type.display,

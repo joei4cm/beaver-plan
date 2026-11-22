@@ -767,7 +767,7 @@ export function BookingPanel({
                       </span>
                     ) : null}
                     {isDirty ? (
-                      <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                      <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70 ring-1 ring-[color:var(--bp-line)] bp-transition">
                         {t(locale, "planner.booking.confirmDirty")}
                       </span>
                     ) : null}
