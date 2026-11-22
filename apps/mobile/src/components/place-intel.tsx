@@ -67,10 +67,11 @@ function SectionEyebrow({ children }: { children: string }) {
  * body · StyleSheet.flatten · Lumen tokens. Wave 57 residual (BEA-551):
  * paper/mist/river/inkSoft hex-alpha · mist Snapshot/Categories tracks · foam
  * rating/hours/tag chips · title lineHeight · support inkSoft/80 — parity with
- * web #329 + BEA-551 type ladder. Craft: `/trips/…?placeSoftFail=1` forces
- * SoftFail depth under Place intel (mirrors web + #282). SoftFail stays under
- * Place intel rail — never timber / Failed to fetch. No `/dev` SoftFail
- * gallery.
+ * web #329 + BEA-551 type ladder. Wave 61 residual (BEA-589): headerEyebrow
+ * letterSpacing 1.8 (section / day-fill sheet-eyebrow ladder). Craft:
+ * `/trips/…?placeSoftFail=1` forces SoftFail depth under Place intel (mirrors
+ * web + #282). SoftFail stays under Place intel rail — never timber / Failed
+ * to fetch. No `/dev` SoftFail gallery.
  */
 export function PlaceIntel({
   details,
@@ -379,7 +380,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    /** Web sheet eyebrow `0.18em` · sectionEyebrow / day-fill header ladder. */
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
