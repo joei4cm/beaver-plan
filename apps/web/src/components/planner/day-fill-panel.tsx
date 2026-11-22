@@ -116,13 +116,14 @@ function SectionEyebrow({ children }: { children: string }) {
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
  * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
  * (BEA-604) + interest chip color settle (BEA-793 / wave 73) + sheet accordion
- * header color settle (BEA-801 / wave 74): DayFillSkeleton day-row rise mirrors
- * live proposal stagger · interest chips + accordion toggle
+ * header color settle (BEA-801 / wave 74) + discard secondary settle
+ * (BEA-813 / wave 75): DayFillSkeleton day-row rise mirrors live proposal
+ * stagger · interest chips + accordion toggle + discard secondary
  * `ease-bp-out-strong` (Mode/Stops #485 / tip-011 / #484–#490 twin). SoftFailBadge
  * Soft fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
  * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
  * fetch. No `/dev` gallery. Not SoftFail Soft · not prefer LIVE (BEA-544 lineage)
- * · not days input / discard secondary · not invent skeletons · chips (#490) leave.
+ * · not days input · not invent skeletons · chips (#490) / accordion (#493) leave.
  */
 export function DayFillPanel({
   tripId,
@@ -533,6 +534,14 @@ export function DayFillPanel({
                   ? t(locale, "planner.dayFill.generating")
                   : t(locale, "planner.dayFill.generate")}
               </button>
+              {/*
+                Discard secondary border/text settle (BEA-813 / wave 75):
+                bare `bp-transition` (`--bp-ease-out`) →
+                `transition duration-bp-fast ease-bp-out-strong` — Generate/
+                Apply already out-strong · tip-011 / #484–#498 twin.
+                SoftFail / prefer LIVE / interest chips (#490) / accordion
+                (#493) / days input leave. Motion-only class-string.
+              */}
               {proposal && (
                 <button
                   type="button"
@@ -547,7 +556,7 @@ export function DayFillPanel({
                       setNotice(null);
                     }
                   }}
-                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft bp-transition hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft transition duration-bp-fast ease-bp-out-strong hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 >
                   {t(locale, "planner.dayFill.discard")}
                 </button>
