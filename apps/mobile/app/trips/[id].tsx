@@ -1200,8 +1200,9 @@ export default function TripDetailScreen() {
 
           {/*
             Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice ·
-            tip-011 rise. Craft residual (BEA-465): display weight 700 · brand
-            0.65rem tracking · soft-shadow primary CTA · pressed scale.
+            tip-011 rise. Craft residual (BEA-465 / BEA-503): display weight 700 ·
+            brand 0.65rem tracking · title lineHeight 40 · support inkSoft ·
+            soft-shadow primary CTA · pressed scale.
           */}
           <Animated.View
             style={StyleSheet.flatten([styles.header, riseStyle])}
@@ -1481,12 +1482,12 @@ export default function TripDetailScreen() {
 
               {/*
                 Transit panel craft residual (BEA-462 / wave 48) + SoftFail
-                kept (BEA-388 / BEA-423): always-on azure Mode rail ·
-                SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
-                tip-011 mist-wash SheetPresence · StyleSheet.flatten. Craft:
-                ?modeSoftFail=1. Yields while TransferSteps /
-                ?transferSoftFail=1 owns. Never timber / Failed to fetch.
-                No `/dev` gallery.
+                kept (BEA-388 / BEA-423) + trip-detail Mode generate press
+                (BEA-503): always-on azure Mode rail · SoftFailBadge ·
+                SoftFailSupport · SoftFailNotice mist band · tip-011 mist-wash
+                SheetPresence · generate tip-011 press. Craft: ?modeSoftFail=1.
+                Yields while TransferSteps / ?transferSoftFail=1 owns. Never
+                timber / Failed to fetch. No `/dev` gallery.
               */}
               <View style={styles.modeFilter}>
                 <View
@@ -1592,12 +1593,19 @@ export default function TripDetailScreen() {
                         disabled: routing || dayStops.length < 2,
                         busy: routing,
                       }}
-                      style={StyleSheet.flatten([
-                        styles.modeGenerate,
-                        routing || dayStops.length < 2
-                          ? styles.modeGenerateDisabled
-                          : null,
-                      ])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.modeGenerate,
+                          routing || dayStops.length < 2
+                            ? styles.modeGenerateDisabled
+                            : null,
+                          /* tip-011 press — web Mode generate active:scale (#337) */
+                          pressed &&
+                          !(routing || dayStops.length < 2)
+                            ? styles.modeGeneratePressed
+                            : null,
+                        ])
+                      }
                     >
                       <Text style={styles.modeGenerateLabel}>
                         {routing
@@ -2924,6 +2932,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     letterSpacing: -0.7,
+    /* Display settle — Expo home hero lineHeight bar (BEA-494 / BEA-503). */
+    lineHeight: 40,
     color: colors.ink,
     marginBottom: 8,
   },
@@ -2931,7 +2941,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 14,
     lineHeight: 22,
-    color: "rgba(100, 116, 139, 0.92)",
+    color: colors.inkSoft,
     marginBottom: 16,
     maxWidth: 360,
   },
@@ -3298,6 +3308,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
   },
+  /* tip-011 press — parity with web Mode generate active:scale-[0.98] (#337). */
+  modeGeneratePressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
   modeGenerateDisabled: {
     opacity: 0.4,
   },
@@ -3305,6 +3320,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "700",
+    letterSpacing: 0.2,
     color: colors.foam,
   },
   modeLegSummary: {
