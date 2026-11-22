@@ -904,8 +904,8 @@ export function BookingPanel({
 
 /**
  * Compact booking chips on a stop list row — mist-track · foam ring · tip-011
- * press (presence pills / Mode mist chips sibling). Beyond OTA #362 / Confirm
- * #350 — SoftFail stays on those rails.
+ * press (presence pills / Mode mist chips sibling). Beyond #371 / Confirm #384 —
+ * SoftFail stays on OTA/Confirm rails.
  */
 export function BookingLinkChips({
   links,
@@ -933,7 +933,7 @@ export function BookingLinkChips({
         >
           <span>{kindLabel(locale, link.kind)}</span>
           {link.providerLabel ? (
-            <span className="truncate font-medium text-ink-soft">
+            <span className="truncate font-medium text-ink-soft/80">
               · {link.providerLabel}
             </span>
           ) : null}
