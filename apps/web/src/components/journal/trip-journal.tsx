@@ -1077,8 +1077,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </SoftFailNotice>
 
             {entryEmpty ? (
-              /* Empty CTA craft residual (BEA-537) — tip-011 active:scale on
-                 river CTA; SoftFail mist inset / SoftFailNotice unchanged. */
+              /* Empty craft residual (BEA-590 beyond #383): title leading-snug
+                 (wave 58–60 empty display ladder). SoftFail mist / Notice
+                 unchanged; tip-011 CTA from BEA-537 kept. */
               <SheetPresence
                 key={`list-empty-${dayId ?? "all"}`}
                 open
@@ -1097,7 +1098,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   {t(locale, "journal.listEyebrow")}
                 </p>
                 <p
-                  className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+                  className="animate-rise mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-3xl"
                   style={{ animationDelay: "70ms" }}
                 >
                   {t(locale, "journal.empty")}
