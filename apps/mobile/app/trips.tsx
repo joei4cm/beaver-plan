@@ -1389,7 +1389,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   tripRowPressed: {
-    backgroundColor: "rgba(230, 236, 245, 0.35)",
+    // Press wash — mist@25 twin of web row `hover:bg-mist/25`
+    backgroundColor: `${colors.mist}40`,
   },
   templateRow: {
     flexDirection: "row",
@@ -1439,7 +1440,8 @@ const styles = StyleSheet.create({
   },
   badgeChip: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    // Sample chip — river@10 twin of web TripBadgeChip `bg-river/10`
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -1469,8 +1471,10 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 4,
     fontSize: 12,
+    // leading-snug (12×1.375≈16.5) — already at bar vs web meta
     lineHeight: 17,
-    color: colors.inkSoft,
+    // Meta ladder — inkSoft@90 twin of web `text-ink-soft/90`
+    color: `${colors.inkSoft}E6`,
   },
   rowMeta: {
     ...type.body,
