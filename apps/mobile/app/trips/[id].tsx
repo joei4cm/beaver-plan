@@ -62,6 +62,8 @@ import {
   SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailBadgeLabelStyle,
+  softFailBadgeStyle,
   softFailBandStyle,
   softFailLiveBadgeLabelStyle,
   softFailLiveBadgeStyle,
@@ -2460,8 +2462,10 @@ export default function TripDetailScreen() {
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
                   wave 51/57 presence pills (#355/#389) + wave 60 residual
                   (BEA-579): chip/empty tip-011 SheetPresence stagger · Live type
-                  1.4 · muted avatar /80 · name snug · meta /80. SoftFailBadge ·
-                  SoftFailSupport · mist band unchanged. Craft:
+                  1.4 · muted avatar /80 · name snug · meta /80. Foam dark Soft
+                  mist Soft twins beyond #404 (BEA-597): viewer role + empty Live
+                  → SoftFail Soft tokens. SoftFailBadge · SoftFailSupport · mist
+                  band · away pills unchanged (BEA-600). Craft:
                   ?presenceSoftFail=1 — never timber.
                 */}
                 <View
@@ -2517,7 +2521,7 @@ export default function TripDetailScreen() {
                             styles.presenceStatusBadge,
                             members.length > 0
                               ? softFailLiveBadgeStyle
-                              : styles.presenceStatusBadgeIdle,
+                              : softFailBadgeStyle,
                           ])}
                         >
                           {members.length > 0 ? (
@@ -2538,7 +2542,7 @@ export default function TripDetailScreen() {
                               styles.presenceStatusBadgeText,
                               members.length > 0
                                 ? softFailLiveBadgeLabelStyle
-                                : styles.presenceStatusBadgeTextIdle,
+                                : softFailBadgeLabelStyle,
                             ])}
                           >
                             {t(locale, "collab.presence.live")}
@@ -4394,21 +4398,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  presenceStatusBadgeIdle: {
-    /** Web bg-mist/70 */
-    backgroundColor: `${colors.mist}B3`,
-  },
-  /** Idle Live type — SoftFail Live / role bar 1.4 (BEA-579). */
+  /** Live / Soft badge type — SoftFail Live / Soft Soft twin 1.4 (BEA-579 / BEA-597). */
   presenceStatusBadgeText: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-  },
-  presenceStatusBadgeTextIdle: {
-    /** Web text-ink-soft/70 */
-    color: `${colors.inkSoft}B3`,
   },
   presenceBody: {
     paddingHorizontal: 10,
@@ -4540,9 +4536,12 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.river}1F`,
     color: colors.riverDeep,
   },
+  /** Foam dark Soft mist Soft twin beyond #404 (BEA-597): ink/70 + line ring. */
   presenceRoleViewer: {
     backgroundColor: colors.mist,
-    color: colors.inkSoft,
+    color: "rgba(15, 23, 42, 0.7)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
   /** List status pills — BEA-493 / BEA-518 · type 1.4 + away inset (BEA-546). */
   presenceStatePill: {

@@ -15,6 +15,7 @@ import {
   SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailBadgeClass,
   softFailLiveBadgeClass,
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
@@ -37,7 +38,9 @@ type InvitePayload = {
 const ROLE_CHIP: Record<TripRole, string> = {
   owner: "bg-river text-foam",
   editor: "bg-river/12 text-river-deep",
-  viewer: "bg-mist text-ink-soft",
+  /** Foam dark Soft mist Soft twin beyond #404 (BEA-597): ink/70 + line ring. */
+  viewer:
+    "bg-mist text-ink/70 ring-1 ring-[color:var(--bp-line)]",
 };
 
 /** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
@@ -64,9 +67,11 @@ function presenceFor(member: TripMember): PresenceState {
  * (BEA-518) + wave 56–58 invite/roster + wave 57 members invite (BEA-547) +
  * wave 60 presence pills (BEA-579) + wave 60 members invite (BEA-584) +
  * wave 61 members roster residual (BEA-587): roster role leading-4 · empty /
- * loading rise 40ms · Expo row stagger +55. SoftFailBadge · SoftFailSupport ·
- * mist band unchanged. Invite SoftFail yields presence (no double depth). Soft
- * copy never timber / Failed to fetch. No `/dev` gallery.
+ * loading rise 40ms · Expo row stagger +55. Foam dark Soft mist Soft twins
+ * beyond #404 (BEA-597): viewer role + empty Live → SoftFail Soft tokens
+ * (ink/70 + line ring). SoftFailBadge · SoftFailSupport · mist band · away
+ * presence pills unchanged (BEA-600). Invite SoftFail yields presence (no
+ * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -326,7 +331,7 @@ export function TripMembersBar({
                 className={`inline-flex items-center gap-1.5 transition duration-bp-fast ease-bp-out ${
                   members.length > 0
                     ? softFailLiveBadgeClass
-                    : "rounded-bp-xs bg-mist/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70"
+                    : softFailBadgeClass
                 }`}
               >
                 {members.length > 0 ? (
