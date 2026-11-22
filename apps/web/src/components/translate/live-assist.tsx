@@ -1203,11 +1203,17 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   >
                     {t(locale, "translate.emptyCta")}
                   </button>
+                  {/*
+                    Empty nextDemo secondary CTA color settle (BEA-812 / wave 75):
+                    tip-011 hover `ease-bp-out-strong` (emptyCta / Talk nextDemo
+                    #488 twin). SoftFail / HoldMic·mode tabs·phrasebook·TTS·
+                    locale-swap leave. Talk-rail nextDemo already out-strong.
+                  */}
                   <button
                     type="button"
                     onClick={() => void runTurn({})}
                     disabled={busy}
-                    className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-50"
+                    className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition duration-bp-fast ease-bp-out-strong hover:border-river/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-50"
                   >
                     {t(locale, "translate.nextDemo")}
                   </button>
