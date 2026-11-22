@@ -781,7 +781,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                 </SectionEyebrow>
                 <h2
                   id="share-template-heading"
-                  className="mt-1 font-display text-xl tracking-tight text-ink md:text-2xl"
+                  className="mt-1 font-display text-xl leading-snug tracking-tight text-ink md:text-2xl"
                 >
                   {t(locale, "share.pickTemplate")}
                 </h2>
@@ -805,10 +805,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       role="option"
                       aria-selected={selected}
                       onClick={() => pickTemplate(tpl.id)}
-                      className={`group flex flex-col overflow-hidden rounded-bp border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+                      className={`group flex flex-col overflow-hidden rounded-bp border text-left transition duration-bp ease-bp-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
                         selected
                           ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
-                          : "border-[color:var(--bp-line)] bg-foam/80 transition duration-bp ease-bp-out hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
+                          : "border-[color:var(--bp-line)] bg-foam/80 hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
                       }`}
                     >
                       {/* Aspect thumbnail — azure wash + thumb pop on select (#46) */}
@@ -880,7 +880,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-[11px] leading-snug text-ink-soft">
+                        <p className="text-xs leading-snug text-ink-soft">
                           {locale === "zh-CN" ? tpl.blurbZh : tpl.blurbEn}
                         </p>
                       </div>
