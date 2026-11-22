@@ -131,12 +131,12 @@ async function searchLocal(
 }
 
 /**
- * Booking SoftFail helpers (BEA-389 after #284) + craft SoftFail query parity
- * (BEA-418): `/trips/…?otaSoftFail=1` · `/trips/…?confirmSoftFail=1` force
- * SoftFail depth under OTA / Confirm rails (mirrors Expo + #282 / wave 42).
- * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band · tip-011 kept.
- * Confirm SoftFail yields OTA SoftFail (no double depth). Soft copy never
- * timber / Failed to fetch. No `/dev` SoftFail gallery.
+ * Booking OTA sheet — SoftFail depth kept (BEA-389 / BEA-418) + wave 48 craft
+ * residual (BEA-460): offer title on display `text-sm` (day-fill / place-intel
+ * density) · BookingOffersSkeleton foam + `shadow-bp-soft` parity. SoftFail
+ * stays under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
+ * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -655,7 +655,7 @@ export function BookingPanel({
                         <span className="inline-flex rounded-bp-xs border border-river/20 bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep">
                           {suggestionKindLabel(locale, s.kind)}
                         </span>
-                        <div className="font-display text-[0.95rem] font-semibold leading-snug tracking-tight text-ink">
+                        <div className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                           {s.title}
                         </div>
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
