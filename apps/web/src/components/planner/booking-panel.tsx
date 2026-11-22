@@ -136,10 +136,12 @@ async function searchLocal(
  * density) · BookingOffersSkeleton foam + `shadow-bp-soft` parity. Wave 52
  * (BEA-502): tip-011 `active:scale-[0.98]` on Search / Open / Use link / Save
  * (day-fill sibling). Wave 56 (BEA-536): Confirm draft Open chip tip-011
- * press (Expo Open already #350; list chips #371). SoftFail stays under
- * OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
- * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to
- * fetch. No `/dev` gallery.
+ * press (Expo Open already #350; list chips #371). Wave 63 (BEA-613): sheet
+ * eyebrow `0.65rem`/`0.18em` · header/loading/empty meta `/80` snug (day-fill
+ * #408 twin) · BookingOffersSkeleton `animate-preview-in` stagger twin of live
+ * offers (#425 DayFillSkeleton pattern). SoftFail stays under OTA / Confirm
+ * rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields
+ * OTA (no double depth). Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -426,7 +428,7 @@ export function BookingPanel({
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "planner.booking.sheetEyebrow")}
             </span>
             <span className="font-display text-lg tracking-tight text-ink">
@@ -460,7 +462,7 @@ export function BookingPanel({
               {sheetSupportCopy}
             </SoftFailSupport>
           ) : (
-            <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft/80">
               {sheetSupportCopy}
             </p>
           )}
@@ -620,7 +622,7 @@ export function BookingPanel({
                 style={{ animationDelay: "60ms" }}
               >
                 <BookingOffersSkeleton />
-                <p className="text-xs text-ink-soft">
+                <p className="text-xs leading-snug text-ink-soft/80">
                   {t(locale, "planner.booking.loadingHint")}
                 </p>
               </div>
@@ -639,7 +641,7 @@ export function BookingPanel({
                 <p className="font-display text-lg font-semibold tracking-tight text-ink">
                   {t(locale, "planner.booking.emptyResults")}
                 </p>
-                <p className="text-sm leading-relaxed text-ink-soft">
+                <p className="text-sm leading-relaxed text-ink-soft/80">
                   {t(locale, "planner.booking.emptyHint")}
                 </p>
               </div>
