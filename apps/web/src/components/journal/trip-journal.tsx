@@ -286,6 +286,18 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
       return false;
     }
   });
+  /** Craft preview: /trips/…/journal?emptySoftFail=1 — SoftFail depth under Soft empty. */
+  const [emptySoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("emptySoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [online, setOnline] = useState(true);
   const [pending, startTransition] = useTransition();
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
@@ -732,15 +744,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
   /**
-   * Empty SoftFail helpers (BEA-391 after #284 / entry rail): empty owns
-   * compact SoftFail under azure list rail · SoftFailBadge Soft empty ·
-   * SoftFailSupport · emptySoftFail copy (never inherit list softNotice) ·
-   * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
-   * SoftFail Soft empty SoftFail depth is always Soft when empty (no craft
-   * SoftFail query needed). Compose SoftFail yields while empty owns (no
-   * double depth). Soft copy never timber / Failed to fetch.
+   * Empty SoftFail helpers (BEA-391 after #284 / entry rail) + craft SoftFail
+   * query parity (BEA-437; replaces BEA-428): empty owns compact SoftFail under
+   * azure list rail · SoftFailBadge Soft empty · SoftFailSupport ·
+   * emptySoftFail copy (never inherit list softNotice) · mist SoftFail band
+   * (`border-b`) · SheetPresence empty body · tip-011 (#46). Craft:
+   * /trips/…/journal?emptySoftFail=1 — SoftFail Soft empty depth without
+   * hunting an empty day (entries SoftFail / compose SoftFail / photo strip
+   * SoftFail yield). Soft copy never timber / Failed to fetch. SoftFail depth +
+   * helpers kept. No `/dev` SoftFail gallery.
    */
-  const entryEmpty = visible.length === 0;
+  const entryEmpty = visible.length === 0 || emptySoftPreview;
   const emptyOwnsSoft = entryEmpty;
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
@@ -750,8 +764,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
    * SoftFailSupport · compact SoftFail mist band (`border-b`) · tip-011
    * mist-wash SheetPresence body. Craft: /trips/…/journal?composeSoftFail=1 —
    * SoftFail depth without a media miss. Compose owns soft-fail while entries
-   * exist; empty SoftFail (#231) and photo strip SoftFail (#244) yield while
-   * compose owns (no double depth). Soft copy never timber / Failed to fetch.
+   * exist; empty SoftFail (#231 / BEA-437 craft) and photo strip SoftFail
+   * (#244) yield while compose owns (no double depth). Soft copy never timber /
+   * Failed to fetch.
    */
   const composeOwnsSoft =
     (composeSoftFail || composeSoftPreview) && !emptyOwnsSoft;
@@ -966,11 +981,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           >
             {/*
               Entry SoftFail helpers (BEA-391 after #284) + craft SoftFail query
-              parity (BEA-424): azure list rail · SoftFailBadge Soft empty/entries ·
-              SoftFailSupport · compact SoftFailNotice mist band · SheetPresence
-              empty body · tip-011 rise. Craft: ?entriesSoftFail=1 — never timber /
-              Failed to fetch. Nested SoftFail yields: empty owns while empty;
-              Soft entries yields while empty / compose owns.
+              parity (BEA-424 / BEA-437): azure list rail · SoftFailBadge Soft
+              empty/entries · SoftFailSupport · compact SoftFailNotice mist band ·
+              SheetPresence empty body · tip-011 rise. Craft: ?emptySoftFail=1 ·
+              ?entriesSoftFail=1 — never timber / Failed to fetch. Nested SoftFail
+              yields: empty owns while empty / craft; Soft entries yields while
+              empty / compose owns.
             */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -1043,7 +1059,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </header>
 
-            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; Soft entries yields while empty owns. */}
+            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; Soft entries yields while empty owns. Craft: ?emptySoftFail=1. */}
             <SoftFailNotice open={emptySoftOpen} compact>
               {emptySoftCopy}
             </SoftFailNotice>
@@ -1117,7 +1133,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               role="list"
               aria-label={t(locale, "journal.listEyebrow")}
             >
-              {visible.map((entry, index) => {
+              {entryEmpty
+                ? null
+                : visible.map((entry, index) => {
                 const stop = stops.find((s) => s.id === entry.stopId);
                 const scrubMatch = Boolean(stopId && entry.stopId === stopId);
                 const placeLabel =
