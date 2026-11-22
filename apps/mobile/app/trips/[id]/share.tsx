@@ -1104,11 +1104,21 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colors.foam,
+    /** Web light-edit bg-foam/90 — Lumen hex-alpha (beyond #448) */
+    backgroundColor: `${colors.foam}E6`,
     color: colors.ink,
     fontSize: 15,
   },
-  accentRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
+  /** Web light-edit accent mist track bg-mist/50 p-1.5 */
+  accentRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 8,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.mist}80`,
+    padding: 6,
+  },
   accentDot: {
     width: 28,
     height: 28,
