@@ -200,6 +200,23 @@ export function JournalSkeleton() {
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
           <Skeleton className="h-12 w-24 rounded-bp-sm" />
         </div>
+        {/* Day scrub SoftFail depth — azure rail · Soft badge · SoftFail mist band · tip-011 mist track */}
+        <div className="border-b border-[color:var(--bp-line)] bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]">
+          <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1.5">
+            <div className="flex items-baseline gap-2">
+              <Skeleton className="h-2.5 w-20" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-14 rounded-bp-xs" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-full rounded-none border-b border-[color:var(--bp-line)]" />
+          <div className="bg-gradient-to-b from-mist/25 via-mist/10 to-transparent px-4 pb-3 pt-2">
+            <Skeleton className="h-10 w-full rounded-bp-sm" />
+          </div>
+        </div>
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
           <div className="space-y-0 px-5 py-6 md:px-7">
             {/* Entry empty SoftFail depth — azure rail · Soft empty badge · mist SoftFail band · empty body */}
