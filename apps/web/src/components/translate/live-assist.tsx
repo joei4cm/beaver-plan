@@ -1436,6 +1436,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "translate.dualHint")}
             >
+              {/*
+                Wave 55 Dual residual (BEA-531 beyond live #369 / history #353):
+                lens badges · source footer · overlay target · control meta →
+                0.18em tracking (history source/target bar). SoftFail untouched.
+              */}
               <div className="grid md:grid-cols-2">
                 {/* Traveler lens */}
                 <div className="relative isolate min-h-[240px] border-b border-[color:var(--bp-line)] md:min-h-[340px] md:border-b-0 md:border-r">
@@ -1449,7 +1454,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     }}
                   />
                   <div className="bp-topo absolute inset-0 opacity-30" />
-                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm ring-1 ring-white/15">
+                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-foam backdrop-blur-sm ring-1 ring-white/15">
                     {t(locale, "translate.lensYou")} ·{" "}
                     {t(locale, "translate.cameraFront")}
                   </div>
@@ -1458,7 +1463,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                       <div className="h-14 w-14 rounded-full bg-river/35 ring-2 ring-foam/25" />
                     </div>
                   </div>
-                  <p className="absolute inset-x-3 bottom-3 z-10 text-center text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-foam/65">
+                  <p className="absolute inset-x-3 bottom-3 z-10 text-center text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-foam/65">
                     {t(locale, "translate.source")}
                   </p>
                 </div>
@@ -1503,7 +1508,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                       </div>
                     </>
                   )}
-                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-foam backdrop-blur-sm ring-1 ring-white/15">
+                  <div className="absolute left-3 top-3 z-10 rounded-bp-xs bg-ink/45 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-foam backdrop-blur-sm ring-1 ring-white/15">
                     {t(locale, "translate.lensWorld")} ·{" "}
                     {facing === "environment"
                       ? t(locale, "translate.cameraBack")
@@ -1519,7 +1524,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
 
                   {overlay ? (
                     <div className="animate-sheet-in absolute inset-x-3 bottom-3 z-10 rounded-bp bg-ink/78 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-foam/55">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-foam/55">
                         {t(locale, "translate.target")}
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-foam/70">
@@ -1575,7 +1580,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 >
                   {t(locale, "translate.caption")}
                 </button>
-                <span className="ml-auto hidden text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink-soft/70 sm:inline">
+                <span className="ml-auto hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ink-soft/70 sm:inline">
                   {cameraReady
                     ? t(locale, "translate.lensWorld")
                     : cameraDenied

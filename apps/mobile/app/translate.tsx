@@ -1390,11 +1390,12 @@ export default function TranslateScreen() {
             {/*
               Dual SoftFail depth (BEA-335 / #202 / #219) + craft SoftFail query
               parity (BEA-407). SoftFail depth unchanged. Wave 49 craft residual
-              (BEA-469 / web #331): dualHint relaxed type · source label tracking ·
-              control-rail press scale · OCR soft-shadow · mist busy ring ·
-              foam / paper tokens. Craft: ?dualSoftFail=1. Yields to Talk SoftFail
-              (#249); Lens SoftFail (#237) SoftFailNotice yields while Dual owns.
-              Soft copy never timber / Failed to fetch.
+              (BEA-469 / web #331) + wave 55 Dual residual (BEA-531 beyond live
+              #369 / history #353): paper@0.6 dualHead · lens/source/target/
+              control meta 1.8 · controlChrome paper/85 · overlay SheetPresence.
+              Craft: ?dualSoftFail=1. Yields to Talk SoftFail (#249); Lens SoftFail
+              (#237) SoftFailNotice yields while Dual owns. Soft copy never timber /
+              Failed to fetch.
             */}
             <View
               style={StyleSheet.flatten([
@@ -1532,7 +1533,12 @@ export default function TranslateScreen() {
                       </View>
                     ) : null}
                     {overlay ? (
-                      <View style={styles.subtitle}>
+                      <SheetPresence
+                        open
+                        delayMs={40}
+                        rise={8}
+                        style={styles.subtitle}
+                      >
                         <Text style={styles.subtitleMeta}>
                           {t(uiLocale, "translate.target")}
                         </Text>
@@ -1552,7 +1558,7 @@ export default function TranslateScreen() {
                             ])}
                           />
                         ) : null}
-                      </View>
+                      </SheetPresence>
                     ) : null}
                   </View>
                 </View>
@@ -2461,11 +2467,12 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.72)",
+    /** Web Dual bg-paper/60 — Lumen paper @ 0.6 (BEA-531; SoftFail wash untouched). */
+    backgroundColor: `${colors.paper}99`,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  /** Soft azure dual rail wash when SoftFail owns depth (BEA-335). */
+  /** Soft azure dual rail wash when SoftFail owns depth (BEA-335). SoftFail untouched. */
   dualHeadSoft: {
     backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
@@ -2562,11 +2569,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
+  /** Lens badge — wave 55 Dual residual (BEA-531): 1.8 tracking · history meta parity. */
   lensBadgeText: {
     color: colors.foam,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
   },
   avatarOuter: {
@@ -2588,7 +2596,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.25)",
   },
-  /** Source footer — 0.65rem · uppercase · 0.14em tracking (web #331). */
+  /** Source footer — wave 55 Dual residual (BEA-531): 1.8 tracking · history source parity. */
   lensFooterLabel: {
     position: "absolute",
     left: 12,
@@ -2598,7 +2606,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.65)",
     fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     zIndex: 1,
   },
@@ -2647,11 +2655,12 @@ const styles = StyleSheet.create({
     gap: 4,
     zIndex: 3,
   },
+  /** Overlay target meta — wave 55 Dual residual (BEA-531): 1.8 · history target parity. */
   subtitleMeta: {
     color: "rgba(255,255,255,0.55)",
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
   },
   subtitleSource: {
@@ -2700,7 +2709,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: colors.paper,
+    /** Web bg-paper/85 — Lumen paper @ 0.85 (BEA-531). */
+    backgroundColor: `${colors.paper}D9`,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
@@ -2737,14 +2747,14 @@ const styles = StyleSheet.create({
   },
   visionLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
   visionLabelAlt: { color: colors.foam, fontWeight: "600", fontSize: 13 },
-  /** Lens status meta — 0.65rem · semibold · 0.14em (web #331). */
+  /** Lens status meta — wave 55 Dual residual (BEA-531): 1.8 tracking · Dual type bar. */
   controlMeta: {
     marginLeft: "auto",
     color: colors.inkSoft,
     opacity: 0.7,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
   },
   partial: {
