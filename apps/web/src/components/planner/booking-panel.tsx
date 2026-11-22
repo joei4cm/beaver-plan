@@ -139,9 +139,12 @@ async function searchLocal(
  * press (Expo Open already #350; list chips #371). Wave 63 (BEA-613): sheet
  * eyebrow `0.65rem`/`0.18em` · header/loading/empty meta `/80` snug (day-fill
  * #408 twin) · BookingOffersSkeleton `animate-preview-in` stagger twin of live
- * offers (#425 DayFillSkeleton pattern). SoftFail stays under OTA / Confirm
- * rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields
- * OTA (no double depth). Never timber / Failed to fetch. No `/dev` gallery.
+ * offers (#425 DayFillSkeleton pattern). Wave 64 (BEA-618): emptyResults
+ * `leading-snug`. Wave 65 (BEA-642): sheet / suggest / results titles
+ * `leading-snug` (day-fill #508/#544 twin; empty snug already #433). SoftFail
+ * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -431,7 +434,7 @@ export function BookingPanel({
             <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "planner.booking.sheetEyebrow")}
             </span>
-            <span className="font-display text-lg tracking-tight text-ink">
+            <span className="font-display text-lg leading-snug tracking-tight text-ink">
               {t(locale, "planner.booking.title")}
             </span>
             {isConfigured ? (
@@ -503,7 +506,7 @@ export function BookingPanel({
               <SectionEyebrow>
                 {t(locale, "planner.booking.searchEyebrow")}
               </SectionEyebrow>
-              <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+              <h3 className="mt-1 font-display text-base leading-snug tracking-tight text-ink">
                 {t(locale, "planner.booking.suggestTitle")}
               </h3>
               <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
@@ -601,7 +604,7 @@ export function BookingPanel({
               </SectionEyebrow>
               {suggestions.length > 0 && !searching ? (
                 <>
-                  <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                  <h3 className="mt-1 font-display text-base leading-snug tracking-tight text-ink">
                     {t(locale, "planner.booking.resultsTitle").replace(
                       "{n}",
                       String(suggestions.length),
