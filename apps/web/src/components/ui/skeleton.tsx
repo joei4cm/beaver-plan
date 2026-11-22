@@ -610,7 +610,10 @@ export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
   );
 }
 
-/** Tip 017 — day-fill draft preview while propose soft-runs. */
+/**
+ * Tip 017 — day-fill draft preview while propose soft-runs.
+ * Day-row rise mirrors live proposal stagger (BEA-576 / BEA-604).
+ */
 export function DayFillSkeleton({ days = 3 }: { days?: number }) {
   return (
     <div
@@ -628,7 +631,11 @@ export function DayFillSkeleton({ days = 3 }: { days?: number }) {
       </div>
       <ol className="divide-y divide-[color:var(--bp-line)]">
         {Array.from({ length: days }).map((_, i) => (
-          <li key={i} className="px-3 py-3">
+          <li
+            key={i}
+            className="animate-rise px-3 py-3"
+            style={{ animationDelay: `${Math.min(i, 6) * 55}ms` }}
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <Skeleton className="h-4 w-28" />
               <Skeleton className="h-5 w-28 max-w-[50%] rounded-bp-xs" />

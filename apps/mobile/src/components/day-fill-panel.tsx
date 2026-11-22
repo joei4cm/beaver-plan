@@ -127,11 +127,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
- * wave 48–56 (#340/#367/#387) + wave 60 craft residual (BEA-576): header
- * eyebrow 1.8 · daysInput paper/80 · day SheetPresence stagger · support
- * ladder inkSoft/80. SoftFailBadge · SoftFailSupport · mist band unchanged.
- * SoftFail copy never timber / Failed to fetch. Yields web #248; Expo day
- * tabs SoftFail (#230) stays on Days. No `/dev` gallery.
+ * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
+ * (BEA-604): skeleton day SheetPresence mirrors live proposal stagger.
+ * SoftFailBadge · SoftFailSupport · mist band unchanged. SoftFail copy never
+ * timber / Failed to fetch. Yields web #248; Expo day tabs SoftFail (#230)
+ * stays on Days. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -416,10 +416,10 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48–56 +
-        wave 60 craft (BEA-576): azure Day fill rail · header eyebrow 1.8 ·
-        paper/70 · support inkSoft/80 · SoftFailBadge Soft fill · SoftFailSupport ·
-        softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Never timber.
+        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48–60 +
+        wave 62 craft (BEA-604): azure Day fill rail · skeleton day stagger ·
+        SoftFailBadge Soft fill · SoftFailSupport · softFailMistWash tip-011 —
+        craft ?dayFillSoftFail=1. Never timber.
       */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
@@ -681,10 +681,16 @@ export function DayFillPanel({
                     <View style={styles.skeletonLine} />
                   </View>
                   {Array.from({ length: dayCount }).map((_, i) => (
-                    <View key={i} style={styles.skeletonDay}>
+                    <SheetPresence
+                      key={i}
+                      open
+                      delayMs={Math.min(i, 6) * 55}
+                      rise={8}
+                      style={styles.skeletonDay}
+                    >
                       <View style={styles.skeletonDayTitle} />
                       <View style={styles.skeletonNote} />
-                    </View>
+                    </SheetPresence>
                   ))}
                 </View>
                 <Text style={styles.loadingHint}>
