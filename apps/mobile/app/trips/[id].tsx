@@ -1759,7 +1759,11 @@ export default function TripDetailScreen() {
                           styles.searchEmpty,
                           searchOwnsSoftFail ? softFailMistWashStyle : null,
                         ])}
+                        accessibilityRole="summary"
                       >
+                        <Text style={styles.searchEmptyEyebrow}>
+                          {t(locale, "planner.search.emptyEyebrow")}
+                        </Text>
                         <Text style={styles.searchEmptyTitle}>
                           {t(locale, "planner.search.emptyTitle")}
                         </Text>
@@ -3438,6 +3442,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 6,
   },
+  searchEmptyEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: "rgba(47,107,255,0.8)",
+  },
   searchEmptyTitle: {
     ...type.display,
     fontSize: 15,
@@ -4447,7 +4459,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },

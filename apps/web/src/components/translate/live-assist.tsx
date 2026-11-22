@@ -1150,7 +1150,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 aria-label={t(locale, "translate.empty")}
               >
                 <p
-                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                  className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river"
                   style={{ animationDelay: "40ms" }}
                 >
                   {t(locale, "translate.history")}
@@ -1174,7 +1174,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   <button
                     type="button"
                     onClick={() => focusComposer("mic")}
-                    className="bp-transition rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam duration-bp ease-bp-out hover:bg-river-deep"
+                    className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                   >
                     {t(locale, "translate.emptyCta")}
                   </button>
@@ -1182,7 +1182,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     type="button"
                     onClick={() => void runTurn({})}
                     disabled={busy}
-                    className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 disabled:opacity-50"
+                    className="rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3 text-sm font-medium text-river transition duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-50"
                   >
                     {t(locale, "translate.nextDemo")}
                   </button>

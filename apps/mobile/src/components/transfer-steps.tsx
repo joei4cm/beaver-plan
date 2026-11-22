@@ -331,7 +331,11 @@ export function TransferSteps({
               styles.emptyBody,
               softOpen ? softFailMistWashStyle : null,
             ])}
+            accessibilityLabel={t(locale, "planner.transfer.emptyTitle")}
           >
+            <SectionEyebrow>
+              {t(locale, "planner.transfer.emptyEyebrow")}
+            </SectionEyebrow>
             <Text style={styles.emptyTitle}>
               {t(locale, "planner.transfer.emptyTitle")}
             </Text>
@@ -693,7 +697,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...type.display,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
