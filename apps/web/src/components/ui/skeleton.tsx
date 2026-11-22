@@ -301,9 +301,9 @@ export function JournalSkeleton() {
             <div className={`${softFailMistWashClass} p-5 md:p-6`}>
               <Skeleton className="h-9 w-full rounded-bp-sm" />
               <Skeleton className="mt-4 h-28 w-full rounded-bp-sm" />
-              {/* Photo strip chrome — SoftFail yields while compose SoftFail owns */}
-              <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]">
-                <div className="flex items-center justify-between border-b border-[color:var(--bp-line)] px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              {/* Media detail chrome — foam/85 · paper/65 azure · SoftFail yields while compose SoftFail owns (BEA-540) */}
+              <div className="mt-4 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/85 shadow-bp-soft">
+                <div className="flex items-center justify-between border-b border-[color:var(--bp-line)] bg-paper/65 px-3.5 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
                   <div className="flex items-baseline gap-2">
                     <Skeleton className="h-2.5 w-16" />
                     <Skeleton className="h-3 w-40" />
@@ -313,9 +313,9 @@ export function JournalSkeleton() {
                 <div>
                   <Skeleton className="mx-3.5 mt-3 h-16 w-[calc(100%-1.75rem)] rounded-bp-sm" />
                   <div className="mt-3 flex gap-2 px-3.5 pb-3">
-                    <Skeleton className="h-[6.25rem] w-[4.5rem] shrink-0 rounded-bp-sm" />
-                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
-                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm" />
+                    <Skeleton className="h-[6.25rem] w-[4.5rem] shrink-0 rounded-bp-sm ring-1 ring-river/40" />
+                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm ring-1 ring-river/30" />
+                    <Skeleton className="h-[5.5rem] w-16 shrink-0 rounded-bp-sm ring-1 ring-river/30" />
                   </div>
                 </div>
               </div>
