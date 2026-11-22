@@ -955,10 +955,12 @@ export default function TranslateScreen() {
             ) : null}
 
             {/*
-              Empty SoftFail depth (BEA-351 after #178) + craft SoftFail query
-              parity (BEA-407): Soft empty · softSupport · mist SoftFail band ·
-              tip-011 mist-wash empty body. Craft: ?emptySoftFail=1. Talk SoftFail
-              (#249) yields while empty owns — never timber / Failed to fetch.
+              Empty SoftFail depth kept (BEA-351 / craft query BEA-407) + wave 51
+              list craft residual (BEA-491): eyebrow 1.8 · mode chips 1.4 ·
+              tip-011 Speak press · source/target meta tracking. Empty CTAs
+              already #351. SoftFail reopen out of scope. Craft: ?emptySoftFail=1.
+              Talk SoftFail (#249) yields while empty owns — never timber /
+              Failed to fetch. No `/dev` gallery.
             */}
             <Animated.View
               style={StyleSheet.flatten([styles.historyStage, historyRiseStyle])}
@@ -1688,7 +1690,18 @@ function HistoryTurn({
           </Text>
         </View>
         {row.translatedText ? (
-          <Pressable onPress={onSpeak} hitSlop={8}>
+          <Pressable
+            onPress={onSpeak}
+            hitSlop={8}
+            style={({ pressed }) =>
+              StyleSheet.flatten([
+                styles.speakActionWrap,
+                pressed ? styles.dualPressScale : null,
+              ])
+            }
+            accessibilityRole="button"
+            accessibilityLabel={t(uiLocale, "translate.speak")}
+          >
             <Text style={styles.speakAction}>
               {t(uiLocale, "translate.speak")}
             </Text>
@@ -2007,10 +2020,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 246, 250, 0.85)",
   },
   historyHeadCopy: { flex: 1, minWidth: 160, gap: 4 },
+  /** History stage eyebrow — wave 51 craft residual (BEA-491): 1.8 tracking. */
   historyEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
@@ -2172,32 +2186,35 @@ const styles = StyleSheet.create({
   modeBadgeText: {
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   modeBadgeTextLive: { color: colors.foam },
   modeBadgeTextOffline: { color: colors.inkSoft },
   modeBadgeTextDemo: { color: colors.riverDeep },
-  speakAction: {
+  /** tip-011 Speak press wrap — web active:scale-[0.98] (BEA-491). */
+  speakActionWrap: {
     marginLeft: "auto",
+  },
+  speakAction: {
     color: colors.river,
     fontSize: 11,
     fontWeight: "600",
-    letterSpacing: 1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   turnCols: { gap: 12 },
   turnCol: { gap: 4 },
   turnMeta: {
     fontSize: 10,
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.inkSoft,
     fontWeight: "700",
   },
   turnMetaTarget: {
     fontSize: 10,
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
