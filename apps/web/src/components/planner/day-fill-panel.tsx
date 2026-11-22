@@ -115,13 +115,14 @@ function SectionEyebrow({ children }: { children: string }) {
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
  * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
- * (BEA-604) + interest chip color settle (BEA-793 / wave 73): DayFillSkeleton
- * day-row rise mirrors live proposal stagger · interest chips
- * `ease-bp-out-strong` (Mode/Stops #485 / tip-011 / #484–#488 twin). SoftFailBadge
+ * (BEA-604) + interest chip color settle (BEA-793 / wave 73) + sheet accordion
+ * header color settle (BEA-801 / wave 74): DayFillSkeleton day-row rise mirrors
+ * live proposal stagger · interest chips + accordion toggle
+ * `ease-bp-out-strong` (Mode/Stops #485 / tip-011 / #484–#490 twin). SoftFailBadge
  * Soft fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
  * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
  * fetch. No `/dev` gallery. Not SoftFail Soft · not prefer LIVE (BEA-544 lineage)
- * · not accordion / days input / discard secondary · not invent skeletons.
+ * · not days input / discard secondary · not invent skeletons · chips (#490) leave.
  */
 export function DayFillPanel({
   tripId,
@@ -353,15 +354,17 @@ export function DayFillPanel({
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
         Day-fill SoftFail depth (BEA-323 / helpers BEA-400) + craft SoftFail
-        query parity (BEA-408): azure sheet rail · SoftFailBadge Soft fill ·
-        SoftFailSupport · softFailMistWash tip-011 — craft ?dayFillSoftFail=1.
-        Yields stop drawer SoftFail (#225) ownership on Itinerary — never
-        timber / Failed to fetch.
+        query parity (BEA-408) + accordion header color settle (BEA-801 /
+        wave 74): azure sheet rail · SoftFailBadge Soft fill · SoftFailSupport ·
+        softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Toggle mist hover
+        `ease-bp-out-strong` (tip-011 / #484–#490 twin). SoftFail / prefer LIVE
+        / interest chips (#490) leave. Yields stop drawer SoftFail (#225)
+        ownership on Itinerary — never timber / Failed to fetch.
       */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
+        className="relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-3.5 text-left shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out-strong hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
         aria-expanded={open}
       >
         <div className="min-w-0">
@@ -442,11 +445,12 @@ export function DayFillPanel({
             </div>
 
             {/*
-              Interest / mood chips color settle (BEA-793 / wave 73): mist-track
-              option chips densify `bp-transition` (`--bp-ease-out`) →
+              Interest / mood chips color settle (BEA-793 / wave 73 / #490):
+              mist-track option chips densify `bp-transition` (`--bp-ease-out`) →
               `ease-bp-out-strong` — Mode/Stops #485 · tip-011 · #484–#488 twin.
-              SoftFail / prefer LIVE (BEA-544 lineage) / accordion / days input /
-              discard secondary leave. Motion-only class-string.
+              SoftFail / prefer LIVE (BEA-544 lineage) / days input / discard
+              secondary leave. Accordion header easing is BEA-801 — do not
+              re-touch chips. Motion-only class-string.
             */}
             <div>
               <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
