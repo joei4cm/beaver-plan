@@ -1106,12 +1106,13 @@ export default function TripDetailScreen() {
   const daysSoftCopy = t(locale, "planner.days.softFail");
   /**
    * Expo Offline pin SoftFail depth kept (BEA-448 / BEA-450) + wave 49 craft
-   * (BEA-474 / #343) + wave 52 residual (BEA-499): always-on azure offline pin
-   * rail · tip-011 pin press · Lumen tokens · status leading-relaxed.
-   * SoftFailBadge Soft pin · SoftFailSupport · mist band unchanged. Craft:
-   * /trips/…?pinSoftFail=1 — SoftFail depth without a pin miss. Soft copy
-   * always offline.pinSoftFail — never timber / Failed to fetch. No `/dev`
-   * gallery.
+   * (BEA-474 / #343) + wave 52 residual (BEA-499) + wave 54 pins-list residual
+   * (BEA-525): always-on azure offline pin rail · tip-011 SheetPresence rise ·
+   * tip-011 pin press · pinned river shadow · inkSoft alpha · status
+   * leading-relaxed. SoftFailBadge Soft pin · SoftFailSupport · mist band
+   * unchanged. Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin
+   * miss. Soft copy always offline.pinSoftFail — never timber / Failed to
+   * fetch. No `/dev` gallery.
    */
   const pinSoftOpen = pinSoftPreview || Boolean(pinError);
   const pinSoftCopy = pinError ?? t(locale, "offline.pinSoftFail");
@@ -2228,11 +2229,11 @@ export default function TripDetailScreen() {
             <View style={styles.secondaryBlock}>
               {/*
                 SoftFail kept (BEA-448 / BEA-450) + wave 49 (#343) + wave 52
-                (BEA-499): always-on azure offline pin rail · tip-011 pin press ·
-                Lumen tokens · status leading-relaxed · SoftFailBadge Soft pin ·
-                SoftFailSupport · mist band. Craft: ?pinSoftFail=1 — SoftFail
-                depth without a pin miss. Soft copy never timber / Failed to
-                fetch. No `/dev` gallery.
+                (BEA-499) + wave 54 (BEA-525): always-on azure offline pin rail ·
+                tip-011 SheetPresence rise · tip-011 pin press · pinned river
+                shadow · inkSoft alpha · SoftFailBadge Soft pin · SoftFailSupport ·
+                mist band. Craft: ?pinSoftFail=1 — SoftFail depth without a pin
+                miss. Soft copy never timber / Failed to fetch. No `/dev` gallery.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -2241,7 +2242,10 @@ export default function TripDetailScreen() {
                 ])}
                 accessibilityLabel={t(locale, "offline.pinRail")}
               >
-                <View
+                <SheetPresence
+                  open
+                  delayMs={40}
+                  rise={8}
                   style={StyleSheet.flatten([
                     styles.pinRail,
                     pinSoftOpen ? styles.pinRailSoft : null,
@@ -2270,7 +2274,7 @@ export default function TripDetailScreen() {
                       {t(locale, "offline.softBadge")}
                     </SoftFailBadge>
                   ) : null}
-                </View>
+                </SheetPresence>
                 <SoftFailNotice
                   open={pinSoftOpen}
                   compact
@@ -2279,7 +2283,10 @@ export default function TripDetailScreen() {
                 >
                   {pinSoftCopy}
                 </SoftFailNotice>
-                <View
+                <SheetPresence
+                  open
+                  delayMs={70}
+                  rise={6}
                   style={StyleSheet.flatten([
                     styles.pinBody,
                     pinSoftOpen ? softFailMistWashStyle : null,
@@ -2328,7 +2335,7 @@ export default function TripDetailScreen() {
                   <Text style={styles.pinHint}>
                     {t(locale, "offline.statusHint")}
                   </Text>
-                </View>
+                </SheetPresence>
               </View>
 
               <View style={styles.collabBox}>
@@ -3880,7 +3887,7 @@ const styles = StyleSheet.create({
   secondaryBlock: {
     marginTop: 4,
   },
-  /** Offline pin chrome — always-on azure rail (#343 / BEA-499) · SoftFail wash. */
+  /** Offline pin chrome — always-on azure rail (#343 / #360 / BEA-525) · SoftFail wash. */
   pinChrome: {
     marginBottom: 18,
     overflow: "hidden",
@@ -3938,7 +3945,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     letterSpacing: 0.2,
     lineHeight: 16,
-    color: colors.inkSoft,
+    /** Web ink-soft/80 — wave 54 pins-list residual. */
+    color: `${colors.inkSoft}CC`,
     flexShrink: 1,
     minWidth: 0,
   },
@@ -3962,6 +3970,12 @@ const styles = StyleSheet.create({
   pinBtnActive: {
     backgroundColor: colors.river,
     borderColor: colors.river,
+    /* Web shadow-bp-soft / emptyDayCta river lift — pinned pin CTA. */
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   pinLabel: {
     ...type.body,
@@ -3978,7 +3992,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     lineHeight: 16,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
   },
   pinMetaActive: {
     color: colors.foam,
@@ -3988,7 +4002,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    /** Web ink-soft/80. */
+    color: `${colors.inkSoft}CC`,
   },
   pinSoftFail: {
     marginBottom: 0,
