@@ -1547,7 +1547,8 @@ const styles = StyleSheet.create({
   },
   pendingChip: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    /** Web bg-river/10 (BEA-739). */
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderLeftWidth: 2,
