@@ -1380,7 +1380,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     <span className="text-sm font-semibold text-river">
                       {t(locale, "journal.addPhotos")}
                     </span>
-                    <span className="text-xs leading-relaxed text-ink-soft">
+                    <span className="text-xs leading-relaxed text-ink-soft/80">
                       {t(locale, "journal.uploadHint")}
                     </span>
                     <input
@@ -1420,7 +1420,10 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     {Array.from({ length: emptySlots }).map((_, i) => (
                       <div
                         key={`slot-${i}`}
-                        className="flex h-[5.5rem] w-16 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/50 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out"
+                        className="animate-stop-select flex h-[5.5rem] w-16 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/50 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out"
+                        style={{
+                          animationDelay: `${(stripMedia.length + i) * 40}ms`,
+                        }}
                         aria-hidden
                       >
                         +

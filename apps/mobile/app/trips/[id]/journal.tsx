@@ -1047,8 +1047,9 @@ export default function JournalScreen() {
                 {/*
                   Compose media rail — BEA-455 nested foam + wave 49 (BEA-476)
                   tip-011 photo drop press · foam/paper tokens · BEA-514 river/
-                  mist hex-alpha · BEA-540 media detail thumb stagger. SoftFail
-                  depth kept elsewhere; no SoftFail reopen here.
+                  mist hex-alpha · BEA-540 media detail thumb stagger · BEA-566
+                  photoDropHint inkSoft@CC. SoftFail depth kept elsewhere; no
+                  SoftFail reopen here.
                 */}
                 <View
                   style={styles.composeMediaRail}
@@ -1921,7 +1922,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 17,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 — Lumen inkSoft @ ~0.8 (compose support parity). */
+    color: `${colors.inkSoft}CC`,
   },
   primary: {
     marginTop: 16,
