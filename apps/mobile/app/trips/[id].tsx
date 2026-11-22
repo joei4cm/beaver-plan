@@ -1046,7 +1046,8 @@ export default function TripDetailScreen() {
    * Expo trip-detail SoftFailNotice depth (BEA-298 after #194 / BEA-253) +
    * craft SoftFail query parity (BEA-384 / BEA-429 residual):
    * azure Stops rail · Soft/empty/reorder badge · softSupport · compact SoftFailNotice
-   * mist band under rail (`border-b`) · mist-wash tip-011 chips · StyleSheet.flatten.
+   * mist band under rail (`border-b`) · softFailMistWashStyle tip-011 chips /
+   * empty body · StyleSheet.flatten.
    * Craft: /trips/…?stopsSoftFail=1 · /trips/…?dragSoftFail=1 ·
    * /trips/…?emptySoftFail=1 — mirrors web planner. Empty day still owns SoftFail.
    * Drag SoftFail yields chips SoftFail (no double depth). Title SoftFail yields
@@ -2018,7 +2019,13 @@ export default function TripDetailScreen() {
                 );
               })}
               {dayStops.length === 0 && (
-                <View style={styles.emptyDay}>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.emptyDay,
+                    /* tip-011 softFailMistWashStyle empty body while SoftFail owns (web softFailMistWashClass). */
+                    stopsSoftOpen ? softFailMistWashStyle : null,
+                  ])}
+                >
                   <Text style={styles.emptyDayTitle}>
                     {t(locale, "planner.emptyDay")}
                   </Text>
