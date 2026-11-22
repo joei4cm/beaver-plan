@@ -13,16 +13,18 @@ import {
   softFailMistWashClass,
 } from "@/components/soft-fail-notice";
 import { apiGet } from "@/lib/api";
+import { clerkEmailElements } from "./clerk-email-appearance";
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
 /**
  * Sign-up sheet — SoftFail depth kept (BEA-392 / BEA-421 / #227) + wave 49
- * craft residual parity with auth WeChat sheet (BEA-472): Lumen sky tokens ·
- * eyebrow tracking · tip-011 demo CTA press. SoftFailBadge · SoftFailSupport ·
- * mist band unchanged. Craft: /sign-up?signUpSoftFail=1 — SoftFail copy never
- * timber / Failed to fetch. No `/dev` gallery.
+ * WeChat/page chrome parity (BEA-472) + wave 52 Clerk email sheet (BEA-498):
+ * Lumen sky · eyebrows · tip-011 demo press · Clerk email form tokens / type /
+ * tip-011 primary. SoftFailBadge · SoftFailSupport · mist unchanged. Craft:
+ * /sign-up?signUpSoftFail=1 — SoftFail copy never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function SignUpPanel({
   locale,
@@ -99,9 +101,10 @@ export function SignUpPanel({
       </header>
 
       {/*
-        SoftFail kept (BEA-392 / BEA-421) + wave 49 craft residual (BEA-472
-        parity): Lumen sky · 0.18em eyebrows · tip-011 CTA press. SoftFailBadge ·
-        SoftFailSupport · mist. Craft: ?signUpSoftFail=1 — never timber.
+        SoftFail kept (BEA-392 / BEA-421) + WeChat/page chrome (BEA-472) +
+        Clerk email sheet (BEA-498): Lumen sky · 0.18em eyebrows · tip-011
+        CTA / email primary. SoftFailBadge · SoftFailSupport · mist. Craft:
+        ?signUpSoftFail=1 — never timber.
       */}
       <div
         className="animate-rise mt-10 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -193,8 +196,15 @@ export function SignUpPanel({
                   fallbackRedirectUrl="/trips"
                   appearance={{
                     elements: {
-                      rootBox: "w-full",
-                      card: "shadow-none border border-[color:var(--bp-line)] bg-foam/80",
+                      rootBox: clerkEmailElements.rootBox,
+                      card: clerkEmailElements.card,
+                      headerTitle: clerkEmailElements.headerTitle,
+                      headerSubtitle: clerkEmailElements.headerSubtitle,
+                      formFieldLabel: clerkEmailElements.formFieldLabel,
+                      formFieldInput: clerkEmailElements.formFieldInput,
+                      formButtonPrimary: clerkEmailElements.formButtonPrimary,
+                      footerActionLink: clerkEmailElements.footerActionLink,
+                      formFieldAction: clerkEmailElements.formFieldAction,
                     },
                   }}
                 />
