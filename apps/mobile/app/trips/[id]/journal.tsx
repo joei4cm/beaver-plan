@@ -869,10 +869,10 @@ export default function JournalScreen() {
                     ])}
                   >
                     {/*
-                      Empty-stage craft residual (BEA-537) — web empty CTA:
-                      river listEyebrow · display title · hint · tip-011 CTA
-                      press. SoftFail mist wash stays on the outer shell;
-                      SoftFail depth unchanged.
+                      Empty-stage craft residual (BEA-590 beyond #383):
+                      river listEyebrow · snug display title · hint · tip-011
+                      CTA + tracking-wide label. SoftFail mist wash stays on
+                      the outer shell; SoftFail depth unchanged.
                     */}
                     <Text style={styles.emptyEyebrow}>
                       {t(locale, "journal.listEyebrow")}
@@ -1674,6 +1674,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     letterSpacing: -0.3,
+    /** Web leading-snug — translate history empty display parity (BEA-548). */
+    lineHeight: 28,
     color: colors.ink,
     marginTop: 8,
   },
@@ -1695,12 +1697,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
+    /** Planner emptyDayCta Android shadow parity. */
+    elevation: 2,
   },
   emptyCtaText: {
     ...type.body,
     color: colors.foam,
     fontSize: 14,
     fontWeight: "700",
+    /** Web tracking-wide · planner emptyDayCtaText. */
+    letterSpacing: 0.3,
   },
   compose: {
     marginTop: 4,
