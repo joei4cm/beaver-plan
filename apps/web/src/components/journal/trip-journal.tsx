@@ -894,13 +894,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/trips/${tripId}`}
-              className="rounded-bp-xs px-4 py-2 text-sm text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
+              className="rounded-bp-xs px-4 py-2 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45"
             >
               {t(locale, "journal.backPlanner")}
             </Link>
             <Link
               href={`/trips/${tripId}/share`}
-              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              className="rounded-bp bg-river px-4 py-2 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "journal.toShare")}
             </Link>
@@ -995,6 +995,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               ?entriesSoftFail=1 — never timber / Failed to fetch. Nested SoftFail
               yields: empty owns while empty / craft; Soft entries yields while
               empty / compose owns.
+              List chrome residual (BEA-607 beyond #357 / #415 empty / compose):
+              rail eyebrow 0.18em · day h2 leading-snug · entry-row tip-011
+              active:scale-[0.995]. SoftFail / empty / compose untouched.
             */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -1002,7 +1005,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                     {t(locale, "journal.listEyebrow")}
                     {" · "}
                     {t(locale, "journal.daySection").replace(
@@ -1057,7 +1060,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   )}
                 </div>
               </div>
-              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
+              <h2 className="mt-2 font-display text-3xl font-bold leading-snug tracking-tight text-ink md:text-4xl">
                 {activeDay?.note ?? activeDay?.date ?? trip.title}
               </h2>
               <p className="mt-2 text-sm text-ink-soft">
@@ -1170,7 +1173,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                           selectEntry();
                         }
                       }}
-                      className={`animate-entry-in group relative flex gap-4 px-2 py-7 first:pt-6 sm:gap-5 sm:px-3 bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 ${
+                      className={`animate-entry-in group relative flex gap-4 px-2 py-7 first:pt-6 sm:gap-5 sm:px-3 transition duration-bp ease-bp-out-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40 active:scale-[0.995] ${
                         scrubMatch
                           ? "animate-stop-select rounded-bp-sm bg-river/[0.08] shadow-[inset_3px_0_0_var(--bp-river)]"
                           : "rounded-bp-sm hover:bg-mist/30"
