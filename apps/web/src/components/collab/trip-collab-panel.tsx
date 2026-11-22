@@ -39,11 +39,12 @@ function newLocalId(prefix: string) {
 
 /**
  * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
- * yield #281) + wave 50 craft residual (BEA-479): Timeline eyebrow tracking ·
- * tip-011 refresh press · mist-track item lift. SoftFailBadge · SoftFailSupport ·
- * SoftFailNotice mist band unchanged. Craft: `/trips/…?timelineSoftFail=1`.
- * Panel SoftFail yields on Activity; invite SoftFail yields timeline (no double
- * depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
+ * yield #281) + wave 50 craft residual: Timeline (BEA-479) + Comments thread
+ * (BEA-487): eyebrow 0.18em · tip-011 Post press · list chrome parity.
+ * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band unchanged.
+ * Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on Activity;
+ * invite SoftFail yields timeline (no double depth). Soft copy never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function TripCollabPanel({
   tripId,
@@ -376,7 +377,11 @@ export function TripCollabPanel({
 
       {/* Tab sheets share one cell so SheetPresence in/out (#46) doesn’t stack. */}
       <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
-      {/* Comments — list + compose sheet hierarchy */}
+      {/*
+        Comments thread SoftFail depth kept (panel SoftFailNotice + Demo/Live) +
+        wave 50 craft residual (BEA-487): eyebrow 0.18em · tip-011 Post press.
+        Empty rise already #351. SoftFail reopen out of scope. No `/dev` gallery.
+      */}
       <SheetPresence
         open={tab === "comments"}
         id="collab-panel-comments"
@@ -389,7 +394,7 @@ export function TripCollabPanel({
           <div className="min-w-0">
             <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "collab.panel.threadEyebrow")}
                 </span>
                 <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -464,7 +469,7 @@ export function TripCollabPanel({
 
           <div className="relative border-t border-[color:var(--bp-line)] bg-mist/20 lg:border-l lg:border-t-0">
             <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/50 px-4 py-2.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
                 {t(locale, "collab.panel.composeEyebrow")}
               </span>
             </header>
@@ -521,7 +526,7 @@ export function TripCollabPanel({
                       type="button"
                       disabled={sending || !body.trim()}
                       onClick={() => void submitComment()}
-                      className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-bp-sm bg-river px-4 py-2 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {sending
                         ? t(locale, "collab.panel.posting")
