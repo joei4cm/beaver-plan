@@ -136,10 +136,12 @@ async function searchLocal(
  * lineHeight 22. Wave 65 (BEA-642 / #441): headerTitle LH 24 · sectionTitle
  * LH 22 · offerTitle LH 20 (day-fill / web snug twin). Wave 66 (BEA-659):
  * OTA StyleSheet rgba → paper/mist/foam/river/inkSoft hex-alpha (day-fill /
- * Days #445 twin) · fieldLabel / kindChip letterSpacing 1.4. SoftFail stays
- * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
- * Confirm SoftFail yields OTA (no double depth). Confirm nest known no-op —
- * leave alone. Never timber / Failed to fetch. No `/dev` gallery.
+ * Days #445 twin) · fieldLabel / kindChip letterSpacing 1.4. Wave 66
+ * (BEA-660): results-list offer provider LH 18 + inkSoft@CC (day-fill stopWalk
+ * + BookingLinkChips #395 twin). SoftFail stays under OTA / Confirm rails;
+ * craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA
+ * (no double depth). Confirm nest known no-op — leave alone. Never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -1330,7 +1332,10 @@ const styles = StyleSheet.create({
   provider: {
     ...type.body,
     fontSize: 12,
-    color: colors.inkSoft,
+    /** Web offer provider leading-snug · day-fill stopWalk twin (BEA-660). */
+    lineHeight: 18,
+    /** Web text-ink-soft/80 · BookingLinkChips #395 twin. */
+    color: `${colors.inkSoft}CC`,
   },
   offerActions: {
     flexDirection: "row",
