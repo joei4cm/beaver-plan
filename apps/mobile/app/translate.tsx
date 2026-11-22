@@ -964,9 +964,19 @@ export default function TranslateScreen() {
         {tab === "conversation" ? (
           <View style={styles.panel}>
             {(listening || partialText) ? (
-              <Text style={styles.partial}>
-                {t(uiLocale, "translate.partialHint")} {partialText || "…"}
-              </Text>
+              // Live translate residual (BEA-585 wave 60): SheetPresence enter ·
+              // partialHint 1.4 · river@0.2 / foam@0.9 — web animate-sheet-in +
+              // border-river/20 + foam/90 parity beyond #399 TTS. SoftFail untouched.
+              <SheetPresence open delayMs={40} rise={6} style={styles.partial}>
+                <Text>
+                  <Text style={styles.partialHint}>
+                    {t(uiLocale, "translate.partialHint")}{" "}
+                  </Text>
+                  <Text style={styles.partialBody}>
+                    {partialText || "…"}
+                  </Text>
+                </Text>
+              </SheetPresence>
             ) : null}
 
             {/*
@@ -1808,10 +1818,16 @@ function LocalePicker({
           <Pressable
             key={loc}
             onPress={() => onChange(loc)}
-            style={StyleSheet.flatten([
-              styles.localeChip,
-              value === loc ? styles.localeChipActive : null,
-            ])}
+            style={({ pressed }) =>
+              StyleSheet.flatten([
+                styles.localeChip,
+                value === loc ? styles.localeChipActive : null,
+                /* tip-011 — cat/phrase/TTS bar (#369/#399); LocalePicker missed. */
+                pressed ? styles.dualPressScale : null,
+              ])
+            }
+            accessibilityRole="button"
+            accessibilityState={{ selected: value === loc }}
           >
             <Text
               style={StyleSheet.flatten([
@@ -1891,7 +1907,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  badgeDemo: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
+  /** Web bg-river/12 — Lumen river @ 0.12 (BEA-585; TTS chip twin #399). */
+  badgeDemo: { backgroundColor: `${colors.river}1F` },
   badgeLive: { backgroundColor: colors.river },
   badgeText: { fontSize: 11, fontWeight: "700" },
   badgeTextDemo: { color: colors.riverDeep },
@@ -2781,18 +2798,29 @@ const styles = StyleSheet.create({
     letterSpacing: 1.8,
     textTransform: "uppercase",
   },
+  /** Web border-river/20 · bg-foam/90 — Lumen hex-alpha (BEA-585). */
   partial: {
     marginHorizontal: 16,
     marginBottom: 8,
     marginTop: 8,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.2)",
-    backgroundColor: colors.foam,
-    color: colors.riverDeep,
-    fontSize: 13,
+    borderColor: `${colors.river}33`,
+    backgroundColor: `${colors.foam}E6`,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  /** Web partialHint tracking-[0.14em] uppercase (BEA-585). */
+  partialHint: {
+    color: colors.river,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  partialBody: {
+    color: colors.riverDeep,
+    fontSize: 13,
   },
   phraseHead: {
     paddingHorizontal: 16,
