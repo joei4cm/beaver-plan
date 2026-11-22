@@ -258,10 +258,10 @@ export default function TranslateScreen() {
 
   /**
    * Expo translate dual SoftFailNotice depth (BEA-335 after #202 / copy #219) +
-   * craft SoftFail query parity (BEA-407):
-   * foam dual rail · azure head · Soft dual badge · softSupport ·
-   * compact SoftFailNotice mist band (`border-b`) · mist-wash tip-011
-   * SheetPresence stage · StyleSheet.flatten. Soft-fail never timber /
+   * craft SoftFail query parity (BEA-407). SoftFail depth untouched in wave 49
+   * craft residual (BEA-469). Foam dual rail · azure head · Soft dual badge ·
+   * softSupport · compact SoftFailNotice mist band (`border-b`) · mist-wash
+   * tip-011 SheetPresence stage · StyleSheet.flatten. Soft-fail never timber /
    * Failed to fetch. Yields to Talk SoftFail (#249) on conversation tab;
    * Lens SoftFail (#237) SoftFailNotice display yields while Dual SoftFail
    * owns dual SoftFail chrome (no double depth). Craft:
@@ -1350,11 +1350,13 @@ export default function TranslateScreen() {
             accessibilityLabel={t(uiLocale, "translate.mode.camera")}
           >
             {/*
-              Dual SoftFail depth (BEA-335 after #202 / #219) + craft SoftFail
-              query parity (BEA-407): Soft dual · softSupport · mist SoftFail
-              band · tip-011 mist-wash stage. Craft: ?dualSoftFail=1. Yields to
-              Talk SoftFail (#249); Lens SoftFail (#237) SoftFailNotice yields
-              while Dual owns. Soft copy never timber / Failed to fetch.
+              Dual SoftFail depth (BEA-335 / #202 / #219) + craft SoftFail query
+              parity (BEA-407). SoftFail depth unchanged. Wave 49 craft residual
+              (BEA-469 / web #331): dualHint relaxed type · source label tracking ·
+              control-rail press scale · OCR soft-shadow · mist busy ring ·
+              foam / paper tokens. Craft: ?dualSoftFail=1. Yields to Talk SoftFail
+              (#249); Lens SoftFail (#237) SoftFailNotice yields while Dual owns.
+              Soft copy never timber / Failed to fetch.
             */}
             <View
               style={StyleSheet.flatten([
@@ -1454,13 +1456,22 @@ export default function TranslateScreen() {
                           {t(uiLocale, "translate.cameraHint")}
                         </Text>
                         <Pressable
-                          style={StyleSheet.flatten([styles.enableCamBtn])}
+                          style={({ pressed }) =>
+                            StyleSheet.flatten([
+                              styles.enableCamBtn,
+                              pressed ? styles.dualPressScale : null,
+                            ])
+                          }
                           onPress={() => {
                             void requestCamPermission().then((next) => {
                               if (!next.granted) setSoftNotice(true);
                             });
                           }}
                           accessibilityRole="button"
+                          accessibilityLabel={t(
+                            uiLocale,
+                            "translate.enableCamera",
+                          )}
                         >
                           <Text style={styles.sendLabel}>
                             {t(uiLocale, "translate.enableCamera")}
@@ -1508,14 +1519,24 @@ export default function TranslateScreen() {
                   </View>
                 </View>
 
-                {/* Control chrome rail */}
+                {/* Control chrome rail — Live dual (tip-011 press · Talk parity) */}
                 <View style={styles.controlChrome}>
                   <Pressable
-                    style={StyleSheet.flatten([styles.facingBtn])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.facingBtn,
+                        pressed ? styles.dualPressScale : null,
+                      ])
+                    }
                     onPress={() =>
                       setFacing((f) => (f === "back" ? "front" : "back"))
                     }
                     accessibilityRole="button"
+                    accessibilityLabel={
+                      facing === "back"
+                        ? t(uiLocale, "translate.cameraFront")
+                        : t(uiLocale, "translate.cameraBack")
+                    }
                   >
                     <Text style={styles.facingLabel}>
                       {facing === "back"
@@ -1524,14 +1545,18 @@ export default function TranslateScreen() {
                     </Text>
                   </Pressable>
                   <Pressable
-                    style={StyleSheet.flatten([
-                      styles.visionBtn,
-                      busy ? styles.disabled : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.visionBtn,
+                        busy ? styles.disabled : null,
+                        pressed && !busy ? styles.dualPressScale : null,
+                      ])
+                    }
                     onPress={() => void onVision("ocr")}
                     disabled={busy}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: busy }}
+                    accessibilityLabel={t(uiLocale, "translate.ocr")}
                   >
                     <Text style={styles.visionLabel}>
                       {busy
@@ -1540,14 +1565,18 @@ export default function TranslateScreen() {
                     </Text>
                   </Pressable>
                   <Pressable
-                    style={StyleSheet.flatten([
-                      styles.visionBtnAlt,
-                      busy ? styles.disabled : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.visionBtnAlt,
+                        busy ? styles.disabled : null,
+                        pressed && !busy ? styles.dualPressScale : null,
+                      ])
+                    }
                     onPress={() => void onVision("caption")}
                     disabled={busy}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: busy }}
+                    accessibilityLabel={t(uiLocale, "translate.caption")}
                   >
                     <Text style={styles.visionLabelAlt}>
                       {t(uiLocale, "translate.caption")}
@@ -2357,7 +2386,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    backgroundColor: colors.foam,
     overflow: "hidden",
     shadowColor: colors.shadowDeep,
     shadowOpacity: 0.08,
@@ -2393,16 +2422,23 @@ const styles = StyleSheet.create({
   dualEyebrow: {
     ...type.body,
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
     fontWeight: "700",
   },
+  /** Talk dualHint parity — relaxed leading · max-w-lg (web #331). */
   dualHint: {
     ...type.body,
     color: colors.inkSoft,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
+    maxWidth: 512,
+  },
+  /** tip-011 press feedback — web active:scale-[0.98] (BEA-469). */
+  dualPressScale: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   /** Mist SoftFail strip under azure dual rail — border-b before mist body. */
   dualSoftFail: {
@@ -2495,6 +2531,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.25)",
   },
+  /** Source footer — 0.65rem · uppercase · 0.14em tracking (web #331). */
   lensFooterLabel: {
     position: "absolute",
     left: 12,
@@ -2502,9 +2539,10 @@ const styles = StyleSheet.create({
     bottom: 12,
     textAlign: "center",
     color: "rgba(255,255,255,0.65)",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 0.6,
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
     zIndex: 1,
   },
   cameraFallback: {
@@ -2536,7 +2574,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.river,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 11,
     zIndex: 1,
   },
   subtitle: {
@@ -2564,12 +2602,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  /** Display overlay — snug tracking · foam (web md:text-xl parity). */
   subtitleTarget: {
+    ...type.display,
     color: colors.foam,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
-    lineHeight: 22,
-    letterSpacing: -0.2,
+    lineHeight: 24,
+    letterSpacing: -0.3,
   },
   visionBusy: {
     position: "absolute",
@@ -2578,6 +2618,8 @@ const styles = StyleSheet.create({
     bottom: 14,
     borderRadius: radius.md,
     backgroundColor: "rgba(15, 23, 42, 0.7)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.1)",
     padding: 12,
     gap: 8,
     zIndex: 3,
@@ -2601,7 +2643,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.92)",
+    backgroundColor: colors.paper,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
@@ -2622,6 +2664,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 14,
     paddingVertical: 11,
+    shadowColor: colors.river,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   visionBtnAlt: {
     borderRadius: radius.sm,
@@ -2633,12 +2680,14 @@ const styles = StyleSheet.create({
   },
   visionLabel: { color: colors.foam, fontWeight: "600", fontSize: 13 },
   visionLabelAlt: { color: colors.foam, fontWeight: "600", fontSize: 13 },
+  /** Lens status meta — 0.65rem · semibold · 0.14em (web #331). */
   controlMeta: {
     marginLeft: "auto",
-    color: "rgba(100, 116, 139, 0.7)",
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.2,
+    color: colors.inkSoft,
+    opacity: 0.7,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.2,
     textTransform: "uppercase",
   },
   partial: {
