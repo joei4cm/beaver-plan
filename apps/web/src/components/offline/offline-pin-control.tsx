@@ -36,10 +36,13 @@ type Props = {
 type SoftFailKind = "pin" | "sync";
 
 /**
- * Offline pin SoftFail helpers (BEA-448 after #323 timber fix):
+ * Offline pin SoftFail helpers (BEA-448 after #323 timber fix) + craft SoftFail
+ * query closeout (BEA-450 after #327 / #319):
  * azure Offline pin SoftFail rail · SoftFailBadge Soft pin/sync · SoftFailSupport ·
  * SoftFailNotice compact mist band · tip-011 mist-wash. SoftFail depth + helpers
- * kept. Soft copy never timber / Failed to fetch. No `/dev` SoftFail gallery.
+ * kept. Craft: /trips/…?pinSoftFail=1 · /trips/…/journal?pinSoftFail=1 — SoftFail
+ * depth without a pin/sync miss. Soft copy never timber / Failed to fetch. No
+ * `/dev` SoftFail gallery.
  */
 export function OfflinePinControl({
   tripId,
@@ -54,6 +57,17 @@ export function OfflinePinControl({
   const [status, setStatus] = useState<OfflinePinStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [softFail, setSoftFail] = useState<SoftFailKind | null>(null);
+  /** Craft preview: /trips/…?pinSoftFail=1 — SoftFail depth under Offline pin. */
+  const [pinSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("pinSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   // Avoid SSR/client navigator.onLine mismatch → Next.js "1 Issue" pill.
   const [mounted, setMounted] = useState(false);
 
@@ -133,7 +147,12 @@ export function OfflinePinControl({
     ? (status?.online ?? isBrowserOnline())
     : true;
 
-  const softOpen = Boolean(softFail);
+  /**
+   * Offline pin SoftFail rail owns SoftFail under azure pin chrome. SoftFail
+   * copy always pinSoftFail / syncSoftFail (never timber). Craft
+   * `?pinSoftFail=1` forces SoftFail depth without a pin/sync miss.
+   */
+  const softOpen = pinSoftPreview || Boolean(softFail);
   const pinSoftCopy = t(locale, "offline.pinSoftFail");
   const syncSoftCopy = t(locale, "offline.syncSoftFail");
   const softCopy = softFail === "sync" ? syncSoftCopy : pinSoftCopy;
@@ -193,9 +212,10 @@ export function OfflinePinControl({
       aria-label={t(locale, "offline.pinRail")}
     >
       {/*
-        SoftFailSupport residual (BEA-448 after #323): azure Offline pin SoftFail
-        rail · SoftFailBadge Soft pin/sync · SoftFailSupport · SoftFailNotice
-        compact mist band · tip-011 — SoftFail depth + helpers kept. Never timber.
+        SoftFailSupport residual (BEA-448 after #323) + craft SoftFail query
+        closeout (BEA-450): azure Offline pin SoftFail rail · SoftFailBadge Soft
+        pin/sync · SoftFailSupport · SoftFailNotice compact mist band · tip-011 —
+        SoftFail depth + helpers kept. Craft: ?pinSoftFail=1 — never timber.
       */}
       {softOpen ? (
         <header
