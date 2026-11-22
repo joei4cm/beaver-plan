@@ -731,7 +731,10 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const listSoftCopy =
     softNotice && !online
       ? t(locale, "journal.softOffline")
-      : t(locale, "journal.demoNotice");
+      : t(locale, "journal.softFail");
+  const listSupportCopy = listSoftOpen
+    ? t(locale, "journal.softSupport")
+    : `${activeDay?.date ? `${activeDay.date} · ` : ""}${t(locale, "journal.entryDetailHint")}`;
   const hardComposeError =
     error && !isPlannerNoiseError(new Error(error)) ? error : null;
 
@@ -908,7 +911,13 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   </p>
                   {entryEmpty ? (
                     <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "journal.emptySupport")}
+                      {emptySoftOpen
+                        ? t(locale, "journal.emptySoftSupport")
+                        : t(locale, "journal.emptySupport")}
+                    </span>
+                  ) : listSoftOpen ? (
+                    <span className="text-[11px] leading-snug text-ink-soft/80">
+                      {t(locale, "journal.softSupport")}
                     </span>
                   ) : null}
                 </div>
@@ -927,6 +936,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     </span>
                   ) : (
                     <>
+                      {listSoftOpen ? (
+                        <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                          {t(locale, "journal.softBadge")}
+                        </span>
+                      ) : null}
                       <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums uppercase tracking-[0.12em] text-river-deep">
                         {t(locale, "journal.entryCount").replace(
                           "{n}",
@@ -946,10 +960,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                 {activeDay?.note ?? activeDay?.date ?? trip.title}
               </h2>
               <p className="mt-2 text-sm text-ink-soft">
-                {activeDay?.date ? `${activeDay.date} · ` : ""}
                 {entryEmpty
                   ? t(locale, "journal.emptyHint")
-                  : t(locale, "journal.entryDetailHint")}
+                  : listSupportCopy}
               </p>
             </header>
 
@@ -961,11 +974,11 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             >
               {emptySoftCopy}
             </SoftFailNotice>
-            {/* List SoftFail yields while empty owns soft-fail (no double depth). */}
+            {/* List SoftFail Soft entries depth — Soft badge · softSupport · softFail. */}
             <SoftFailNotice
               open={listSoftOpen}
               compact
-              className="mb-1"
+              className="border-b border-[color:var(--bp-line)]"
             >
               {listSoftCopy}
             </SoftFailNotice>

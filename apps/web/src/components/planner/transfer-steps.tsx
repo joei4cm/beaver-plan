@@ -193,10 +193,12 @@ function modeLabel(locale: Locale, mode: Leg["mode"]): string {
 function LegCardHeader({
   locale,
   demoMode,
+  softOpen,
   view,
 }: {
   locale: Locale;
   demoMode: boolean;
+  softOpen: boolean;
   view?: Leg | null;
 }) {
   return (
@@ -207,13 +209,22 @@ function LegCardHeader({
         </span>
         <span
           className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-            demoMode ? "bg-mist text-ink-soft" : "bg-river/12 text-river-deep"
+            softOpen || demoMode
+              ? "bg-mist text-ink-soft"
+              : "bg-river/12 text-river-deep"
           }`}
         >
-          {demoMode
-            ? t(locale, "planner.transfer.demoBadge")
-            : t(locale, "planner.transfer.liveBadge")}
+          {softOpen
+            ? t(locale, "planner.transfer.softBadge")
+            : demoMode
+              ? t(locale, "planner.transfer.demoBadge")
+              : t(locale, "planner.transfer.liveBadge")}
         </span>
+        {softOpen ? (
+          <span className="text-[11px] leading-snug text-ink-soft/80">
+            {t(locale, "planner.transfer.softSupport")}
+          </span>
+        ) : null}
       </div>
       {view ? (
         <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
@@ -231,9 +242,9 @@ function LegCardHeader({
 }
 
 /**
- * Transit leg card — deeper Lumen hierarchy after #61:
- * azure header rail · summary · step rails · SoftFailNotice / soft-fail empty,
- * SheetPresence + #46 radii / easing.
+ * Transit leg card SoftFail depth (BEA-383 Soft badge / softSupport):
+ * azure Transfer rail · Soft transfer badge · softSupport · SoftFailNotice /
+ * soft-fail empty · SheetPresence + #46 radii / easing. Never timber.
  */
 export function TransferSteps({
   leg,
@@ -252,6 +263,7 @@ export function TransferSteps({
   const open = Boolean(leg) || empty;
   const noticeDemo =
     demoMode && (showSoftFail || variant === "panel" || empty);
+  const softOpen = Boolean(noticeDemo);
 
   const shell =
     variant === "panel"
@@ -267,7 +279,18 @@ export function TransferSteps({
     >
       {empty ? (
         <>
-          <LegCardHeader locale={locale} demoMode={demoMode} />
+          <LegCardHeader
+            locale={locale}
+            demoMode={demoMode}
+            softOpen={softOpen}
+          />
+          <SoftFailNotice
+            open={softOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {t(locale, "planner.transfer.softFailEmpty")}
+          </SoftFailNotice>
           <div
             className="animate-fade space-y-1.5 px-3 py-4"
             style={{ animationDelay: "60ms" }}
@@ -279,13 +302,22 @@ export function TransferSteps({
               {t(locale, "planner.transfer.emptyHint")}
             </p>
           </div>
-          <SoftFailNotice open={Boolean(noticeDemo)} compact>
-            {t(locale, "planner.transfer.softFailEmpty")}
-          </SoftFailNotice>
         </>
       ) : view ? (
         <>
-          <LegCardHeader locale={locale} demoMode={demoMode} view={view} />
+          <LegCardHeader
+            locale={locale}
+            demoMode={demoMode}
+            softOpen={softOpen}
+            view={view}
+          />
+          <SoftFailNotice
+            open={softOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {t(locale, "planner.transfer.demoNotice")}
+          </SoftFailNotice>
 
           <div className="divide-y divide-[color:var(--bp-line)]">
             <section
@@ -329,10 +361,6 @@ export function TransferSteps({
               </section>
             ) : null}
           </div>
-
-          <SoftFailNotice open={Boolean(noticeDemo)} compact>
-            {t(locale, "planner.transfer.demoNotice")}
-          </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>

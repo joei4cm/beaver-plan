@@ -446,31 +446,34 @@ export function TripsHome({ locale }: Props) {
                   {t(locale, "trips.listRail")}
                 </span>
                 <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
-                  {t(locale, "trips.listCount").replace(
-                    "{n}",
-                    String(trips.length),
-                  )}
+                  {listSoft && !seedOwnsSoft
+                    ? t(locale, "trips.cardsSoftSupport")
+                    : t(locale, "trips.listCount").replace(
+                        "{n}",
+                        String(trips.length),
+                      )}
                 </span>
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  listSoft
+                  listSoft && !seedOwnsSoft
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river"
                 }`}
               >
-                {listSoft
-                  ? t(locale, "trips.listDemo")
+                {listSoft && !seedOwnsSoft
+                  ? t(locale, "trips.cardsSoftBadge")
                   : t(locale, "trips.listLive")}
               </span>
             </header>
 
-            {/* List SoftFail yields while seed owns soft-fail (no double depth). */}
+            {/* List SoftFail Soft cards depth — yields while seed owns soft-fail. */}
             <SoftFailNotice
               open={!error && Boolean(softNotice) && !seedOwnsSoft}
               compact
+              className="border-b border-[color:var(--bp-line)]"
             >
-              {softNotice ?? ""}
+              {t(locale, "trips.cardsSoftFail")}
             </SoftFailNotice>
 
             <ul role="list" aria-label={t(locale, "trips.yours")}>

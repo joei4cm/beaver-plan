@@ -28,7 +28,8 @@ type Props = {
   filterLabel: string;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   liveBadge: string;
 };
 
@@ -84,16 +85,16 @@ function useBrowserOnline(): boolean {
 }
 
 /**
- * FAQ SoftFail sheet — azure rail · Offline/Live · compact SoftFailNotice
- * under rail (`border-b`) · SheetPresence body (mist-track topics · accordion).
- * Depth craft after #191 (BEA-293): SoftFail strip owns a clear mist band
- * between azure rail and topics — never timber / Failed to fetch.
+ * FAQ SoftFail sheet — azure rail · Soft FAQ / Live · softSupport · compact
+ * SoftFailNotice under rail (`border-b`) · SheetPresence body.
+ * Soft badge / softSupport depth (BEA-383 after BEA-293) — never timber.
  */
 function FaqSoftFailSheet({
   softOpen,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   liveBadge,
   offlineNotice,
   bodyLabel,
@@ -104,7 +105,8 @@ function FaqSoftFailSheet({
   softOpen: boolean;
   sheetEyebrow: string;
   sheetSupport: string;
-  offlineBadge: string;
+  softSupport: string;
+  softBadge: string;
   liveBadge: string;
   offlineNotice: string;
   bodyLabel: string;
@@ -124,7 +126,7 @@ function FaqSoftFailSheet({
             {sheetEyebrow}
           </span>
           <span className="text-[11px] leading-snug text-ink-soft/80">
-            {sheetSupport}
+            {softOpen ? softSupport : sheetSupport}
           </span>
         </div>
         <span
@@ -132,7 +134,7 @@ function FaqSoftFailSheet({
             softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
           }`}
         >
-          {softOpen ? offlineBadge : liveBadge}
+          {softOpen ? softBadge : liveBadge}
         </span>
       </header>
 
@@ -159,10 +161,9 @@ function FaqSoftFailSheet({
 }
 
 /**
- * Landing FAQ SoftFailNotice depth (BEA-293 after #143/#191):
- * FaqSoftFailSheet · azure FAQ rail · Offline/Live badge · compact SoftFailNotice
- * mist band under rail · mist-track topic chips · tip-011 rise stagger —
- * SoftFail owned by the sheet (no floating notice). Never timber / Failed to fetch.
+ * Landing FAQ SoftFailNotice depth (BEA-383 Soft badge after BEA-293):
+ * FaqSoftFailSheet · azure FAQ rail · Soft FAQ / Live · softSupport · compact
+ * SoftFailNotice mist band · mist-track topics · tip-011 — never timber.
  */
 export function LandingFaq({
   title,
@@ -173,7 +174,8 @@ export function LandingFaq({
   filterLabel,
   sheetEyebrow,
   sheetSupport,
-  offlineBadge,
+  softSupport,
+  softBadge,
   liveBadge,
 }: Props) {
   const reduced = usePrefersReducedMotion();
@@ -235,15 +237,15 @@ export function LandingFaq({
         </header>
 
         {/*
-          FAQ SoftFail depth (BEA-293 after #143/#191):
-          FaqSoftFailSheet · azure FAQ rail · Offline/Live · mist SoftFail band ·
-          mist-track topics · tip-011 accordion — never timber.
+          FAQ SoftFail Soft badge depth (BEA-383): Soft FAQ · softSupport ·
+          mist SoftFail band · mist-track topics · tip-011 — never timber.
         */}
         <FaqSoftFailSheet
           softOpen={softOpen}
           sheetEyebrow={sheetEyebrow}
           sheetSupport={sheetSupport}
-          offlineBadge={offlineBadge}
+          softSupport={softSupport}
+          softBadge={softBadge}
           liveBadge={liveBadge}
           offlineNotice={offlineNotice}
           bodyLabel={filterLabel}
