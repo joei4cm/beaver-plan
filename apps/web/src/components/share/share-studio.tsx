@@ -1007,11 +1007,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
             {/*
               Export SoftFail helpers (BEA-397 after #284 / depth BEA-331) + craft
-              SoftFail query parity (BEA-404): azure Export rail · SoftFailBadge
-              Soft export / Live · SoftFailSupport · SoftFailNotice mist band ·
-              softFailMistWashClass tip-011 · Craft: ?exportSoftFail=1 — Studio
-              SoftFail (#243) yields while Export owns — never timber /
-              Failed to fetch.
+              SoftFail query parity (BEA-404) + wave 52 craft residual (BEA-501):
+              tip-011 active:scale-[0.98] on Download / System share / Refresh ·
+              Export title leading-snug. SoftFail rails unchanged. Craft:
+              ?exportSoftFail=1 — Studio SoftFail (#243) yields while Export owns
+              — never timber / Failed to fetch. No /dev gallery.
             */}
             <section
               className="animate-rise border-t border-[color:var(--bp-line)] pt-5"
@@ -1026,7 +1026,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     </SectionEyebrow>
                     <h2
                       id="share-export-title"
-                      className="mt-1 font-display text-lg tracking-tight text-ink md:text-xl"
+                      className="mt-1 font-display text-lg leading-snug tracking-tight text-ink md:text-xl"
                     >
                       {t(locale, "share.export")}
                     </h2>
@@ -1073,7 +1073,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     type="button"
                     disabled={busy || !preview}
                     onClick={() => void downloadPng()}
-                    className="animate-rise rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    className="animate-rise rounded-bp bg-river px-4 py-3.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ animationDelay: "40ms" }}
                     aria-labelledby="share-export-title"
                   >
@@ -1083,7 +1083,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     type="button"
                     disabled={busy || !preview}
                     onClick={() => void shareNative()}
-                    className="animate-rise rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    className="animate-rise rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-ink/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ animationDelay: "70ms" }}
                   >
                     {t(locale, "share.systemShare")}
@@ -1099,7 +1099,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                         kickRender();
                         void render();
                       }}
-                      className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                      className="rounded-bp-xs px-1 py-1.5 text-sm text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
                     >
                       {t(locale, "share.refresh")}
                     </button>
