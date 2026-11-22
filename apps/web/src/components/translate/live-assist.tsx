@@ -1635,10 +1635,15 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   {t(locale, "translate.talkLiveBadge")}
                 </SoftFailLiveBadge>
               )}
+              {/*
+                Live Talk TTS chip residual (BEA-561 wave 58): tracking 0.14em
+                · tip-011 press — parity with history mode chips (#390) / #369
+                panel bar. SoftFail / history / Dual untouched.
+              */}
               <button
                 type="button"
                 onClick={() => setTtsEnabled((v) => !v)}
-                className={`bp-transition rounded-bp-xs px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] duration-bp-fast ease-bp-out ${
+                className={`bp-transition rounded-bp-xs px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] duration-bp-fast ease-bp-out active:scale-[0.98] ${
                   ttsEnabled
                     ? "bg-river/12 text-river-deep"
                     : "bg-mist text-ink-soft"

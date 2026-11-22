@@ -1242,12 +1242,21 @@ export default function TranslateScreen() {
                       {t(uiLocale, "translate.talkLiveBadge")}
                     </SoftFailLiveBadge>
                   )}
+                  {/*
+                    Live Talk TTS chip residual (BEA-561 wave 58): tip-011
+                    press · 1.4 tracking · river@0.12 token — web Talk chip
+                    + history mode parity. SoftFail / history / Dual out of
+                    scope.
+                  */}
                   <Pressable
                     onPress={() => setTtsEnabled((v) => !v)}
-                    style={StyleSheet.flatten([
-                      styles.ttsChip,
-                      ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.ttsChip,
+                        ttsEnabled ? styles.ttsChipOn : styles.ttsChipOff,
+                        pressed ? styles.dualPressScale : null,
+                      ])
+                    }
                     accessibilityRole="button"
                     accessibilityState={{ selected: ttsEnabled }}
                   >
@@ -2397,13 +2406,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  ttsChipOn: { backgroundColor: "rgba(47, 107, 255, 0.12)" },
+  /** Web bg-river/12 — Lumen river @ 0.12 (BEA-561). */
+  ttsChipOn: { backgroundColor: `${colors.river}1F` },
   ttsChipOff: { backgroundColor: colors.mist },
+  /** Talk TTS chip — wave 58 craft residual (BEA-561): 1.4 tracking. */
   ttsChipText: {
     color: colors.inkSoft,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   ttsChipTextOn: { color: colors.riverDeep },
