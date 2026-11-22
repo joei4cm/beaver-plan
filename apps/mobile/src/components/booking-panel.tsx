@@ -138,10 +138,13 @@ async function searchLocal(
  * OTA StyleSheet rgba → paper/mist/foam/river/inkSoft hex-alpha (day-fill /
  * Days #445 twin) · fieldLabel / kindChip letterSpacing 1.4. Wave 66
  * (BEA-660): results-list offer provider LH 18 + inkSoft@CC (day-fill stopWalk
- * + BookingLinkChips #395 twin). SoftFail stays under OTA / Confirm rails;
- * craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA
- * (no double depth). Confirm nest known no-op — leave alone. Never timber /
- * Failed to fetch. No `/dev` gallery.
+ * + BookingLinkChips #395 twin). Wave 66 (BEA-670 / #449): priceLabel
+ * letterSpacing 1.2. Wave 67 (BEA-674): loading skeleton foam shell + bones
+ * twin of live offerCard / web BookingOffersSkeleton (beyond #446/#449 live
+ * chrome). SoftFail stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth).
+ * Confirm nest known no-op — leave alone. Never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -681,15 +684,44 @@ export function BookingPanel({
                 delayMs={60}
                 rise={8}
                 style={styles.loadingBlock}
+                accessibilityLabel={t(locale, "planner.booking.loadingHint")}
               >
-                {[0, 1].map((i) => (
+                {/*
+                  Wave 67 (BEA-674): foam shell + bones twin of live offerCard /
+                  web BookingOffersSkeleton — beyond #446/#449 live chrome.
+                  Motion stays SheetPresence `80+i*40` / rise 8 (#429).
+                */}
+                {[0, 1, 2].map((i) => (
                   <SheetPresence
                     key={i}
                     open={open}
                     delayMs={80 + i * 40}
                     rise={8}
+                    style={styles.skeletonCard}
                   >
-                    <View style={styles.skeletonCard} />
+                    <View style={styles.skeletonBody}>
+                      <View style={styles.skeletonKind} />
+                      <View style={styles.skeletonTitle} />
+                      <View style={styles.skeletonMeta}>
+                        <View style={styles.skeletonPrice} />
+                        <View style={styles.skeletonMetaBone} />
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.skeletonMetaBone,
+                            styles.skeletonMetaBoneShort,
+                          ])}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.skeletonActions}>
+                      <View style={styles.skeletonCta} />
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.skeletonCta,
+                          styles.skeletonCtaSecondary,
+                        ])}
+                      />
+                    </View>
                   </SheetPresence>
                 ))}
                 <Text style={styles.loadingHint}>
@@ -1200,10 +1232,70 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   skeletonCard: {
-    height: 72,
+    /** Live offerCard / web BookingOffersSkeleton foam shell (BEA-674). */
     borderRadius: radius.sm,
-    /** Web mist wash · day-fill skeleton twin (BEA-659). */
-    backgroundColor: `${colors.mist}D9`,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 12,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  skeletonBody: {
+    gap: 6,
+  },
+  skeletonKind: {
+    width: 56,
+    height: 12,
+    borderRadius: radius.xs,
+    /** Day-fill skeletonEyebrow river wash twin. */
+    backgroundColor: `${colors.river}2E`,
+  },
+  skeletonTitle: {
+    width: "72%",
+    maxWidth: 192,
+    height: 16,
+    borderRadius: 4,
+    backgroundColor: `${colors.ink}1A`,
+  },
+  skeletonMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  skeletonPrice: {
+    width: 80,
+    height: 18,
+    borderRadius: radius.xs,
+    backgroundColor: `${colors.river}1A`,
+  },
+  skeletonMetaBone: {
+    width: 72,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: `${colors.ink}12`,
+  },
+  skeletonMetaBoneShort: {
+    width: 48,
+  },
+  skeletonActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  skeletonCta: {
+    width: 88,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.mist}B3`,
+  },
+  skeletonCtaSecondary: {
+    width: 72,
   },
   loadingHint: {
     ...type.body,
