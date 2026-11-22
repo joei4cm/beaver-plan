@@ -14,7 +14,13 @@ import { brand, colors, motion, radius } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
 import { fetchMapEngine, type EngineResolve } from "../src/api";
 import { SheetPresence } from "../src/components/sheet-presence";
-import { SoftFailNotice } from "../src/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailBandStyle,
+  softFailMistWashStyle,
+} from "../src/components/soft-fail-notice";
 import { type } from "../src/theme";
 import {
   type DistanceUnit,
@@ -85,10 +91,10 @@ function Segmented<T extends string>({
 }
 
 /**
- * Expo settings SoftFailNotice depth (BEA-306 after #167 / web #209):
- * azure Device rail · Soft maps badge · softSupport · compact SoftFailNotice
- * mist band under rail (`border-b`) · mist-wash Maps section · tip-011
- * SheetPresence stagger · StyleSheet.flatten. SoftFail copy always softFail
+ * Expo settings SoftFail helper adoption (BEA-395 after #284 / depth #222):
+ * SoftFailBadge · SoftFailSupport · softFailBandStyle · softFailMistWashStyle ·
+ * compact SoftFail mist band under azure Device rail · tip-011 SheetPresence
+ * mist-wash Language / Maps · StyleSheet.flatten. SoftFail copy always softFail
  * (never timber / Failed to fetch) — prefs still save locally.
  */
 export default function SettingsScreen() {
@@ -212,9 +218,9 @@ export default function SettingsScreen() {
         </View>
 
         {/*
-          SoftFail depth (BEA-306 after #167 / web #209):
-          azure Device rail · Soft maps · softSupport · SoftFailNotice ·
-          tip-011 — never timber / Failed to fetch.
+          SoftFail helper adoption (BEA-395): SoftFailBadge · SoftFailSupport ·
+          softFailBandStyle · softFailMistWashStyle · SoftFailNotice · tip-011 —
+          never timber / Failed to fetch.
         */}
         <View
           style={styles.prefsSheet}
@@ -230,40 +236,42 @@ export default function SettingsScreen() {
               <Text style={styles.sheetEyebrow}>
                 {t(locale, "settings.sheetEyebrow")}
               </Text>
-              <Text style={styles.sheetSupport}>
-                {sectionSoftOpen
-                  ? t(locale, "settings.softSupport")
-                  : t(locale, "settings.sheetSupport")}
-              </Text>
+              {sectionSoftOpen ? (
+                <SoftFailSupport style={styles.softSupportShrink}>
+                  {t(locale, "settings.softSupport")}
+                </SoftFailSupport>
+              ) : (
+                <Text style={styles.sheetSupport}>
+                  {t(locale, "settings.sheetSupport")}
+                </Text>
+              )}
             </View>
-            <View
-              style={StyleSheet.flatten([
-                styles.statusBadge,
-                sectionSoftOpen
-                  ? styles.statusBadgeSoft
-                  : styles.statusBadgeLocal,
-              ])}
-            >
-              <Text
+            {sectionSoftOpen ? (
+              <SoftFailBadge>{t(locale, "settings.softBadge")}</SoftFailBadge>
+            ) : (
+              <View
                 style={StyleSheet.flatten([
-                  styles.statusBadgeText,
-                  sectionSoftOpen
-                    ? styles.statusBadgeTextSoft
-                    : styles.statusBadgeTextLocal,
+                  styles.statusBadge,
+                  styles.statusBadgeLocal,
                 ])}
               >
-                {sectionSoftOpen
-                  ? t(locale, "settings.softBadge")
-                  : t(locale, "settings.localBadge")}
-              </Text>
-            </View>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.statusBadgeText,
+                    styles.statusBadgeTextLocal,
+                  ])}
+                >
+                  {t(locale, "settings.localBadge")}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Compact SoftFail mist band under azure Device rail — never timber. */}
           <SoftFailNotice
             open={sectionSoftOpen}
             compact
-            style={styles.sheetSoftFail}
+            style={softFailBandStyle}
           >
             {softCopy}
           </SoftFailNotice>
@@ -275,7 +283,7 @@ export default function SettingsScreen() {
             rise={10}
             style={StyleSheet.flatten([
               styles.section,
-              sectionSoftOpen ? styles.sectionWash : null,
+              sectionSoftOpen ? softFailMistWashStyle : null,
             ])}
             accessibilityLabel={t(locale, "settings.locale")}
           >
@@ -316,7 +324,8 @@ export default function SettingsScreen() {
             style={StyleSheet.flatten([
               styles.section,
               styles.sectionBordered,
-              sectionSoftOpen ? styles.sectionWashMaps : null,
+              sectionSoftOpen ? softFailMistWashStyle : null,
+              sectionSoftOpen ? styles.sectionMapsRail : null,
             ])}
             accessibilityLabel={t(locale, "settings.mapEngine")}
           >
@@ -588,22 +597,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: "rgba(100, 116, 139, 0.85)",
   },
+  softSupportShrink: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
   sheetRailSoft: {
     backgroundColor: "rgba(244, 246, 250, 0.85)",
-  },
-  /** Mist SoftFail strip under azure Device rail — border-b before mist body. */
-  sheetSoftFail: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    borderTopWidth: 0,
   },
   statusBadge: {
     borderRadius: radius.xs,
     paddingHorizontal: 6,
     paddingVertical: 2,
-  },
-  statusBadgeSoft: {
-    backgroundColor: colors.mist,
   },
   statusBadgeLocal: {
     backgroundColor: "rgba(47, 107, 255, 0.12)",
@@ -614,9 +618,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase",
-  },
-  statusBadgeTextSoft: {
-    color: colors.inkSoft,
   },
   statusBadgeTextLocal: {
     color: colors.river,
@@ -632,12 +633,8 @@ const styles = StyleSheet.create({
   sectionLast: {
     paddingBottom: 20,
   },
-  /** Mist wash on tip-011 sections while SoftFail owns the rail. */
-  sectionWash: {
-    backgroundColor: "rgba(230, 236, 245, 0.18)",
-  },
-  sectionWashMaps: {
-    backgroundColor: "rgba(230, 236, 245, 0.28)",
+  /** Azure Maps inset while SoftFail owns — mist-wash via softFailMistWashStyle. */
+  sectionMapsRail: {
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },

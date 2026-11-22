@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { SHARE_TEMPLATES, type Trip } from "@beaver/core";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale, type MessageKey } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+  softFailRailClass,
+} from "@/components/soft-fail-notice";
 import { apiGet } from "@/lib/api";
 import {
   type DistanceUnit,
@@ -85,11 +91,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Settings section SoftFailNotice depth (BEA-339 after #209):
- * azure Device rail · Soft maps badge · softSupport · compact SoftFail
- * mist band under rail (`border-b`) · tip-011 mist-wash Language / Maps ·
- * Hero SoftFail yields while section owns (no double depth). SoftFail copy
- * always softFail (never timber / Failed to fetch) — prefs still save locally.
+ * Settings SoftFail helper adoption (BEA-395 after #284 / depth #255):
+ * SoftFailBadge · SoftFailSupport · softFailRailClass · softFailMistWashClass ·
+ * compact SoftFail mist band under azure Device rail · tip-011 mist-wash
+ * Language / Maps · Hero SoftFail yields while section owns (no double depth).
+ * SoftFail copy always softFail (never timber / Failed to fetch) — prefs
+ * still save locally.
  */
 export function SettingsPanel({ locale: initialLocale }: Props) {
   const router = useRouter();
@@ -202,9 +209,9 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       </header>
 
       {/*
-        SoftFail depth (BEA-339 after #209):
-        azure Device rail · Soft maps badge · softSupport · SoftFailNotice mist
-        band · tip-011 mist-wash Language / Maps — never timber / Failed to fetch.
+        SoftFail helper adoption (BEA-395): SoftFailBadge · SoftFailSupport ·
+        softFailRailClass · softFailMistWashClass · SoftFailNotice mist band ·
+        tip-011 mist-wash Language / Maps — never timber / Failed to fetch.
       */}
       <div
         className="animate-rise mt-12 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"
@@ -212,48 +219,48 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
         aria-label={t(locale, "settings.sheetEyebrow")}
       >
         <header
-          className={`relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] transition duration-bp-fast ease-bp-out sm:px-5 ${
-            sectionSoftOpen ? "bg-mist/40" : "bg-paper/70"
-          }`}
+          className={[
+            "relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-4 py-2.5 transition duration-bp-fast ease-bp-out sm:px-5",
+            sectionSoftOpen
+              ? softFailRailClass
+              : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
+          ].join(" ")}
         >
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
               {t(locale, "settings.sheetEyebrow")}
             </span>
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {sheetSupportCopy}
-            </span>
+            {sectionSoftOpen ? (
+              <SoftFailSupport>{sheetSupportCopy}</SoftFailSupport>
+            ) : (
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {sheetSupportCopy}
+              </span>
+            )}
           </div>
-          <span
-            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-              sectionSoftOpen
-                ? "bg-mist text-ink-soft"
-                : "bg-river/12 text-river"
-            }`}
-          >
-            {sectionSoftOpen
-              ? t(locale, "settings.softBadge")
-              : t(locale, "settings.localBadge")}
-          </span>
+          {sectionSoftOpen ? (
+            <SoftFailBadge>{t(locale, "settings.softBadge")}</SoftFailBadge>
+          ) : (
+            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+              {t(locale, "settings.localBadge")}
+            </span>
+          )}
         </header>
 
         {/* Compact SoftFail mist band under azure Device rail — never timber. */}
-        <SoftFailNotice
-          open={sectionSoftOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={sectionSoftOpen} compact>
           {softCopy}
         </SoftFailNotice>
 
         <div className="divide-y divide-[color:var(--bp-line)]">
           {/* Language — tip-011 mist wash while SoftFail owns Device rail. */}
           <section
-            className={`animate-rise px-4 py-8 sm:px-5 ${
-              sectionSoftOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
-            }`}
+            className={[
+              "animate-rise px-4 py-8 sm:px-5",
+              sectionSoftOpen ? softFailMistWashClass : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={{ animationDelay: "60ms" }}
             aria-labelledby="settings-locale-heading"
           >
@@ -284,11 +291,14 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
 
           {/* Map engine — SoftFail owned by Device rail; tip-011 mist-wash body. */}
           <section
-            className={`animate-rise px-4 py-8 sm:px-5 ${
+            className={[
+              "animate-rise px-4 py-8 sm:px-5",
               sectionSoftOpen
-                ? "bg-gradient-to-b from-mist/30 via-mist/12 to-transparent shadow-[inset_3px_0_0_var(--bp-river)]"
-                : ""
-            }`}
+                ? `${softFailMistWashClass} ${softFailRailClass}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={{ animationDelay: "90ms" }}
             aria-labelledby="settings-map-heading"
           >
