@@ -387,10 +387,13 @@ export default function ShareScreen() {
                     onPress={() => setDayId(day.id)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
-                    style={StyleSheet.flatten([
-                      styles.dayChip,
-                      selected ? styles.dayChipActive : null,
-                    ])}
+                    style={({ pressed }) =>
+                      StyleSheet.flatten([
+                        styles.dayChip,
+                        selected ? styles.dayChipActive : null,
+                        pressed ? styles.dayChipPressed : null,
+                      ])
+                    }
                   >
                     <Text
                       style={StyleSheet.flatten([
@@ -782,7 +785,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     lineHeight: 20,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 secondary ladder (BEA-627) */
+    color: `${colors.inkSoft}CC`,
   },
   dayRow: { gap: 8, paddingVertical: 16 },
   dayChip: {
@@ -797,6 +801,10 @@ const styles = StyleSheet.create({
   dayChipActive: {
     backgroundColor: colors.riverDeep,
     borderColor: colors.riverDeep,
+  },
+  /** tip-011 press — parity with web day-tab settle / template #348 */
+  dayChipPressed: {
+    transform: [{ scale: 0.98 }],
   },
   dayLabel: { ...type.body, fontSize: 13, color: colors.inkSoft },
   dayLabelActive: { color: colors.foam, fontWeight: "600" },
