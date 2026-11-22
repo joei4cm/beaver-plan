@@ -1835,13 +1835,13 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Stops SoftFail helpers (BEA-388 after #284 / BEA-298 + #282) +
-                stop-card craft residual (BEA-529 / wave 55 beyond #349):
-                SoftFailBadge · SoftFailSupport · SoftFailNotice mist band ·
-                tip-011 mist-wash · mist-track chip press · stop-row press ·
-                selected display + Selected mark · SheetPresence detail rise.
-                Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy never timber
-                / Failed to fetch. No `/dev` gallery.
+                Stops SoftFail helpers (BEA-388) + stop-card #381 (BEA-529) +
+                list craft residual (BEA-567 / wave 59 beyond #349): eyebrow
+                tracking 1.8 (Mode #549) · SoftFailBadge · SoftFailSupport ·
+                SoftFailNotice mist · tip-011 mist-wash · mist-track chip press ·
+                stop-row press · selected display + Selected mark · SheetPresence
+                detail rise. Craft: ?stopsSoftFail=1 · ?dragSoftFail=1. Soft copy
+                never timber / Failed to fetch. No `/dev` gallery.
               */}
               <View style={styles.stopsChrome}>
                 <View
@@ -3804,11 +3804,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  /** Mode #549 tracking 1.8 parity (BEA-567 beyond #349). */
   stopsEyebrow: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
