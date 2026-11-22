@@ -1075,6 +1075,8 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             </SoftFailNotice>
 
             {entryEmpty ? (
+              /* Empty CTA craft residual (BEA-537) — tip-011 active:scale on
+                 river CTA; SoftFail mist inset / SoftFailNotice unchanged. */
               <SheetPresence
                 key={`list-empty-${dayId ?? "all"}`}
                 open
@@ -1113,7 +1115,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                       block: "nearest",
                     });
                   }}
-                  className="animate-rise mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                  className="animate-rise mt-7 rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                   style={{ animationDelay: "130ms" }}
                 >
                   {t(locale, "journal.emptyCta")}
