@@ -143,7 +143,10 @@ async function searchLocal(
  * twin of live offerCard / web BookingOffersSkeleton (beyond #446/#449 live
  * chrome). Wave 67 (BEA-694): offer rating ★ `river@CC` + ink value twin of
  * web `text-river/80` / place-intel ratingStar (beyond #447/#449 live chrome;
- * skeleton leave-alone). SoftFail stays under OTA / Confirm rails; craft
+ * skeleton leave-alone). Wave 68 (BEA-700): OTA mistTrack mist@80 twin of
+ * web `bg-mist/50` / place-intel tagTrack / trip-detail bookingMistTrack
+ * (beyond #455 rating · #449 priceLabel; day-fill mistTrack left to BEA-701).
+ * SoftFail stays under OTA / Confirm rails; craft
  * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
  * double depth). Confirm nest known no-op — leave alone. Never timber /
  * Failed to fetch. No `/dev` gallery.
@@ -1155,8 +1158,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 2,
     borderRadius: radius.sm,
-    /** Web bg-mist/50 · day-fill mistTrack twin (BEA-659). */
-    backgroundColor: `${colors.mist}8C`,
+    /**
+     * Web `bg-mist/50` · place-intel tagTrack / trip-detail bookingMistTrack
+     * mist@80 (BEA-700). Was mist@8C (~0.55) as day-fill twin — web /50 is 0x80.
+     */
+    backgroundColor: `${colors.mist}80`,
     padding: 4,
   },
   filterChip: {
