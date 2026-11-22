@@ -43,7 +43,7 @@ const ROLE_CHIP: Record<TripRole, string> = {
 /** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
 type PresenceState = "active" | "idle" | "away";
 
-/** Status pills — wave 51/57 + wave 60 residual (BEA-579): away inset kept. */
+/** Status pills — wave 51/57/60 + wave 62 residual (BEA-600): away inset kept. */
 const PRESENCE_PILL: Record<PresenceState, string> = {
   active:
     "bg-river/12 text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]",
@@ -63,10 +63,11 @@ function presenceFor(member: TripMember): PresenceState {
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
  * (BEA-518) + wave 56–58 invite/roster + wave 57 members invite (BEA-547) +
  * wave 60 presence pills (BEA-579) + wave 60 members invite (BEA-584) +
- * wave 61 members roster residual (BEA-587): roster role leading-4 · empty /
- * loading rise 40ms · Expo row stagger +55. SoftFailBadge · SoftFailSupport ·
- * mist band unchanged. Invite SoftFail yields presence (no double depth). Soft
- * copy never timber / Failed to fetch. No `/dev` gallery.
+ * wave 61 members roster residual (BEA-587) + wave 62 presence pills residual
+ * (BEA-600): chip name leading-snug · Expo role/state lineHeight 16 · editor
+ * avatar river/85. SoftFailBadge · SoftFailSupport · mist band unchanged.
+ * Invite SoftFail yields presence (no double depth). Soft copy never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -689,7 +690,7 @@ function PresenceChip({
       style={style}
     >
       <PresenceAvatar member={member} size="sm" presence={presence} />
-      <span className="min-w-0 truncate text-xs font-semibold tracking-tight">
+      <span className="min-w-0 truncate text-xs font-semibold leading-snug tracking-tight">
         {shortName(member)}
       </span>
       <span

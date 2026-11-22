@@ -2458,10 +2458,9 @@ export default function TripDetailScreen() {
 
                 {/*
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
-                  wave 51/57 presence pills (#355/#389) + wave 60 residual
-                  (BEA-579): chip/empty tip-011 SheetPresence stagger · Live type
-                  1.4 · muted avatar /80 · name snug · meta /80. SoftFailBadge ·
-                  SoftFailSupport · mist band unchanged. Craft:
+                  wave 51/57/60 presence pills (#355/#389/#409) + wave 62 residual
+                  (BEA-600): role/state lineHeight 16 · editor avatar river/85.
+                  SoftFailBadge · SoftFailSupport · mist band unchanged. Craft:
                   ?presenceSoftFail=1 — never timber.
                 */}
                 <View
@@ -2608,7 +2607,9 @@ export default function TripDetailScreen() {
                                   styles.presenceAvatar,
                                   m.role === "viewer"
                                     ? styles.presenceAvatarMuted
-                                    : null,
+                                    : m.role === "editor"
+                                      ? styles.presenceAvatarEditor
+                                      : null,
                                 ])}
                               >
                                 <Text style={styles.presenceInitials}>
@@ -2892,7 +2893,9 @@ export default function TripDetailScreen() {
                                   styles.presenceAvatarMd,
                                   m.role === "viewer"
                                     ? styles.presenceAvatarMuted
-                                    : null,
+                                    : m.role === "editor"
+                                      ? styles.presenceAvatarEditor
+                                      : null,
                                 ])}
                               >
                                 <Text style={styles.presenceInitialsMd}>
@@ -4481,6 +4484,10 @@ const styles = StyleSheet.create({
     /** Web bg-ink-soft/80 */
     backgroundColor: `${colors.inkSoft}CC`,
   },
+  /** Editor avatar — web bg-river/85 (BEA-600). */
+  presenceAvatarEditor: {
+    backgroundColor: `${colors.river}D9`,
+  },
   presenceDot: {
     position: "absolute",
     right: -1,
@@ -4520,11 +4527,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.ink,
   },
-  /** Role pill on presence chips — wave 51/57 · 1.4 bar kept (BEA-579). */
+  /** Role pill on presence chips — wave 51/57/60 · leading-4 parity (BEA-600). */
   presenceRole: {
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
+    /** Web leading-4 */
+    lineHeight: 16,
     textTransform: "uppercase",
     paddingHorizontal: 5,
     paddingVertical: 1,
@@ -4544,7 +4553,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
-  /** List status pills — BEA-493 / BEA-518 · type 1.4 + away inset (BEA-546). */
+  /** List status pills — type 1.4 + away inset · leading-4 parity (BEA-600). */
   presenceStatePill: {
     ...type.body,
     alignSelf: "flex-start",
@@ -4552,6 +4561,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
+    /** Web PRESENCE_PILL leading-4 */
+    lineHeight: 16,
     textTransform: "uppercase",
     paddingHorizontal: 6,
     paddingVertical: 1,
