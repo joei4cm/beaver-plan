@@ -1437,16 +1437,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {/*
               Stops list craft residual (BEA-594 / wave 61 beyond #402) + planner
-              drag residual (BEA-641 / wave 65 beyond #47 / #157): azure Stops
-              rail · eyebrow `0.65rem` / `0.18em` · Reorder hint same densify ·
-              header `animate-rise` · Soft stops / Soft empty / Soft reorder
-              badge · softSupport · compact SoftFail mist band · tip-011 mist-wash ·
-              mist-track SheetPresence body rise 70ms (Mode #549) · drag hint
-              85ms · chip/empty CTA press · empty title `leading-snug` · stop-row
-              tip-011 `active:scale-[0.995]` + selected display `leading-snug` —
-              SoftFail kept (BEA-367 chips / BEA-355 empty / BEA-348 drag) —
-              stop-drawer SoftFail (#257) / day-fill SoftFail (#248) yield —
-              never timber / Failed to fetch. No `/dev` gallery.
+              drag residual (BEA-641 / wave 65 beyond #47 / #157) + stops residual
+              (BEA-644 beyond #418): azure Stops rail · eyebrow `0.65rem` /
+              `0.18em` · Reorder hint same densify · header `animate-rise` · Soft
+              stops / Soft empty / Soft reorder badge · softSupport · compact
+              SoftFail mist band · tip-011 mist-wash · mist-track SheetPresence
+              body rise 70ms (Mode #549) · drag hint 85ms · chip/empty CTA press ·
+              empty title `leading-snug` · stop-row tip-011 `active:scale-[0.995]`
+              + selected display `leading-snug` · address `ink-soft/80` (Expo
+              stopAddr@CC twin from #381) — SoftFail kept (BEA-367 chips /
+              BEA-355 empty / BEA-348 drag) — stop-drawer SoftFail (#257) /
+              day-fill SoftFail (#248) yield — never timber / Failed to fetch.
+              No `/dev` gallery. Not Expo stop-card (#437).
             */}
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
@@ -1719,7 +1721,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           ) : null}
                         </div>
                         {stop.place.address && (
-                          <div className="mt-0.5 truncate text-xs text-ink-soft">
+                          <div className="mt-0.5 truncate text-xs text-ink-soft/80">
                             {stop.place.address}
                           </div>
                         )}
