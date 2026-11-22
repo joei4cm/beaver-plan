@@ -474,8 +474,8 @@
   }
 
   /*
-   * Collab activity timeline depth (BEA-215).
-   * Mist-track spine · azure node stack · tip-011 hover settle.
+   * Collab activity timeline depth (BEA-215) + wave 50 craft residual (BEA-479).
+   * Mist-track spine · azure node stack · tip-011 hover settle / item lift.
    * SoftFailNotice stays under collab tabs (trip-collab-panel); never timber.
    */
   .bp-collab-timeline {
@@ -510,7 +510,7 @@
     padding-right: 0.35rem;
     transition:
       background-color var(--bp-duration-fast) var(--bp-ease-out),
-      transform var(--bp-duration-fast) var(--bp-ease-out);
+      transform var(--bp-duration-fast) var(--bp-ease-out-strong);
   }
 
   .bp-collab-timeline__item:last-child {
@@ -519,6 +519,7 @@
 
   .bp-collab-timeline__item:hover {
     background-color: color-mix(in srgb, var(--bp-mist) 45%, transparent);
+    transform: translateX(1px);
   }
 
   .bp-collab-timeline__node {
@@ -536,6 +537,7 @@
     color: var(--bp-foam);
     font-size: 9px;
     font-weight: 700;
+    letter-spacing: 0.02em;
     box-shadow:
       0 0 0 3px color-mix(in srgb, var(--bp-river) 16%, transparent),
       0 1px 4px color-mix(in srgb, var(--bp-ink) 12%, transparent);
@@ -565,6 +567,7 @@
       transition: none;
     }
 
+    .bp-collab-timeline__item:hover,
     .bp-collab-timeline__item:hover .bp-collab-timeline__node {
       transform: none;
     }

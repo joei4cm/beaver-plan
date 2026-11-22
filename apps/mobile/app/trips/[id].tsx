@@ -1013,11 +1013,11 @@ export default function TripDetailScreen() {
       : t(locale, "collab.inviteDemoNotice");
 
   /**
-   * Expo collab timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
-   * query parity (BEA-420): SoftFailBadge · SoftFailSupport · compact SoftFail
-   * mist band · tip-011 mist-wash track. Craft: /trips/…?timelineSoftFail=1.
-   * SoftFail copy never timber / Failed to fetch. Yields while invite SoftFail
-   * owns (no double depth).
+   * Expo collab timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
+   * wave 50 craft residual (BEA-479): eyebrow 1.8 · paper/inkSoft tokens.
+   * SoftFailBadge · SoftFailSupport · mist band · tip-011 mist-wash unchanged.
+   * Craft: /trips/…?timelineSoftFail=1. Soft copy never timber / Failed to fetch.
+   * Yields while invite SoftFail owns (no double depth). No `/dev` gallery.
    */
   const timelineSoftNoise =
     collabSeeded || collabSoftOffline || timelineSoftPreview;
@@ -2715,11 +2715,12 @@ export default function TripDetailScreen() {
                     accessibilityLabel={t(locale, "collab.panel.tab.activity")}
                   >
                     {/*
-                      Timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail
-                      query parity (BEA-420): SoftFailBadge · SoftFailSupport ·
-                      softFailBandStyle · softFailMistWashStyle · yields invite
-                      SoftFail while sheet open. Craft: ?timelineSoftFail=1 —
-                      never timber / Failed to fetch.
+                      Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
+                      wave 50 craft residual (BEA-479): eyebrow 1.8 · paper/foam
+                      tokens · tip-011 rise stagger. SoftFailBadge · SoftFailSupport ·
+                      softFailBandStyle · softFailMistWashStyle unchanged. Yields
+                      invite SoftFail while sheet open. Craft: ?timelineSoftFail=1 —
+                      never timber / Failed to fetch. No `/dev` gallery.
                     */}
                     <View
                       style={StyleSheet.flatten([
@@ -4095,7 +4096,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
-  /** Timeline SoftFail sheet — azure rail · mist SoftFail · tip-011 (BEA-371). */
+  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / BEA-479). */
   timelineSheet: {
     marginTop: 10,
     overflow: "hidden",
@@ -4112,7 +4113,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    backgroundColor: colors.paper,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderLeftWidth: 3,
@@ -4141,7 +4142,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -4150,13 +4151,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
-    color: "rgba(71, 85, 105, 0.8)",
+    color: colors.inkSoft,
   },
   timelineSupport: {
     ...type.body,
     fontSize: 11,
-    lineHeight: 16,
-    color: "rgba(71, 85, 105, 0.8)",
+    lineHeight: 17,
+    color: colors.inkSoft,
     maxWidth: 420,
   },
   timelineBody: {
@@ -4181,7 +4182,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
     backgroundColor: "rgba(47,107,255,0.15)",
@@ -4196,7 +4197,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.riverDeep,
     backgroundColor: "rgba(47,107,255,0.1)",
@@ -4215,6 +4216,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "500",
+    lineHeight: 18,
+    letterSpacing: -0.15,
     color: colors.ink,
   },
   inviteActions: {

@@ -38,12 +38,12 @@ function newLocalId(prefix: string) {
 }
 
 /**
- * Timeline SoftFail helpers (BEA-392 after #284 / yield #281) + craft SoftFail
- * query parity (BEA-420): `/trips/…?timelineSoftFail=1` forces SoftFail depth
- * under Timeline (mirrors Expo + #282 / wave 42). SoftFailBadge · SoftFailSupport ·
- * SoftFailNotice mist band · tip-011 kept. Panel SoftFail yields on Activity;
- * invite SoftFail yields timeline (no double depth). Soft copy never timber /
- * Failed to fetch. No `/dev` SoftFail gallery.
+ * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
+ * yield #281) + wave 50 craft residual (BEA-479): Timeline eyebrow tracking ·
+ * tip-011 refresh press · mist-track item lift. SoftFailBadge · SoftFailSupport ·
+ * SoftFailNotice mist band unchanged. Craft: `/trips/…?timelineSoftFail=1`.
+ * Panel SoftFail yields on Activity; invite SoftFail yields timeline (no double
+ * depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripCollabPanel({
   tripId,
@@ -542,10 +542,11 @@ export function TripCollabPanel({
       </SheetPresence>
 
       {/*
-        Timeline SoftFail helpers (BEA-392 / yield #281) + craft SoftFail query
-        parity (BEA-420): SoftFailBadge · SoftFailSupport · softFailMistWashClass ·
-        invite SoftFail owns when open. Craft: ?timelineSoftFail=1 — never timber /
-        Failed to fetch.
+        Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
+        craft residual (BEA-479): eyebrow 0.18em · tip-011 refresh press ·
+        SoftFailBadge · SoftFailSupport · softFailMistWashClass unchanged.
+        Invite SoftFail owns when open. Craft: ?timelineSoftFail=1 — never timber /
+        Failed to fetch. No `/dev` gallery.
       */}
       <SheetPresence
         open={tab === "activity"}
@@ -558,7 +559,7 @@ export function TripCollabPanel({
         <header className="relative border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.panel.timelineEyebrow")}
               </span>
               <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -589,7 +590,7 @@ export function TripCollabPanel({
                       );
                     })
                   }
-                  className="animate-rise text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river"
+                  className="animate-rise text-[11px] font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                   style={{ animationDelay: "55ms" }}
                 >
                   {t(locale, "collab.panel.refresh")}
@@ -639,7 +640,7 @@ export function TripCollabPanel({
               className="animate-fade bp-collab-timeline__item space-y-1.5 py-3"
               style={{ animationDelay: "70ms" }}
             >
-              <p className="font-display text-sm font-semibold tracking-tight text-ink">
+              <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                 {t(locale, "collab.panel.emptyActivity")}
               </p>
               <p className="text-xs leading-relaxed text-ink-soft">
@@ -668,11 +669,11 @@ export function TripCollabPanel({
               </span>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 {i === 0 ? (
-                  <span className="rounded-bp-xs bg-river/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                  <span className="rounded-bp-xs bg-river/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
                     {t(locale, "collab.panel.timelineNow")}
                   </span>
                 ) : null}
-                <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {activityLabel(locale, ev.type)}
                 </span>
                 {ev.actorDisplayName ? (
@@ -680,11 +681,11 @@ export function TripCollabPanel({
                     {ev.actorDisplayName}
                   </span>
                 ) : null}
-                <time className="text-[11px] tabular-nums text-ink-soft/70">
+                <time className="text-[11px] tabular-nums tracking-wide text-ink-soft/70">
                   {formatWhen(ev.createdAt, locale)}
                 </time>
               </div>
-              <p className="mt-1.5 text-sm font-medium leading-snug text-ink">
+              <p className="mt-1.5 text-sm font-medium leading-snug tracking-tight text-ink">
                 {ev.summary}
               </p>
             </li>
