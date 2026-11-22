@@ -2981,12 +2981,12 @@ export default function TripDetailScreen() {
                   >
                     {/*
                       Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
-                      wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532):
-                      paper/mist/river/inkSoft hex-alpha · tip-011 rise stagger.
-                      SoftFailBadge · SoftFailSupport · softFailBandStyle ·
-                      softFailMistWashStyle unchanged. Yields invite SoftFail while
-                      sheet open. Craft: ?timelineSoftFail=1 — never timber /
-                      Failed to fetch. No `/dev` gallery.
+                      wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532) +
+                      wave 60 residual (BEA-575 beyond #377): foam/95 sheet · type
+                      chip inset · actor snug. SoftFailBadge · SoftFailSupport ·
+                      softFailBandStyle · softFailMistWashStyle unchanged. Yields
+                      invite SoftFail while sheet open. Craft: ?timelineSoftFail=1
+                      — never timber / Failed to fetch. No `/dev` gallery.
                     */}
                     <View
                       style={StyleSheet.flatten([
@@ -4579,14 +4579,15 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
-  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / #347 / BEA-532). */
+  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / #347 / BEA-532 / BEA-575). */
   timelineSheet: {
     marginTop: 10,
     overflow: "hidden",
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    /** Web bg-foam/95 — invite/Mode foam@F2 parity (BEA-575 beyond #377). */
+    backgroundColor: `${colors.foam}F2`,
     shadowColor: colors.ink,
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -4695,12 +4696,16 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.xs,
     overflow: "hidden",
+    /** Web type chip inset river (BEA-575 beyond #377 Now-chip parity). */
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
   },
   activityActor: {
     ...type.body,
     fontSize: 11,
     fontWeight: "500",
-    /** Web ink-soft/80 actor meta (BEA-532). */
+    /** Web ink-soft/80 actor meta (BEA-532) · snug density (BEA-575). */
+    lineHeight: 16,
     color: `${colors.inkSoft}CC`,
   },
   activitySummary: {
