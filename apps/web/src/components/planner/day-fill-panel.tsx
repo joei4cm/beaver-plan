@@ -114,11 +114,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
- * wave 48–56 (#340/#367/#387) + wave 60 craft residual (BEA-576): sheet
- * eyebrow 0.65rem/0.18em · stop/empty/loading `/80` + snug. SoftFailBadge Soft
- * fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
- * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
- * fetch. No `/dev` gallery.
+ * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
+ * (BEA-604): DayFillSkeleton day-row rise mirrors live proposal stagger.
+ * SoftFailBadge Soft fill · SoftFailSupport · mist band unchanged. Stop drawer
+ * SoftFail (#225) owns Itinerary. Soft-fails to local Kyoto demo — never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
