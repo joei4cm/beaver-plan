@@ -2063,25 +2063,39 @@ export default function TripDetailScreen() {
                           <Text style={styles.bookingTitle}>
                             {t(locale, "mobile.booking")}
                           </Text>
-                          {(stop.bookingLinks ?? []).map((link) => (
-                            <Pressable
-                              key={`${link.kind}-${link.url}`}
-                              style={StyleSheet.flatten([styles.bookingChip])}
-                              onPress={() => void Linking.openURL(link.url)}
-                            >
-                              <Text style={styles.bookingChipText}>
-                                {t(
-                                  locale,
-                                  `planner.booking.kind.${link.kind as BookingLinkKind}`,
-                                )}
-                                {link.providerLabel
-                                  ? ` · ${link.providerLabel}`
-                                  : ""}
-                                {" · "}
-                                {t(locale, "mobile.bookingOpen")}
-                              </Text>
-                            </Pressable>
-                          ))}
+                          <View
+                            style={styles.bookingMistTrack}
+                            accessibilityRole="list"
+                            accessibilityLabel={t(locale, "mobile.booking")}
+                          >
+                            {(stop.bookingLinks ?? []).map((link) => (
+                              <Pressable
+                                key={`${link.kind}-${link.url}`}
+                                style={({ pressed }) =>
+                                  StyleSheet.flatten([
+                                    styles.bookingChip,
+                                    pressed
+                                      ? styles.bookingChipPressed
+                                      : null,
+                                  ])
+                                }
+                                onPress={() => void Linking.openURL(link.url)}
+                                accessibilityRole="link"
+                              >
+                                <Text style={styles.bookingChipText}>
+                                  {t(
+                                    locale,
+                                    `planner.booking.kind.${link.kind as BookingLinkKind}`,
+                                  )}
+                                  {link.providerLabel
+                                    ? ` · ${link.providerLabel}`
+                                    : ""}
+                                  {" · "}
+                                  {t(locale, "mobile.bookingOpen")}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
                         </View>
                       ) : null}
                     </View>
@@ -3754,27 +3768,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inkSoft,
   },
+  /* Booking list chips — web BookingLinkChips mist-track · tip-011 (BEA-521). */
   bookingBlock: { marginTop: 8, gap: 6 },
   bookingTitle: {
     ...type.body,
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
+  bookingMistTrack: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 2,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.mist}8C`,
+    padding: 4,
+  },
   bookingChip: {
     alignSelf: "flex-start",
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.35)",
-    backgroundColor: "rgba(47,107,255,0.08)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: `${colors.river}40`,
+    backgroundColor: colors.foam,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    shadowColor: colors.river,
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  /* tip-011 press — parity with web BookingLinkChips active:scale-[0.98]. */
+  bookingChipPressed: {
+    transform: [{ scale: 0.98 }],
   },
   bookingChipText: {
     ...type.body,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.river,
     fontWeight: "600",
   },
