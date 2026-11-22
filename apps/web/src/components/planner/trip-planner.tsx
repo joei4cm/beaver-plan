@@ -1890,9 +1890,14 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {error}
             </p>
           )}
+          {/*
+            Drawer footer hintEyebrow craft residual (BEA-724 / wave 69): densify
+            to `0.65rem` / `0.18em` — Reorder hint twin (BEA-641) · Itinerary /
+            detailEyebrow azure bar (#460 / #461). SoftFail untouched.
+          */}
           <footer className="border-t border-[color:var(--bp-line)] bg-paper/40 px-4 py-3 shadow-[inset_3px_0_0_var(--bp-river)]">
             <p className="text-[11px] leading-snug text-ink-soft/80">
-              <span className="font-semibold uppercase tracking-[0.14em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.drawer.hintEyebrow")}
               </span>
               <span className="mx-1.5 text-ink-soft/40" aria-hidden>
