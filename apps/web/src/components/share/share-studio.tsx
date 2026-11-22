@@ -697,7 +697,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       kickRender();
                       void render();
                     }}
-                    className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    className="animate-rise mt-6 rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ animationDelay: "130ms" }}
                   >
                     {t(locale, "share.emptyCta")}
@@ -706,7 +706,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               )}
             </div>
           </div>
-          <p className="mt-4 max-w-md text-center text-sm text-ink-soft">
+          <p
+            className="animate-rise mt-4 max-w-md text-center text-sm leading-relaxed text-ink-soft"
+            style={{ animationDelay: "70ms" }}
+          >
             {trip.title} · {photoCount} {t(locale, "share.photos")}
             {dayStops.length > 0
               ? ` · ${dayStops
@@ -715,7 +718,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   .join(" · ")}`
               : ""}
           </p>
-          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-river/70">
+          <p
+            className="animate-rise mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-river/70"
+            style={{ animationDelay: "100ms" }}
+          >
             {active.aspect} ·{" "}
             {locale === "zh-CN" ? active.nameZh : active.nameEn}
           </p>

@@ -405,8 +405,9 @@ export default function ShareScreen() {
               })}
             </ScrollView>
 
-            {/* Preview stage — paper wash + azure rail hierarchy (#88) */}
+            {/* Preview stage — foam + river wash + azure rail (#88 / wave 55 tokens) */}
             <View style={styles.canvasStage}>
+              <View style={styles.canvasWash} pointerEvents="none" />
               <View style={styles.canvasRail} pointerEvents="none" />
               <View style={styles.canvasMetaRow}>
                 <Text style={styles.canvasEyebrow}>
@@ -807,8 +808,13 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     padding: 16,
     overflow: "hidden",
-    // Paper → sky wash (RN linear approx of web #88 stage)
-    backgroundColor: "#DBE8FF",
+    /** Web foam base — river wash sits in canvasWash (#334 parity) */
+    backgroundColor: colors.foam,
+  },
+  /** ~18% river on foam — flat RN approx of web canvas wash end-stop */
+  canvasWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: `${colors.river}2E`,
   },
   canvasRail: {
     position: "absolute",
@@ -819,6 +825,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
     backgroundColor: colors.river,
+    /** Web rail glow — color-mix river @ 35% */
+    shadowColor: colors.river,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 2,
   },
   canvasMetaRow: {
     flexDirection: "row",
@@ -832,7 +844,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    /** Web SectionEyebrow 0.18em ≈ 1.8 — template/export parity */
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -857,7 +870,8 @@ const styles = StyleSheet.create({
   },
   previewSoft: {
     borderWidth: 1.5,
-    borderColor: "rgba(47,107,255,0.35)",
+    /** Web border-river/35 */
+    borderColor: `${colors.river}59`,
   },
   previewImage: { width: "100%", height: "100%" },
   previewCaption: {
@@ -868,7 +882,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: "uppercase",
-    color: "rgba(47,107,255,0.7)",
+    /** Web text-river/70 */
+    color: `${colors.river}B3`,
   },
   templateSection: { marginTop: 12 },
   templateEyebrow: {
