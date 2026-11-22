@@ -579,10 +579,10 @@ export function TripCollabPanel({
       {/*
         Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
         craft (#347 / BEA-479) + wave 55 residual (BEA-532) + wave 60 residual
-        (BEA-575 beyond #377): loading `/80` snug · refresh secondary `/80` +
-        out-strong. SoftFailBadge · SoftFailSupport · softFailMistWashClass
-        unchanged. Invite SoftFail owns when open. Craft: ?timelineSoftFail=1 —
-        never timber / Failed to fetch. No `/dev` gallery.
+        (BEA-575 beyond #377) + wave 62 residual (BEA-603 beyond #407): Now/type
+        leading-4 · actor snug. SoftFailBadge · SoftFailSupport ·
+        softFailMistWashClass unchanged. Invite SoftFail owns when open. Craft:
+        ?timelineSoftFail=1 — never timber / Failed to fetch. No `/dev` gallery.
       */}
       <SheetPresence
         open={tab === "activity"}
@@ -705,15 +705,15 @@ export function TripCollabPanel({
               </span>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 {i === 0 ? (
-                  <span className="rounded-bp-xs bg-river/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
+                  <span className="rounded-bp-xs bg-river/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] text-river shadow-[inset_2px_0_0_var(--bp-river)]">
                     {t(locale, "collab.panel.timelineNow")}
                   </span>
                 ) : null}
-                <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
+                <span className="rounded-bp-xs bg-river/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {activityLabel(locale, ev.type)}
                 </span>
                 {ev.actorDisplayName ? (
-                  <span className="text-[11px] font-medium text-ink-soft/80">
+                  <span className="text-[11px] font-medium leading-snug text-ink-soft/80">
                     {ev.actorDisplayName}
                   </span>
                 ) : null}
