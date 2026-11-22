@@ -1055,6 +1055,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             ui={locale}
             onChange={setSourceLocale}
           />
+          {/*
+            Locale swap CTA color settle (BEA-803 / wave 74): tip-011 hover
+            `ease-bp-out-strong` (emptyCta / #488/#491 twin). SoftFail /
+            mode tabs (#491) / HoldMic·Talk·Dual (#488) / phrasebook·TTS
+            invent leave. Locale `<select>` focus rings keep `ease-bp-out`.
+          */}
           <button
             type="button"
             onClick={() => {
@@ -1062,7 +1068,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
               setSourceLocale(next.sourceLocale);
               setTargetLocale(next.targetLocale);
             }}
-            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98]"
+            className="bp-transition mt-6 flex h-11 w-11 shrink-0 items-center justify-center justify-self-center rounded-full bg-river text-foam shadow-bp-soft duration-bp-fast ease-bp-out-strong hover:bg-river-deep active:scale-[0.98]"
             aria-label={t(locale, "translate.swap")}
           >
             ⇄
