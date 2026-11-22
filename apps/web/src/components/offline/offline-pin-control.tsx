@@ -36,9 +36,9 @@ type Props = {
 type SoftFailKind = "pin" | "sync";
 
 /**
- * Offline pin chrome — SoftFail depth kept (BEA-448 / BEA-450 / #323) + wave 49
- * craft residual (BEA-474): always-on azure Offline pin rail (non-compact) ·
- * tip-011 pin/sync press · Lumen status chip tokens. SoftFailBadge ·
+ * Offline pin / map-cache chrome — SoftFail depth kept (BEA-448 / BEA-450 /
+ * #323) + wave 49 craft (BEA-474 / #343) + wave 52 residual (BEA-499): Lumen
+ * eyebrow tracking · tip-011 header rise · status leading-relaxed. SoftFailBadge ·
  * SoftFailSupport · mist band unchanged. Craft: ?pinSoftFail=1 — SoftFail
  * depth without a pin/sync miss. Soft copy never timber / Failed to fetch.
  * No `/dev` gallery.
@@ -192,7 +192,7 @@ export function OfflinePinControl({
             : t(locale, "offline.pin")}
       </button>
       {compact ? (
-        <span className="text-[11px] font-medium tracking-wide text-ink-soft/75">
+        <span className="text-[11px] font-medium leading-relaxed tracking-wide text-ink-soft/75">
           {statusLabel}
         </span>
       ) : null}
@@ -219,27 +219,28 @@ export function OfflinePinControl({
       aria-label={t(locale, "offline.pinRail")}
     >
       {/*
-        SoftFail kept (BEA-448 / BEA-450) + wave 49 craft (BEA-474): azure
-        Offline pin rail · SoftFailBadge Soft pin/sync · SoftFailSupport ·
-        tip-011 press — craft ?pinSoftFail=1. Never timber / Failed to fetch.
+        SoftFail kept (BEA-448 / BEA-450) + wave 49 (#343) + wave 52 (BEA-499):
+        azure Offline pin rail · Lumen eyebrow · tip-011 rise · SoftFailBadge ·
+        SoftFailSupport — craft ?pinSoftFail=1. Never timber / Failed to fetch.
       */}
       {sheetChrome ? (
         <header
           className={[
-            "relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-3 py-2",
+            "animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] px-3 py-2",
             softOpen
               ? softFailRailClass
               : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
           ].join(" ")}
+          style={{ animationDelay: "40ms" }}
         >
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "offline.pinRail")}
             </span>
             {softOpen ? (
               <SoftFailSupport>{softSupportCopy}</SoftFailSupport>
             ) : (
-              <span className="text-[11px] font-medium tracking-wide text-ink-soft/80">
+              <span className="text-[11px] font-medium leading-relaxed tracking-wide text-ink-soft/80">
                 {statusLabel}
               </span>
             )}

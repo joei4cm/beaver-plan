@@ -1106,11 +1106,12 @@ export default function TripDetailScreen() {
   const daysSoftCopy = t(locale, "planner.days.softFail");
   /**
    * Expo Offline pin SoftFail depth kept (BEA-448 / BEA-450) + wave 49 craft
-   * residual (BEA-474): always-on azure Offline pin rail · tip-011 pin press ·
-   * Lumen tokens. SoftFailBadge Soft pin · SoftFailSupport · mist band
-   * unchanged. Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin
-   * miss. Soft copy always offline.pinSoftFail — never timber / Failed to
-   * fetch. No `/dev` gallery.
+   * (BEA-474 / #343) + wave 52 residual (BEA-499): always-on azure offline pin
+   * rail · tip-011 pin press · Lumen tokens · status leading-relaxed.
+   * SoftFailBadge Soft pin · SoftFailSupport · mist band unchanged. Craft:
+   * /trips/…?pinSoftFail=1 — SoftFail depth without a pin miss. Soft copy
+   * always offline.pinSoftFail — never timber / Failed to fetch. No `/dev`
+   * gallery.
    */
   const pinSoftOpen = pinSoftPreview || Boolean(pinError);
   const pinSoftCopy = pinError ?? t(locale, "offline.pinSoftFail");
@@ -2202,11 +2203,12 @@ export default function TripDetailScreen() {
 
             <View style={styles.secondaryBlock}>
               {/*
-                SoftFail kept (BEA-448 / BEA-450) + wave 49 craft (BEA-474):
-                always-on azure Offline pin rail · tip-011 pin press · Lumen
-                tokens · SoftFailBadge Soft pin · SoftFailSupport · mist band.
-                Craft: ?pinSoftFail=1 — SoftFail depth without a pin miss.
-                Soft copy never timber / Failed to fetch. No `/dev` gallery.
+                SoftFail kept (BEA-448 / BEA-450) + wave 49 (#343) + wave 52
+                (BEA-499): always-on azure offline pin rail · tip-011 pin press ·
+                Lumen tokens · status leading-relaxed · SoftFailBadge Soft pin ·
+                SoftFailSupport · mist band. Craft: ?pinSoftFail=1 — SoftFail
+                depth without a pin miss. Soft copy never timber / Failed to
+                fetch. No `/dev` gallery.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -3747,7 +3749,7 @@ const styles = StyleSheet.create({
   secondaryBlock: {
     marginTop: 4,
   },
-  /** Offline pin chrome — always-on azure rail (BEA-474) · SoftFail wash. */
+  /** Offline pin chrome — always-on azure rail (#343 / BEA-499) · SoftFail wash. */
   pinChrome: {
     marginBottom: 18,
     overflow: "hidden",
@@ -3793,7 +3795,7 @@ const styles = StyleSheet.create({
   },
   pinSoftEyebrow: {
     ...type.body,
-    fontSize: 10,
+    fontSize: 10.4,
     fontWeight: "700",
     letterSpacing: 1.8,
     textTransform: "uppercase",
@@ -3804,6 +3806,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     letterSpacing: 0.2,
+    lineHeight: 16,
     color: colors.inkSoft,
     flexShrink: 1,
     minWidth: 0,
