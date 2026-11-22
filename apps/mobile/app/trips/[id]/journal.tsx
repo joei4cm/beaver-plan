@@ -740,9 +740,10 @@ export default function JournalScreen() {
                           </Text>
                         ) : null}
                         {/*
-                          Entry photo strip — web EntryPhotoStrip parity (BEA-514):
-                          foam azure rail · support · count · lead · dashed empties
-                          to PHOTO_SLOT_MAX. SoftFail stays on Entries/Compose.
+                          Entry photo strip — web EntryPhotoStrip parity (BEA-514
+                          gallery · BEA-540 media detail): foam azure rail ·
+                          support · count · lead · dashed empties · tip-011
+                          thumb stagger. SoftFail stays on Entries/Compose.
                         */}
                         <View
                           style={StyleSheet.flatten([
@@ -804,16 +805,22 @@ export default function JournalScreen() {
                             {entry.media
                               .slice(0, PHOTO_SLOT_MAX)
                               .map((url, mediaIndex) => (
-                                <Image
+                                <SheetPresence
                                   key={`${entry.id}-${mediaIndex}`}
-                                  source={{ uri: resolveMediaUrl(url) }}
-                                  style={StyleSheet.flatten([
-                                    styles.thumb,
-                                    mediaIndex === 0
-                                      ? styles.thumbLead
-                                      : null,
-                                  ])}
-                                />
+                                  open
+                                  rise={6}
+                                  delayMs={mediaIndex * 45}
+                                >
+                                  <Image
+                                    source={{ uri: resolveMediaUrl(url) }}
+                                    style={StyleSheet.flatten([
+                                      styles.thumb,
+                                      mediaIndex === 0
+                                        ? styles.thumbLead
+                                        : null,
+                                    ])}
+                                  />
+                                </SheetPresence>
                               ))}
                             {Array.from({
                               length: Math.max(
@@ -824,17 +831,29 @@ export default function JournalScreen() {
                                     PHOTO_SLOT_MAX,
                                   ),
                               ),
-                            }).map((_, i) => (
-                              <View
-                                key={`${entry.id}-empty-${i}`}
-                                style={StyleSheet.flatten([
-                                  styles.slot,
-                                  styles.slotEntry,
-                                ])}
-                              >
-                                <Text style={styles.slotEntryMark}>+</Text>
-                              </View>
-                            ))}
+                            }).map((_, i) => {
+                              const shown = Math.min(
+                                entry.media.length,
+                                PHOTO_SLOT_MAX,
+                              );
+                              return (
+                                <SheetPresence
+                                  key={`${entry.id}-empty-${i}`}
+                                  open
+                                  rise={6}
+                                  delayMs={(shown + i) * 45}
+                                >
+                                  <View
+                                    style={StyleSheet.flatten([
+                                      styles.slot,
+                                      styles.slotEntry,
+                                    ])}
+                                  >
+                                    <Text style={styles.slotEntryMark}>+</Text>
+                                  </View>
+                                </SheetPresence>
+                              );
+                            })}
                           </ScrollView>
                         </View>
                       </View>
@@ -1019,8 +1038,8 @@ export default function JournalScreen() {
                 {/*
                   Compose media rail — BEA-455 nested foam + wave 49 (BEA-476)
                   tip-011 photo drop press · foam/paper tokens · BEA-514 river/
-                  mist hex-alpha washes. SoftFail depth kept elsewhere; no
-                  SoftFail reopen here.
+                  mist hex-alpha · BEA-540 media detail thumb stagger. SoftFail
+                  depth kept elsewhere; no SoftFail reopen here.
                 */}
                 <View
                   style={styles.composeMediaRail}
@@ -1087,26 +1106,38 @@ export default function JournalScreen() {
                     accessibilityLabel={t(locale, "journal.photoStrip")}
                   >
                     {previewMedia.map((item, i) => (
-                      <Image
+                      <SheetPresence
                         key={item.key}
-                        source={{ uri: item.uri }}
-                        style={StyleSheet.flatten([
-                          styles.thumb,
-                          styles.thumbCompose,
-                          i === 0 ? styles.thumbComposeLead : null,
-                        ])}
-                      />
+                        open
+                        rise={6}
+                        delayMs={i * 40}
+                      >
+                        <Image
+                          source={{ uri: item.uri }}
+                          style={StyleSheet.flatten([
+                            styles.thumb,
+                            styles.thumbCompose,
+                            i === 0 ? styles.thumbComposeLead : null,
+                          ])}
+                        />
+                      </SheetPresence>
                     ))}
                     {Array.from({ length: emptySlots }).map((_, i) => (
-                      <View
+                      <SheetPresence
                         key={`slot-${i}`}
-                        style={StyleSheet.flatten([
-                          styles.slot,
-                          styles.slotCompose,
-                        ])}
+                        open
+                        rise={6}
+                        delayMs={(previewMedia.length + i) * 40}
                       >
-                        <Text style={styles.slotComposeMark}>+</Text>
-                      </View>
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.slot,
+                            styles.slotCompose,
+                          ])}
+                        >
+                          <Text style={styles.slotComposeMark}>+</Text>
+                        </View>
+                      </SheetPresence>
                     ))}
                   </ScrollView>
                 </View>
@@ -1473,14 +1504,15 @@ const styles = StyleSheet.create({
   entryBodySelected: {
     fontWeight: "700",
   },
-  /** Nested foam entry strip — web EntryPhotoStrip (BEA-514). */
+  /** Nested foam entry strip — web EntryPhotoStrip (BEA-514 · BEA-540). */
   photoStrip: {
     marginTop: 8,
     overflow: "hidden",
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    /** Web bg-foam/80 — Lumen foam @ ~0.8 (BEA-540 media detail). */
+    backgroundColor: `${colors.foam}CC`,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -1525,7 +1557,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   photoStripCount: {
     borderRadius: radius.xs,
@@ -1559,13 +1592,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.mist,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
+    /** Web ring-river/30 secondary media detail (BEA-540). */
+    borderColor: `${colors.river}4D`,
   },
   thumbLead: {
     width: 84,
     height: 112,
     /** Web ring-river/40 */
-    borderColor: `${colors.river}59`,
+    borderColor: `${colors.river}66`,
     shadowColor: colors.river,
     shadowOpacity: 0.14,
     shadowRadius: 6,
@@ -1772,14 +1806,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.foam,
     textAlignVertical: "top",
   },
-  /** Nested foam media rail — web #124 compose chrome (BEA-455 / BEA-476). */
+  /** Nested foam media rail — web #124 compose chrome (BEA-455 / BEA-476 / BEA-540). */
   composeMediaRail: {
     marginTop: 14,
     overflow: "hidden",
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    /** Web bg-foam/85 — Lumen foam @ ~0.85 (BEA-540 media detail). */
+    backgroundColor: `${colors.foam}D9`,
     shadowColor: colors.ink,
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -1821,7 +1856,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   composeMediaCount: {
     borderRadius: radius.xs,

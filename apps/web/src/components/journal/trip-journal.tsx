@@ -123,10 +123,11 @@ function MediaFrame({
 }
 
 /**
- * Entry photo strip chrome (BEA-225 after #124/#172 · BEA-514 gallery residual):
- * azure inset rail · count · lead frame · quieter empties to PHOTO_SLOT_MAX ·
- * tip-011 settle · eyebrow 0.18em (compose media parity). SoftFailNotice lives
- * on compose media rail (BEA-282) — not reopened here.
+ * Entry photo strip chrome (BEA-225 after #124/#172 · BEA-514 gallery ·
+ * BEA-540 media detail residual): azure inset rail · count · lead frame ·
+ * quieter empties to PHOTO_SLOT_MAX · tip-011 settle · eyebrow 0.18em ·
+ * secondary frames ring-river/30 (compose media detail parity). SoftFailNotice
+ * lives on compose media rail (BEA-282) — not reopened here.
  */
 function EntryPhotoStrip({
   locale,
@@ -190,7 +191,7 @@ function EntryPhotoStrip({
               className={`animate-stop-select shrink-0 rounded-bp-sm object-cover transition duration-bp ease-bp-out-strong ${
                 lead
                   ? "h-36 w-[6.75rem] shadow-bp ring-1 ring-river/40 sm:h-40 sm:w-28"
-                  : "h-32 w-24 shadow-bp-soft ring-1 ring-[color:var(--bp-line)] sm:h-36 sm:w-[6.5rem]"
+                  : "h-32 w-24 shadow-bp-soft ring-1 ring-river/30 sm:h-36 sm:w-[6.5rem]"
               }`}
               style={{ animationDelay: `${mediaIndex * 45}ms` }}
             />
@@ -199,8 +200,9 @@ function EntryPhotoStrip({
         {Array.from({ length: empties }).map((_, i) => (
           <div
             key={`empty-${i}`}
-            className="flex aspect-[3/4] h-32 w-24 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.05] via-mist/45 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out sm:h-36 sm:w-[6.5rem]"
+            className="animate-stop-select flex aspect-[3/4] h-32 w-24 shrink-0 items-center justify-center rounded-bp-sm border border-dashed border-river/20 bg-gradient-to-br from-river/[0.06] via-mist/45 to-foam text-[11px] font-medium text-river/40 transition duration-bp-fast ease-bp-out sm:h-36 sm:w-[6.5rem]"
             aria-label={t(locale, "journal.mediaPlaceholder")}
+            style={{ animationDelay: `${(shown.length + i) * 45}ms` }}
           >
             +
           </div>
