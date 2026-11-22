@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link, Stack, useRouter } from "expo-router";
+import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Animated,
   Easing,
@@ -41,6 +41,12 @@ import {
 import { type } from "../src/theme";
 
 const locale = "zh-CN" as const;
+
+/** Craft SoftFail query parity with web (`?playbooksSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
 
 /** Tip 011 — shared rise easing from #46 motion tokens. */
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
@@ -360,18 +366,20 @@ function TripsListSkeleton() {
 
 /**
  * Expo home SoftFailNotice (BEA-307 empty + BEA-341 cards + BEA-398 playbooks
- * SoftFail helpers after #284 / BEA-372 depth):
- * Empty: azure Start · Soft empty · emptySupport · emptySoftFail.
- * Cards: azure Trips rail · Soft cards · softSupport · cardsSoftFail copy
- * (never inherit softNotice) · mist SoftFail band · tip-011 mist-wash stage.
- * Playbooks: azure Playbooks rail · SoftFailBadge · SoftFailSupport ·
- * templatesSoftOffline · softFailBandStyle · softFailMistWashStyle catalog.
- * StyleSheet.flatten · Lumen tokens. SoftFail never timber / Failed to fetch.
- * SoftFail yields across empty / cards / playbooks sheets (no double depth).
- * Yields web trips playbooks SoftFail (#245).
+ * SoftFail helpers after #284 / BEA-372 depth) + craft SoftFail query parity
+ * (BEA-405): Empty / cards / playbooks SoftFail rails unchanged. Craft:
+ * /trips?playbooksSoftFail=1 forces SoftFail depth under azure Playbooks
+ * (mirrors web). SoftFail never timber / Failed to fetch. SoftFail yields
+ * across empty / cards / playbooks sheets (no double depth). No /dev gallery.
+ * Yields web trips playbooks SoftFail (#245 / BEA-405).
  */
 export default function TripsScreen() {
   const router = useRouter();
+  const { playbooksSoftFail: playbooksSoftFailParam } = useLocalSearchParams<{
+    playbooksSoftFail?: string | string[];
+  }>();
+  /** Craft preview: /trips?playbooksSoftFail=1 — SoftFail depth under Playbooks. */
+  const playbooksSoftPreview = craftSoftFailOn(playbooksSoftFailParam);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [templates, setTemplates] = useState<MobileTemplateCard[]>(() =>
     templateCardsFromSeed(),
@@ -510,13 +518,15 @@ export default function TripsScreen() {
   const cardsSoftCopy = t(locale, "trips.cardsSoftFail");
   const cardsSoftActive = cardsSoftOpen && !emptyOwnsSoft;
   /**
-   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245 parity):
-   * SoftFailBadge Soft playbooks · SoftFailSupport · softFailBandStyle mist
-   * band · softFailMistWashStyle tip-011 body while soft. Empty SoftFail
-   * (#233) stays on Start; cards SoftFail (#259) stays on Trips (yield / no
-   * overlap). Soft copy never timber / Failed to fetch.
+   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245 parity)
+   * + craft SoftFail query parity (BEA-405): SoftFailBadge Soft playbooks ·
+   * SoftFailSupport · softFailBandStyle mist band · softFailMistWashStyle
+   * tip-011 body while soft. Craft: /trips?playbooksSoftFail=1 — mirrors web.
+   * Empty SoftFail (#233) stays on Start; cards SoftFail (#259) stays on
+   * Trips (yield / no overlap). Soft copy never timber / Failed to fetch.
    */
-  const playbooksSoftOpen = hydrated && templatesSoft;
+  const playbooksSoftOpen =
+    hydrated && (templatesSoft || playbooksSoftPreview);
   const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
   /** Timber banner — scrub soft-fail transport noise (Failed to fetch). */
   const hardError =
@@ -784,11 +794,12 @@ export default function TripsScreen() {
           >
             {/*
               Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245
-              parity): azure Playbooks rail · SoftFailBadge · SoftFailSupport ·
-              softFailBandStyle · softFailMistWashStyle catalog ·
+              parity) + craft SoftFail query parity (BEA-405): azure Playbooks
+              rail · SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+              softFailMistWashStyle catalog · Craft: ?playbooksSoftFail=1 ·
               StyleSheet.flatten — never timber / Failed to fetch.
               Empty SoftFail (#233) stays on Start; cards SoftFail (#259)
-              stays on Trips (yield / no overlap). Yields web #245.
+              stays on Trips (yield / no overlap). Yields web #245 / BEA-405.
             */}
             <View style={styles.listSheet}>
               <PlaybooksRail
