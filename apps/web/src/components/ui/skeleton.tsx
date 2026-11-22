@@ -124,14 +124,17 @@ export function PlannerSkeleton() {
               <Skeleton className="h-6 w-16 rounded-bp" />
             </div>
           </div>
-          {/* Mode rail craft residual — azure Mode rail · mist chips · generate CTA (BEA-511 / #337) */}
+          {/* Mode rail craft residual — azure Mode rail · mist chips · generate CTA (BEA-549 / #370) */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95">
             <div className="animate-rise flex items-baseline gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 pt-2.5 pb-1.5 shadow-[inset_3px_0_0_var(--bp-river)]">
               <Skeleton className="h-2.5 w-12" />
               <Skeleton className="h-2.5 w-28" />
               <Skeleton className="h-5 w-20 rounded-bp-xs" />
             </div>
-            <div className="flex flex-wrap items-end gap-3 px-4 pb-3 pt-1.5">
+            <div
+              className="animate-rise flex flex-wrap items-end gap-3 px-4 pb-3 pt-1.5"
+              style={{ animationDelay: "70ms" }}
+            >
               <div className="inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1">
                 <Skeleton className="h-8 w-16 rounded-bp-xs" />
                 <Skeleton className="h-8 w-20 rounded-bp-xs" />
