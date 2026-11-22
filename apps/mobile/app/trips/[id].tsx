@@ -914,11 +914,10 @@ export default function TripDetailScreen() {
 
   const collabSoftOpen = collabSeeded || collabSoftOffline;
   /**
-   * Presence SoftFailNotice depth / yield (BEA-379 after #135 / #275):
-   * Soft badge · softSupport · mist SoftFail band · tip-011 mist-wash chips
-   * own as one unit. Yields while invite sheet SoftFail (#228) owns — no
-   * double depth. SoftFail copy never timber / Failed to fetch. Timeline
-   * SoftFail (BEA-371) owns its rail when present.
+   * Presence SoftFail helper adoption / yield (BEA-392 after #284 / #281):
+   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
+   * chips. Yields while invite sheet SoftFail owns — no double depth.
+   * SoftFail copy never timber / Failed to fetch.
    */
   const presenceSoftOpen = collabSoftOpen && !inviteOpen;
   const presenceSoftCopy = collabSoftOffline
@@ -928,10 +927,10 @@ export default function TripDetailScreen() {
     (m) => presenceFor(m.role) === "active",
   ).length;
   /**
-   * Invite SoftFailNotice depth (BEA-300 after #186 / #228):
-   * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
-   * softSupport · tip-011. Presence SoftFail yields while invite open
-   * (BEA-374). Soft copy never timber / Failed to fetch.
+   * Invite SoftFail helper adoption (BEA-392 after #284 / #228):
+   * SoftFailBadge · SoftFailSupport · compact SoftFail under azure rail.
+   * Presence SoftFail yields while invite open (#281). Soft copy never
+   * timber / Failed to fetch.
    */
   const inviteSoftOpen = collabSoftOpen;
   const inviteSoftCopy = collabSoftOffline
@@ -939,13 +938,11 @@ export default function TripDetailScreen() {
     : t(locale, "collab.inviteDemoNotice");
 
   /**
-   * Expo collab timeline SoftFailNotice depth (BEA-371 after #112):
-   * azure Timeline rail · Soft timeline badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · tip-011 SheetPresence mist-wash track ·
-   * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
-   * Failed to fetch. Yields while invite SoftFail (#228) owns the invite
-   * sheet (no double depth). Web collab timeline SoftFail (#252) stays out
-   * of scope.
+   * Expo collab timeline SoftFail helper adoption (BEA-392 after #284 / #279):
+   * SoftFailBadge · SoftFailSupport · compact SoftFail mist band · tip-011
+   * mist-wash track · StyleSheet.flatten · Lumen tokens. SoftFail copy never
+   * timber / Failed to fetch. Yields while invite SoftFail owns (no double
+   * depth).
    */
   const timelineSoftNoise = collabSeeded || collabSoftOffline;
   const timelineSoftOpen = timelineSoftNoise && !inviteOpen;
@@ -2093,10 +2090,10 @@ export default function TripDetailScreen() {
                 </Text>
 
                 {/*
-                  Presence SoftFail helpers (BEA-388 after #284 / BEA-374):
-                  azure rail · SoftFailBadge / Live · SoftFailSupport ·
-                  SoftFailNotice mist band · tip-011 mist-wash chips.
-                  Yields while invite sheet open. Never timber / Failed to fetch.
+                  Presence SoftFail helpers (BEA-392 after #284 / yield #281):
+                  SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+                  softFailMistWashStyle · yields invite sheet. Never timber /
+                  Failed to fetch.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2200,7 +2197,7 @@ export default function TripDetailScreen() {
                     rise={8}
                     style={StyleSheet.flatten([
                       styles.presenceBody,
-                      presenceSoftOpen ? styles.presenceBodySoft : null,
+                      presenceSoftOpen ? softFailMistWashStyle : null,
                     ])}
                     accessibilityLabel={t(locale, "collab.members")}
                   >
@@ -2323,9 +2320,9 @@ export default function TripDetailScreen() {
                   accessibilityLabel={t(locale, "collab.invite")}
                 >
                   {/*
-                    Invite SoftFail helpers (BEA-388 after #284 / BEA-300):
-                    azure rail · SoftFailBadge · SoftFailSupport · SoftFailNotice ·
-                    mist code · tip-011 — presence SoftFail yields. Never timber /
+                    Invite SoftFail helpers (BEA-392 after #284 / yield #281):
+                    SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+                    softFailMistWashStyle · presence SoftFail yields. Never timber /
                     Failed to fetch.
                   */}
                   <View style={styles.inviteSheetHeader}>
@@ -2376,7 +2373,7 @@ export default function TripDetailScreen() {
                   <View
                     style={StyleSheet.flatten([
                       styles.inviteSheetBody,
-                      inviteSoftOpen ? styles.inviteSheetBodySoft : null,
+                      inviteSoftOpen ? softFailMistWashStyle : null,
                     ])}
                   >
                     {inviteCode ? (
@@ -2510,11 +2507,10 @@ export default function TripDetailScreen() {
                     accessibilityLabel={t(locale, "collab.panel.tab.activity")}
                   >
                     {/*
-                      Timeline SoftFail helpers (BEA-388 after #284 / BEA-371):
-                      azure Timeline rail · SoftFailBadge · SoftFailSupport ·
-                      SoftFailNotice mist band · tip-011 mist-wash track —
-                      yields invite SoftFail while sheet open · never timber /
-                      Failed to fetch.
+                      Timeline SoftFail helpers (BEA-392 after #284 / yield #281):
+                      SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+                      softFailMistWashStyle · yields invite SoftFail while sheet
+                      open · never timber / Failed to fetch.
                     */}
                     <View
                       style={StyleSheet.flatten([
@@ -2565,7 +2561,7 @@ export default function TripDetailScreen() {
                     <View
                       style={StyleSheet.flatten([
                         styles.timelineBody,
-                        timelineSoftOpen ? styles.timelineBodySoft : null,
+                        timelineSoftOpen ? softFailMistWashStyle : null,
                       ])}
                     >
                       {activity.slice(0, 4).map((ev, i) => (

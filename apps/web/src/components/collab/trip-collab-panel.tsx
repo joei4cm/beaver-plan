@@ -10,7 +10,12 @@ import type {
 } from "@beaver/core";
 import { parseMentions, sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
@@ -254,11 +259,11 @@ export function TripCollabPanel({
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
   const softNoticeOpen = demoSeeded || softOffline;
   /**
-   * Timeline SoftFailNotice depth / yield (BEA-379 after #135 / #252):
-   * Activity sheet owns Soft badge · softSupport · mist SoftFail band ·
-   * tip-011 mist-wash track as one unit. Panel SoftFail yields on Activity;
-   * invite SoftFail (#241) owns when invite sheet open — timeline SoftFail
-   * yields (no double depth). Soft copy never timber / Failed to fetch.
+   * Timeline SoftFail helper adoption / yield (BEA-392 after #284 / #281):
+   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
+   * track. Panel SoftFail yields on Activity; invite SoftFail owns when invite
+   * sheet open — timeline SoftFail yields (no double depth). Soft copy never
+   * timber / Failed to fetch.
    */
   const timelineSoftOpen =
     softNoticeOpen && tab === "activity" && !inviteOpen;
@@ -364,17 +369,13 @@ export function TripCollabPanel({
                   {threadCount}
                 </span>
               </div>
-              <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  panelSoftOpen
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river-deep"
-                }`}
-              >
-                {panelSoftOpen
-                  ? t(locale, "collab.demoBadge")
-                  : t(locale, "collab.panel.liveBadge")}
-              </span>
+              {panelSoftOpen ? (
+                <SoftFailBadge>{t(locale, "collab.demoBadge")}</SoftFailBadge>
+              ) : (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
+                  {t(locale, "collab.panel.liveBadge")}
+                </span>
+              )}
             </header>
 
             <ul className="max-h-72 space-y-0 overflow-y-auto px-3 py-2">
@@ -514,10 +515,8 @@ export function TripCollabPanel({
       </SheetPresence>
 
       {/*
-        Timeline SoftFail depth / yield (BEA-379 after #135 / #252):
-        azure Timeline rail · Soft timeline badge · softSupport · compact
-        SoftFail mist band (`border-b`) · tip-011 mist-wash track · panel
-        SoftFail yields on Activity; invite SoftFail (#241) owns when open
+        Timeline SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
+        SoftFailSupport · softFailMistWashClass · invite SoftFail owns when open
         — never timber / Failed to fetch.
       */}
       <SheetPresence
@@ -539,17 +538,15 @@ export function TripCollabPanel({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  timelineSoftOpen
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river-deep"
-                }`}
-              >
-                {timelineSoftOpen
-                  ? t(locale, "collab.panel.timelineSoftBadge")
-                  : t(locale, "collab.panel.liveBadge")}
-              </span>
+              {timelineSoftOpen ? (
+                <SoftFailBadge>
+                  {t(locale, "collab.panel.timelineSoftBadge")}
+                </SoftFailBadge>
+              ) : (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep transition duration-bp-fast ease-bp-out">
+                  {t(locale, "collab.panel.liveBadge")}
+                </span>
+              )}
               {liveApi && !demoSeeded ? (
                 <button
                   type="button"
@@ -572,27 +569,29 @@ export function TripCollabPanel({
               ) : null}
             </div>
           </div>
-          <p
-            className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft"
-            style={{ animationDelay: "40ms" }}
-          >
-            {timelineSupportCopy}
-          </p>
+          {timelineSoftOpen ? (
+            <SoftFailSupport className="mt-1.5 block max-w-lg animate-rise">
+              {timelineSupportCopy}
+            </SoftFailSupport>
+          ) : (
+            <p
+              className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft"
+              style={{ animationDelay: "40ms" }}
+            >
+              {timelineSupportCopy}
+            </p>
+          )}
         </header>
 
         {/* Compact SoftFail mist band under azure Timeline rail — never timber / Failed to fetch. */}
-        <SoftFailNotice
-          open={timelineSoftOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={timelineSoftOpen} compact>
           {timelineSoftCopy}
         </SoftFailNotice>
 
         <ol
           className={`bp-collab-timeline m-0 max-h-80 list-none space-y-0 overflow-y-auto px-4 py-4 pl-5 ${
             timelineSoftOpen
-              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              ? softFailMistWashClass
               : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
           }`}
         >

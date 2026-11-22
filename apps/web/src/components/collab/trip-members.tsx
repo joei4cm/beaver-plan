@@ -10,7 +10,12 @@ import {
 import type { TripInvite, TripMember, TripRole } from "@beaver/core";
 import { sampleKyotoCollab } from "@beaver/core";
 import { t, type Locale } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 
@@ -184,21 +189,20 @@ export function TripMembersBar({
   const overflow = Math.max(0, members.length - visible.length);
   const softOpen = demoSeeded || softOffline;
   /**
-   * Presence SoftFailNotice depth / yield (BEA-379 after #135 / #223):
-   * Soft badge · softSupport · mist SoftFail band · tip-011 mist-wash chips
-   * own as one unit. Invite sheet open → SoftFail chrome yields (no double
-   * depth with invite SoftFail). Soft copy never timber / Failed to fetch.
+   * Presence SoftFail helper adoption / yield (BEA-392 after #284 / #281):
+   * SoftFailBadge · SoftFailSupport · mist SoftFail band · tip-011 mist-wash
+   * chips own as one unit. Invite sheet open → SoftFail chrome yields (no
+   * double depth). Soft copy never timber / Failed to fetch.
    */
   const presenceSoftOpen = softOpen && !open;
   const presenceSoftCopy = softOffline
     ? t(locale, "collab.presenceSoftFail")
     : t(locale, "collab.presenceDemoNotice");
   /**
-   * Invite SoftFailNotice depth (BEA-319 after #216):
-   * invite sheet owns Soft badge · softSupport · compact SoftFail under azure
-   * rail · mist-wash tip-011 SheetPresence code · tip-011 rise.
-   * Presence SoftFail yields while invite open (#223 / BEA-379). Soft copy
-   * never timber / Failed to fetch.
+   * Invite SoftFail helper adoption (BEA-392 after #284 / #241):
+   * SoftFailBadge · SoftFailSupport · compact SoftFail under azure rail ·
+   * mist-wash tip-011 SheetPresence code. Presence SoftFail yields while
+   * invite open (#281). Soft copy never timber / Failed to fetch.
    */
   const inviteSoftOpen = softOpen && open;
   const inviteSoftCopy = softOffline
@@ -211,9 +215,9 @@ export function TripMembersBar({
   return (
     <div className="animate-fade w-full border-y border-[color:var(--bp-line)] bg-foam/40 px-1 py-3.5 md:px-0">
       {/*
-        Presence SoftFail depth (BEA-292 after #181):
-        azure rail · Soft/Live badge · compact SoftFailNotice · mist-wash
-        SheetPresence chips · tip-011 rise — never timber.
+        Presence SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
+        SoftFailSupport · softFailMistWashClass · compact SoftFailNotice —
+        never timber.
       */}
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
         <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
@@ -227,11 +231,15 @@ export function TripMembersBar({
                 String(members.length),
               )}
             </span>
-            <span className="text-[11px] leading-snug text-ink-soft/80">
-              {presenceSoftOpen
-                ? t(locale, "collab.presence.softSupport")
-                : t(locale, "collab.presence.support")}
-            </span>
+            {presenceSoftOpen ? (
+              <SoftFailSupport>
+                {t(locale, "collab.presence.softSupport")}
+              </SoftFailSupport>
+            ) : (
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {t(locale, "collab.presence.support")}
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {yourRole ? (
@@ -244,48 +252,44 @@ export function TripMembersBar({
             <span className="rounded-bp-xs bg-mist/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-soft">
               v{tripVersion}
             </span>
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                presenceSoftOpen
-                  ? "bg-mist text-ink-soft"
-                  : members.length > 0
+            {presenceSoftOpen ? (
+              <SoftFailBadge>
+                {t(locale, "collab.presence.softBadge")}
+              </SoftFailBadge>
+            ) : (
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+                  members.length > 0
                     ? "bg-river/12 text-river-deep"
                     : "bg-mist/60 text-ink-soft/70"
-              }`}
-            >
-              {!presenceSoftOpen && members.length > 0 ? (
-                <span
-                  className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
-                  aria-hidden
-                />
-              ) : null}
-              {presenceSoftOpen
-                ? t(locale, "collab.presence.softBadge")
-                : t(locale, "collab.presence.live")}
-              {!presenceSoftOpen && activeCount > 0 ? (
-                <span className="tabular-nums font-medium normal-case tracking-normal text-river/80">
-                  · {activeCount}
-                </span>
-              ) : null}
-            </span>
+                }`}
+              >
+                {members.length > 0 ? (
+                  <span
+                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-river animate-presence-pulse"
+                    aria-hidden
+                  />
+                ) : null}
+                {t(locale, "collab.presence.live")}
+                {activeCount > 0 ? (
+                  <span className="tabular-nums font-medium normal-case tracking-normal text-river/80">
+                    · {activeCount}
+                  </span>
+                ) : null}
+              </span>
+            )}
           </div>
         </header>
 
         {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-        <SoftFailNotice
-          open={presenceSoftOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={presenceSoftOpen} compact>
           {presenceSoftCopy}
         </SoftFailNotice>
 
         <SheetPresence
           open
           className={`flex flex-wrap items-center justify-between gap-3 px-4 pb-2.5 pt-1.5 ${
-            presenceSoftOpen
-              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-              : ""
+            presenceSoftOpen ? softFailMistWashClass : ""
           }`}
           style={{ animationDelay: "40ms" }}
           aria-label={t(locale, "collab.members")}
@@ -380,10 +384,9 @@ export function TripMembersBar({
       ) : null}
 
       {/*
-        Invite SoftFail depth (BEA-319 after #216):
-        azure rail · Soft invite badge · softSupport · compact SoftFailNotice
-        (border-b) · mist-wash tip-011 SheetPresence code · presence SoftFail
-        yields (#223) — never timber / Failed to fetch.
+        Invite SoftFail helpers (BEA-392 / yield #281): SoftFailBadge ·
+        SoftFailSupport · softFailMistWashClass · presence SoftFail yields —
+        never timber / Failed to fetch.
       */}
       <SheetPresence
         open={open}
@@ -397,24 +400,26 @@ export function TripMembersBar({
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "collab.inviteEyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {inviteSoftOpen
-                  ? t(locale, "collab.inviteSoftSupport")
-                  : t(locale, "collab.inviteSupport")}
-              </span>
+              {inviteSoftOpen ? (
+                <SoftFailSupport>
+                  {t(locale, "collab.inviteSoftSupport")}
+                </SoftFailSupport>
+              ) : (
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "collab.inviteSupport")}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  inviteSoftOpen
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river"
-                }`}
-              >
-                {inviteSoftOpen
-                  ? t(locale, "collab.inviteSoftBadge")
-                  : t(locale, "collab.inviteLiveBadge")}
-              </span>
+              {inviteSoftOpen ? (
+                <SoftFailBadge>
+                  {t(locale, "collab.inviteSoftBadge")}
+                </SoftFailBadge>
+              ) : (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                  {t(locale, "collab.inviteLiveBadge")}
+                </span>
+              )}
               {lastInvite ? (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {t(locale, `collab.role.${lastInvite.invite.role}`)}
@@ -425,18 +430,14 @@ export function TripMembersBar({
         </header>
 
         {/* Compact SoftFail under azure invite rail — never timber / Failed to fetch. */}
-        <SoftFailNotice
-          open={inviteSoftOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={inviteSoftOpen} compact>
           {inviteSoftCopy}
         </SoftFailNotice>
 
         <div
           className={`space-y-4 px-4 py-4 ${
             inviteSoftOpen
-              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              ? softFailMistWashClass
               : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
           }`}
         >

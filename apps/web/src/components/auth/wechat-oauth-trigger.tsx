@@ -68,12 +68,8 @@ export function WeChatOAuthTrigger({
           {t(locale, "auth.wechatStarting")}
         </p>
       ) : null}
-      {/* Child SoftFail — sign-in sheet SoftFail yields while open. */}
-      <SoftFailNotice
-        open={failed}
-        compact
-        className="border-b border-[color:var(--bp-line)]"
-      >
+      {/* Child SoftFail — sign-in sheet SoftFail yields while open (BEA-392). */}
+      <SoftFailNotice open={failed} compact>
         {t(locale, "auth.wechatStartFailed")}
       </SoftFailNotice>
     </div>

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { brand } from "@beaver/ui-tokens";
 import { t, type Locale } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
 import { clerkEnabled } from "@/lib/clerk";
@@ -35,9 +40,9 @@ function demoPreview(code: string): Preview {
 }
 
 /**
- * Invite SoftFailNotice depth (BEA-319 after #216):
- * azure sheet rail · Soft invite badge · softSupport · compact SoftFail
- * under rail (border-b) · mist-wash tip-011 SheetPresence trip preview —
+ * Invite SoftFail helper adoption (BEA-392 after #284 / depth #241):
+ * SoftFailBadge · SoftFailSupport · softFailMistWashClass · compact SoftFail
+ * mist band under azure rail · tip-011 SheetPresence trip preview —
  * never timber / Failed to fetch for transport / demo soft-fail.
  */
 export function InviteAccept({
@@ -148,9 +153,8 @@ export function InviteAccept({
       ) : null}
 
       {/*
-        SoftFail depth (BEA-319 after #216):
-        azure rail · Soft invite badge · softSupport · compact SoftFailNotice
-        (border-b) · mist-wash tip-011 SheetPresence trip preview —
+        SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
+        softFailMistWashClass · compact SoftFailNotice · tip-011 trip preview —
         never timber / Failed to fetch.
       */}
       <SheetPresence
@@ -165,24 +169,24 @@ export function InviteAccept({
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "invite.sheetEyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {softOpen
-                  ? t(locale, "invite.softSupport")
-                  : t(locale, "invite.sheetSupport")}
-              </span>
+              {softOpen ? (
+                <SoftFailSupport>
+                  {t(locale, "invite.softSupport")}
+                </SoftFailSupport>
+              ) : (
+                <span className="text-[11px] leading-snug text-ink-soft/80">
+                  {t(locale, "invite.sheetSupport")}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  softOpen
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river"
-                }`}
-              >
-                {softOpen
-                  ? t(locale, "invite.softBadge")
-                  : t(locale, "invite.liveBadge")}
-              </span>
+              {softOpen ? (
+                <SoftFailBadge>{t(locale, "invite.softBadge")}</SoftFailBadge>
+              ) : (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                  {t(locale, "invite.liveBadge")}
+                </span>
+              )}
               {preview ? (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]">
                   {t(locale, `collab.role.${preview.role}`)}
@@ -193,18 +197,14 @@ export function InviteAccept({
         </header>
 
         {/* Compact SoftFail under azure invite rail — never timber / Failed to fetch. */}
-        <SoftFailNotice
-          open={softOpen}
-          compact
-          className="border-b border-[color:var(--bp-line)]"
-        >
+        <SoftFailNotice open={softOpen} compact>
           {softCopy ?? ""}
         </SoftFailNotice>
 
         <div
           className={`space-y-5 px-5 py-5 ${
             softOpen
-              ? "bg-gradient-to-b from-mist/40 via-mist/18 to-transparent"
+              ? softFailMistWashClass
               : "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
           }`}
         >
