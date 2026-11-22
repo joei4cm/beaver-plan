@@ -88,6 +88,22 @@ function useBrowserOnline(): boolean {
   return online;
 }
 
+/** Craft SoftFail query: `/?featuresSoftFail=1` — SoftFail depth without going offline. */
+function useCraftSoftFailPreview(): boolean {
+  const [preview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("featuresSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  return preview;
+}
+
 /**
  * Azure route plane for the lead feature — wash + path, not a bordered card.
  * Draw/markers only fire when the section is in view (tip-011 settle).
@@ -241,11 +257,13 @@ function PillarsSoftFailSheet({
 }
 
 /**
- * Landing features SoftFailNotice depth (BEA-330 after #197):
+ * Landing features SoftFailNotice depth (BEA-330 after #197) + craft SoftFail
+ * query parity (BEA-406):
  * azure pillars SoftFail sheet · Soft/Live badge · softSupport · compact
  * SoftFailNotice mist band under rail · tip-011 mist-wash body · azure inset
  * on mist-track focus while SoftFail open — SoftFail owned by the sheet
- * (FAQ/footer/how yield). Never timber / Failed to fetch.
+ * (FAQ/footer/how yield). Craft: `/?featuresSoftFail=1`.
+ * Never timber / Failed to fetch.
  */
 export function LandingFeatures({
   title,
@@ -263,7 +281,8 @@ export function LandingFeatures({
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
   const online = useBrowserOnline();
-  const softOpen = !online;
+  const softPreview = useCraftSoftFailPreview();
+  const softOpen = softPreview || !online;
   const [focus, setFocus] = useState(0);
 
   const lead = items[focus] ?? items[0];
@@ -312,9 +331,10 @@ export function LandingFeatures({
         </header>
 
         {/*
-          Features SoftFail depth (BEA-330 after #197):
-          azure rail · Soft badge · softSupport · mist SoftFail band ·
-          tip-011 mist-wash pillars — never timber.
+          Features SoftFail depth (BEA-330 after #197) + craft SoftFail
+          query parity (BEA-406): azure rail · Soft badge · softSupport ·
+          mist SoftFail band · tip-011. Craft: ?featuresSoftFail=1 —
+          never timber.
         */}
         <PillarsSoftFailSheet
           softOpen={softOpen}

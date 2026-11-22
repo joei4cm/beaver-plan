@@ -90,6 +90,21 @@ function useBrowserOnline(): boolean {
   return online;
 }
 
+/** Craft SoftFail query: `/?faqSoftFail=1` — SoftFail depth without going offline. */
+function useCraftSoftFailPreview(): boolean {
+  const [preview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("faqSoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  return preview;
+}
+
 /**
  * FAQ SoftFail sheet — azure rail · SoftFailBadge Soft FAQ / Live ·
  * SoftFailSupport · compact SoftFailNotice under rail (`border-b`) ·
@@ -176,9 +191,12 @@ function FaqSoftFailSheet({
 }
 
 /**
- * Landing FAQ SoftFailNotice depth (BEA-383 Soft badge after BEA-293):
+ * Landing FAQ SoftFailNotice depth (BEA-383 Soft badge after BEA-293) +
+ * craft SoftFail query parity (BEA-406):
  * FaqSoftFailSheet · azure FAQ rail · Soft FAQ / Live · softSupport · compact
- * SoftFailNotice mist band · mist-track topics · tip-011 — never timber.
+ * SoftFailNotice mist band · mist-track topics · tip-011.
+ * Craft: `/?faqSoftFail=1` — SoftFail depth without going offline.
+ * Never timber / Failed to fetch.
  */
 export function LandingFaq({
   title,
@@ -196,7 +214,8 @@ export function LandingFaq({
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
   const online = useBrowserOnline();
-  const softOpen = !online;
+  const softPreview = useCraftSoftFailPreview();
+  const softOpen = softPreview || !online;
   const baseId = useId();
 
   const [topic, setTopic] = useState<FaqTopic>("all");
@@ -252,8 +271,9 @@ export function LandingFaq({
         </header>
 
         {/*
-          FAQ SoftFail Soft badge depth (BEA-383): Soft FAQ · softSupport ·
-          mist SoftFail band · mist-track topics · tip-011 — never timber.
+          FAQ SoftFail Soft badge depth (BEA-383) + craft SoftFail query
+          parity (BEA-406): Soft FAQ · softSupport · mist SoftFail band ·
+          mist-track topics · tip-011. Craft: ?faqSoftFail=1 — never timber.
         */}
         <FaqSoftFailSheet
           softOpen={softOpen}

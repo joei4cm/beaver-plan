@@ -85,6 +85,22 @@ function useBrowserOnline(): boolean {
   return online;
 }
 
+/** Craft SoftFail query: `/?footerSoftFail=1` — SoftFail depth without going offline. */
+function useCraftSoftFailPreview(): boolean {
+  const [preview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("footerSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  return preview;
+}
+
 /** Quiet route plane — finale atmosphere, not a bordered card. */
 function FinaleRouteArt() {
   return (
@@ -224,10 +240,11 @@ function FooterSoftFailSheet({
 
 /**
  * Landing finale SoftFailNotice depth (BEA-383 Soft badge after BEA-311;
- * SoftFail helpers BEA-400 after #284):
+ * SoftFail helpers BEA-400 after #284) + craft SoftFail query parity (BEA-406):
  * FooterSoftFailSheet · azure finale rail · SoftFailBadge Soft finale / Live ·
- * SoftFailSupport · compact SoftFailNotice · tip-011 CTA + route plane —
- * never timber.
+ * SoftFailSupport · compact SoftFailNotice · tip-011 CTA + route plane.
+ * Craft: `/?footerSoftFail=1` — SoftFail depth without going offline.
+ * Never timber / Failed to fetch.
  */
 export function LandingFooterCta({
   brandPrimary,
@@ -253,7 +270,8 @@ export function LandingFooterCta({
   const reduced = usePrefersReducedMotion();
   const { ref, visible } = useSectionReveal(reduced);
   const online = useBrowserOnline();
-  const softOpen = !online;
+  const softPreview = useCraftSoftFailPreview();
+  const softOpen = softPreview || !online;
 
   return (
     <footer
@@ -274,8 +292,9 @@ export function LandingFooterCta({
 
       <div className="relative mx-auto max-w-6xl px-6 pt-20 md:px-10 md:pt-28">
         {/*
-          Finale SoftFail Soft badge depth (BEA-383): Soft finale · softSupport ·
-          mist SoftFail band · tip-011 CTA + route plane — never timber.
+          Finale SoftFail Soft badge depth (BEA-383) + craft SoftFail query
+          parity (BEA-406): Soft finale · softSupport · mist SoftFail band ·
+          tip-011 CTA + route plane. Craft: ?footerSoftFail=1 — never timber.
         */}
         <FooterSoftFailSheet
           softOpen={softOpen}
