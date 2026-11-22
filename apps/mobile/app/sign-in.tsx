@@ -1,6 +1,6 @@
 import { useOAuth, useAuth } from "@clerk/clerk-expo";
 import type { OAuthStrategy } from "@clerk/types";
-import { Link, Stack, router } from "expo-router";
+import { Link, Stack, router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -34,13 +34,27 @@ const locale = "zh-CN" as const;
 const WECHAT_STRATEGY = "oauth_wechat" as OAuthStrategy;
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
+/** Craft SoftFail query parity with web (`?signInSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
+
 /**
- * Expo auth SoftFail helper adoption (BEA-392 after #284 / depth #269):
- * SoftFailBadge · SoftFailSupport · softFailMistWashStyle · compact SoftFail
- * mist band under azure rail · WeChat SoftFail yield (no double depth) —
- * never timber / Failed to fetch. Web auth SoftFail stays sibling scope.
+ * Expo auth SoftFail helper adoption (BEA-392 after #284 / depth #269) + craft
+ * SoftFail query parity (BEA-421): SoftFailBadge · SoftFailSupport ·
+ * softFailMistWashStyle · compact SoftFail mist band under azure rail ·
+ * WeChat SoftFail yield (no double depth). Craft: /sign-in?signInSoftFail=1 —
+ * SoftFail depth without a Clerk/API miss. SoftFail copy never timber /
+ * Failed to fetch. No `/dev` SoftFail gallery. Web sign-up SoftFail is sibling
+ * scope (Expo has no sign-up screen).
  */
 export default function SignInScreen() {
+  const { signInSoftFail: signInSoftFailParam } = useLocalSearchParams<{
+    signInSoftFail?: string | string[];
+  }>();
+  /** Craft preview: /sign-in?signInSoftFail=1 — SoftFail depth under azure rail. */
+  const signInSoftPreview = craftSoftFailOn(signInSoftFailParam);
   const clerkReady = clerkEnabled();
   const [apiSoft, setApiSoft] = useState(false);
   /** Child WeChat SoftFail ownership — sheet SoftFail yields while open. */
@@ -69,14 +83,19 @@ export default function SignInScreen() {
       easing: easeRise,
       useNativeDriver: true,
     }).start();
-  }, [rise, clerkReady, apiSoft]);
+  }, [rise, clerkReady, apiSoft, signInSoftPreview]);
 
-  /** SoftFail owned by sign-in sheet — never timber / Failed to fetch. */
-  const softCopy = !clerkReady
+  /**
+   * SoftFail owned by sign-in sheet — never timber / Failed to fetch.
+   * Craft `?signInSoftFail=1` forces SoftFail depth without a Clerk/API miss.
+   */
+  const softCopy = signInSoftPreview
     ? t(locale, "auth.signInSoftFail")
-    : apiSoft
-      ? t(locale, "auth.signInApiSoftFail")
-      : null;
+    : !clerkReady
+      ? t(locale, "auth.signInSoftFail")
+      : apiSoft
+        ? t(locale, "auth.signInApiSoftFail")
+        : null;
   const softOpen = Boolean(softCopy);
   /** Parent SoftFail yields while WeChat child SoftFail owns (no double depth). */
   const sheetSoftOpen = softOpen && !wechatOwnsSoft;
@@ -121,8 +140,9 @@ export default function SignInScreen() {
         </Animated.View>
 
         {/*
-          SoftFail helper adoption (BEA-392): SoftFailBadge · SoftFailSupport ·
-          softFailMistWashStyle · WeChat SoftFail yield — never timber.
+          SoftFail helper adoption (BEA-392) + craft SoftFail query parity
+          (BEA-421): SoftFailBadge · SoftFailSupport · softFailMistWashStyle ·
+          WeChat SoftFail yield. Craft: ?signInSoftFail=1 — never timber.
         */}
         <SheetPresence
           open
