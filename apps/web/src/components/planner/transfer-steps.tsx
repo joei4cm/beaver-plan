@@ -22,7 +22,7 @@ type Props = {
   /** Soft demo badge when live Directions keys are absent. */
   demoMode?: boolean;
   /**
-   * Show SoftFailNotice under the step list (selected stop only —
+   * Show SoftFailNotice under the azure Transfer rail (selected stop only —
    * avoids repeating the notice on every leg row).
    */
   showSoftFail?: boolean;
@@ -202,49 +202,58 @@ function LegCardHeader({
   view?: Leg | null;
 }) {
   return (
-    <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-          {t(locale, "planner.transfer.title")}
-        </span>
-        <span
-          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-            softOpen || demoMode
-              ? "bg-mist text-ink-soft"
-              : "bg-river/12 text-river-deep"
-          }`}
-        >
-          {softOpen
-            ? t(locale, "planner.transfer.softBadge")
-            : demoMode
-              ? t(locale, "planner.transfer.demoBadge")
-              : t(locale, "planner.transfer.liveBadge")}
-        </span>
-        {softOpen ? (
-          <span className="text-[11px] leading-snug text-ink-soft/80">
-            {t(locale, "planner.transfer.softSupport")}
+    <header
+      className={`relative border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)] ${
+        softOpen ? "bg-mist/35" : ""
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            {t(locale, "planner.transfer.title")}
+          </span>
+          <span
+            className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
+              softOpen || demoMode
+                ? "bg-mist text-ink-soft"
+                : "bg-river/12 text-river-deep"
+            }`}
+          >
+            {softOpen
+              ? t(locale, "planner.transfer.softBadge")
+              : demoMode
+                ? t(locale, "planner.transfer.demoBadge")
+                : t(locale, "planner.transfer.liveBadge")}
+          </span>
+          {softOpen ? (
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {t(locale, "planner.transfer.softSupport")}
+            </span>
+          ) : null}
+        </div>
+        {view ? (
+          <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
+            <span className="font-display text-sm font-semibold tracking-tight text-ink">
+              {formatDuration(view.durationSec)}
+            </span>
+            <span className="mx-1.5 text-ink-soft/40">·</span>
+            {formatDistance(view.distanceM)}
+            <span className="mx-1.5 text-ink-soft/40">·</span>
+            {modeLabel(locale, view.mode)}
           </span>
         ) : null}
       </div>
-      {view ? (
-        <span className="shrink-0 text-[11px] tabular-nums text-ink-soft">
-          <span className="font-display text-sm font-semibold tracking-tight text-ink">
-            {formatDuration(view.durationSec)}
-          </span>
-          <span className="mx-1.5 text-ink-soft/40">·</span>
-          {formatDistance(view.distanceM)}
-          <span className="mx-1.5 text-ink-soft/40">·</span>
-          {modeLabel(locale, view.mode)}
-        </span>
-      ) : null}
-    </div>
+    </header>
   );
 }
 
 /**
- * Transit leg card SoftFail depth (BEA-383 Soft badge / softSupport):
- * azure Transfer rail · Soft transfer badge · softSupport · SoftFailNotice /
- * soft-fail empty · SheetPresence + #46 radii / easing. Never timber.
+ * Transit leg SoftFailNotice depth (BEA-378 after #93 / #121 / Soft badge #280):
+ * azure Transfer rail · Soft transfer badge · softSupport · compact SoftFail
+ * mist band under rail (`border-b`) · tip-011 mist-wash Summary / Steps ·
+ * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
+ * Failed to fetch. Transit filters SoftFail (#272) yields while TransferSteps
+ * owns selected-stop soft chrome (no double depth). Expo transit out of scope.
  */
 export function TransferSteps({
   leg,
@@ -261,9 +270,11 @@ export function TransferSteps({
   const hasSteps = Boolean(view && view.transitSteps.length > 0);
   const empty = Boolean(showEmpty && !leg);
   const open = Boolean(leg) || empty;
-  const noticeDemo =
+  const softOpen =
     demoMode && (showSoftFail || variant === "panel" || empty);
-  const softOpen = Boolean(noticeDemo);
+  const softCopy = empty
+    ? t(locale, "planner.transfer.softFailEmpty")
+    : t(locale, "planner.transfer.softFail");
 
   const shell =
     variant === "panel"
@@ -279,20 +290,32 @@ export function TransferSteps({
     >
       {empty ? (
         <>
+          {/*
+            SoftFail depth (BEA-378): azure Transfer rail · Soft transfer ·
+            softSupport · tip-011 — SoftFail under rail; transit filters (#272)
+            SoftFail yields while this owns selected-stop soft chrome.
+          */}
           <LegCardHeader
             locale={locale}
             demoMode={demoMode}
             softOpen={softOpen}
           />
+
+          {/* Compact SoftFail mist band under azure Transfer rail — never timber. */}
           <SoftFailNotice
             open={softOpen}
             compact
             className="border-b border-[color:var(--bp-line)]"
           >
-            {t(locale, "planner.transfer.softFailEmpty")}
+            {softCopy}
           </SoftFailNotice>
+
           <div
-            className="animate-fade space-y-1.5 px-3 py-4"
+            className={`animate-fade space-y-1.5 px-3 py-4 ${
+              softOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
             style={{ animationDelay: "60ms" }}
           >
             <p className="font-display text-sm font-semibold tracking-tight text-ink">
@@ -305,21 +328,34 @@ export function TransferSteps({
         </>
       ) : view ? (
         <>
+          {/*
+            SoftFail depth (BEA-378): azure Transfer rail · Soft transfer ·
+            softSupport · tip-011 mist-wash — SoftFail under rail; Mode SoftFail
+            (#272) yields while TransferSteps owns (no double depth).
+          */}
           <LegCardHeader
             locale={locale}
             demoMode={demoMode}
             softOpen={softOpen}
             view={view}
           />
+
+          {/* Compact SoftFail mist band under azure Transfer rail — never timber / Failed to fetch. */}
           <SoftFailNotice
             open={softOpen}
             compact
             className="border-b border-[color:var(--bp-line)]"
           >
-            {t(locale, "planner.transfer.demoNotice")}
+            {softCopy}
           </SoftFailNotice>
 
-          <div className="divide-y divide-[color:var(--bp-line)]">
+          <div
+            className={`divide-y divide-[color:var(--bp-line)] ${
+              softOpen
+                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                : ""
+            }`}
+          >
             <section
               className="animate-fade space-y-2 px-3 py-3"
               style={{ animationDelay: "55ms" }}

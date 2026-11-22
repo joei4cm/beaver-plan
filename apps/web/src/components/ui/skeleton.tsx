@@ -487,7 +487,10 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-/** Tip 017 — transit leg card (summary · steps) while route-day soft-runs. */
+/**
+ * Tip 017 — transit leg SoftFail depth (BEA-378):
+ * azure Transfer rail · SoftFail mist band · tip-011 mist-wash summary/steps.
+ */
 export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
   return (
     <div
@@ -495,14 +498,21 @@ export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
       aria-live="polite"
       className="animate-fade mt-2.5 overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft"
     >
-      <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-5 w-14 rounded-bp-xs" />
+      {/* Transfer SoftFail depth — azure rail · Soft transfer · SoftFail mist band (BEA-378) */}
+      <div className="relative border-b border-[color:var(--bp-line)] bg-mist/35 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)]">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-5 w-14 rounded-bp-xs" />
+            <Skeleton className="h-5 w-16 rounded-bp-xs" />
+          </div>
+          <Skeleton className="h-3.5 w-28" />
         </div>
-        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="mt-1 h-2.5 w-48 max-w-[80%]" />
       </div>
-      <div className="divide-y divide-[color:var(--bp-line)]">
+      {/* SoftFailNotice mist band under azure Transfer rail */}
+      <Skeleton className="h-9 w-full rounded-none" />
+      <div className="divide-y divide-[color:var(--bp-line)] bg-gradient-to-b from-mist/25 via-mist/10 to-transparent">
         <div className="space-y-2 px-3 py-3">
           <Skeleton className="h-2.5 w-12" />
           <div className="flex flex-wrap items-center gap-2">
