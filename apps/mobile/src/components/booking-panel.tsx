@@ -1532,7 +1532,8 @@ const styles = StyleSheet.create({
   },
   /** Soft azure Confirm rail wash when SoftFail owns depth (BEA-340). */
   confirmHeaderSoft: {
-    backgroundColor: "rgba(244, 246, 250, 0.85)",
+    /** Web paper/85 · OTA headerSoft twin (BEA-747; α preserved). */
+    backgroundColor: `${colors.paper}D9`,
   },
   confirmHeaderText: {
     flex: 1,
