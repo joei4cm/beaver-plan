@@ -148,10 +148,13 @@ async function searchLocal(
  * Wave 73 (BEA-789): provider Use-link + Confirm draft Open CTA color settle
  * → `ease-bp-out-strong` (BookingLinkChips / Search·Open-external·Save /
  * tip-011 / #484–#488 twin). Wave 74 (BEA-801): OTA sheet accordion header
- * mist hover → `ease-bp-out-strong` (day-fill accordion twin). SoftFail stays
- * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
- * Confirm SoftFail yields OTA (no double depth). SoftFail Soft / Confirm nest
- * hex / prefer LIVE leave. Never timber / Failed to fetch. No `/dev` gallery.
+ * mist hover → `ease-bp-out-strong` (day-fill accordion twin). Wave 74
+ * (BEA-805): Confirm draft + OTA offer card shells border-color settle →
+ * `ease-bp-out-strong` (W73 invent #6; CTA/chips already strong). SoftFail
+ * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth).
+ * SoftFail Soft / Confirm nest hex / prefer LIVE leave. Never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -665,7 +668,7 @@ export function BookingPanel({
                 {suggestions.map((s, i) => (
                   <li
                     key={s.id}
-                    className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft transition duration-bp-fast ease-bp-out hover:border-river/35 hover:shadow-bp"
+                    className="animate-preview-in overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)]/80 bg-foam px-3 py-3 shadow-bp-soft transition duration-bp-fast ease-bp-out-strong hover:border-river/35 hover:shadow-bp"
                     style={{ animationDelay: `${80 + i * 40}ms` }}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -750,12 +753,13 @@ export function BookingPanel({
           {/*
             Confirm SoftFail helpers (BEA-389 after #284 / depth BEA-345) + craft
             SoftFail query parity (BEA-418) + Confirm Open CTA color settle
-            (BEA-789 / wave 73): softFailRailClass · SoftFailBadge Soft/Live ·
+            (BEA-789 / wave 73) + draft card border-color settle (BEA-805 /
+            wave 74): softFailRailClass · SoftFailBadge Soft/Live ·
             SoftFailSupport · SoftFailNotice mist band · softFailMistWashClass
-            tip-011 · draft Open `ease-bp-out-strong` (BookingLinkChips /
-            tip-011 / #484–#488 twin). Craft: ?confirmSoftFail=1 — OTA SoftFail
-            yields while Confirm owns; never timber. SoftFail Soft / Confirm
-            nest hex leave · not Export (#486) · HoldMic (#488).
+            tip-011 · draft Open `ease-bp-out-strong` · draft card shells
+            `ease-bp-out-strong` (offer twin). Craft: ?confirmSoftFail=1 — OTA
+            SoftFail yields while Confirm owns; never timber. SoftFail Soft /
+            Confirm nest hex leave · not Export (#486) · HoldMic (#488).
           */}
           <section
             className="animate-rise px-4 py-4"
@@ -855,7 +859,7 @@ export function BookingPanel({
                     return (
                       <div
                         key={row.kind}
-                        className={`space-y-1.5 rounded-bp-sm border px-3 py-3 transition duration-bp-fast ease-bp-out ${
+                        className={`space-y-1.5 rounded-bp-sm border px-3 py-3 transition duration-bp-fast ease-bp-out-strong ${
                           filled
                             ? "animate-stop-select border-river/30 bg-river/[0.04] shadow-[inset_3px_0_0_var(--bp-river)]"
                             : "animate-rise border-[color:var(--bp-line)]/70 bg-paper/50 hover:border-river/25"
