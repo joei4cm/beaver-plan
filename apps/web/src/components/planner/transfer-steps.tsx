@@ -212,9 +212,15 @@ function LegCardHeader({
   softOpen: boolean;
   view?: Leg | null;
 }) {
+  /*
+   * Composition spacing residual (BEA-770 / wave 72): densify header
+   * `py-2` → `py-2.5` — Expo Transfer `paddingVertical: 10` twin · Export
+   * azure rail `px-3 py-2.5` sibling. SoftFail-free; SoftFail untouched.
+   * Beyond prefer soft/type bar (BEA-762). No Mode soft reopen · no `/dev`.
+   */
   return (
     <header
-      className={`animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2 shadow-[inset_3px_0_0_var(--bp-river)] ${
+      className={`animate-rise relative border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)] ${
         softOpen ? "bg-mist/35" : ""
       }`}
       style={{ animationDelay: "50ms" }}
