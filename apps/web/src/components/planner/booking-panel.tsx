@@ -135,9 +135,11 @@ async function searchLocal(
  * residual (BEA-460): offer title on display `text-sm` (day-fill / place-intel
  * density) · BookingOffersSkeleton foam + `shadow-bp-soft` parity. Wave 52
  * (BEA-502): tip-011 `active:scale-[0.98]` on Search / Open / Use link / Save
- * (day-fill sibling). SoftFail stays under OTA / Confirm rails; craft
- * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
- * double depth). Never timber / Failed to fetch. No `/dev` gallery.
+ * (day-fill sibling). Wave 56 (BEA-536): Confirm draft Open chip tip-011
+ * press (Expo Open already #350; list chips #371). SoftFail stays under
+ * OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
+ * Confirm SoftFail yields OTA (no double depth). Never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -850,7 +852,7 @@ export function BookingPanel({
                             <button
                               type="button"
                               onClick={() => openExternal(row.url.trim())}
-                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                              className="rounded-bp-xs border border-river/35 bg-river/5 px-2 py-1 text-[11px] font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river/60 hover:bg-river/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                             >
                               {t(locale, "planner.booking.open")}
                             </button>
