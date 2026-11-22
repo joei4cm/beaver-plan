@@ -115,10 +115,13 @@ function SectionEyebrow({ children }: { children: string }) {
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
  * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
- * (BEA-604): DayFillSkeleton day-row rise mirrors live proposal stagger.
- * SoftFailBadge Soft fill · SoftFailSupport · mist band unchanged. Stop drawer
- * SoftFail (#225) owns Itinerary. Soft-fails to local Kyoto demo — never
- * timber / Failed to fetch. No `/dev` gallery.
+ * (BEA-604) + interest chip color settle (BEA-793 / wave 73): DayFillSkeleton
+ * day-row rise mirrors live proposal stagger · interest chips
+ * `ease-bp-out-strong` (Mode/Stops #485 / tip-011 / #484–#488 twin). SoftFailBadge
+ * Soft fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
+ * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
+ * fetch. No `/dev` gallery. Not SoftFail Soft · not prefer LIVE (BEA-544 lineage)
+ * · not accordion / days input / discard secondary · not invent skeletons.
  */
 export function DayFillPanel({
   tripId,
@@ -438,6 +441,13 @@ export function DayFillPanel({
               </p>
             </div>
 
+            {/*
+              Interest / mood chips color settle (BEA-793 / wave 73): mist-track
+              option chips densify `bp-transition` (`--bp-ease-out`) →
+              `ease-bp-out-strong` — Mode/Stops #485 · tip-011 · #484–#488 twin.
+              SoftFail / prefer LIVE (BEA-544 lineage) / accordion / days input /
+              discard secondary leave. Motion-only class-string.
+            */}
             <div>
               <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                 {t(locale, "planner.dayFill.interests")}
@@ -455,7 +465,7 @@ export function DayFillPanel({
                       type="button"
                       aria-pressed={on}
                       onClick={() => toggleInterest(id)}
-                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold transition duration-bp-fast ease-bp-out-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                         on
                           ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                           : "text-ink-soft hover:bg-foam/70 hover:text-river"
