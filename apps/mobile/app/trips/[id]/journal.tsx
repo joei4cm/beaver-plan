@@ -508,8 +508,8 @@ export default function JournalScreen() {
           <Animated.View style={StyleSheet.flatten([styles.sheet, riseStyle])}>
             {/*
               Day strip / chips (BEA-496 beyond #333 / #346): azure inset paper
-              rail · Day meta 1.8 · tip-011 press. SoftFail stays on Entries /
-              Compose rails.
+              rail · Day meta 1.8 · tip-011 press. BEA-643: paper@B3 · foam@D9
+              hex-alpha. SoftFail stays on Entries / Compose rails.
             */}
             <ScrollView
               horizontal
@@ -569,7 +569,10 @@ export default function JournalScreen() {
                 timber / Failed to fetch. Empty owns while empty; Soft entries
                 yields while empty; Compose SoftFail stays on Compose.
                 List chrome residual (BEA-607): daySectionTitle snug lineHeight
-                (web list day h2 twin). SoftFail / empty / compose untouched.
+                (web list day h2 twin). Expo list residual (BEA-643 beyond
+                #428): day strip / entry select / index / linked Lumen
+                hex-alpha (photo-strip · Mode · Transfer twin). SoftFail /
+                empty / compose untouched.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -1272,7 +1275,8 @@ const styles = StyleSheet.create({
   dayRail: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 — Lumen paper @ ~0.7 (BEA-643 hex-alpha). */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -1299,7 +1303,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 2,
   },
-  dayChipMetaActive: { color: "rgba(255,255,255,0.85)" },
+  /** Active Day meta on river — Lumen foam @ ~0.85 (BEA-643). */
+  dayChipMetaActive: { color: `${colors.foam}D9` },
   dayChipLabel: {
     ...type.body,
     fontSize: 13,
@@ -1424,7 +1429,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   entrySelected: {
-    backgroundColor: "rgba(47, 107, 255, 0.08)",
+    /** Web bg-river/[0.08] — Lumen river @ 0.08 (BEA-643). */
+    backgroundColor: `${colors.river}14`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -1439,7 +1445,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(230, 236, 245, 0.8)",
+    /** Web bg-mist/80 — Lumen mist @ 0.8 (BEA-643). */
+    backgroundColor: `${colors.mist}CC`,
   },
   indexMarkActive: {
     backgroundColor: colors.river,
@@ -1480,7 +1487,8 @@ const styles = StyleSheet.create({
   },
   linkedChip: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** Web bg-river/12 — Lumen river @ 0.12 (BEA-643; badge twin). */
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
