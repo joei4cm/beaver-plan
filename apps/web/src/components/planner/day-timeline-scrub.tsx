@@ -22,8 +22,10 @@ type Props = {
 };
 
 /**
- * Day timeline scrub — Lumen Route azure thumb/track.
+ * Day timeline scrub — Lumen Route azure thumb/track under day tabs.
  * Tip 011 (#46) motion on thumb settle; keyboard slider (←→ Home/End).
+ * Craft residual (BEA-452): river eyebrow · azure inset rail · header/track
+ * paper density matching Days / Stops / journal scrub (SoftFail stays off).
  */
 export function DayTimelineScrub({
   locale,
@@ -123,11 +125,11 @@ export function DayTimelineScrub({
   const liveTransition = dragging ? "none" : undefined;
 
   return (
-    <div className="bp-day-scrub border-b border-[color:var(--bp-line)] bg-paper/50 px-4 py-3">
-      <div className="mb-2 flex items-baseline justify-between gap-3">
+    <div className="bp-day-scrub border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 px-4 pt-3 pb-1.5">
         <p
           id={labelId}
-          className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft"
+          className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river"
         >
           {t(locale, "planner.scrub.label")}
         </p>
@@ -140,75 +142,77 @@ export function DayTimelineScrub({
             </span>
           ) : null}
         </p>
-      </div>
+      </header>
 
-      <div
-        ref={trackRef}
-        role="slider"
-        tabIndex={0}
-        aria-labelledby={labelId}
-        aria-valuemin={0}
-        aria-valuemax={max}
-        aria-valuenow={index}
-        aria-valuetext={
-          active
-            ? t(locale, "planner.scrub.value")
-                .replace("{n}", String(index + 1))
-                .replace("{total}", String(stops.length))
-                .replace("{name}", active.place.name)
-            : undefined
-        }
-        aria-orientation="horizontal"
-        onKeyDown={onKeyDown}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        className={`bp-day-scrub__rail relative h-10 cursor-pointer touch-none select-none outline-none ${
-          dragging ? "bp-day-scrub__rail--active" : ""
-        }`}
-      >
-        <span aria-hidden className="bp-day-scrub__track" />
-        <span
-          aria-hidden
-          className="bp-day-scrub__fill"
-          style={{
-            width: `${pct}%`,
-            transition: liveTransition,
-          }}
-        />
-        {stops.map((stop, i) => {
-          const tickPct = max === 0 ? 0 : (i / max) * 100;
-          const on = i <= index;
-          return (
-            <button
-              key={stop.id}
-              type="button"
-              tabIndex={-1}
-              aria-label={t(locale, "planner.scrub.tick")
-                .replace("{n}", String(i + 1))
-                .replace("{name}", stop.place.name)}
-              className={`bp-day-scrub__tick ${
-                on ? "bp-day-scrub__tick--on" : ""
-              } ${i === index ? "bp-day-scrub__tick--current" : ""}`}
-              style={{ left: `${tickPct}%` }}
-              onClick={(e) => {
-                e.stopPropagation();
-                commitIndex(i);
-              }}
-            />
-          );
-        })}
-        <span
-          aria-hidden
-          className={`bp-day-scrub__thumb ${
-            dragging ? "bp-day-scrub__thumb--active" : ""
+      <div className="px-4 pb-3 pt-2">
+        <div
+          ref={trackRef}
+          role="slider"
+          tabIndex={0}
+          aria-labelledby={labelId}
+          aria-valuemin={0}
+          aria-valuemax={max}
+          aria-valuenow={index}
+          aria-valuetext={
+            active
+              ? t(locale, "planner.scrub.value")
+                  .replace("{n}", String(index + 1))
+                  .replace("{total}", String(stops.length))
+                  .replace("{name}", active.place.name)
+              : undefined
+          }
+          aria-orientation="horizontal"
+          onKeyDown={onKeyDown}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className={`bp-day-scrub__rail relative h-10 cursor-pointer touch-none select-none outline-none ${
+            dragging ? "bp-day-scrub__rail--active" : ""
           }`}
-          style={{
-            left: `${pct}%`,
-            transition: liveTransition,
-          }}
-        />
+        >
+          <span aria-hidden className="bp-day-scrub__track" />
+          <span
+            aria-hidden
+            className="bp-day-scrub__fill"
+            style={{
+              width: `${pct}%`,
+              transition: liveTransition,
+            }}
+          />
+          {stops.map((stop, i) => {
+            const tickPct = max === 0 ? 0 : (i / max) * 100;
+            const on = i <= index;
+            return (
+              <button
+                key={stop.id}
+                type="button"
+                tabIndex={-1}
+                aria-label={t(locale, "planner.scrub.tick")
+                  .replace("{n}", String(i + 1))
+                  .replace("{name}", stop.place.name)}
+                className={`bp-day-scrub__tick ${
+                  on ? "bp-day-scrub__tick--on" : ""
+                } ${i === index ? "bp-day-scrub__tick--current" : ""}`}
+                style={{ left: `${tickPct}%` }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  commitIndex(i);
+                }}
+              />
+            );
+          })}
+          <span
+            aria-hidden
+            className={`bp-day-scrub__thumb ${
+              dragging ? "bp-day-scrub__thumb--active" : ""
+            }`}
+            style={{
+              left: `${pct}%`,
+              transition: liveTransition,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

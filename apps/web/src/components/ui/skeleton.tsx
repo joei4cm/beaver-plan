@@ -154,6 +154,16 @@ export function PlannerSkeleton() {
               <Skeleton className="mx-1 h-14 w-24 rounded-bp-sm" />
             </div>
           </div>
+          {/* Day scrub chrome — azure inset rail · river eyebrow · tip-011 track (BEA-452) */}
+          <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
+            <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-1.5">
+              <Skeleton className="h-2.5 w-24" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+            <div className="px-4 pb-3 pt-2">
+              <Skeleton className="h-10 w-full rounded-bp-sm" />
+            </div>
+          </div>
           {/* Stop chips SoftFail depth — azure Stops rail · Soft stops · SoftFail mist band (BEA-367) */}
           <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex items-center justify-between gap-2 px-4 py-2.5">
