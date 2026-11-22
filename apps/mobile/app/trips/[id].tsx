@@ -1014,7 +1014,7 @@ export default function TripDetailScreen() {
 
   /**
    * Expo collab SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
-   * craft residual: Timeline (BEA-479) + Comments preview eyebrow (BEA-487).
+   * craft (#347 / BEA-479) + wave 55 residual (BEA-532): Lumen hex-alpha tokens.
    * SoftFailBadge · SoftFailSupport · mist band · tip-011 mist-wash unchanged.
    * Craft: /trips/…?timelineSoftFail=1. Soft copy never timber / Failed to fetch.
    * Yields while invite SoftFail owns (no double depth). No `/dev` gallery.
@@ -2851,11 +2851,12 @@ export default function TripDetailScreen() {
                   >
                     {/*
                       Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
-                      wave 50 craft residual (BEA-479): eyebrow 1.8 · paper/foam
-                      tokens · tip-011 rise stagger. SoftFailBadge · SoftFailSupport ·
-                      softFailBandStyle · softFailMistWashStyle unchanged. Yields
-                      invite SoftFail while sheet open. Craft: ?timelineSoftFail=1 —
-                      never timber / Failed to fetch. No `/dev` gallery.
+                      wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532):
+                      paper/mist/river/inkSoft hex-alpha · tip-011 rise stagger.
+                      SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+                      softFailMistWashStyle unchanged. Yields invite SoftFail while
+                      sheet open. Craft: ?timelineSoftFail=1 — never timber /
+                      Failed to fetch. No `/dev` gallery.
                     */}
                     <View
                       style={StyleSheet.flatten([
@@ -4332,7 +4333,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
-  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / BEA-479). */
+  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / #347 / BEA-532). */
   timelineSheet: {
     marginTop: 10,
     overflow: "hidden",
@@ -4349,7 +4350,8 @@ const styles = StyleSheet.create({
     gap: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: colors.paper,
+    /** Web paper/70 — Lumen paper @ 0.7 (BEA-532 beyond #347 solid paper). */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderLeftWidth: 3,
@@ -4357,7 +4359,8 @@ const styles = StyleSheet.create({
   },
   /** Soft azure Timeline rail wash when SoftFail owns depth (BEA-371). */
   timelineHeaderSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.88)",
+    /** Mist @ 0.88 — SoftFail wash token (BEA-532). */
+    backgroundColor: `${colors.mist}E0`,
   },
   timelineHeaderRow: {
     flexDirection: "row",
@@ -4387,24 +4390,27 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
-    color: colors.inkSoft,
+    /** Web ink-soft/80 (BEA-532). */
+    color: `${colors.inkSoft}CC`,
   },
   timelineSupport: {
     ...type.body,
     fontSize: 11,
     lineHeight: 17,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
     maxWidth: 420,
   },
   timelineBody: {
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 10,
-    backgroundColor: "rgba(230, 236, 245, 0.18)",
+    /** Mist @ 0.18 wash under activity rails (BEA-532). */
+    backgroundColor: `${colors.mist}2E`,
   },
   activityRail: {
     borderLeftWidth: 2,
-    borderLeftColor: "rgba(47,107,255,0.28)",
+    /** River @ 0.28 — azure rail token (BEA-532). */
+    borderLeftColor: `${colors.river}47`,
     paddingLeft: 10,
     gap: 2,
   },
@@ -4421,7 +4427,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
-    backgroundColor: "rgba(47,107,255,0.15)",
+    /** River @ 0.15 — Now chip (BEA-532). */
+    backgroundColor: `${colors.river}26`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.xs,
@@ -4436,7 +4443,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.riverDeep,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    /** River @ 0.1 — type chip (BEA-532). */
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.xs,
@@ -4446,7 +4454,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     fontWeight: "500",
-    color: colors.inkSoft,
+    /** Web ink-soft/80 actor meta (BEA-532). */
+    color: `${colors.inkSoft}CC`,
   },
   activitySummary: {
     ...type.body,

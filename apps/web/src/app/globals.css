@@ -474,9 +474,9 @@
   }
 
   /*
-   * Collab activity timeline depth (BEA-215) + wave 50 craft residual (BEA-479).
-   * Mist-track spine · azure node stack · tip-011 hover settle / item lift.
-   * SoftFailNotice stays under collab tabs (trip-collab-panel); never timber.
+   * Collab activity timeline depth (BEA-215) + wave 50 (#347 / BEA-479) +
+   * wave 55 residual (BEA-532). Mist-track spine · azure node stack · tip-011
+   * hover settle / item lift. SoftFailNotice under collab tabs; never timber.
    */
   .bp-collab-timeline {
     position: relative;

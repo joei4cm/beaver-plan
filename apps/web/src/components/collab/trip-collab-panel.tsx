@@ -39,8 +39,8 @@ function newLocalId(prefix: string) {
 
 /**
  * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
- * yield #281) + wave 50 craft residual: Timeline (BEA-479) + Comments thread
- * (BEA-487): eyebrow 0.18em · tip-011 Post press · list chrome parity.
+ * yield #281) + wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532):
+ * Timeline empty rise · actor inkSoft/80. Comments thread (BEA-487) unchanged.
  * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band unchanged.
  * Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on Activity;
  * invite SoftFail yields timeline (no double depth). Soft copy never timber /
@@ -553,10 +553,10 @@ export function TripCollabPanel({
 
       {/*
         Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) + wave 50
-        craft residual (BEA-479): eyebrow 0.18em · tip-011 refresh press ·
-        SoftFailBadge · SoftFailSupport · softFailMistWashClass unchanged.
-        Invite SoftFail owns when open. Craft: ?timelineSoftFail=1 — never timber /
-        Failed to fetch. No `/dev` gallery.
+        craft (#347 / BEA-479) + wave 55 residual (BEA-532): empty animate-rise ·
+        actor inkSoft/80. SoftFailBadge · SoftFailSupport · softFailMistWashClass
+        unchanged. Invite SoftFail owns when open. Craft: ?timelineSoftFail=1 —
+        never timber / Failed to fetch. No `/dev` gallery.
       */}
       <SheetPresence
         open={tab === "activity"}
@@ -609,12 +609,12 @@ export function TripCollabPanel({
             </div>
           </div>
           {timelineSoftOpen ? (
-            <SoftFailSupport className="mt-1.5 block max-w-lg animate-rise">
+            <SoftFailSupport className="mt-1.5 block max-w-lg animate-rise [animation-delay:40ms]">
               {timelineSupportCopy}
             </SoftFailSupport>
           ) : (
             <p
-              className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft"
+              className="animate-rise mt-1.5 max-w-lg text-xs leading-relaxed text-ink-soft/80"
               style={{ animationDelay: "40ms" }}
             >
               {timelineSupportCopy}
@@ -647,13 +647,13 @@ export function TripCollabPanel({
           ) : null}
           {!showLoading && events.length === 0 ? (
             <li
-              className="animate-fade bp-collab-timeline__item space-y-1.5 py-3"
+              className="animate-rise bp-collab-timeline__item space-y-1.5 py-3"
               style={{ animationDelay: "70ms" }}
             >
               <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                 {t(locale, "collab.panel.emptyActivity")}
               </p>
-              <p className="text-xs leading-relaxed text-ink-soft">
+              <p className="text-xs leading-relaxed text-ink-soft/80">
                 {t(locale, "collab.panel.emptyActivityHint")}
               </p>
             </li>
@@ -687,7 +687,7 @@ export function TripCollabPanel({
                   {activityLabel(locale, ev.type)}
                 </span>
                 {ev.actorDisplayName ? (
-                  <span className="text-[11px] font-medium text-ink-soft">
+                  <span className="text-[11px] font-medium text-ink-soft/80">
                     {ev.actorDisplayName}
                   </span>
                 ) : null}
