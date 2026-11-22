@@ -113,16 +113,11 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Planner secondary tool — smart day-fill SoftFailNotice depth (BEA-323 after #206;
- * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284) + craft SoftFail
- * query parity (BEA-408): `/trips/…?dayFillSoftFail=1` forces SoftFail under the
- * Day fill rail (mirrors Expo + #282 stops/drag craft queries).
- * Lumen hierarchy: azure header rail · SoftFailBadge Soft fill · SoftFailSupport ·
- * compact SoftFail mist band under rail · softFailMistWash tip-011 body ·
- * SheetPresence in/out.
- * Stop drawer SoftFail (#225) owns Itinerary — day-fill SoftFail stays under the
- * Day fill rail (no double depth). Soft-fails to local Kyoto demo when LLM/API/
- * Neon are absent — never timber / Failed to fetch. No `/dev` SoftFail gallery.
+ * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
+ * wave 48 craft residual (BEA-467): tip-011 Generate/Apply/Discard `active:scale`
+ * · stop-row 4px grid. SoftFailBadge Soft fill · SoftFailSupport · mist band
+ * unchanged. Stop drawer SoftFail (#225) owns Itinerary. Soft-fails to local
+ * Kyoto demo — never timber / Failed to fetch. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -517,7 +512,7 @@ export function DayFillPanel({
                 type="button"
                 disabled={generating || interests.length === 0}
                 onClick={() => void generate()}
-                className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {generating
                   ? t(locale, "planner.dayFill.generating")
@@ -537,7 +532,7 @@ export function DayFillPanel({
                       setNotice(null);
                     }
                   }}
-                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
+                  className="rounded-bp-sm border border-[color:var(--bp-line)] px-3 py-2 text-sm text-ink-soft bp-transition hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                 >
                   {t(locale, "planner.dayFill.discard")}
                 </button>
@@ -612,7 +607,7 @@ export function DayFillPanel({
                   type="button"
                   disabled={applying}
                   onClick={() => void apply()}
-                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:opacity-40"
+                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:opacity-40"
                 >
                   {applying
                     ? t(locale, "planner.dayFill.applying")
@@ -648,7 +643,7 @@ export function DayFillPanel({
                       {day.stops.map((stop, i) => (
                         <li
                           key={`${stop.place.enginePlaceId}-${i}`}
-                          className="flex gap-2.5 text-sm text-ink"
+                          className="flex gap-3 text-sm text-ink"
                         >
                           <span
                             className="animate-marker-pop mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-river/12 text-[11px] font-semibold text-river-deep"
