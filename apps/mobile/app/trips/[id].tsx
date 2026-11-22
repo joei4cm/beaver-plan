@@ -3006,8 +3006,10 @@ export default function TripDetailScreen() {
                     {/*
                       Timeline SoftFail depth kept (BEA-392 / BEA-420 / yield #281) +
                       wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532) +
-                      wave 60 residual (BEA-575 beyond #377): foam/95 sheet · type
-                      chip inset · actor snug. SoftFailBadge · SoftFailSupport ·
+                      wave 60 residual (BEA-575 beyond #377) + wave 62 residual
+                      (BEA-603 / #423 web Now/type leading-4) + wave 65 residual
+                      (BEA-636 beyond #423): Now/type lineHeight 16 (web leading-4 ·
+                      presenceRole twin). SoftFailBadge · SoftFailSupport ·
                       softFailBandStyle · softFailMistWashStyle unchanged. Yields
                       invite SoftFail while sheet open. Craft: ?timelineSoftFail=1
                       — never timber / Failed to fetch. No `/dev` gallery.
@@ -4631,7 +4633,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
-  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / #347 / BEA-532 / BEA-575). */
+  /** Timeline sheet — azure rail · mist SoftFail · tip-011 (BEA-371 / #347 / BEA-532 / BEA-575 / BEA-636). */
   timelineSheet: {
     marginTop: 10,
     overflow: "hidden",
@@ -4724,6 +4726,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
+    /** Web Now leading-4 · presenceRole LH twin (BEA-636 beyond #423). */
+    lineHeight: 16,
     textTransform: "uppercase",
     color: colors.river,
     /** River @ 0.15 — Now chip (BEA-532). */
@@ -4740,6 +4744,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.4,
+    /** Web type leading-4 · presenceRole LH twin (BEA-636 beyond #423). */
+    lineHeight: 16,
     textTransform: "uppercase",
     color: colors.riverDeep,
     /** River @ 0.1 — type chip (BEA-532). */
