@@ -216,7 +216,8 @@ export function SoftFailSupport({
 
 /**
  * One muted Lumen Route notice for demo / keys-missing / API-absent / offline soft-fail.
- * Mist wash + ink-soft copy — never timber, never raw "Failed to fetch".
+ * Mist wash + ink/70 copy (Foam dark contrast residual BEA-436 after Soft badge #305) —
+ * never timber, never raw "Failed to fetch".
  * Compact defaults to tip-011 mist band (`border-b`) under azure rails.
  * Enter: easeRise + tip-011 ease-out (#46). Exit: paired ease-in rise-out (#87).
  * StyleSheet.flatten keeps RN Web Pressable/Link parents from choking on style arrays (#76).
@@ -390,7 +391,9 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 14,
     lineHeight: 21,
-    color: colors.inkSoft,
+    // Foam dark contrast residual (BEA-436): ink/70 parity with SoftFail Soft
+    // badge (~6.4:1 on mist) — inkSoft on mistWash fails AA.
+    color: "rgba(15, 23, 42, 0.7)",
   },
   textCompact: {
     fontSize: 12,

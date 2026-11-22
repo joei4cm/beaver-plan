@@ -156,16 +156,19 @@ function prefersReducedMotion(): boolean {
 }
 
 function compactSurface(band: SoftFailBand): string {
-  // tip-011 mist-band default under azure rails — border-b, mist/40, ink-soft.
+  // tip-011 mist-band default under azure rails — border-b, mist/40, ink/70
+  // Foam dark contrast residual (BEA-436): ink-soft on mist fails AA (~4.0–4.4);
+  // ink/70 matches SoftFail Soft badge (~6.4:1).
   if (band === "footer") {
-    return "border-t border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink-soft";
+    return "border-t border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink/70";
   }
-  return "border-b border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink-soft";
+  return "border-b border-[color:var(--bp-line)] bg-mist/40 px-4 py-2 text-xs leading-relaxed text-ink/70";
 }
 
 /**
  * One muted Lumen Route notice for demo / keys-missing / API-absent / offline soft-fail.
- * Mist wash + ink-soft copy — never timber, never raw "Failed to fetch", never purple glow.
+ * Mist wash + ink/70 copy (Foam dark contrast residual BEA-436 after Soft badge #305) —
+ * never timber, never raw "Failed to fetch", never purple glow.
  * Compact defaults to tip-011 mist band (`border-b`) under azure rails.
  * Enter: easeRise + tip-011 ease-out (#46). Exit: paired ease-in rise-out.
  *
@@ -227,7 +230,7 @@ export function SoftFailNotice({
 
   const surface = compact
     ? compactSurface(band)
-    : "rounded-bp-sm border border-[color:var(--bp-line)] bg-mist/50 px-4 py-3 text-sm leading-relaxed text-ink-soft";
+    : "rounded-bp-sm border border-[color:var(--bp-line)] bg-mist/50 px-4 py-3 text-sm leading-relaxed text-ink/70";
   const motion = exiting ? "animate-rise-out" : "animate-rise";
 
   return (
