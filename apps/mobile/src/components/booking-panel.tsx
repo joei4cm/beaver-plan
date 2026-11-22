@@ -132,9 +132,12 @@ async function searchLocal(
  * press on OTA Search / Open / Use link (reuse `ctaPressed`). Wave 63
  * (BEA-613): headerEyebrow letterSpacing 1.8 · header/loading/empty meta
  * inkSoft@CC (day-fill #408 twin) · skeleton SheetPresence `80+i*40` / rise 8
- * twin of live offers (#425 pattern). SoftFail stays under OTA / Confirm
- * rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields
- * OTA (no double depth). Never timber / Failed to fetch. No `/dev` gallery.
+ * twin of live offers (#425 pattern). Wave 64 (BEA-618): emptyResults
+ * lineHeight 22. Wave 65 (BEA-642): headerTitle LH 24 · sectionTitle LH 22 ·
+ * offerTitle LH 20 (day-fill title / prefsTitle / web offer snug twin). SoftFail
+ * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
+ * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth). Never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -1033,6 +1036,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...type.display,
     fontSize: 18,
+    /** Web sheet title leading-snug · day-fill title twin (BEA-642). */
+    lineHeight: 24,
     fontWeight: "800",
     letterSpacing: -0.3,
     color: colors.ink,
@@ -1080,6 +1085,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...type.display,
     fontSize: 16,
+    /** Web section title leading-snug · day-fill prefsTitle twin (BEA-642). */
+    lineHeight: 22,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
@@ -1263,6 +1270,8 @@ const styles = StyleSheet.create({
   offerTitle: {
     ...type.display,
     fontSize: 14,
+    /** Web offer title leading-snug twin (BEA-642). */
+    lineHeight: 20,
     fontWeight: "700",
     letterSpacing: -0.2,
     color: colors.ink,
