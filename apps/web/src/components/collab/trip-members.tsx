@@ -43,12 +43,12 @@ const ROLE_CHIP: Record<TripRole, string> = {
 /** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
 type PresenceState = "active" | "idle" | "away";
 
-/** Status pills — wave 51 craft residual (BEA-493): inset river/focus · type bar. */
+/** Status pills — wave 51 (BEA-493) + wave 57 residual (BEA-546): away inset. */
 const PRESENCE_PILL: Record<PresenceState, string> = {
   active:
     "bg-river/12 text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]",
   idle: "bg-focus/15 text-river-deep shadow-[inset_2px_0_0_var(--bp-focus)]",
-  away: "bg-mist text-ink-soft",
+  away: "bg-mist text-ink-soft shadow-[inset_2px_0_0_color-mix(in_srgb,var(--bp-ink-soft)_55%,transparent)]",
 };
 
 function presenceFor(member: TripMember): PresenceState {
@@ -61,10 +61,11 @@ function presenceFor(member: TripMember): PresenceState {
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
- * (BEA-518) + wave 56 invite residual (BEA-543): invite sheet eyebrow `0.18em` ·
- * empty shareHint rise + `/80` · URL rise. SoftFailBadge · SoftFailSupport ·
- * mist band unchanged. Invite SoftFail yields presence (no double depth). Soft
- * copy never timber / Failed to fetch. No `/dev` gallery.
+ * (BEA-518) + wave 56 invite residual (BEA-543) + wave 57 presence pills
+ * (BEA-546): away pill inset · strip empty `/80` · status pill out-strong.
+ * SoftFailBadge · SoftFailSupport · mist band unchanged. Invite SoftFail
+ * yields presence (no double depth). Soft copy never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -377,7 +378,7 @@ export function TripMembersBar({
             ))}
             {overflow > 0 ? (
               <span
-                className="animate-rise inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[0.65rem] font-semibold tabular-nums tracking-tight text-ink-soft"
+                className="animate-rise inline-flex h-8 shrink-0 items-center rounded-bp-xs bg-foam/80 px-2 text-[0.65rem] font-semibold tabular-nums tracking-tight text-ink-soft/80"
                 style={{ animationDelay: "115ms" }}
               >
                 +{overflow}
@@ -397,7 +398,7 @@ export function TripMembersBar({
             ) : null}
             {!pending && members.length === 0 ? (
               <span
-                className="animate-rise px-2 py-1.5 text-sm text-ink-soft"
+                className="animate-rise px-2 py-1.5 text-sm leading-snug text-ink-soft/80"
                 style={{ animationDelay: "70ms" }}
               >
                 {t(locale, "collab.presence.empty")}
@@ -620,7 +621,7 @@ export function TripMembersBar({
                           {m.displayName ?? m.userId}
                         </span>
                         <span
-                          className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] transition duration-bp-fast ease-bp-out ${PRESENCE_PILL[presence]}`}
+                          className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] transition duration-bp-fast ease-bp-out-strong ${PRESENCE_PILL[presence]}`}
                         >
                           {t(locale, `collab.presence.${presence}`)}
                         </span>
@@ -640,7 +641,7 @@ export function TripMembersBar({
                 </li>
               ) : null}
               {!pending && members.length === 0 ? (
-                <li className="animate-fade space-y-1 px-2 py-3">
+                <li className="animate-rise space-y-1 px-2 py-3">
                   <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                     {t(locale, "collab.presence.empty")}
                   </p>
