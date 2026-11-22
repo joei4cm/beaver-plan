@@ -46,12 +46,13 @@ const ROLE_CHIP: Record<TripRole, string> = {
 /** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
 type PresenceState = "active" | "idle" | "away";
 
-/** Status pills — wave 51/57/60 + wave 62 residual (BEA-600): away inset kept. */
+/** Status pills — wave 51/57/60/62 + wave 65 residual (BEA-640): away Foam dark. */
 const PRESENCE_PILL: Record<PresenceState, string> = {
   active:
     "bg-river/12 text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]",
   idle: "bg-focus/15 text-river-deep shadow-[inset_2px_0_0_var(--bp-focus)]",
-  away: "bg-mist text-ink-soft shadow-[inset_2px_0_0_color-mix(in_srgb,var(--bp-ink-soft)_55%,transparent)]",
+  /** Foam dark AA beyond #424 Soft twins — ink/70 on mist; inset kept (no Soft ring). */
+  away: "bg-mist text-ink/70 shadow-[inset_2px_0_0_color-mix(in_srgb,var(--bp-ink-soft)_55%,transparent)]",
 };
 
 function presenceFor(member: TripMember): PresenceState {
@@ -70,9 +71,11 @@ function presenceFor(member: TripMember): PresenceState {
  * (BEA-600): chip name leading-snug · Expo role/state lineHeight 16 · editor
  * avatar river/85. Foam dark Soft mist Soft twins beyond #404 (BEA-597 restore
  * after #422): viewer role + empty Live → SoftFail Soft tokens (ink/70 + line
- * ring). SoftFailBadge · SoftFailSupport · mist band · away presence pills
- * unchanged (#420). Invite SoftFail yields presence (no double depth). Soft
- * copy never timber / Failed to fetch. No `/dev` gallery.
+ * ring). Wave 65 presence residual (BEA-640): header yourRole leading-4 · away
+ * PRESENCE_PILL / presenceStateAway ink/70 (Foam AA deferred from #424). SoftFailBadge ·
+ * SoftFailSupport · mist band · Soft twins unchanged. Invite SoftFail yields
+ * presence (no double depth). Soft copy never timber / Failed to fetch. No
+ * `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -315,7 +318,7 @@ export function TripMembersBar({
           <div className="flex flex-wrap items-center gap-1.5">
             {yourRole ? (
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] bp-transition ${ROLE_CHIP[yourRole]}`}
+                className={`rounded-bp-xs px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] bp-transition ${ROLE_CHIP[yourRole]}`}
               >
                 {t(locale, `collab.role.${yourRole}`)}
               </span>
