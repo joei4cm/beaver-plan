@@ -24,7 +24,12 @@ import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import { JournalDayScrub } from "@/components/journal/journal-day-scrub";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { JournalSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
@@ -679,9 +684,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const stripMedia = previewMedia.slice(0, PHOTO_SLOT_MAX);
   const emptySlots = Math.max(0, PHOTO_SLOT_MAX - stripMedia.length);
   /**
-   * Empty SoftFailNotice depth (BEA-303 after #187):
-   * empty owns compact SoftFail under azure list rail · Soft empty badge ·
-   * emptySupport · emptySoftFail copy (never inherit list softNotice) ·
+   * Empty SoftFail helpers (BEA-391 after #284 / entry rail):
+   * empty owns compact SoftFail under azure list rail · SoftFailBadge Soft
+   * empty · SoftFailSupport · emptySoftFail copy (never inherit list softNotice) ·
    * mist SoftFail band (`border-b`) · SheetPresence empty body · tip-011 (#46).
    * Compose SoftFail yields while empty owns (no double depth). Soft copy
    * never timber / Failed to fetch.
@@ -691,19 +696,17 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
   const emptySoftOpen = emptyOwnsSoft;
   const emptySoftCopy = t(locale, "journal.emptySoftFail");
   /**
-   * Compose SoftFailNotice depth (BEA-356 after #110/#156):
-   * azure Compose rail · Soft media badge · softSupport · compact SoftFail
-   * mist band (`border-b`) · tip-011 mist-wash SheetPresence body · tip-011 (#46).
-   * Compose owns soft-fail while entries exist; empty SoftFail (#231) and
-   * photo strip SoftFail (#244) yield while compose owns (no double depth).
-   * Soft copy never timber / Failed to fetch. Expo compose SoftFail (#247) out of scope.
+   * Compose SoftFail helpers (BEA-391 after #284 / BEA-356):
+   * azure Compose rail · SoftFailBadge Soft media · SoftFailSupport ·
+   * compact SoftFail mist band (`border-b`) · tip-011 mist-wash SheetPresence
+   * body · tip-011 (#46). Compose owns soft-fail while entries exist; empty
+   * SoftFail (#231) and photo strip SoftFail (#244) yield while compose owns
+   * (no double depth). Soft copy never timber / Failed to fetch.
    */
   const composeOwnsSoft = composeSoftFail && !emptyOwnsSoft;
   const showComposeSoftFail = composeOwnsSoft;
   const composeSoftCopy = t(locale, "journal.composeSoftFail");
-  const composeSupportCopy = showComposeSoftFail
-    ? t(locale, "journal.composeSoftSupport")
-    : t(locale, "journal.composeHint");
+  const composeSoftSupportCopy = t(locale, "journal.composeSoftSupport");
   /**
    * Photo strip SoftFailNotice depth (BEA-325 after #217):
    * SoftFail under azure strip rail yields while empty (#231) or compose
@@ -716,15 +719,20 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     String(PHOTO_SLOT_MAX),
   );
   /**
-   * Journal day scrub SoftFailNotice depth (BEA-368 after #103):
-   * SoftFail under azure scrub rail · Soft scrub badge · softSupport ·
-   * tip-011 mist-wash track. Own rail under day tabs — sibling to compose
-   * SoftFail (#264) / empty SoftFail (#231) / photo strip SoftFail (#244)
-   * (those SoftFails stay on their rails; no double SoftFail on scrub).
-   * Soft copy never timber / Failed to fetch. Expo journal out of scope.
+   * Journal day scrub SoftFail helpers (BEA-391 after #284 / BEA-368):
+   * SoftFailBadge / SoftFailSupport on azure scrub rail · tip-011 mist-wash.
+   * Own rail under day tabs — sibling to compose SoftFail (#264) / empty
+   * SoftFail (#231) / photo strip SoftFail (#244) (those SoftFails stay on
+   * their rails; no double SoftFail on scrub). Soft copy never timber /
+   * Failed to fetch. Expo journal scrub out of scope.
    */
   const scrubSoftShell = demoSeeded || softNotice || composeSoftFail;
   const scrubSoftOpen = scrubSoftShell && dayStops.length > 0;
+  /**
+   * Entry SoftFail helpers (BEA-391 after #284): SoftFailBadge Soft entries ·
+   * SoftFailSupport · compact SoftFail mist band under azure list rail.
+   * Yields while empty SoftFail owns (no double depth). Soft copy never timber.
+   */
   const showListSoftFail =
     !emptyOwnsSoft && !composeOwnsSoft && (demoSeeded || softNotice);
   const listSoftOpen = showListSoftFail;
@@ -732,8 +740,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
     softNotice && !online
       ? t(locale, "journal.softOffline")
       : t(locale, "journal.softFail");
+  const listSoftSupportCopy = t(locale, "journal.softSupport");
   const listSupportCopy = listSoftOpen
-    ? t(locale, "journal.softSupport")
+    ? listSoftSupportCopy
     : `${activeDay?.date ? `${activeDay.date} · ` : ""}${t(locale, "journal.entryDetailHint")}`;
   const hardComposeError =
     error && !isPlannerNoiseError(new Error(error)) ? error : null;
@@ -890,10 +899,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             aria-label={t(locale, "journal.listEyebrow")}
           >
             {/*
-              Empty SoftFail depth (BEA-303 after #187):
-              azure list rail · Soft empty badge · emptySupport ·
+              Entry SoftFail helpers (BEA-391 after #284):
+              azure list rail · SoftFailBadge Soft empty/entries · SoftFailSupport ·
               compact SoftFailNotice mist band · SheetPresence empty body ·
-              tip-011 rise — never timber / Failed to fetch.
+              tip-011 rise — never timber / Failed to fetch. Nested SoftFail
+              yields: empty owns while empty; Soft entries yields while empty /
+              compose owns.
             */}
             <header
               className="animate-sheet-in relative border-b border-[color:var(--bp-line)] bg-paper/55 pb-5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -910,36 +921,36 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                     )}
                   </p>
                   {entryEmpty ? (
-                    <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {emptySoftOpen
-                        ? t(locale, "journal.emptySoftSupport")
-                        : t(locale, "journal.emptySupport")}
-                    </span>
+                    emptySoftOpen ? (
+                      <SoftFailSupport>
+                        {t(locale, "journal.emptySoftSupport")}
+                      </SoftFailSupport>
+                    ) : (
+                      <span className="text-[11px] leading-snug text-ink-soft/80">
+                        {t(locale, "journal.emptySupport")}
+                      </span>
+                    )
                   ) : listSoftOpen ? (
-                    <span className="text-[11px] leading-snug text-ink-soft/80">
-                      {t(locale, "journal.softSupport")}
-                    </span>
+                    <SoftFailSupport>{listSoftSupportCopy}</SoftFailSupport>
                   ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {entryEmpty ? (
-                    <span
-                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                        emptySoftOpen
-                          ? "bg-mist text-ink-soft"
-                          : "bg-river/12 text-river"
-                      }`}
-                    >
-                      {emptySoftOpen
-                        ? t(locale, "journal.emptySoftBadge")
-                        : t(locale, "journal.emptyBadge")}
-                    </span>
+                    emptySoftOpen ? (
+                      <SoftFailBadge>
+                        {t(locale, "journal.emptySoftBadge")}
+                      </SoftFailBadge>
+                    ) : (
+                      <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river transition duration-bp-fast ease-bp-out">
+                        {t(locale, "journal.emptyBadge")}
+                      </span>
+                    )
                   ) : (
                     <>
                       {listSoftOpen ? (
-                        <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                        <SoftFailBadge>
                           {t(locale, "journal.softBadge")}
-                        </span>
+                        </SoftFailBadge>
                       ) : null}
                       <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums uppercase tracking-[0.12em] text-river-deep">
                         {t(locale, "journal.entryCount").replace(
@@ -966,20 +977,12 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               </p>
             </header>
 
-            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; list yields while empty owns. */}
-            <SoftFailNotice
-              open={emptySoftOpen}
-              compact
-              className="border-b border-[color:var(--bp-line)]"
-            >
+            {/* Compact SoftFail under azure rail — empty owns emptySoftFail; Soft entries yields while empty owns. */}
+            <SoftFailNotice open={emptySoftOpen} compact>
               {emptySoftCopy}
             </SoftFailNotice>
-            {/* List SoftFail Soft entries depth — Soft badge · softSupport · softFail. */}
-            <SoftFailNotice
-              open={listSoftOpen}
-              compact
-              className="border-b border-[color:var(--bp-line)]"
-            >
+            {/* Soft entries SoftFail — SoftFailBadge · SoftFailSupport · softFail. */}
+            <SoftFailNotice open={listSoftOpen} compact>
               {listSoftCopy}
             </SoftFailNotice>
 
@@ -1143,9 +1146,9 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
             aria-label={t(locale, "journal.compose")}
           >
             {/*
-              Compose SoftFail depth (BEA-356 after #110/#156):
-              azure Compose rail · Soft media badge · softSupport · compact
-              SoftFail mist band · tip-011 mist-wash body — empty SoftFail
+              Compose SoftFail helpers (BEA-391 after #284 / BEA-356):
+              azure Compose rail · SoftFailBadge Soft media · SoftFailSupport ·
+              compact SoftFail mist band · tip-011 mist-wash body — empty SoftFail
               (#231) + photo strip SoftFail (#244) yield while compose owns;
               never timber / Failed to fetch.
             */}
@@ -1158,24 +1161,25 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
                   <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
                     {t(locale, "journal.compose")}
                   </h2>
+                  {showComposeSoftFail ? (
+                    <SoftFailSupport>{composeSoftSupportCopy}</SoftFailSupport>
+                  ) : null}
                 </div>
                 {showComposeSoftFail ? (
-                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  <SoftFailBadge>
                     {t(locale, "journal.composeSoftBadge")}
-                  </span>
+                  </SoftFailBadge>
                 ) : null}
               </div>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                {composeSupportCopy}
-              </p>
+              {showComposeSoftFail ? null : (
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "journal.composeHint")}
+                </p>
+              )}
             </header>
 
             {/* Compact SoftFail mist band under azure Compose rail — photo strip SoftFail yields. */}
-            <SoftFailNotice
-              open={showComposeSoftFail}
-              compact
-              className="border-b border-[color:var(--bp-line)]"
-            >
+            <SoftFailNotice open={showComposeSoftFail} compact>
               {composeSoftCopy}
             </SoftFailNotice>
 
@@ -1183,9 +1187,7 @@ export function TripJournal({ tripId, locale, initialTrip }: Props) {
               key={`compose-body-${dayId ?? "all"}`}
               open
               className={`flex flex-col p-5 md:p-6 ${
-                showComposeSoftFail
-                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                  : ""
+                showComposeSoftFail ? softFailMistWashClass : ""
               }`}
               style={{ animationDelay: "80ms" }}
               aria-label={t(locale, "journal.compose")}

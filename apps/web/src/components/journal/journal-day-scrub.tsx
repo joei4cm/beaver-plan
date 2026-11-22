@@ -13,7 +13,13 @@ import {
 import type { Stop } from "@beaver/core";
 import type { Locale } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+  softFailRailClass,
+} from "@/components/soft-fail-notice";
 
 type Props = {
   locale: Locale;
@@ -21,8 +27,8 @@ type Props = {
   selectedStopId: string | null;
   onSelectStop: (stopId: string) => void;
   /**
-   * SoftFailNotice depth (BEA-368 after #103):
-   * SoftFail under azure scrub rail · Soft badge · softSupport · tip-011 mist-wash.
+   * SoftFail helpers (BEA-391 after #284): SoftFailBadge / SoftFailSupport on
+   * azure scrub rail · Soft/Live · softSupport · tip-011 mist-wash.
    * Sibling rail — compose SoftFail (#264) / empty SoftFail (#231) / photo strip
    * SoftFail (#244) stay on their rails (no double SoftFail on scrub).
    */
@@ -31,8 +37,8 @@ type Props = {
 
 /**
  * Journal day timeline scrub — Lumen Route azure thumb/track under day tabs.
- * SoftFailNotice depth (BEA-368 after #103): SoftFail under azure rail · Soft badge ·
- * softSupport · tip-011 mist-wash. Soft copy never timber / Failed to fetch.
+ * SoftFail helpers (BEA-391 after #284): SoftFailBadge / SoftFailSupport ·
+ * tip-011 mist-wash. Soft copy never timber / Failed to fetch.
  * Same craft as planner #86: tip 011 (#46) settle, overshoot press, keyboard slider.
  */
 export function JournalDayScrub({
@@ -144,18 +150,16 @@ export function JournalDayScrub({
   return (
     <div
       className={`bp-day-scrub border-b border-[color:var(--bp-line)] ${
-        softOpen
-          ? "bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]"
-          : "bg-paper/50"
+        softOpen ? softFailRailClass : "bg-paper/50"
       }`}
     >
       {/*
-        SoftFail depth (BEA-368 after #103):
-        azure scrub rail · Soft scrub badge · softSupport · compact SoftFail
-        mist band (`border-b`) · tip-011 mist-wash track — compose SoftFail
-        (#264) / empty SoftFail (#231) / photo strip SoftFail (#244) stay on
-        their rails (sibling SoftFail; no double SoftFail on scrub) — never
-        timber / Failed to fetch.
+        SoftFail helpers (BEA-391 after #284):
+        azure scrub rail · SoftFailBadge Soft scrub · SoftFailSupport ·
+        compact SoftFail mist band (`border-b`) · tip-011 mist-wash track —
+        compose SoftFail (#264) / empty SoftFail (#231) / photo strip SoftFail
+        (#244) stay on their rails (sibling SoftFail; no double SoftFail on
+        scrub) — never timber / Failed to fetch.
       */}
       <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 px-4 pt-3 pb-1.5">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -166,16 +170,14 @@ export function JournalDayScrub({
             {t(locale, "journal.scrub.label")}
           </p>
           {softSupportCopy ? (
-            <p className="min-w-0 text-[11px] leading-snug text-ink-soft/80">
-              {softSupportCopy}
-            </p>
+            <SoftFailSupport>{softSupportCopy}</SoftFailSupport>
           ) : null}
         </div>
         <div className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5">
           {softOpen ? (
-            <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+            <SoftFailBadge>
               {t(locale, "journal.scrub.softBadge")}
-            </span>
+            </SoftFailBadge>
           ) : null}
           <p className="min-w-0 truncate text-sm font-semibold text-ink tabular-nums">
             {hasSelection || dragging ? (
@@ -196,20 +198,12 @@ export function JournalDayScrub({
       </header>
 
       {/* Compact SoftFail mist band under azure scrub rail — sibling SoftFails stay on compose / empty / photo strip rails. */}
-      <SoftFailNotice
-        open={softOpen}
-        compact
-        className="border-b border-[color:var(--bp-line)]"
-      >
+      <SoftFailNotice open={softOpen} compact>
         {softCopy}
       </SoftFailNotice>
 
       <div
-        className={`px-4 pb-3 pt-2 ${
-          softOpen
-            ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-            : ""
-        }`}
+        className={`px-4 pb-3 pt-2 ${softOpen ? softFailMistWashClass : ""}`}
       >
         <div
           ref={trackRef}
