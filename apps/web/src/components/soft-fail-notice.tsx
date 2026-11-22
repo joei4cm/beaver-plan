@@ -36,17 +36,27 @@ type Props = {
 /** Match `--bp-duration` (320ms) + small buffer for animationend misses. */
 const EXIT_FALLBACK_MS = 380;
 
-/** Soft badge chip — mist / ink-soft while SoftFail owns an azure rail. */
+/**
+ * Soft badge chip — mist wash + ink label while SoftFail owns an azure rail.
+ * Foam dark contrast (BEA-412): ink/70 on mist (~6:1) + line ring so Soft
+ * chips read on Foam sheets — never timber.
+ */
 export const softFailBadgeClass =
-  "rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition";
+  "rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70 ring-1 ring-[color:var(--bp-line)] bp-transition";
 
-/** Live badge chip — river wash while keys are present (parity SoftFailBadge). */
+/**
+ * Live badge chip — river wash while keys are present (parity SoftFailBadge).
+ * Foam dark contrast (BEA-412): keep river-deep type; river ring for Foam edge.
+ */
 export const softFailLiveBadgeClass =
-  "rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition";
+  "rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep ring-1 ring-river/20 bp-transition";
 
-/** softSupport line under an azure rail title while SoftFail owns. */
+/**
+ * softSupport line under an azure rail title while SoftFail owns.
+ * Foam dark contrast (BEA-412): solid ink-soft (~4.8:1 on Foam) — not /80 wash.
+ */
 export const softFailSupportClass =
-  "min-w-0 text-[11px] leading-snug text-ink-soft/80";
+  "min-w-0 text-[11px] leading-snug text-ink-soft";
 
 /** tip-011 mist-wash body / CTA track under a SoftFail mist band. */
 export const softFailMistWashClass =
@@ -85,7 +95,8 @@ export function sanitizeSoftFailCopy(
 
 /**
  * Soft | Live badge composition helper — Lumen mist (soft) or river wash
- * (live). Never timber. Default tone stays Soft for existing call sites.
+ * (live). Foam dark contrast via softFailBadgeClass / softFailLiveBadgeClass.
+ * Never timber. Default tone stays Soft for existing call sites.
  */
 export function SoftFailBadge({
   children,
@@ -119,7 +130,10 @@ export function SoftFailLiveBadge({
     </SoftFailBadge>
   );
 }
-/** softSupport composition helper — ink-soft line beside azure rail titles. */
+/**
+ * softSupport composition helper — solid ink-soft beside azure rail titles
+ * (Foam dark contrast). Never timber.
+ */
 export function SoftFailSupport({
   children,
   className,
