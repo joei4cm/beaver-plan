@@ -30,6 +30,7 @@ import { type } from "../theme";
 import { SheetPresence } from "./sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashStyle,
@@ -431,21 +432,11 @@ export function BookingPanel({
             <Text style={styles.headerTitle}>
               {t(locale, "planner.booking.title")}
             </Text>
-            <View
-              style={StyleSheet.flatten([
-                styles.badge,
-                isConfigured ? styles.badgeLive : styles.badgeDemo,
-              ])}
-            >
-              <Text
-                style={StyleSheet.flatten([
-                  styles.badgeText,
-                  isConfigured ? styles.badgeTextLive : styles.badgeTextDemo,
-                ])}
-              >
-                {badge}
-              </Text>
-            </View>
+            {isConfigured ? (
+              <SoftFailLiveBadge>{badge}</SoftFailLiveBadge>
+            ) : (
+              <SoftFailBadge>{badge}</SoftFailBadge>
+            )}
             {showOtaSoftFail ? (
               <SoftFailBadge>
                 {t(locale, "planner.booking.otaSoftBadge")}
@@ -963,30 +954,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.3,
     color: colors.ink,
-  },
-  badge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  badgeDemo: {
-    backgroundColor: colors.mist,
-  },
-  badgeLive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
-  },
-  badgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  badgeTextDemo: {
-    color: colors.inkSoft,
-  },
-  badgeTextLive: {
-    color: colors.riverDeep,
   },
   headerCount: {
     ...type.body,

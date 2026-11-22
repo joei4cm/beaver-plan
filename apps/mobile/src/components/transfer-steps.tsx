@@ -12,7 +12,12 @@ import { t, type Locale } from "@beaver/i18n";
 import { colors, radius } from "@beaver/ui-tokens";
 import { type } from "../theme";
 import { SheetPresence } from "./sheet-presence";
-import { SoftFailNotice } from "./soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+} from "./soft-fail-notice";
 
 type Props = {
   leg: Leg | null;
@@ -207,31 +212,21 @@ function LegCardHeader({
         <Text style={styles.headerTitle}>
           {t(locale, "planner.transfer.title")}
         </Text>
-        <View
-          style={StyleSheet.flatten([
-            styles.badge,
-            softOpen || demoMode ? styles.badgeDemo : styles.badgeLive,
-          ])}
-        >
-          <Text
-            style={StyleSheet.flatten([
-              styles.badgeText,
-              softOpen || demoMode
-                ? styles.badgeTextDemo
-                : styles.badgeTextLive,
-            ])}
-          >
+        {softOpen || demoMode ? (
+          <SoftFailBadge>
             {softOpen
               ? t(locale, "planner.transfer.softBadge")
-              : demoMode
-                ? t(locale, "planner.transfer.demoBadge")
-                : t(locale, "planner.transfer.liveBadge")}
-          </Text>
-        </View>
+              : t(locale, "planner.transfer.demoBadge")}
+          </SoftFailBadge>
+        ) : (
+          <SoftFailLiveBadge>
+            {t(locale, "planner.transfer.liveBadge")}
+          </SoftFailLiveBadge>
+        )}
         {softOpen ? (
-          <Text style={styles.softSupport}>
+          <SoftFailSupport>
             {t(locale, "planner.transfer.softSupport")}
-          </Text>
+          </SoftFailSupport>
         ) : null}
       </View>
       {view ? (
@@ -250,9 +245,10 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit SoftFailNotice depth (BEA-383 Soft badge / softSupport):
- * azure Transfer rail · Soft transfer badge · softSupport · compact SoftFail
- * mist band · tip-011 SheetPresence rise · StyleSheet.flatten.
+ * Expo transit SoftFailNotice depth (BEA-383 Soft badge / softSupport;
+ * SoftFailLiveBadge BEA-399):
+ * azure Transfer rail · SoftFailBadge / SoftFailLiveBadge · SoftFailSupport ·
+ * compact SoftFail mist band · tip-011 SheetPresence rise · StyleSheet.flatten.
  * Soft-fail never timber / Failed to fetch.
  */
 export function TransferSteps({
@@ -379,13 +375,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
-  softSupport: {
-    ...type.body,
-    fontSize: 11,
-    lineHeight: 16,
-    color: "rgba(15, 23, 42, 0.55)",
-    flexShrink: 1,
-  },
   header: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -415,30 +404,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: "uppercase",
     color: colors.river,
-  },
-  badge: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  badgeDemo: {
-    backgroundColor: colors.mist,
-  },
-  badgeLive: {
-    backgroundColor: "rgba(47,107,255,0.12)",
-  },
-  badgeText: {
-    ...type.body,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  badgeTextDemo: {
-    color: colors.inkSoft,
-  },
-  badgeTextLive: {
-    color: colors.riverDeep,
   },
   headerMeta: {
     ...type.body,

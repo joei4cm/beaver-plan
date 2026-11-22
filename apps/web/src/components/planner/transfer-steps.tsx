@@ -14,6 +14,7 @@ import { t } from "@beaver/i18n";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -224,9 +225,9 @@ function LegCardHeader({
                 : t(locale, "planner.transfer.demoBadge")}
             </SoftFailBadge>
           ) : (
-            <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river-deep bp-transition">
+            <SoftFailLiveBadge>
               {t(locale, "planner.transfer.liveBadge")}
-            </span>
+            </SoftFailLiveBadge>
           )}
           {softOpen ? (
             <SoftFailSupport>
@@ -252,8 +253,9 @@ function LegCardHeader({
 
 /**
  * Transit leg SoftFailNotice depth (BEA-378 after #93 / #121 / Soft badge #280;
- * SoftFailBadge / SoftFailSupport helpers BEA-387 after #284):
- * azure Transfer rail · Soft transfer badge · softSupport · compact SoftFail
+ * SoftFailBadge / SoftFailSupport helpers BEA-387 after #284;
+ * SoftFailLiveBadge BEA-399):
+ * azure Transfer rail · Soft/Live badge · softSupport · compact SoftFail
  * mist band under rail (`border-b`) · tip-011 mist-wash Summary / Steps ·
  * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
  * Failed to fetch. Transit filters SoftFail (#272) yields while TransferSteps

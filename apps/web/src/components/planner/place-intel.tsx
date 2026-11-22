@@ -10,6 +10,7 @@ import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
 import {
   SoftFailBadge,
+  SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
@@ -145,17 +146,17 @@ export function PlaceIntel({
                   <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                     {t(locale, "planner.place.sheetEyebrow")}
                   </span>
-                  <span
-                    className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                      softOpen
-                        ? "bg-mist text-ink-soft"
-                        : "bg-river/12 text-river-deep"
-                    }`}
-                  >
-                    {demo
-                      ? t(locale, "planner.place.demoBadge")
-                      : t(locale, "planner.place.liveBadge")}
-                  </span>
+                  {softOpen || demo ? (
+                    <SoftFailBadge>
+                      {demo
+                        ? t(locale, "planner.place.demoBadge")
+                        : t(locale, "planner.place.liveBadge")}
+                    </SoftFailBadge>
+                  ) : (
+                    <SoftFailLiveBadge>
+                      {t(locale, "planner.place.liveBadge")}
+                    </SoftFailLiveBadge>
+                  )}
                   {softOpen ? (
                     <SoftFailBadge>
                       {t(locale, "planner.place.softBadge")}
