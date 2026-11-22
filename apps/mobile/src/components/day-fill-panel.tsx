@@ -127,11 +127,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
- * wave 48 (#340) + wave 53 (#367) + wave 56 craft residual (BEA-544): header
- * paper/70 · support inkSoft/80 · stop name lineHeight. SoftFailBadge ·
- * SoftFailSupport · mist band unchanged. SoftFail copy never timber / Failed
- * to fetch. Yields web #248; Expo day tabs SoftFail (#230) stays on Days. No
- * `/dev` gallery.
+ * wave 48–56 (#340/#367/#387) + wave 60 craft residual (BEA-576): header
+ * eyebrow 1.8 · daysInput paper/80 · day SheetPresence stagger · support
+ * ladder inkSoft/80. SoftFailBadge · SoftFailSupport · mist band unchanged.
+ * SoftFail copy never timber / Failed to fetch. Yields web #248; Expo day
+ * tabs SoftFail (#230) stays on Days. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -416,8 +416,8 @@ export function DayFillPanel({
   return (
     <View style={styles.root} accessibilityLabel={t(locale, "planner.dayFill.title")}>
       {/*
-        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48 (#340) +
-        wave 53 (#367) + wave 56 craft (BEA-544): azure Day fill rail · header
+        Day-fill SoftFail kept (BEA-360 / BEA-400 / BEA-408) + wave 48–56 +
+        wave 60 craft (BEA-576): azure Day fill rail · header eyebrow 1.8 ·
         paper/70 · support inkSoft/80 · SoftFailBadge Soft fill · SoftFailSupport ·
         softFailMistWash tip-011 — craft ?dayFillSoftFail=1. Never timber.
       */}
@@ -783,7 +783,13 @@ export function DayFillPanel({
                 </View>
 
                 {proposal.days.map((day) => (
-                  <View key={day.dayIndex} style={styles.dayBlock}>
+                  <SheetPresence
+                    key={day.dayIndex}
+                    open
+                    delayMs={Math.min(day.dayIndex, 6) * 55}
+                    rise={8}
+                    style={styles.dayBlock}
+                  >
                     <View style={styles.dayHead}>
                       <Text style={styles.dayTitle}>
                         {t(locale, "planner.day")} {day.dayIndex + 1}
@@ -825,7 +831,7 @@ export function DayFillPanel({
                         </Text>
                       ) : null}
                     </View>
-                  </View>
+                  </SheetPresence>
                 ))}
               </Animated.View>
             </SheetPresence>
@@ -882,7 +888,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    /** Web sheet eyebrow tracking-[0.18em] — section/empty bar */
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -1024,8 +1031,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    /** Web bg-paper/80 — foam @ 0.85 */
-    backgroundColor: `${colors.foam}D9`,
+    /** Web bg-paper/80 — Lumen paper @ 0.80 */
+    backgroundColor: `${colors.paper}CC`,
     color: colors.ink,
     fontSize: 14,
     paddingHorizontal: 12,
@@ -1146,7 +1153,9 @@ const styles = StyleSheet.create({
   loadingHint: {
     ...type.body,
     fontSize: 12,
-    color: colors.inkSoft,
+    lineHeight: 18,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   empty: {
     maxWidth: 360,
@@ -1178,7 +1187,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     lineHeight: 22,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   preview: {
     overflow: "hidden",
@@ -1242,7 +1252,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 13,
     fontWeight: "400",
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   dayNote: {
     ...type.body,
@@ -1300,11 +1311,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
   noStops: {
     ...type.body,
     fontSize: 12,
-    color: colors.inkSoft,
+    lineHeight: 18,
+    /** Web text-ink-soft/80 */
+    color: `${colors.inkSoft}CC`,
   },
 });
