@@ -30,6 +30,7 @@ import {
   SoftFailNotice,
   SoftFailSupport,
   softFailMistWashClass,
+  softFailRailClass,
 } from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
@@ -279,11 +280,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   /** SoftFail copy owned by empty chrome — never inherit softNotice / timber. */
   const emptySoftCopy = t(locale, "translate.emptySoftFail");
   /**
-   * Talk SoftFail + craft SoftFail query residual parity (BEA-429 / Expo #301)
-   * + compact mist band residual (BEA-439): compact SoftFailNotice (`border-b`)
-   * under Talk rail. Craft: `/translate?talkSoftFail=1` seeds demo turns so
-   * Talk SoftFail can own (empty yields). SoftFail copy always talkSoftFail
-   * when craft — never timber / Failed to fetch.
+   * Talk SoftFail depth + Expo-web SoftFail depth parity residual (BEA-442
+   * after #322 compact mist band): azure Talk rail · SoftFailBadge Soft talk ·
+   * SoftFailSupport · compact SoftFailNotice mist band · tip-011 mist-wash
+   * compose. Craft: `/translate?talkSoftFail=1` seeds demo turns so Talk
+   * SoftFail can own (empty yields). SoftFail copy always talkSoftFail when
+   * craft — never timber / Failed to fetch.
    */
   const talkSoftOpen =
     tab === "conversation" &&
@@ -295,11 +297,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       ? t(locale, "translate.permissionMic")
       : (error ?? t(locale, "translate.error"));
   /**
-   * Dual / camera SoftFail + craft SoftFail query residual parity (BEA-429 /
-   * Expo #301) + compact mist band residual (BEA-439): compact SoftFailNotice
-   * (`border-b`) under camera rail. Craft: `/translate?dualSoftFail=1` opens
-   * camera tab SoftFail. SoftFail copy always dualSoftFail when craft —
-   * never timber / Failed to fetch.
+   * Dual / camera SoftFail depth + Expo-web SoftFail depth parity residual
+   * (BEA-442 after #322 compact mist band): azure dual rail · SoftFailBadge
+   * Soft dual · SoftFailSupport · compact SoftFailNotice mist band · tip-011
+   * mist-wash stage. Craft: `/translate?dualSoftFail=1` opens camera tab
+   * SoftFail. SoftFail copy always dualSoftFail when craft — never timber /
+   * Failed to fetch.
    */
   const dualSoftOpen =
     tab === "camera" && (dualSoftPreview || cameraDenied);
@@ -1361,39 +1364,62 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         </>
       ) : (
         <section
-          className="animate-sheet-in mt-6"
+          className="animate-sheet-in mt-6 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp"
           aria-label={t(locale, "translate.mode.camera")}
         >
-          <div className="mb-3">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
-                  {t(locale, "translate.mode.camera")}
-                </p>
+          {/*
+            Dual SoftFail depth + Expo-web SoftFail depth parity (BEA-442 after
+            #322): azure dual rail · SoftFailBadge Soft dual · SoftFailSupport ·
+            compact SoftFailNotice mist band · tip-011 mist-wash stage. Craft:
+            ?dualSoftFail=1 — never timber / Failed to fetch.
+          */}
+          <header
+            className={`relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6 ${
+              dualSoftOpen ? softFailRailClass : "bg-paper/60"
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                {t(locale, "translate.mode.camera")}
+              </p>
+              {dualSoftOpen ? (
+                <div className="mt-1 max-w-lg">
+                  <SoftFailSupport>
+                    {t(locale, "translate.dualSoftSupport")}
+                  </SoftFailSupport>
+                </div>
+              ) : (
                 <p className="mt-1 text-sm text-ink-soft">
                   {t(locale, "translate.dualHint")}
                 </p>
-              </div>
+              )}
             </div>
-            {/*
-              Compact SoftFail mist band under camera rail (BEA-439) —
-              craft: ?dualSoftFail=1. SoftFailBadge / SoftFailSupport SoftFail
-              depth deferred to SoftFail Expo-web SoftFail depth parity
-              (BEA-442). Never timber / Failed to fetch.
-            */}
-            <SoftFailNotice
-              open={dualSoftOpen}
-              compact
-              className="mt-3 border-b border-[color:var(--bp-line)]"
-            >
-              {dualSoftCopy}
-            </SoftFailNotice>
-          </div>
+            {dualSoftOpen ? (
+              <SoftFailBadge>
+                {t(locale, "translate.dualSoftBadge")}
+              </SoftFailBadge>
+            ) : (
+              <SoftFailLiveBadge>
+                {t(locale, "translate.dualLiveBadge")}
+              </SoftFailLiveBadge>
+            )}
+          </header>
+
+          {/* Compact SoftFail mist band under azure dual rail — never timber. */}
+          <SoftFailNotice
+            open={dualSoftOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {dualSoftCopy}
+          </SoftFailNotice>
 
           {cameraStarting && !cameraReady ? (
-            <DualCameraSkeleton />
+            <div className={dualSoftOpen ? softFailMistWashClass : undefined}>
+              <DualCameraSkeleton />
+            </div>
           ) : (
-            <div className="overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp">
+            <div className={dualSoftOpen ? softFailMistWashClass : undefined}>
               <div className="grid md:grid-cols-2">
                 {/* Traveler lens */}
                 <div className="relative isolate min-h-[240px] border-b border-[color:var(--bp-line)] md:min-h-[340px] md:border-b-0 md:border-r">
@@ -1551,16 +1577,43 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           className="animate-rise sticky bottom-0 z-20 mt-10 -mx-6 overflow-hidden rounded-t-bp-lg border border-b-0 border-[color:var(--bp-line)] bg-foam/92 shadow-[0_-12px_40px_rgba(15,23,42,0.06)] backdrop-blur-md md:-mx-10"
           style={{ animationDelay: "160ms" }}
         >
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] bg-paper/70 px-6 py-3.5 md:px-10">
+          {/*
+            Talk SoftFail depth + Expo-web SoftFail depth parity (BEA-442 after
+            #322): azure Talk rail · SoftFailBadge Soft talk · SoftFailSupport ·
+            compact SoftFailNotice mist band · tip-011 mist-wash compose. Craft:
+            ?talkSoftFail=1 — yields while empty owns; never timber.
+          */}
+          <header
+            className={`flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] px-6 py-3.5 shadow-[inset_3px_0_0_var(--bp-river)] md:px-10 ${
+              talkSoftOpen ? softFailRailClass : "bg-paper/70"
+            }`}
+          >
             <div className="min-w-0">
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
                 {t(locale, "translate.talkRail")}
               </p>
-              <p className="mt-1 max-w-lg text-sm leading-relaxed text-ink-soft">
-                {t(locale, "translate.talkHint")}
-              </p>
+              {talkSoftOpen ? (
+                <div className="mt-1 max-w-lg">
+                  <SoftFailSupport>
+                    {t(locale, "translate.talkSoftSupport")}
+                  </SoftFailSupport>
+                </div>
+              ) : (
+                <p className="mt-1 max-w-lg text-sm leading-relaxed text-ink-soft">
+                  {t(locale, "translate.talkHint")}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {talkSoftOpen ? (
+                <SoftFailBadge>
+                  {t(locale, "translate.talkSoftBadge")}
+                </SoftFailBadge>
+              ) : (
+                <SoftFailLiveBadge>
+                  {t(locale, "translate.talkLiveBadge")}
+                </SoftFailLiveBadge>
+              )}
               <button
                 type="button"
                 onClick={() => setTtsEnabled((v) => !v)}
@@ -1578,13 +1631,9 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 {apiBase()}
               </span>
             </div>
-          </div>
+          </header>
 
-          {/*
-            Compact SoftFail mist band under Talk rail (BEA-439) — yields while
-            empty history owns soft-fail. Craft: ?talkSoftFail=1. SoftFailBadge /
-            SoftFailSupport SoftFail depth deferred to BEA-442. Never timber.
-          */}
+          {/* Compact SoftFail mist band under azure Talk rail — never timber. */}
           <SoftFailNotice
             open={talkSoftOpen}
             compact
@@ -1593,7 +1642,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             {talkSoftCopy}
           </SoftFailNotice>
 
-          <div className="space-y-3 px-6 py-4 md:px-10">
+          <div
+            className={`space-y-3 px-6 py-4 md:px-10 ${
+              talkSoftOpen ? softFailMistWashClass : ""
+            }`}
+          >
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 ref={draftRef}
