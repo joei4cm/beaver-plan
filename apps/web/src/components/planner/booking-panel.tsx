@@ -633,7 +633,7 @@ export function BookingPanel({
                 role="status"
                 aria-live="polite"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                   {t(locale, "planner.booking.emptyEyebrow")}
                 </p>
                 <p className="font-display text-lg font-semibold tracking-tight text-ink">
@@ -722,7 +722,7 @@ export function BookingPanel({
                 style={{ animationDelay: "70ms" }}
                 role="status"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                   {t(locale, "planner.booking.emptyEyebrow")}
                 </p>
                 <p className="text-sm leading-relaxed text-ink-soft">

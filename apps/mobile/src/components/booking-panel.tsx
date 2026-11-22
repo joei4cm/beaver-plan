@@ -1188,9 +1188,11 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    /** Web empty-stage 0.18em bar (#351 / map search empty). */
+    letterSpacing: 1.8,
     textTransform: "uppercase",
-    color: "rgba(47,107,255,0.8)",
+    /** Web text-river/80 */
+    color: `${colors.river}CC`,
   },
   emptyResults: {
     ...type.display,

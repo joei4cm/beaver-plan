@@ -561,7 +561,7 @@ export function DayFillPanel({
               role="status"
               aria-live="polite"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                 {t(locale, "planner.dayFill.emptyEyebrow")}
               </p>
               <p className="font-display text-lg font-semibold leading-snug tracking-tight text-ink">
