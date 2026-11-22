@@ -905,7 +905,7 @@ export default function TripDetailScreen() {
     (m) => presenceFor(m.role) === "active",
   ).length;
   /**
-   * Invite SoftFailNotice depth (BEA-300 after #186):
+   * Invite SoftFailNotice depth (BEA-300 after #186 / #228):
    * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
    * softSupport · tip-011. Presence SoftFail yields while invite open
    * (BEA-374). Soft copy never timber / Failed to fetch.
@@ -914,6 +914,29 @@ export default function TripDetailScreen() {
   const inviteSoftCopy = collabSoftOffline
     ? t(locale, "collab.inviteSoftFail")
     : t(locale, "collab.inviteDemoNotice");
+
+  /**
+   * Expo collab timeline SoftFailNotice depth (BEA-371 after #112):
+   * azure Timeline rail · Soft timeline badge · softSupport · compact SoftFail
+   * mist band (`border-b`) · tip-011 SheetPresence mist-wash track ·
+   * StyleSheet.flatten · Lumen tokens. SoftFail copy never timber /
+   * Failed to fetch. Yields while invite SoftFail (#228) owns the invite
+   * sheet (no double depth). Web collab timeline SoftFail (#252) stays out
+   * of scope.
+   */
+  const timelineSoftNoise = collabSeeded || collabSoftOffline;
+  const timelineSoftOpen = timelineSoftNoise && !inviteOpen;
+  const timelineSoftCopy = collabSoftOffline
+    ? t(locale, "collab.panel.timelineSoftFail")
+    : t(locale, "collab.panel.timelineDemoNotice");
+  const timelineSupportCopy = timelineSoftOpen
+    ? t(locale, "collab.panel.timelineSoftSupport")
+    : t(locale, "collab.panel.timelineSupport");
+  const timelineCount = t(locale, "collab.panel.count").replace(
+    "{n}",
+    String(activity.length),
+  );
+  const showTimeline = activity.length > 0 || timelineSoftNoise;
 
   /** Title + stop-list chrome hierarchy after web #105 / Expo #148. */
   const dayEmpty = dayStops.length === 0;
@@ -2400,27 +2423,97 @@ export default function TripDetailScreen() {
                     ))}
                   </View>
                 ) : null}
-                {activity.length > 0 ? (
-                  <View style={styles.collabThread}>
-                    <Text style={styles.collabSectionLabel}>
-                      {t(locale, "collab.panel.tab.activity")}
-                    </Text>
-                    {activity.slice(0, 4).map((ev) => (
-                      <View key={ev.id} style={styles.activityRail}>
-                        <View style={styles.activityMeta}>
-                          <Text style={styles.activityType}>
-                            {t(locale, `collab.activity.${ev.type}`)}
+                {showTimeline ? (
+                  <SheetPresence
+                    open
+                    delayMs={40}
+                    rise={12}
+                    style={styles.timelineSheet}
+                    accessibilityLabel={t(locale, "collab.panel.tab.activity")}
+                  >
+                    {/*
+                      Timeline SoftFail depth (BEA-371 after #112):
+                      azure Timeline rail · Soft timeline · softSupport ·
+                      SoftFailNotice mist band · tip-011 mist-wash track —
+                      yields invite SoftFail (#228) while sheet open · never
+                      timber / Failed to fetch. Web #252 out of scope.
+                    */}
+                    <View
+                      style={StyleSheet.flatten([
+                        styles.timelineHeader,
+                        timelineSoftOpen ? styles.timelineHeaderSoft : null,
+                      ])}
+                    >
+                      <View style={styles.timelineHeaderRow}>
+                        <View style={styles.timelineTitles}>
+                          <Text style={styles.timelineEyebrow}>
+                            {t(locale, "collab.panel.timelineEyebrow")}
                           </Text>
-                          {ev.actorDisplayName ? (
-                            <Text style={styles.activityActor}>
-                              {ev.actorDisplayName}
-                            </Text>
-                          ) : null}
+                          <Text style={styles.timelineCount}>
+                            {timelineCount}
+                          </Text>
                         </View>
-                        <Text style={styles.activitySummary}>{ev.summary}</Text>
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.timelineStatusBadge,
+                            timelineSoftOpen
+                              ? styles.timelineStatusBadgeSoft
+                              : styles.timelineStatusBadgeLive,
+                          ])}
+                        >
+                          {timelineSoftOpen
+                            ? t(locale, "collab.panel.timelineSoftBadge")
+                            : t(locale, "collab.panel.liveBadge")}
+                        </Text>
                       </View>
-                    ))}
-                  </View>
+                      <Text style={styles.timelineSupport}>
+                        {timelineSupportCopy}
+                      </Text>
+                    </View>
+                    {/* Compact SoftFail mist band under azure Timeline rail. */}
+                    <SoftFailNotice
+                      open={timelineSoftOpen}
+                      compact
+                      style={styles.timelineSoftFail}
+                    >
+                      {timelineSoftCopy}
+                    </SoftFailNotice>
+                    <View
+                      style={StyleSheet.flatten([
+                        styles.timelineBody,
+                        timelineSoftOpen ? styles.timelineBodySoft : null,
+                      ])}
+                    >
+                      {activity.slice(0, 4).map((ev, i) => (
+                        <SheetPresence
+                          key={ev.id}
+                          open
+                          delayMs={Math.min(i, 8) * 35 + 70}
+                          rise={8}
+                          style={styles.activityRail}
+                        >
+                          <View style={styles.activityMeta}>
+                            {i === 0 ? (
+                              <Text style={styles.activityNow}>
+                                {t(locale, "collab.panel.timelineNow")}
+                              </Text>
+                            ) : null}
+                            <Text style={styles.activityType}>
+                              {t(locale, `collab.activity.${ev.type}`)}
+                            </Text>
+                            {ev.actorDisplayName ? (
+                              <Text style={styles.activityActor}>
+                                {ev.actorDisplayName}
+                              </Text>
+                            ) : null}
+                          </View>
+                          <Text style={styles.activitySummary}>
+                            {ev.summary}
+                          </Text>
+                        </SheetPresence>
+                      ))}
+                    </View>
+                  </SheetPresence>
                 ) : null}
               </View>
             </View>
@@ -3736,6 +3829,105 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.inkSoft,
   },
+  /** Timeline SoftFail sheet — azure rail · mist SoftFail · tip-011 (BEA-371). */
+  timelineSheet: {
+    marginTop: 10,
+    overflow: "hidden",
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  timelineHeader: {
+    gap: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  /** Soft azure Timeline rail wash when SoftFail owns depth (BEA-371). */
+  timelineHeaderSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.88)",
+  },
+  timelineHeaderRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  timelineTitles: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  timelineEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  timelineCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "500",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(71, 85, 105, 0.8)",
+  },
+  timelineSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(71, 85, 105, 0.8)",
+    maxWidth: 420,
+  },
+  timelineStatusBadge: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  timelineStatusBadgeSoft: {
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+  },
+  timelineStatusBadgeLive: {
+    color: colors.river,
+    backgroundColor: "rgba(47,107,255,0.12)",
+  },
+  /** Mist SoftFail strip under azure Timeline rail — border-b before tip-011 track. */
+  timelineSoftFail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
+  timelineBody: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+    backgroundColor: "rgba(230, 236, 245, 0.18)",
+  },
+  /** tip-011 mist-wash track while SoftFail owns Timeline (BEA-371). */
+  timelineBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.36)",
+  },
   activityRail: {
     borderLeftWidth: 2,
     borderLeftColor: "rgba(47,107,255,0.28)",
@@ -3747,6 +3939,21 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     alignItems: "center",
     gap: 6,
+  },
+  activityNow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: colors.river,
+    backgroundColor: "rgba(47,107,255,0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
   },
   activityType: {
     ...type.body,
