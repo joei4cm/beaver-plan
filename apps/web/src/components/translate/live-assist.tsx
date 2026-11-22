@@ -1392,9 +1392,13 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         >
           {/*
             Dual SoftFail depth + Expo-web SoftFail depth parity (BEA-442 after
-            #322): azure dual rail · SoftFailBadge Soft dual · SoftFailSupport ·
-            compact SoftFailNotice mist band · tip-011 mist-wash stage. Craft:
-            ?dualSoftFail=1 — never timber / Failed to fetch.
+            #322) + Dual CTA color settle (BEA-785 / wave 73): azure dual rail ·
+            SoftFailBadge Soft dual · SoftFailSupport · compact SoftFailNotice
+            mist band · tip-011 mist-wash stage · control CTAs
+            `ease-bp-out-strong` (emptyCta / tip-011 / #484–#486 twin). Craft:
+            ?dualSoftFail=1 — never timber / Failed to fetch. SoftFail /
+            history prefer / Dual prefer LIVE leave · not Export (#486) ·
+            Mode (#485) · collab (#484).
           */}
           <header
             className={`relative flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] px-5 py-4 shadow-[inset_3px_0_0_var(--bp-river)] md:px-6 ${
@@ -1513,7 +1517,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                         <button
                           type="button"
                           onClick={() => void startCamera()}
-                          className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98]"
+                          className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out-strong hover:bg-river-deep active:scale-[0.98]"
                         >
                           {t(locale, "translate.enableCamera")}
                         </button>
@@ -1557,7 +1561,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 </div>
               </div>
 
-              {/* Control chrome rail — Live dual (tip-011 press · Talk parity) */}
+              {/* Control chrome rail — Live dual (tip-011 press · Talk parity · BEA-785 out-strong) */}
               <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--bp-line)] bg-paper/85 px-3 py-3 backdrop-blur-sm">
                 <button
                   type="button"
@@ -1568,7 +1572,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                     void startCamera(next);
                   }}
                   disabled={cameraStarting}
-                  className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft duration-bp-fast ease-bp-out hover:border-river/30 hover:text-river active:scale-[0.98] disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-foam px-4 py-2.5 text-sm font-medium text-ink-soft duration-bp-fast ease-bp-out-strong hover:border-river/30 hover:text-river active:scale-[0.98] disabled:opacity-50"
                 >
                   {facing === "environment"
                     ? t(locale, "translate.cameraFront")
@@ -1578,7 +1582,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={() => void onVision("ocr")}
                   disabled={busy || cameraStarting}
-                  className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft duration-bp-fast ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
                 >
                   {busy
                     ? t(locale, "translate.translating")
@@ -1588,7 +1592,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={() => void onVision("caption")}
                   disabled={busy || cameraStarting}
-                  className="bp-transition rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out hover:bg-ink active:scale-[0.98] disabled:opacity-50"
+                  className="bp-transition rounded-bp-sm bg-river-deep px-4 py-2.5 text-sm font-semibold text-foam duration-bp-fast ease-bp-out-strong hover:bg-ink active:scale-[0.98] disabled:opacity-50"
                 >
                   {t(locale, "translate.caption")}
                 </button>
@@ -1612,9 +1616,13 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         >
           {/*
             Talk SoftFail depth + Expo-web SoftFail depth parity (BEA-442 after
-            #322): azure Talk rail · SoftFailBadge Soft talk · SoftFailSupport ·
-            compact SoftFailNotice mist band · tip-011 mist-wash compose. Craft:
-            ?talkSoftFail=1 — yields while empty owns; never timber.
+            #322) + HoldMic / Talk CTA color settle (BEA-785 / wave 73): azure
+            Talk rail · SoftFailBadge Soft talk · SoftFailSupport · compact
+            SoftFailNotice mist band · tip-011 mist-wash compose · HoldMic /
+            Send / Queue / NextDemo `ease-bp-out-strong` (emptyCta / tip-011 /
+            #484–#486 twin). Craft: ?talkSoftFail=1 — yields while empty owns;
+            never timber. SoftFail / history prefer leave · not Export (#486) ·
+            Mode (#485) · collab (#484).
           */}
           <header
             className={`flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--bp-line)] px-6 py-3.5 shadow-[inset_3px_0_0_var(--bp-river)] md:px-10 ${
@@ -1701,7 +1709,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 type="button"
                 onClick={() => void onSend()}
                 disabled={busy}
-                className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam duration-bp-fast ease-bp-out hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
+                className="bp-transition rounded-bp-sm bg-river px-4 py-2.5 text-sm font-medium text-foam duration-bp-fast ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] disabled:opacity-50"
               >
                 {busy
                   ? t(locale, "translate.translating")
@@ -1711,7 +1719,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 type="button"
                 onClick={() => void onQueueDraft()}
                 disabled={busy || !draft.trim()}
-                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
+                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-2.5 text-sm font-medium text-river duration-bp-fast ease-bp-out-strong hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
               >
                 {t(locale, "translate.queueAdd")}
               </button>
@@ -1736,7 +1744,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 }}
                 disabled={busy && !listening}
                 aria-pressed={listening}
-                className={`bp-transition relative min-w-[12rem] flex-1 rounded-bp px-5 py-3.5 text-sm font-semibold text-foam duration-bp ease-bp-out disabled:opacity-50 ${
+                className={`bp-transition relative min-w-[12rem] flex-1 rounded-bp px-5 py-3.5 text-sm font-semibold text-foam duration-bp ease-bp-out-strong disabled:opacity-50 ${
                   listening
                     ? "animate-hold-listen bg-ink"
                     : "bg-river shadow-bp-soft hover:bg-river-deep active:scale-[0.98]"
@@ -1750,7 +1758,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                 type="button"
                 onClick={() => void runTurn({})}
                 disabled={busy}
-                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3.5 text-sm font-medium text-river duration-bp-fast ease-bp-out hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
+                className="bp-transition rounded-bp-sm border border-[color:var(--bp-line)] bg-paper px-4 py-3.5 text-sm font-medium text-river duration-bp-fast ease-bp-out-strong hover:border-river/40 active:scale-[0.98] disabled:opacity-50"
               >
                 {t(locale, "translate.nextDemo")}
               </button>
