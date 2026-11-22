@@ -1107,8 +1107,9 @@ export default function TripDetailScreen() {
   /**
    * Expo Offline pin SoftFail depth kept (BEA-448 / BEA-450) + wave 49 craft
    * (BEA-474 / #343) + wave 52 residual (BEA-499) + wave 54 pins-list residual
-   * (BEA-525): always-on azure offline pin rail · tip-011 SheetPresence rise ·
-   * tip-011 pin press · pinned river shadow · inkSoft alpha · status
+   * (BEA-525) + wave 57 residual (BEA-550): always-on azure offline pin rail ·
+   * tip-011 SheetPresence rise · tip-011 pin press · pinned river shadow ·
+   * foam/paper hex-alpha · pin label lineHeight · inkSoft alpha · status
    * leading-relaxed. SoftFailBadge Soft pin · SoftFailSupport · mist band
    * unchanged. Craft: /trips/…?pinSoftFail=1 — SoftFail depth without a pin
    * miss. Soft copy always offline.pinSoftFail — never timber / Failed to
@@ -2319,11 +2320,12 @@ export default function TripDetailScreen() {
             <View style={styles.secondaryBlock}>
               {/*
                 SoftFail kept (BEA-448 / BEA-450) + wave 49 (#343) + wave 52
-                (BEA-499) + wave 54 (BEA-525): always-on azure offline pin rail ·
-                tip-011 SheetPresence rise · tip-011 pin press · pinned river
-                shadow · inkSoft alpha · SoftFailBadge Soft pin · SoftFailSupport ·
-                mist band. Craft: ?pinSoftFail=1 — SoftFail depth without a pin
-                miss. Soft copy never timber / Failed to fetch. No `/dev` gallery.
+                (BEA-499) + wave 54 (BEA-525) + wave 57 (BEA-550): always-on azure
+                offline pin rail · tip-011 SheetPresence rise · tip-011 pin press ·
+                pinned river shadow · foam/paper hex-alpha · SoftFailBadge Soft
+                pin · SoftFailSupport · mist band. Craft: ?pinSoftFail=1 —
+                SoftFail depth without a pin miss. Soft copy never timber /
+                Failed to fetch. No `/dev` gallery.
               */}
               <View
                 style={StyleSheet.flatten([
@@ -4053,14 +4055,15 @@ const styles = StyleSheet.create({
   secondaryBlock: {
     marginTop: 4,
   },
-  /** Offline pin chrome — always-on azure rail (#343 / #360 / BEA-525) · SoftFail wash. */
+  /** Offline pin chrome — always-on azure rail (#343 / #360 / #376 / BEA-550) · SoftFail wash. */
   pinChrome: {
     marginBottom: 18,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.sm,
-    backgroundColor: colors.foam,
+    /** Web bg-foam/95 — wave 57 pins residual (BEA-550). */
+    backgroundColor: `${colors.foam}F2`,
   },
   pinChromeSoft: {
     backgroundColor: colors.paper,
@@ -4079,7 +4082,8 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: colors.paper,
+    /** Web bg-paper/70 — presenceChrome / transfer header parity. */
+    backgroundColor: `${colors.paper}B3`,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
@@ -4125,7 +4129,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.foam,
+    /** Web unpinned `bg-foam/60`. */
+    backgroundColor: `${colors.foam}99`,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 8,
@@ -4148,6 +4153,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,
+    lineHeight: 20,
     color: colors.river,
   },
   pinLabelActive: {

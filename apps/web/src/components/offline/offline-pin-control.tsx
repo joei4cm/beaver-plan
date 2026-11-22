@@ -38,11 +38,12 @@ type SoftFailKind = "pin" | "sync";
 /**
  * Offline pin / map-cache chrome — SoftFail depth kept (BEA-448 / BEA-450 /
  * #323) + wave 49 craft (BEA-474 / #343) + wave 52 residual (BEA-499) +
- * wave 54 pins-list residual (BEA-525): Lumen eyebrow · tip-011 header rise ·
- * body stagger · pinned hover river-deep · status leading-relaxed.
- * SoftFailBadge · SoftFailSupport · mist band unchanged. Craft: ?pinSoftFail=1 —
- * SoftFail depth without a pin/sync miss. Soft copy never timber / Failed to
- * fetch. No `/dev` gallery.
+ * wave 54 pins-list residual (BEA-525) + wave 57 residual (BEA-550): Lumen
+ * eyebrow · tip-011 header rise · body stagger · pinned hover river-deep ·
+ * sync tip-011 ease-bp-out-strong · status leading-relaxed. SoftFailBadge ·
+ * SoftFailSupport · mist band unchanged. Craft: ?pinSoftFail=1 — SoftFail
+ * depth without a pin/sync miss. Soft copy never timber / Failed to fetch.
+ * No `/dev` gallery.
  */
 export function OfflinePinControl({
   tripId,
@@ -202,7 +203,7 @@ export function OfflinePinControl({
           type="button"
           disabled={busy}
           onClick={() => void onFlush()}
-          className="text-xs font-medium text-river underline-offset-2 transition duration-bp-fast ease-bp-out hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-40"
+          className="text-xs font-medium text-river underline-offset-2 transition duration-bp-fast ease-bp-out-strong hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:opacity-40"
         >
           {t(locale, "offline.syncNow")}
         </button>
@@ -221,9 +222,10 @@ export function OfflinePinControl({
     >
       {/*
         SoftFail kept (BEA-448 / BEA-450) + wave 49 (#343) + wave 52 (BEA-499) +
-        wave 54 (BEA-525): azure Offline pin rail · Lumen eyebrow · tip-011 rise ·
-        body stagger · SoftFailBadge · SoftFailSupport — craft ?pinSoftFail=1.
-        Never timber / Failed to fetch.
+        wave 54 (BEA-525) + wave 57 (BEA-550): azure Offline pin rail · Lumen
+        eyebrow · tip-011 rise · body stagger · sync ease-bp-out-strong ·
+        SoftFailBadge · SoftFailSupport — craft ?pinSoftFail=1. Never timber /
+        Failed to fetch.
       */}
       {sheetChrome ? (
         <header
