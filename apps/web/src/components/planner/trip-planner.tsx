@@ -238,6 +238,33 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     ? t(locale, "planner.shareSoftSupport")
     : t(locale, "planner.shareSupport");
 
+  /**
+   * Transit filters SoftFailNotice depth (BEA-358 after #129 / BEA-170):
+   * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
+   * own selected-stop soft chrome. Soft mode badge · softSupport · compact
+   * SoftFail mist band (`border-b`) · tip-011 mist-wash. SoftFail yields while
+   * TransferSteps owns (no double depth). Soft copy always mode.softFail —
+   * never timber / Failed to fetch. Expo transit filters SoftFail (#256) stays
+   * out of scope.
+   */
+  const selectedStopIndex = selectedStopId
+    ? dayStops.findIndex((s) => s.id === selectedStopId)
+    : -1;
+  const selectedOutgoingLeg = selectedStopId
+    ? dayLegs.find((l) => l.fromStopId === selectedStopId)
+    : undefined;
+  const transitSoftOwns =
+    demoShell &&
+    selectedStopIndex >= 0 &&
+    (Boolean(selectedOutgoingLeg) ||
+      (!routing && selectedStopIndex < dayStops.length - 1));
+  const modeSoftOpen =
+    demoShell && dayLegs.length > 0 && !transitSoftOwns;
+  const modeSoftCopy = t(locale, "planner.mode.softFail");
+  const modeSupportCopy = modeSoftOpen
+    ? t(locale, "planner.mode.softSupport")
+    : t(locale, "planner.mode.support");
+
   useEffect(() => {
     if (!dayId) {
       setDayTabIndicator(null);
@@ -1003,24 +1030,67 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             />
           </div>
 
-          {/* Transit filter chips — mist-track · azure select · SoftFailNotice · #46 */}
+          {/*
+            Transit filters SoftFail depth (BEA-358 after #129 / BEA-170):
+            azure mode rail · Soft mode badge · softSupport · compact SoftFail
+            mist band (`border-b`) · tip-011 mist-wash — yields while
+            TransferSteps owns selected-stop soft chrome — never timber /
+            Failed to fetch. Expo transit filters SoftFail (#256) out of scope.
+          */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-3 px-4 py-3">
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
-                    {t(locale, "planner.mode.eyebrow")}
-                  </span>
-                  <span className="text-[11px] leading-snug text-ink-soft/80">
-                    {t(locale, "planner.mode.support")}
-                  </span>
-                  <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
-                    {t(locale, `planner.mode.${travelMode}`)} ·{" "}
-                    {t(locale, "planner.mode.selected")}
-                  </span>
-                </div>
+            <header
+              className={`relative flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 pt-2.5 pb-1.5 ${
+                modeSoftOpen
+                  ? "bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]"
+                  : ""
+              }`}
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                {t(locale, "planner.mode.eyebrow")}
+              </span>
+              <span className="text-[11px] leading-snug text-ink-soft/80">
+                {modeSupportCopy}
+              </span>
+              {modeSoftOpen ? (
+                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                  {t(locale, "planner.mode.softBadge")}
+                </span>
+              ) : (
+                <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
+                  {t(locale, `planner.mode.${travelMode}`)} ·{" "}
+                  {t(locale, "planner.mode.selected")}
+                </span>
+              )}
+            </header>
+
+            {/* Compact SoftFail mist band under azure mode rail — TransferSteps SoftFail yields. */}
+            <SoftFailNotice
+              open={modeSoftOpen}
+              compact
+              className="border-b border-[color:var(--bp-line)]"
+            >
+              {modeSoftCopy}
+            </SoftFailNotice>
+
+            <SheetPresence
+              open
+              style={{ animationDelay: "40ms" }}
+              aria-label={t(locale, "planner.mode.filterLabel")}
+            >
+              <div
+                className={`animate-rise flex flex-wrap items-end gap-x-4 gap-y-3 px-4 pb-3 pt-1.5 ${
+                  modeSoftOpen
+                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                    : ""
+                }`}
+                style={{ animationDelay: "70ms" }}
+              >
                 <div
-                  className="inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1"
+                  className={`inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1 ${
+                    modeSoftOpen
+                      ? "bg-mist/70 shadow-[inset_3px_0_0_var(--bp-river)]"
+                      : ""
+                  }`}
                   role="group"
                   aria-label={t(locale, "planner.mode.filterLabel")}
                 >
@@ -1043,39 +1113,33 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                     );
                   })}
                 </div>
+                <button
+                  type="button"
+                  disabled={routing || dayStops.length < 2}
+                  onClick={() => void generateRoutes()}
+                  className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {routing
+                    ? t(locale, "planner.routing")
+                    : t(locale, "planner.generateRoutes")}
+                </button>
+                {dayLegs.length > 0 && (
+                  <p className="pb-1 text-sm tabular-nums text-ink-soft">
+                    {dayLegs
+                      .map(
+                        (l) =>
+                          `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
+                      )
+                      .join("  →  ")}
+                  </p>
+                )}
+                {demoShell && dayLegs.length > 0 && (
+                  <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    {t(locale, "planner.transfer.demoBadge")}
+                  </span>
+                )}
               </div>
-              <button
-                type="button"
-                disabled={routing || dayStops.length < 2}
-                onClick={() => void generateRoutes()}
-                className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {routing
-                  ? t(locale, "planner.routing")
-                  : t(locale, "planner.generateRoutes")}
-              </button>
-              {dayLegs.length > 0 && (
-                <p className="pb-1 text-sm tabular-nums text-ink-soft">
-                  {dayLegs
-                    .map(
-                      (l) =>
-                        `${formatDuration(l.durationSec)} · ${formatDistance(l.distanceM)}`,
-                    )
-                    .join("  →  ")}
-                </p>
-              )}
-              {engineInfo?.mode !== "live" && dayLegs.length > 0 && (
-                <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
-                  {t(locale, "planner.transfer.demoBadge")}
-                </span>
-              )}
-            </div>
-            <SoftFailNotice
-              open={engineInfo?.mode !== "live" && dayLegs.length > 0}
-              compact
-            >
-              {t(locale, "planner.transfer.demoNotice")}
-            </SoftFailNotice>
+            </SheetPresence>
           </div>
         </section>
 
