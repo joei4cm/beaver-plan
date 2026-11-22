@@ -581,16 +581,20 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             className="relative flex w-full max-w-[440px] flex-col items-center overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] p-4 shadow-bp-soft md:p-5"
             style={{
               backgroundImage:
-                "radial-gradient(ellipse 85% 60% at 18% -5%, rgba(47,107,255,0.16), transparent 55%), linear-gradient(165deg, #FFFFFF 0%, #F4F6FA 48%, #DBE8FF 130%)",
+                "radial-gradient(ellipse 85% 60% at 18% -5%, color-mix(in srgb, var(--bp-river) 16%, transparent), transparent 55%), linear-gradient(165deg, var(--bp-foam) 0%, var(--bp-paper) 48%, color-mix(in srgb, var(--bp-river) 18%, var(--bp-foam)) 130%)",
             }}
           >
             <span
               aria-hidden
-              className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-river shadow-[0_0_12px_rgba(47,107,255,0.35)]"
+              className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-river"
+              style={{
+                boxShadow:
+                  "0 0 12px color-mix(in srgb, var(--bp-river) 35%, transparent)",
+              }}
             />
             <div className="mb-0 flex w-full max-w-[400px] items-center justify-between gap-2 pl-2">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "share.canvasEyebrow")}
                 </p>
                 {canvasEmpty ? (
@@ -667,7 +671,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   aria-label={t(locale, "share.empty")}
                 >
                   <p
-                    className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-river"
+                    className="animate-rise text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river"
                     style={{ animationDelay: "40ms" }}
                   >
                     {t(locale, "share.canvasEyebrow")}
@@ -787,7 +791,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </div>
 
               <div
-                className="grid grid-cols-2 gap-2.5"
+                className="grid grid-cols-2 gap-3"
                 role="listbox"
                 aria-label={t(locale, "share.pickTemplate")}
               >
@@ -801,7 +805,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       role="option"
                       aria-selected={selected}
                       onClick={() => pickTemplate(tpl.id)}
-                      className={`group flex flex-col overflow-hidden rounded-bp border text-left will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
+                      className={`group flex flex-col overflow-hidden rounded-bp border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 ${
                         selected
                           ? "animate-template-select border-river bg-river/[0.08] shadow-bp-soft ring-2 ring-river/30"
                           : "border-[color:var(--bp-line)] bg-foam/80 transition duration-bp ease-bp-out hover:border-river/45 hover:bg-foam hover:shadow-bp-soft hover:scale-[1.01]"
@@ -848,7 +852,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                       <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
                         <div className="flex items-start justify-between gap-1.5">
                           <span
-                            className={`font-display text-[0.95rem] font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
+                            className={`font-display text-base font-semibold leading-snug tracking-tight transition duration-bp-fast ease-bp-out ${
                               selected
                                 ? "text-river"
                                 : "text-ink group-hover:text-river"
@@ -1022,7 +1026,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     </SectionEyebrow>
                     <h2
                       id="share-export-title"
-                      className="mt-1 font-display text-base tracking-tight text-ink md:text-lg"
+                      className="mt-1 font-display text-lg tracking-tight text-ink md:text-xl"
                     >
                       {t(locale, "share.export")}
                     </h2>
@@ -1058,7 +1062,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
                 <SheetPresence
                   open
-                  className={`flex flex-col gap-2.5 px-3 py-3 ${
+                  className={`flex flex-col gap-3 px-3 py-3 ${
                     exportOwnsSoft ? softFailMistWashClass : ""
                   }`}
                   style={{ animationDelay: "40ms" }}
@@ -1079,7 +1083,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     type="button"
                     disabled={busy || !preview}
                     onClick={() => void shareNative()}
-                    className="animate-rise rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
+                    className="animate-rise rounded-bp bg-ink px-4 py-3 text-sm font-semibold text-foam transition duration-bp ease-bp-out-strong hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-foam disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ animationDelay: "70ms" }}
                   >
                     {t(locale, "share.systemShare")}
