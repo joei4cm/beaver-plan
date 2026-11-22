@@ -1312,7 +1312,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1,
+    /** Web tracking-[0.12em] price twin (BEA-670). */
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     /** Web text-river/75 (BEA-659). */
     color: `${colors.river}BF`,
