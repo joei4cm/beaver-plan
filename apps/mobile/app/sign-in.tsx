@@ -457,10 +457,6 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
-  /** Mist wash on tip-011 body while SoftFail owns the rail. */
-  sheetBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
-  },
   providersBody: {
     gap: 12,
   },

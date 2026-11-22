@@ -1479,7 +1479,9 @@ export default function TripDetailScreen() {
                   <View
                     style={StyleSheet.flatten([
                       styles.modeFilterBody,
-                      modeSoftOpen ? styles.modeFilterBodySoft : null,
+                      modeSoftOpen
+                        ? [softFailMistWashStyle, styles.modeFilterBodySoft]
+                        : null,
                     ])}
                   >
                     <View
@@ -3049,9 +3051,8 @@ const styles = StyleSheet.create({
     columnGap: 10,
     rowGap: 8,
   },
-  /** Mist-wash mode body when SoftFail open (BEA-342 tip-011). */
+  /** SoftFail mode body pad — mist density from softFailMistWashStyle (tip-011 /25). */
   modeFilterBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
     borderRadius: radius.sm,
     paddingHorizontal: 4,
     paddingVertical: 4,
@@ -3707,10 +3708,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 8,
   },
-  /** Mist-wash chips body when Presence SoftFail open (tip-011). */
-  presenceBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.28)",
-  },
   presenceTrack: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -3922,10 +3919,6 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
-  /** tip-011 mist-wash track while SoftFail owns Timeline (BEA-371). */
-  timelineBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.36)",
-  },
   activityRail: {
     borderLeftWidth: 2,
     borderLeftColor: "rgba(47,107,255,0.28)",
@@ -4085,9 +4078,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
-  },
-  inviteSheetBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
   },
   inviteCodeInset: {
     gap: 10,

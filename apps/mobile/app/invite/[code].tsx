@@ -493,9 +493,6 @@ const styles = StyleSheet.create({
     gap: 16,
     backgroundColor: "rgba(230, 236, 245, 0.18)",
   },
-  sheetBodySoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.32)",
-  },
   tripInset: {
     gap: 6,
     overflow: "hidden",
