@@ -849,6 +849,15 @@ export default function JournalScreen() {
                       emptySoftOpen ? styles.emptySoft : null,
                     ])}
                   >
+                    {/*
+                      Empty-stage craft residual (BEA-537) — web empty CTA:
+                      river listEyebrow · display title · hint · tip-011 CTA
+                      press. SoftFail mist wash stays on the outer shell;
+                      SoftFail depth unchanged.
+                    */}
+                    <Text style={styles.emptyEyebrow}>
+                      {t(locale, "journal.listEyebrow")}
+                    </Text>
                     <Text style={styles.emptyTitle}>
                       {t(locale, "journal.empty")}
                     </Text>
@@ -1613,12 +1622,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
   },
+  /** River eyebrow inside empty stage — web listEyebrow + planner emptyDayEyebrow parity. */
+  emptyEyebrow: {
+    ...type.body,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
+    color: colors.river,
+    fontWeight: "700",
+  },
   emptyTitle: {
     ...type.display,
     fontSize: 24,
     fontWeight: "700",
     letterSpacing: -0.3,
     color: colors.ink,
+    marginTop: 8,
   },
   hint: {
     ...type.body,
