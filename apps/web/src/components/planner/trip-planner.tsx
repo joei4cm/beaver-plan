@@ -167,6 +167,30 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       return false;
     }
   });
+  /** Craft preview: /trips/…?shareSoftFail=1 — SoftFail depth under Export (BEA-429). */
+  const [shareSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("shareSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…?emptySoftFail=1 — SoftFail depth under empty Stops (BEA-429). */
+  const [emptySoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("emptySoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [pending, startTransition] = useTransition();
   const [duplicating, setDuplicating] = useState(false);
   const [copyJournal, setCopyJournal] = useState(false);
@@ -261,15 +285,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     ? t(locale, "planner.drawer.softSupport")
     : t(locale, "planner.drawer.support");
   /**
-   * Empty SoftFailNotice depth (BEA-355 after #122 / BEA-222):
-   * azure Stops rail · Soft empty badge · softSupport · compact SoftFail mist
-   * band · tip-011 mist-wash empty body. Yields to drawer SoftFail (#257),
-   * day-fill SoftFail (#248), drag SoftFail (BEA-348), and stop chips SoftFail
-   * (BEA-367) — no double depth. SoftFail copy always emptySoftFail (never
-   * inherit transfer / drag timber).
+   * Empty SoftFailNotice depth (BEA-355 after #122 / BEA-222) + craft SoftFail
+   * query residual (BEA-429): azure Stops rail · Soft empty badge · softSupport ·
+   * compact SoftFail mist band · tip-011 mist-wash empty body. Craft:
+   * `/trips/…?emptySoftFail=1` forces SoftFail under empty Stops. Yields to
+   * drawer SoftFail (#257), day-fill SoftFail (#248), drag SoftFail (BEA-348),
+   * and stop chips SoftFail (BEA-367) — no double depth. SoftFail copy always
+   * emptySoftFail (never inherit transfer / drag timber). Journal empty SoftFail
+   * craft stays on /journal (BEA-428).
    */
   const listSoftOpen = emptyOwnsSoft
-    ? Boolean(softNotice || plannerNoise || demoShell)
+    ? Boolean(emptySoftPreview || softNotice || plannerNoise || demoShell)
     : dragOwnsSoft
       ? true
       : chipsSoftOpen;
@@ -301,13 +327,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       ? dragSoftFailCopy
       : t(locale, "planner.stops.softFail");
   /**
-   * Share CTA SoftFailNotice depth (BEA-362 after #121):
-   * azure Export rail · Soft share badge · softSupport · compact SoftFail mist
-   * band · tip-011 mist-wash CTA. Own rail — empty / drawer SoftFails stay under
-   * Stops / Itinerary. Yield share export SoftFail (#255) / share studio SoftFail
-   * (#243) on /share. SoftFail copy always shareSoftFail.
+   * Share CTA SoftFailNotice depth (BEA-362 after #121) + craft SoftFail query
+   * residual (BEA-429): azure Export rail · Soft share badge · softSupport ·
+   * compact SoftFail mist band · tip-011 mist-wash CTA. Craft:
+   * `/trips/…?shareSoftFail=1` forces SoftFail under Export. Own rail — empty /
+   * drawer SoftFails stay under Stops / Itinerary. Yield share export SoftFail
+   * (#255) / share studio SoftFail (#243) on /share. SoftFail copy always
+   * shareSoftFail.
    */
-  const shareSoftOpen = demoShell || plannerNoise;
+  const shareSoftOpen = shareSoftPreview || demoShell || plannerNoise;
   const shareSupportCopy = shareSoftOpen
     ? t(locale, "planner.shareSoftSupport")
     : t(locale, "planner.shareSupport");
@@ -958,8 +986,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       {/*
         Share CTA SoftFail depth (BEA-362 after #121):
         azure Export rail · Soft share badge · softSupport · compact SoftFail
-        mist band · tip-011 mist-wash CTA · yield share export SoftFail (#255) /
-        share studio SoftFail (#243) on /share — never timber / Failed to fetch.
+        mist band · tip-011 mist-wash CTA · Craft: ?shareSoftFail=1 · yield
+        share export SoftFail (#255) / share studio SoftFail (#243) on /share —
+        never timber / Failed to fetch.
       */}
       <header className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
         <div>

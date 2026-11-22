@@ -123,7 +123,7 @@ function newLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
-/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1` / `?searchSoftFail=1` / `?placeSoftFail=1`). */
+/** Craft SoftFail query parity with web (`?stopsSoftFail=1` / `?dragSoftFail=1` / `?dayFillSoftFail=1` / `?otaSoftFail=1` / `?confirmSoftFail=1` / `?presenceSoftFail=1` / `?inviteSoftFail=1` / `?timelineSoftFail=1` / `?modeSoftFail=1` / `?transferSoftFail=1` / `?searchSoftFail=1` / `?placeSoftFail=1` / `?daysSoftFail=1` / `?emptySoftFail=1`). */
 function craftSoftFailOn(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
@@ -145,6 +145,8 @@ export default function TripDetailScreen() {
     transferSoftFail: transferSoftFailParam,
     searchSoftFail: searchSoftFailParam,
     placeSoftFail: placeSoftFailParam,
+    daysSoftFail: daysSoftFailParam,
+    emptySoftFail: emptySoftFailParam,
   } = useLocalSearchParams<{
     id: string;
     stopsSoftFail?: string | string[];
@@ -159,6 +161,8 @@ export default function TripDetailScreen() {
     transferSoftFail?: string | string[];
     searchSoftFail?: string | string[];
     placeSoftFail?: string | string[];
+    daysSoftFail?: string | string[];
+    emptySoftFail?: string | string[];
   }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
   /** Craft preview: /trips/…?stopsSoftFail=1 — SoftFail depth under stop chips. */
@@ -185,6 +189,10 @@ export default function TripDetailScreen() {
   const searchSoftPreview = craftSoftFailOn(searchSoftFailParam);
   /** Craft preview: /trips/…?placeSoftFail=1 — SoftFail depth under Place intel (BEA-422). */
   const placeSoftPreview = craftSoftFailOn(placeSoftFailParam);
+  /** Craft preview: /trips/…?daysSoftFail=1 — SoftFail depth under Days (BEA-429). */
+  const daysSoftPreview = craftSoftFailOn(daysSoftFailParam);
+  /** Craft preview: /trips/…?emptySoftFail=1 — SoftFail depth under empty Stops (BEA-429). */
+  const emptySoftPreview = craftSoftFailOn(emptySoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -1035,14 +1043,15 @@ export default function TripDetailScreen() {
     Boolean(softNotice) || fromCache || !online || detailDemo;
   /**
    * Expo trip-detail SoftFailNotice depth (BEA-298 after #194 / BEA-253) +
-   * craft SoftFail query parity (BEA-384):
+   * craft SoftFail query parity (BEA-384 / BEA-429 residual):
    * azure Stops rail · Soft/empty/reorder badge · softSupport · compact SoftFailNotice
    * mist band under rail (`border-b`) · mist-wash tip-011 chips · StyleSheet.flatten.
-   * Craft: /trips/…?stopsSoftFail=1 · /trips/…?dragSoftFail=1 — mirrors web planner.
-   * Empty day still owns SoftFail. Drag SoftFail yields chips SoftFail (no double
-   * depth). Title SoftFail yields while Stops owns. SoftFail copy always
-   * emptySoftFail / stops.softFail / dragSoftFail (never inherit softNotice).
-   * Soft copy never timber / Failed to fetch.
+   * Craft: /trips/…?stopsSoftFail=1 · /trips/…?dragSoftFail=1 ·
+   * /trips/…?emptySoftFail=1 — mirrors web planner. Empty day still owns SoftFail.
+   * Drag SoftFail yields chips SoftFail (no double depth). Title SoftFail yields
+   * while Stops owns. SoftFail copy always emptySoftFail / stops.softFail /
+   * dragSoftFail (never inherit softNotice). Soft copy never timber / Failed to
+   * fetch. Journal empty SoftFail craft stays on /journal (BEA-428).
    */
   const emptyOwnsSoft = dayEmpty;
   const dragSoftFailCopy = t(locale, "planner.stops.dragSoftFail");
@@ -1050,7 +1059,7 @@ export default function TripDetailScreen() {
     !dayEmpty && (dragSoftPreview || softNotice === dragSoftFailCopy);
   const stopsOwnsSoft = !dayEmpty && !dragOwnsSoft;
   const stopsSoftOpen = emptyOwnsSoft
-    ? detailSoftNoise
+    ? Boolean(emptySoftPreview || detailSoftNoise)
     : dragOwnsSoft
       ? true
       : Boolean(
@@ -1079,13 +1088,15 @@ export default function TripDetailScreen() {
       ? (softNotice ?? t(locale, "planner.demoLocal"))
       : (softNotice ?? "");
   /**
-   * Expo day tabs SoftFailNotice depth (BEA-299 after #196 / BEA-258):
-   * Days rail owns compact SoftFail under azure Days chrome · Soft days badge ·
-   * softSupport · tip-011 SheetPresence mist tabs · StyleSheet.flatten.
-   * SoftFail yields while invite sheet open (no double depth). Soft copy never
-   * timber / Failed to fetch. Stops SoftFail stays under Stops (sibling rail).
+   * Expo day tabs SoftFailNotice depth (BEA-299 after #196 / BEA-258) + craft
+   * SoftFail query residual (BEA-429): Days rail owns compact SoftFail under
+   * azure Days chrome · Soft days badge · softSupport · tip-011 SheetPresence
+   * mist tabs · StyleSheet.flatten. Craft: /trips/…?daysSoftFail=1. SoftFail
+   * yields while invite sheet open (no double depth). Soft copy never timber /
+   * Failed to fetch. Stops SoftFail stays under Stops (sibling rail).
    */
-  const daysSoftOpen = detailSoftNoise && !inviteOpen;
+  const daysSoftOpen =
+    (daysSoftPreview || detailSoftNoise) && !inviteOpen;
   const daysSoftCopy = t(locale, "planner.days.softFail");
   const selectedDayIndex = dayId
     ? Math.max(1, days.findIndex((d) => d.id === dayId) + 1)
