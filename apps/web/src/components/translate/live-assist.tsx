@@ -1276,6 +1276,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             Phrasebook live craft residual (BEA-515): title leading-snug ·
             category tip-011 · phrase row press · queue flush tip-011.
             SoftFail / history list (#353) out of scope.
+            Category chip color settle (BEA-800 / wave 74): category chips →
+            `ease-bp-out-strong` (mode tabs #491 / Mode·Stops #485 twin). SoftFail /
+            phrase rows · queue flush / HoldMic·Talk·Dual (#488) / mode tabs (#491) /
+            history·Dual prefer leave.
           */}
           <section
             className="animate-rise mt-12"
@@ -1305,7 +1309,7 @@ export function LiveAssist({ locale }: { locale: Locale }) {
                   key={cat}
                   type="button"
                   onClick={() => setPhraseCategory(cat)}
-                  className={`bp-transition rounded-bp-sm px-3 py-1.5 text-xs font-medium duration-bp-fast ease-bp-out active:scale-[0.98] ${
+                  className={`bp-transition rounded-bp-sm px-3 py-1.5 text-xs font-medium duration-bp-fast ease-bp-out-strong active:scale-[0.98] ${
                     phraseCategory === cat
                       ? "bg-river text-foam shadow-bp-soft"
                       : "bg-mist text-river-deep hover:bg-river/15"
