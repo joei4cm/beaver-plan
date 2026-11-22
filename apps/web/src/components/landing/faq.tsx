@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { usePrefersReducedMotion } from "./scroll-motion";
 
@@ -85,9 +91,10 @@ function useBrowserOnline(): boolean {
 }
 
 /**
- * FAQ SoftFail sheet — azure rail · Soft FAQ / Live · softSupport · compact
- * SoftFailNotice under rail (`border-b`) · SheetPresence body.
- * Soft badge / softSupport depth (BEA-383 after BEA-293) — never timber.
+ * FAQ SoftFail sheet — azure rail · SoftFailBadge Soft FAQ / Live ·
+ * SoftFailSupport · compact SoftFailNotice under rail (`border-b`) ·
+ * SheetPresence body. SoftFail helpers (BEA-400 after #284 / SoftFailLiveBadge
+ * #295 / Soft badge BEA-383) — never timber.
  */
 function FaqSoftFailSheet({
   softOpen,
@@ -125,17 +132,23 @@ function FaqSoftFailSheet({
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
             {sheetEyebrow}
           </span>
-          <span className="text-[11px] leading-snug text-ink-soft/80">
-            {softOpen ? softSupport : sheetSupport}
-          </span>
+          {softOpen ? (
+            <SoftFailSupport>{softSupport}</SoftFailSupport>
+          ) : (
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {sheetSupport}
+            </span>
+          )}
         </div>
-        <span
-          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-            softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
-          }`}
-        >
-          {softOpen ? softBadge : liveBadge}
-        </span>
+        {softOpen ? (
+          <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
+            {softBadge}
+          </SoftFailBadge>
+        ) : (
+          <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+            {liveBadge}
+          </SoftFailLiveBadge>
+        )}
       </header>
 
       {/* Compact SoftFail under azure rail — mist band + border-b depth. */}
@@ -150,7 +163,9 @@ function FaqSoftFailSheet({
       <SheetPresence
         open
         role="group"
-        className="px-4 py-5 sm:px-5 sm:py-6"
+        className={`px-4 py-5 sm:px-5 sm:py-6 ${
+          softOpen ? softFailMistWashClass : ""
+        }`}
         style={{ animationDelay: "40ms" }}
         aria-label={bodyLabel}
       >

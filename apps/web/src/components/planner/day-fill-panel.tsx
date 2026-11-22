@@ -15,7 +15,12 @@ import {
 } from "@beaver/core";
 import type { Locale, MessageKey } from "@beaver/i18n";
 import { t } from "@beaver/i18n";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { DayFillSkeleton } from "@/components/ui/skeleton";
 import { apiGet, apiSend, isPlannerNoiseError } from "@/lib/api";
@@ -107,9 +112,11 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Planner secondary tool — smart day-fill SoftFailNotice depth (BEA-323 after #206).
- * Lumen hierarchy: azure header rail · Soft fill badge · softSupport · compact
- * SoftFail mist band under rail · mist-wash tip-011 body · SheetPresence in/out.
+ * Planner secondary tool — smart day-fill SoftFailNotice depth (BEA-323 after #206;
+ * SoftFailBadge / SoftFailSupport helpers BEA-400 after #284).
+ * Lumen hierarchy: azure header rail · SoftFailBadge Soft fill · SoftFailSupport ·
+ * compact SoftFail mist band under rail · softFailMistWash tip-011 body ·
+ * SheetPresence in/out.
  * Stop drawer SoftFail (#225) owns Itinerary — day-fill SoftFail stays under the
  * Day fill rail (no double depth). Soft-fails to local Kyoto demo when LLM/API/
  * Neon are absent — never timber / Failed to fetch.
@@ -302,11 +309,11 @@ export function DayFillPanel({
       ? t(locale, "planner.dayFill.liveBadge")
       : t(locale, "planner.dayFill.demoBadge");
   /**
-   * Day-fill SoftFailNotice depth (BEA-323 after #206):
-   * azure sheet rail · Soft fill badge · softSupport · compact SoftFail mist
-   * band (`border-b`) · mist tip-011 body while soft. Stop drawer SoftFail
-   * (#225) owns Itinerary — no double depth. Soft copy never timber /
-   * Failed to fetch.
+   * Day-fill SoftFailNotice depth (BEA-323 after #206; helpers BEA-400):
+   * azure sheet rail · SoftFailBadge Soft fill · SoftFailSupport · compact
+   * SoftFail mist band (`border-b`) · softFailMistWash tip-011 body while soft.
+   * Stop drawer SoftFail (#225) owns Itinerary — no double depth. Soft copy
+   * never timber / Failed to fetch.
    */
   const softCopy =
     notice ??
@@ -327,10 +334,10 @@ export function DayFillPanel({
   return (
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
-        Day-fill SoftFail depth (BEA-323 after #206):
-        azure sheet rail · Soft fill badge · softSupport · tip-011 mist-wash —
-        yields stop drawer SoftFail (#225) ownership on Itinerary —
-        never timber / Failed to fetch.
+        Day-fill SoftFail depth (BEA-323 / helpers BEA-400):
+        azure sheet rail · SoftFailBadge Soft fill · SoftFailSupport ·
+        softFailMistWash tip-011 — yields stop drawer SoftFail (#225)
+        ownership on Itinerary — never timber / Failed to fetch.
       */}
       <button
         type="button"
@@ -356,17 +363,23 @@ export function DayFillPanel({
               {badge}
             </span>
             {showSoftFail ? (
-              <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+              <SoftFailBadge>
                 {t(locale, "planner.dayFill.softBadge")}
-              </span>
+              </SoftFailBadge>
             ) : null}
             <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
               {dayCountLabel}
             </span>
           </div>
-          <p className="mt-0.5 text-[11px] leading-snug text-ink-soft/80">
-            {sheetSupportCopy}
-          </p>
+          {showSoftFail ? (
+            <SoftFailSupport className="mt-0.5 block">
+              {sheetSupportCopy}
+            </SoftFailSupport>
+          ) : (
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft/80">
+              {sheetSupportCopy}
+            </p>
+          )}
         </div>
         <span
           className={`shrink-0 text-river transition duration-bp ease-bp-in-out ${open ? "rotate-180" : ""}`}
@@ -392,9 +405,7 @@ export function DayFillPanel({
 
         <div
           className={`animate-rise space-y-5 px-4 py-4 ${
-            showSoftFail
-              ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-              : ""
+            showSoftFail ? softFailMistWashClass : ""
           }`}
           style={{ animationDelay: "70ms" }}
         >

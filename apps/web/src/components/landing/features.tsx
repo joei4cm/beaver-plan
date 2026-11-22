@@ -8,7 +8,13 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailLiveBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailMistWashClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import { usePrefersReducedMotion } from "./scroll-motion";
 
@@ -149,10 +155,11 @@ function LeadRouteArt({ active }: { active: boolean }) {
 }
 
 /**
- * Pillars SoftFail sheet — azure section rail · Soft/Live badge · softSupport ·
- * compact SoftFailNotice mist band (`border-b`) · tip-011 mist-wash
- * SheetPresence body (focus chips · lead route · rows). SoftFail owned by the
- * sheet; FAQ/footer/how SoftFails stay on their rails (yield if overlapping).
+ * Pillars SoftFail sheet — azure section rail · SoftFailBadge Soft / Live ·
+ * SoftFailSupport · compact SoftFailNotice mist band (`border-b`) ·
+ * softFailMistWash tip-011 SheetPresence body. SoftFail helpers (BEA-400
+ * after #284 / SoftFailLiveBadge #295). SoftFail owned by the sheet;
+ * FAQ/footer/how SoftFails stay on their rails (yield if overlapping).
  * Never timber / Failed to fetch.
  */
 function PillarsSoftFailSheet({
@@ -191,17 +198,23 @@ function PillarsSoftFailSheet({
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
             {sheetEyebrow}
           </span>
-          <span className="text-[11px] leading-snug text-ink-soft/80">
-            {softOpen ? softSupport : sheetSupport}
-          </span>
+          {softOpen ? (
+            <SoftFailSupport>{softSupport}</SoftFailSupport>
+          ) : (
+            <span className="text-[11px] leading-snug text-ink-soft/80">
+              {sheetSupport}
+            </span>
+          )}
         </div>
-        <span
-          className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-            softOpen ? "bg-mist text-ink-soft" : "bg-river/12 text-river"
-          }`}
-        >
-          {softOpen ? softBadge : softLiveBadge}
-        </span>
+        {softOpen ? (
+          <SoftFailBadge className="transition duration-bp-fast ease-bp-out">
+            {softBadge}
+          </SoftFailBadge>
+        ) : (
+          <SoftFailLiveBadge className="transition duration-bp-fast ease-bp-out">
+            {softLiveBadge}
+          </SoftFailLiveBadge>
+        )}
       </header>
       {/* Compact SoftFail under azure rail — mist band + border-b depth. */}
       <SoftFailNotice
@@ -216,9 +229,7 @@ function PillarsSoftFailSheet({
         open
         role="group"
         className={`px-4 py-5 sm:px-5 sm:py-6 ${
-          softOpen
-            ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-            : ""
+          softOpen ? softFailMistWashClass : ""
         }`}
         style={{ animationDelay: "40ms" }}
         aria-label={bodyLabel}

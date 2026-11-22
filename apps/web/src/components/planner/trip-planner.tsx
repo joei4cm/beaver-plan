@@ -1204,11 +1204,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               <SoftFailSupport>{drawerSupportCopy}</SoftFailSupport>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              {drawerSoftOpen || demoShell ? (
+              {demoShell ? (
                 <SoftFailBadge>
-                  {demoShell
-                    ? t(locale, "planner.drawer.demoBadge")
-                    : t(locale, "planner.drawer.liveBadge")}
+                  {t(locale, "planner.drawer.demoBadge")}
                 </SoftFailBadge>
               ) : (
                 <SoftFailLiveBadge>
