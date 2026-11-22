@@ -259,13 +259,13 @@ function LegCardHeader({
 
 /**
  * Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
- * wave 48 Mode/river ring (BEA-462) + wave 51 craft residual (BEA-490):
- * Transfer rail eyebrow `0.65rem` / `0.18em` · Summary / Steps `animate-rise`.
- * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact
- * SoftFail mist band · tip-011 mist-wash unchanged. Craft SoftFail:
- * `/trips/…?transferSoftFail=1`. Soft copy never timber / Failed to fetch.
- * Mode SoftFail (#272) yields while this owns (no double depth). No `/dev`
- * gallery.
+ * wave 48 Mode/river ring (BEA-462) + wave 51 craft residual (BEA-490) +
+ * wave 56 residual (BEA-538): empty title `leading-snug` · Expo hex-alpha /
+ * step stagger parity. SoftFailBadge Soft/Demo · SoftFailLiveBadge ·
+ * SoftFailSupport · compact SoftFail mist band · tip-011 mist-wash unchanged.
+ * Craft SoftFail: `/trips/…?transferSoftFail=1`. Soft copy never timber /
+ * Failed to fetch. Mode SoftFail (#272) yields while this owns (no double
+ * depth). No `/dev` gallery.
  */
 export function TransferSteps({
   leg,
@@ -357,10 +357,10 @@ export function TransferSteps({
             <SectionEyebrow>
               {t(locale, "planner.transfer.emptyEyebrow")}
             </SectionEyebrow>
-            <p className="font-display text-sm font-semibold tracking-tight text-ink">
+            <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
               {t(locale, "planner.transfer.emptyTitle")}
             </p>
-            <p className="text-xs leading-relaxed text-ink-soft">
+            <p className="text-xs leading-relaxed text-ink-soft/80">
               {t(locale, "planner.transfer.emptyHint")}
             </p>
           </div>

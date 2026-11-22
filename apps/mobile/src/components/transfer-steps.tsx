@@ -258,8 +258,9 @@ function LegCardHeader({
 
 /**
  * Expo Transfer / directions panel — SoftFail depth kept (BEA-396 / BEA-423) +
- * wave 48 Mode/river chrome (BEA-462) + wave 51 craft residual (BEA-490):
- * Transfer rail eyebrow tracking 1.8 · transit mark river ring. SoftFailBadge
+ * wave 48 Mode/river chrome (BEA-462) + wave 51 craft residual (BEA-490) +
+ * wave 56 residual (BEA-538): Lumen hex-alpha foam/paper/river/inkSoft tokens ·
+ * mode/step kind tracking 1.4 · tip-011 step SheetPresence stagger. SoftFailBadge
  * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · softFailBandStyle mist band ·
  * tip-011 softFailMistWashStyle unchanged. Craft SoftFail:
  * `/trips/…?transferSoftFail=1`. Soft copy never timber / Failed to fetch.
@@ -396,12 +397,18 @@ export function TransferSteps({
                 </SectionEyebrow>
                 <View style={styles.stepList}>
                   {view.transitSteps.map((step, i) => (
-                    <StepRow
+                    <SheetPresence
                       key={`${view.id}-step-${i}`}
-                      step={step}
-                      locale={locale}
-                      last={i === view.transitSteps.length - 1}
-                    />
+                      open
+                      delayMs={40 + i * 45}
+                      rise={6}
+                    >
+                      <StepRow
+                        step={step}
+                        locale={locale}
+                        last={i === view.transitSteps.length - 1}
+                      />
+                    </SheetPresence>
                   ))}
                 </View>
               </SheetPresence>
@@ -420,7 +427,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(244,246,250,0.98)",
+    /** Web panel `bg-foam/95` parity. */
+    backgroundColor: `${colors.foam}F2`,
   },
   /** Layout-only shrink for SoftFailSupport beside azure Transfer titles. */
   softSupportShrink: {
@@ -434,14 +442,16 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web `bg-paper/70`. */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
   },
   headerSoft: {
-    backgroundColor: "rgba(230, 236, 245, 0.35)",
+    /** Web SoftFail header `bg-mist/35` — token only, SoftFail logic untouched. */
+    backgroundColor: `${colors.mist}59`,
   },
   headerLeft: {
     flexDirection: "row",
@@ -474,7 +484,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   headerDot: {
-    color: "rgba(100,116,139,0.4)",
+    /** Web `text-ink-soft/40`. */
+    color: `${colors.inkSoft}66`,
   },
   sections: {
     borderTopWidth: 0,
@@ -505,7 +516,7 @@ const styles = StyleSheet.create({
   },
   modeBadge: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    backgroundColor: `${colors.river}1A`,
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
     paddingHorizontal: 8,
@@ -515,7 +526,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    /** Web `tracking-[0.14em]` / Mode rail #370 selected badge parity. */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -546,16 +558,16 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   railWalk: {
-    backgroundColor: "rgba(100,116,139,0.35)",
+    backgroundColor: `${colors.inkSoft}59`,
   },
   railTransit: {
-    backgroundColor: "rgba(47,107,255,0.55)",
+    backgroundColor: `${colors.river}8C`,
   },
   railTransfer: {
-    backgroundColor: "rgba(47,107,255,0.3)",
+    backgroundColor: `${colors.river}4D`,
   },
   railDrive: {
-    backgroundColor: "rgba(15,23,42,0.4)",
+    backgroundColor: `${colors.ink}66`,
   },
   railDefault: {
     backgroundColor: colors.line,
@@ -571,9 +583,9 @@ const styles = StyleSheet.create({
   },
   iconWalk: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(100,116,139,0.55)",
+    borderColor: `${colors.inkSoft}8C`,
     borderStyle: "dashed",
-    backgroundColor: "rgba(230,236,245,0.8)",
+    backgroundColor: `${colors.mist}CC`,
   },
   /** Transit mark river ring — web #337 color-mix(--bp-river 16%) parity. */
   iconTransit: {
@@ -585,8 +597,8 @@ const styles = StyleSheet.create({
   },
   iconTransfer: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.4)",
-    backgroundColor: "rgba(47,107,255,0.1)",
+    borderColor: `${colors.river}66`,
+    backgroundColor: `${colors.river}1A`,
   },
   iconDrive: {
     backgroundColor: colors.ink,
@@ -633,7 +645,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    /** Web `tracking-[0.14em]` parity. */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
@@ -648,7 +661,8 @@ const styles = StyleSheet.create({
   stepAgency: {
     ...type.body,
     fontSize: 11,
-    color: "rgba(100,116,139,0.8)",
+    /** Web `text-ink-soft/80`. */
+    color: `${colors.inkSoft}CC`,
   },
   lineRow: {
     marginTop: 6,
@@ -660,7 +674,7 @@ const styles = StyleSheet.create({
   lineBadge: {
     maxWidth: "100%",
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    backgroundColor: `${colors.river}1A`,
     borderLeftWidth: 2,
     borderLeftColor: colors.river,
     paddingHorizontal: 8,
@@ -680,7 +694,8 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
   },
   lineArrow: {
-    color: "rgba(47,107,255,0.7)",
+    /** Web `text-river/70`. */
+    color: `${colors.river}B3`,
   },
   stepLabel: {
     ...type.body,
@@ -693,7 +708,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 4,
     fontSize: 12,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
   },
   emptyBody: {
     paddingHorizontal: 12,
@@ -705,12 +720,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
+    lineHeight: 20,
     color: colors.ink,
   },
   emptyHint: {
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.inkSoft,
+    color: `${colors.inkSoft}CC`,
   },
 });
