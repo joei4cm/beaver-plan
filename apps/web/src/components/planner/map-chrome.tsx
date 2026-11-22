@@ -418,7 +418,7 @@ export function MapChrome({
               autoComplete="off"
             />
             {searching ? (
-              <span className="shrink-0 text-xs text-ink-soft" aria-hidden>
+              <span className="shrink-0 text-xs text-ink-soft/80" aria-hidden>
                 …
               </span>
             ) : null}
@@ -431,9 +431,11 @@ export function MapChrome({
           >
             {/*
               Search SoftFail depth (BEA-302 / BEA-390) + craft SoftFail query
-              parity (BEA-422): azure Places rail · SoftFailBadge / Live ·
-              SoftFailSupport · compact SoftFailNotice · softFailMistWash tip-011
-              body. Craft: ?searchSoftFail=1 — never timber / Failed to fetch.
+              parity (BEA-422) kept. Wave 59 residual (BEA-572 beyond #382):
+              empty title leading-snug · empty/loading/spinner ink-soft/80.
+              SoftFailBadge / Live · SoftFailSupport · compact SoftFailNotice ·
+              softFailMistWash tip-011 body unchanged. Craft: ?searchSoftFail=1
+              — never timber / Failed to fetch. No `/dev` gallery.
             */}
             <div
               className="animate-rise relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/80 px-3 py-2.5 pl-3.5 shadow-[inset_3px_0_0_var(--bp-river)]"
@@ -569,16 +571,16 @@ export function MapChrome({
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80">
                   {t(locale, "planner.search.emptyEyebrow")}
                 </p>
-                <p className="font-display text-sm font-semibold tracking-tight text-ink">
+                <p className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                   {t(locale, "planner.search.emptyTitle")}
                 </p>
-                <p className="text-xs leading-relaxed text-ink-soft">
+                <p className="text-xs leading-relaxed text-ink-soft/80">
                   {t(locale, "planner.search.emptyHint")}
                 </p>
               </div>
             ) : (
               <div
-                className={`animate-rise px-3.5 py-3 text-xs text-ink-soft ${
+                className={`animate-rise px-3.5 py-3 text-xs leading-snug text-ink-soft/80 ${
                   searchOwnsSoftFail ? softFailMistWashClass : ""
                 }`}
                 style={{ animationDelay: "70ms" }}

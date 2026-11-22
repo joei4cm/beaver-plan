@@ -1638,9 +1638,10 @@ export default function TripDetailScreen() {
               </View>
 
               {/*
-                Places search SoftFail kept (BEA-422 / #356) + wave 55 residual
-                (BEA-534): tip-011 SheetPresence rise · Lumen hex-alpha paper /
-                inkSoft / river · foam input. SoftFailBadge · SoftFailSupport ·
+                Places search SoftFail kept (BEA-422 / #356) + wave 55 (#382) +
+                wave 59 residual (BEA-572): tip-011 SheetPresence rise · hit
+                stagger · Lumen hex-alpha paper / inkSoft / river · foam input ·
+                placeholder inkSoft@73 (web /45). SoftFailBadge · SoftFailSupport ·
                 mist band unchanged. Craft: ?searchSoftFail=1 — SoftFail depth
                 when sheet open. Soft copy never timber / Failed to fetch. No
                 `/dev` gallery.
@@ -1653,7 +1654,7 @@ export default function TripDetailScreen() {
                   onFocus={() => setSearchOpen(true)}
                   onKeyPress={onSearchKeyPress}
                   placeholder={t(locale, "planner.searchPlaceholder")}
-                  placeholderTextColor={colors.inkSoft}
+                  placeholderTextColor={`${colors.inkSoft}73`}
                   style={styles.searchInput}
                   autoCorrect={false}
                   autoCapitalize="none"
@@ -1729,63 +1730,69 @@ export default function TripDetailScreen() {
                           {results.map((place, i) => {
                             const selected = i === activeIndex;
                             return (
-                              <Pressable
+                              <SheetPresence
                                 key={place.enginePlaceId}
-                                accessibilityRole="button"
-                                accessibilityState={{ selected }}
-                                onPress={() => void addPlace(place)}
-                                onPressIn={() => setActiveIndex(i)}
-                                style={({ pressed }) =>
-                                  StyleSheet.flatten([
-                                    styles.searchHit,
-                                    selected ? styles.searchHitSelected : null,
-                                    i === results.length - 1
-                                      ? styles.searchHitLast
-                                      : null,
-                                    pressed ? styles.searchHitPressed : null,
-                                  ])
-                                }
+                                open
+                                delayMs={Math.min(i, 6) * 35 + 70}
+                                rise={8}
                               >
-                                <View
-                                  style={StyleSheet.flatten([
-                                    styles.searchHitIndex,
-                                    selected
-                                      ? styles.searchHitIndexSelected
-                                      : null,
-                                  ])}
+                                <Pressable
+                                  accessibilityRole="button"
+                                  accessibilityState={{ selected }}
+                                  onPress={() => void addPlace(place)}
+                                  onPressIn={() => setActiveIndex(i)}
+                                  style={({ pressed }) =>
+                                    StyleSheet.flatten([
+                                      styles.searchHit,
+                                      selected ? styles.searchHitSelected : null,
+                                      i === results.length - 1
+                                        ? styles.searchHitLast
+                                        : null,
+                                      pressed ? styles.searchHitPressed : null,
+                                    ])
+                                  }
                                 >
-                                  <Text
+                                  <View
                                     style={StyleSheet.flatten([
-                                      styles.searchHitIndexText,
+                                      styles.searchHitIndex,
                                       selected
-                                        ? styles.searchHitIndexTextSelected
+                                        ? styles.searchHitIndexSelected
                                         : null,
                                     ])}
                                   >
-                                    {i + 1}
-                                  </Text>
-                                </View>
-                                <View style={styles.searchHitBody}>
-                                  <Text style={styles.searchHitName}>
-                                    {place.name}
-                                  </Text>
-                                  {place.address ? (
-                                    <Text style={styles.searchHitAddr}>
-                                      {place.address}
+                                    <Text
+                                      style={StyleSheet.flatten([
+                                        styles.searchHitIndexText,
+                                        selected
+                                          ? styles.searchHitIndexTextSelected
+                                          : null,
+                                      ])}
+                                    >
+                                      {i + 1}
                                     </Text>
-                                  ) : null}
-                                </View>
-                                <Text
-                                  style={StyleSheet.flatten([
-                                    styles.searchHitHint,
-                                    selected
-                                      ? styles.searchHitHintSelected
-                                      : null,
-                                  ])}
-                                >
-                                  {t(locale, "planner.search.addHint")}
-                                </Text>
-                              </Pressable>
+                                  </View>
+                                  <View style={styles.searchHitBody}>
+                                    <Text style={styles.searchHitName}>
+                                      {place.name}
+                                    </Text>
+                                    {place.address ? (
+                                      <Text style={styles.searchHitAddr}>
+                                        {place.address}
+                                      </Text>
+                                    ) : null}
+                                  </View>
+                                  <Text
+                                    style={StyleSheet.flatten([
+                                      styles.searchHitHint,
+                                      selected
+                                        ? styles.searchHitHintSelected
+                                        : null,
+                                    ])}
+                                  >
+                                    {t(locale, "planner.search.addHint")}
+                                  </Text>
+                                </Pressable>
+                              </SheetPresence>
                             );
                           })}
                         </View>
