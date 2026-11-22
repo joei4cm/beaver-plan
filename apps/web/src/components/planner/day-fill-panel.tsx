@@ -114,10 +114,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
- * wave 48 (#340) + wave 53 (#367) + wave 56 craft residual (BEA-544): sheet
- * title + day title `leading-snug`. SoftFailBadge Soft fill · SoftFailSupport ·
- * mist band unchanged. Stop drawer SoftFail (#225) owns Itinerary. Soft-fails
- * to local Kyoto demo — never timber / Failed to fetch. No `/dev` gallery.
+ * wave 48–56 (#340/#367/#387) + wave 60 craft residual (BEA-576): sheet
+ * eyebrow 0.65rem/0.18em · stop/empty/loading `/80` + snug. SoftFailBadge Soft
+ * fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
+ * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -362,7 +363,7 @@ export function DayFillPanel({
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "planner.dayFill.sheetEyebrow")}
             </span>
             <span className="font-display text-lg leading-snug tracking-tight text-ink">
@@ -548,7 +549,7 @@ export function DayFillPanel({
               style={{ animationDelay: "60ms" }}
             >
               <DayFillSkeleton days={dayCount} />
-              <p className="text-xs text-ink-soft">
+              <p className="text-xs leading-snug text-ink-soft/80">
                 {t(locale, "planner.dayFill.loadingHint")}
               </p>
             </div>
@@ -567,7 +568,7 @@ export function DayFillPanel({
               <p className="font-display text-lg font-semibold leading-snug tracking-tight text-ink">
                 {t(locale, "planner.dayFill.empty")}
               </p>
-              <p className="text-sm leading-relaxed text-ink-soft">
+              <p className="text-sm leading-relaxed text-ink-soft/80">
                 {t(locale, "planner.dayFill.emptyHint")}
               </p>
             </div>
@@ -628,7 +629,7 @@ export function DayFillPanel({
                       <span className="font-display text-sm font-semibold leading-snug tracking-tight text-ink">
                         {t(locale, "planner.day")} {day.dayIndex + 1}
                         {day.date ? (
-                          <span className="ml-2 text-sm font-normal text-ink-soft">
+                          <span className="ml-2 text-sm font-normal text-ink-soft/80">
                             {day.date}
                           </span>
                         ) : null}
@@ -654,10 +655,12 @@ export function DayFillPanel({
                             {i + 1}
                           </span>
                           <div className="min-w-0">
-                            <div className="truncate">{stop.place.name}</div>
+                            <div className="truncate leading-snug">
+                              {stop.place.name}
+                            </div>
                             {typeof stop.estimatedWalkMinutes === "number" &&
                               stop.estimatedWalkMinutes > 0 && (
-                                <div className="text-xs text-ink-soft">
+                                <div className="text-xs leading-snug text-ink-soft/80">
                                   {t(locale, "planner.dayFill.stopWalk")}{" "}
                                   {stop.estimatedWalkMinutes}
                                   {t(locale, "planner.dayFill.minutes")}
@@ -667,7 +670,7 @@ export function DayFillPanel({
                         </li>
                       ))}
                       {day.stops.length === 0 && (
-                        <li className="text-xs text-ink-soft">
+                        <li className="text-xs leading-snug text-ink-soft/80">
                           {t(locale, "planner.dayFill.noStops")}
                         </li>
                       )}
