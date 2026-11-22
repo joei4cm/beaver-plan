@@ -85,7 +85,7 @@ function modeTone(mode: string): {
       };
     case "transit":
       return {
-        icon: "bg-river text-foam shadow-[0_0_0_3px_rgba(47,107,255,0.16)]",
+        icon: "bg-river text-foam shadow-[0_0_0_3px_color-mix(in_srgb,var(--bp-river)_16%,transparent)]",
         rail: "bg-river/55",
         mark: "●",
       };
@@ -257,14 +257,14 @@ function LegCardHeader({
 }
 
 /**
- * Transit leg SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295) +
- * craft SoftFail query parity (BEA-423): `/trips/…?transferSoftFail=1` forces
- * SoftFail depth under Transfer (mirrors Expo + #282 / wave 42). SoftFailBadge
- * Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact SoftFail mist band
- * under rail (`border-b`) · tip-011 mist-wash Summary / Steps · SheetPresence.
+ * Transit panel — SoftFail depth kept (BEA-396 / BEA-423) + wave 48 craft
+ * residual (BEA-462): Lumen river ring token on transit marks · SheetPresence
+ * Summary / Steps · `--bp-line` + `shadow-bp-soft` shell. Craft SoftFail:
+ * `/trips/…?transferSoftFail=1`. SoftFailBadge Soft/Demo · SoftFailLiveBadge ·
+ * SoftFailSupport · compact SoftFail mist band under rail · tip-011 mist-wash.
  * SoftFail copy always softFail / softFailEmpty — never timber / Failed to
  * fetch. Mode SoftFail (#272) yields while TransferSteps owns selected-stop
- * soft chrome (no double depth). No `/dev` SoftFail gallery.
+ * soft chrome (no double depth). No `/dev` gallery.
  */
 export function TransferSteps({
   leg,

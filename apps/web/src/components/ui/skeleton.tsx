@@ -115,11 +115,29 @@ export function PlannerSkeleton() {
         </div>
       </div>
       <div className="grid gap-0 overflow-hidden rounded-bp-lg border border-[color:var(--bp-line)] bg-foam shadow-bp lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.9fr)] lg:min-h-[640px]">
-        <div className="relative min-h-[420px] bg-[#EAF0F8] lg:min-h-[640px]">
-          <Skeleton className="absolute inset-0 rounded-none" />
-          <div className="absolute left-4 top-4 space-y-2">
-            <Skeleton className="h-6 w-24 rounded-bp" />
-            <Skeleton className="h-6 w-16 rounded-bp" />
+        <div className="relative flex min-h-[420px] flex-col lg:min-h-[640px]">
+          <div className="relative min-h-[320px] flex-1 bg-mist lg:min-h-0">
+            <Skeleton className="absolute inset-0 rounded-none" />
+            <div className="absolute left-4 top-4 space-y-2">
+              <Skeleton className="h-6 w-24 rounded-bp" />
+              <Skeleton className="h-6 w-16 rounded-bp" />
+            </div>
+          </div>
+          {/* Mode filter craft residual — azure Mode rail · mist chips · generate CTA (BEA-462) */}
+          <div className="border-t border-[color:var(--bp-line)] bg-foam/95">
+            <div className="flex items-baseline gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 pt-2.5 pb-1.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-2.5 w-28" />
+              <Skeleton className="h-5 w-20 rounded-bp-xs" />
+            </div>
+            <div className="flex flex-wrap items-end gap-3 px-4 pb-3 pt-1.5">
+              <div className="inline-flex gap-0.5 rounded-bp-sm bg-mist/50 p-1">
+                <Skeleton className="h-8 w-16 rounded-bp-xs" />
+                <Skeleton className="h-8 w-20 rounded-bp-xs" />
+                <Skeleton className="h-8 w-16 rounded-bp-xs" />
+              </div>
+              <Skeleton className="h-10 w-28 rounded-bp" />
+            </div>
           </div>
         </div>
         <aside className="flex flex-col border-t border-[color:var(--bp-line)] lg:border-l lg:border-t-0">
@@ -508,7 +526,7 @@ export function BookingOffersSkeleton({ rows = 3 }: { rows?: number }) {
 }
 
 /**
- * Tip 017 — transit leg SoftFail depth (BEA-378):
+ * Tip 017 — transit panel SoftFail depth (BEA-378) + craft residual (BEA-462):
  * azure Transfer rail · SoftFail mist band · tip-011 mist-wash summary/steps.
  */
 export function TransferStepsSkeleton({ steps = 3 }: { steps?: number }) {
