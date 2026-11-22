@@ -17,6 +17,8 @@ import {
   SoftFailLiveBadge,
   SoftFailNotice,
   SoftFailSupport,
+  softFailBandStyle,
+  softFailMistWashStyle,
 } from "./soft-fail-notice";
 
 type Props = {
@@ -207,7 +209,12 @@ function LegCardHeader({
   view?: Leg | null;
 }) {
   return (
-    <View style={styles.header}>
+    <View
+      style={StyleSheet.flatten([
+        styles.header,
+        softOpen ? styles.headerSoft : null,
+      ])}
+    >
       <View style={styles.headerLeft}>
         <Text style={styles.headerTitle}>
           {t(locale, "planner.transfer.title")}
@@ -224,7 +231,7 @@ function LegCardHeader({
           </SoftFailLiveBadge>
         )}
         {softOpen ? (
-          <SoftFailSupport>
+          <SoftFailSupport style={styles.softSupportShrink} numberOfLines={2}>
             {t(locale, "planner.transfer.softSupport")}
           </SoftFailSupport>
         ) : null}
@@ -245,11 +252,12 @@ function LegCardHeader({
 }
 
 /**
- * Expo transit SoftFailNotice depth (BEA-383 Soft badge / softSupport;
- * SoftFailLiveBadge BEA-399):
- * azure Transfer rail · SoftFailBadge / SoftFailLiveBadge · SoftFailSupport ·
- * compact SoftFail mist band · tip-011 SheetPresence rise · StyleSheet.flatten.
- * Soft-fail never timber / Failed to fetch.
+ * Expo transit SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295):
+ * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport ·
+ * softFailBandStyle mist band · tip-011 softFailMistWashStyle Summary / Steps ·
+ * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
+ * Failed to fetch. Mode SoftFail yields while TransferSteps owns selected-stop
+ * soft chrome (no double depth).
  */
 export function TransferSteps({
   leg,
@@ -285,10 +293,18 @@ export function TransferSteps({
             softOpen={softOpen}
           />
           {/* Compact SoftFail under azure rail — never timber / Failed to fetch. */}
-          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
+          <SoftFailNotice open={softOpen} compact style={softFailBandStyle}>
             {t(locale, "planner.transfer.softFailEmpty")}
           </SoftFailNotice>
-          <SheetPresence open delayMs={60} rise={8} style={styles.emptyBody}>
+          <SheetPresence
+            open
+            delayMs={60}
+            rise={8}
+            style={StyleSheet.flatten([
+              styles.emptyBody,
+              softOpen ? softFailMistWashStyle : null,
+            ])}
+          >
             <Text style={styles.emptyTitle}>
               {t(locale, "planner.transfer.emptyTitle")}
             </Text>
@@ -306,11 +322,16 @@ export function TransferSteps({
             view={view}
           />
           {/* SoftFail mist band under azure Transfer rail — tip-011 rise. */}
-          <SoftFailNotice open={softOpen} compact style={styles.softFail}>
-            {t(locale, "planner.transfer.demoNotice")}
+          <SoftFailNotice open={softOpen} compact style={softFailBandStyle}>
+            {t(locale, "planner.transfer.softFail")}
           </SoftFailNotice>
 
-          <View style={styles.sections}>
+          <View
+            style={StyleSheet.flatten([
+              styles.sections,
+              softOpen ? softFailMistWashStyle : null,
+            ])}
+          >
             <SheetPresence
               open
               delayMs={55}
@@ -370,10 +391,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: "rgba(244,246,250,0.98)",
   },
-  softFail: {
-    marginBottom: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
+  /** Layout-only shrink for SoftFailSupport beside azure Transfer titles. */
+  softSupportShrink: {
+    flexShrink: 1,
   },
   header: {
     flexDirection: "row",
@@ -388,6 +408,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+  },
+  headerSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.35)",
   },
   headerLeft: {
     flexDirection: "row",

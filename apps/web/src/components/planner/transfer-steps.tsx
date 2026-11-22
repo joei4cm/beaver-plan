@@ -252,14 +252,12 @@ function LegCardHeader({
 }
 
 /**
- * Transit leg SoftFailNotice depth (BEA-378 after #93 / #121 / Soft badge #280;
- * SoftFailBadge / SoftFailSupport helpers BEA-387 after #284;
- * SoftFailLiveBadge BEA-399):
- * azure Transfer rail · Soft/Live badge · softSupport · compact SoftFail
- * mist band under rail (`border-b`) · tip-011 mist-wash Summary / Steps ·
- * SheetPresence. SoftFail copy always softFail / softFailEmpty — never timber /
- * Failed to fetch. Transit filters SoftFail (#272) yields while TransferSteps
- * owns selected-stop soft chrome (no double depth). Expo transit out of scope.
+ * Transit leg SoftFail helpers (BEA-396 after #284 / SoftFailLiveBadge #295):
+ * SoftFailBadge Soft/Demo · SoftFailLiveBadge · SoftFailSupport · compact
+ * SoftFail mist band under rail (`border-b`) · tip-011 mist-wash Summary /
+ * Steps · SheetPresence. SoftFail copy always softFail / softFailEmpty —
+ * never timber / Failed to fetch. Mode SoftFail (#272) yields while
+ * TransferSteps owns selected-stop soft chrome (no double depth).
  */
 export function TransferSteps({
   leg,
