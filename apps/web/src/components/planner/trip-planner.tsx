@@ -286,9 +286,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
    * Mode rail owns SoftFail when demo legs exist and TransferSteps does not
    * own selected-stop soft chrome. Soft mode badge · softSupport · compact
    * SoftFail mist band (`border-b`) · tip-011 mist-wash. SoftFail yields while
-   * TransferSteps owns (no double depth). Soft copy always mode.softFail —
-   * never timber / Failed to fetch. Expo transit filters SoftFail (#256) stays
-   * out of scope.
+   * TransferSteps SoftFail depth (BEA-378 / #272 yield) owns (no double depth).
+   * Soft copy always mode.softFail — never timber / Failed to fetch. Expo
+   * transit filters SoftFail (#256) stays out of scope.
    */
   const selectedStopIndex = selectedStopId
     ? dayStops.findIndex((s) => s.id === selectedStopId)
@@ -1078,8 +1078,9 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             Transit filters SoftFail depth (BEA-358 after #129 / BEA-170):
             azure mode rail · Soft mode badge · softSupport · compact SoftFail
             mist band (`border-b`) · tip-011 mist-wash — yields while
-            TransferSteps owns selected-stop soft chrome — never timber /
-            Failed to fetch. Expo transit filters SoftFail (#256) out of scope.
+            TransferSteps SoftFail depth (BEA-378) owns selected-stop soft
+            chrome — never timber / Failed to fetch. Expo transit filters
+            SoftFail (#256) out of scope.
           */}
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
@@ -1107,7 +1108,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               )}
             </header>
 
-            {/* Compact SoftFail mist band under azure mode rail — TransferSteps SoftFail yields. */}
+            {/* Compact SoftFail mist band under azure mode rail — yields while TransferSteps SoftFail depth (BEA-378) owns. */}
             <SoftFailNotice
               open={modeSoftOpen}
               compact
