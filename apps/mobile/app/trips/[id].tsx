@@ -888,12 +888,29 @@ export default function TripDetailScreen() {
     ],
   };
 
+  const collabSoftOpen = collabSeeded || collabSoftOffline;
+  /**
+   * Presence SoftFailNotice depth (BEA-374 after #141):
+   * azure rail · Soft/Live badge · softSupport · compact SoftFailNotice
+   * mist band (`border-b`) · tip-011 mist-wash SheetPresence chips ·
+   * StyleSheet.flatten. Yields while invite sheet open (#228). SoftFail
+   * copy never timber / Failed to fetch. Timeline SoftFail (BEA-371) owns
+   * its rail when present — no double depth on presence.
+   */
+  const presenceSoftOpen = collabSoftOpen && !inviteOpen;
+  const presenceSoftCopy = collabSoftOffline
+    ? t(locale, "collab.presenceSoftFail")
+    : t(locale, "collab.presenceDemoNotice");
+  const presenceActiveCount = members.filter(
+    (m) => presenceFor(m.role) === "active",
+  ).length;
   /**
    * Invite SoftFailNotice depth (BEA-300 after #186):
    * invite sheet owns compact SoftFail under azure rail · Soft invite badge ·
-   * softSupport · tip-011. Soft copy never timber / Failed to fetch.
+   * softSupport · tip-011. Presence SoftFail yields while invite open
+   * (BEA-374). Soft copy never timber / Failed to fetch.
    */
-  const inviteSoftOpen = collabSeeded || collabSoftOffline;
+  const inviteSoftOpen = collabSoftOpen;
   const inviteSoftCopy = collabSoftOffline
     ? t(locale, "collab.inviteSoftFail")
     : t(locale, "collab.inviteDemoNotice");
@@ -1985,110 +2002,198 @@ export default function TripDetailScreen() {
                 <Text style={styles.collabHeading}>
                   {t(locale, "collab.panel.title")}
                 </Text>
-                <Text style={styles.collabTitle}>
-                  {t(locale, "collab.members")}
-                </Text>
+
+                {/*
+                  Presence SoftFail depth (BEA-374 after #141):
+                  azure rail · Soft/Live badge · softSupport · compact SoftFail
+                  mist band · tip-011 mist-wash chips · StyleSheet.flatten.
+                  Yields while invite sheet open (#228). Never timber /
+                  Failed to fetch.
+                */}
                 <View
-                  style={styles.presenceRow}
-                  accessibilityRole="list"
-                  accessibilityLabel={t(locale, "collab.members")}
+                  style={styles.presenceChrome}
+                  accessibilityLabel={t(locale, "collab.presence.eyebrow")}
                 >
-                  {members.slice(0, 4).map((m) => {
-                    const presence = presenceFor(m.role);
-                    const pulseOpacity =
-                      presence === "active"
-                        ? presencePulse.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.55, 1],
-                          })
-                        : 1;
-                    return (
-                      <View
-                        key={m.id}
-                        style={StyleSheet.flatten([
-                          styles.presenceChip,
-                          presence === "active"
-                            ? styles.presenceChipActive
-                            : null,
-                        ])}
-                        accessibilityLabel={`${m.displayName ?? m.userId} · ${t(locale, `collab.role.${m.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
-                      >
-                        <View
-                          style={StyleSheet.flatten([
-                            styles.presenceAvatar,
-                            m.role === "viewer"
-                              ? styles.presenceAvatarMuted
-                              : null,
-                          ])}
-                        >
-                          <Text style={styles.presenceInitials}>
-                            {memberInitials(m.displayName ?? m.userId)}
-                          </Text>
-                          <Animated.View
-                            style={StyleSheet.flatten([
-                              styles.presenceDot,
-                              presence === "active"
-                                ? styles.presenceDotActive
-                                : presence === "idle"
-                                  ? styles.presenceDotIdle
-                                  : styles.presenceDotAway,
-                              { opacity: pulseOpacity },
-                            ])}
-                          />
-                        </View>
-                        <Text style={styles.presenceName} numberOfLines={1}>
-                          {(m.displayName ?? m.userId).split(/\s+/)[0]}
-                        </Text>
+                  <View style={styles.presenceRail}>
+                    <View style={styles.presenceRailCopy}>
+                      <Text style={styles.presenceEyebrow}>
+                        {t(locale, "collab.presence.eyebrow")}
+                      </Text>
+                      <Text style={styles.presenceCount}>
+                        {t(locale, "collab.presence.count").replace(
+                          "{n}",
+                          String(members.length),
+                        )}
+                      </Text>
+                      <Text style={styles.presenceSupport} numberOfLines={2}>
+                        {collabSoftOpen
+                          ? t(locale, "collab.presence.softSupport")
+                          : t(locale, "collab.presence.support")}
+                      </Text>
+                    </View>
+                    <View style={styles.presenceRailBadges}>
+                      {yourRole ? (
                         <Text
                           style={StyleSheet.flatten([
                             styles.presenceRole,
-                            m.role === "owner"
+                            yourRole === "owner"
                               ? styles.presenceRoleOwner
-                              : m.role === "editor"
+                              : yourRole === "editor"
                                 ? styles.presenceRoleEditor
                                 : styles.presenceRoleViewer,
                           ])}
                         >
-                          {t(locale, `collab.role.${m.role}`)}
+                          {t(locale, `collab.role.${yourRole}`)}
+                        </Text>
+                      ) : null}
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.presenceStatusBadge,
+                          collabSoftOpen
+                            ? styles.presenceStatusBadgeSoft
+                            : members.length > 0
+                              ? styles.presenceStatusBadgeLive
+                              : styles.presenceStatusBadgeIdle,
+                        ])}
+                      >
+                        {!collabSoftOpen && members.length > 0 ? (
+                          <Animated.View
+                            style={StyleSheet.flatten([
+                              styles.liveDot,
+                              {
+                                opacity: presencePulse.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0.45, 1],
+                                }),
+                              },
+                            ])}
+                          />
+                        ) : null}
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.presenceStatusBadgeText,
+                            collabSoftOpen
+                              ? styles.presenceStatusBadgeTextSoft
+                              : members.length > 0
+                                ? styles.presenceStatusBadgeTextLive
+                                : styles.presenceStatusBadgeTextIdle,
+                          ])}
+                        >
+                          {collabSoftOpen
+                            ? t(locale, "collab.presence.softBadge")
+                            : t(locale, "collab.presence.live")}
+                          {!collabSoftOpen && presenceActiveCount > 0
+                            ? ` · ${presenceActiveCount}`
+                            : ""}
                         </Text>
                       </View>
-                    );
-                  })}
-                </View>
-                <View style={styles.collabMetaRow}>
-                  <Text style={styles.collabMeta}>
-                    {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
-                    {collabSeeded
-                      ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
-                      : ""}
-                  </Text>
-                  {members.length > 0 ? (
-                    <View style={styles.liveBadge}>
-                      <Animated.View
-                        style={StyleSheet.flatten([
-                          styles.liveDot,
-                          {
-                            opacity: presencePulse.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0.45, 1],
-                            }),
-                          },
-                        ])}
-                      />
-                      <Text style={styles.liveLabel}>
-                        {t(locale, "collab.presence.live")}
+                    </View>
+                  </View>
+
+                  {/* Compact SoftFail mist band under azure Presence rail — never timber. */}
+                  <SoftFailNotice
+                    open={presenceSoftOpen}
+                    compact
+                    style={styles.presenceSoftFail}
+                  >
+                    {presenceSoftCopy}
+                  </SoftFailNotice>
+
+                  <SheetPresence
+                    open
+                    delayMs={40}
+                    rise={8}
+                    style={StyleSheet.flatten([
+                      styles.presenceBody,
+                      presenceSoftOpen ? styles.presenceBodySoft : null,
+                    ])}
+                    accessibilityLabel={t(locale, "collab.members")}
+                  >
+                    <View
+                      style={StyleSheet.flatten([
+                        styles.presenceTrack,
+                        presenceSoftOpen ? styles.presenceTrackSoft : null,
+                      ])}
+                      accessibilityRole="list"
+                      accessibilityLabel={t(locale, "collab.members")}
+                    >
+                      {members.slice(0, 4).map((m) => {
+                        const presence = presenceFor(m.role);
+                        const pulseOpacity =
+                          presence === "active"
+                            ? presencePulse.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.55, 1],
+                              })
+                            : 1;
+                        return (
+                          <View
+                            key={m.id}
+                            style={StyleSheet.flatten([
+                              styles.presenceChip,
+                              presence === "active"
+                                ? styles.presenceChipActive
+                                : null,
+                            ])}
+                            accessibilityLabel={`${m.displayName ?? m.userId} · ${t(locale, `collab.role.${m.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
+                          >
+                            <View
+                              style={StyleSheet.flatten([
+                                styles.presenceAvatar,
+                                m.role === "viewer"
+                                  ? styles.presenceAvatarMuted
+                                  : null,
+                              ])}
+                            >
+                              <Text style={styles.presenceInitials}>
+                                {memberInitials(m.displayName ?? m.userId)}
+                              </Text>
+                              <Animated.View
+                                style={StyleSheet.flatten([
+                                  styles.presenceDot,
+                                  presence === "active"
+                                    ? styles.presenceDotActive
+                                    : presence === "idle"
+                                      ? styles.presenceDotIdle
+                                      : styles.presenceDotAway,
+                                  { opacity: pulseOpacity },
+                                ])}
+                              />
+                            </View>
+                            <Text style={styles.presenceName} numberOfLines={1}>
+                              {(m.displayName ?? m.userId).split(/\s+/)[0]}
+                            </Text>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.presenceRole,
+                                m.role === "owner"
+                                  ? styles.presenceRoleOwner
+                                  : m.role === "editor"
+                                    ? styles.presenceRoleEditor
+                                    : styles.presenceRoleViewer,
+                              ])}
+                            >
+                              {t(locale, `collab.role.${m.role}`)}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                      {members.length === 0 ? (
+                        <Text style={styles.presenceEmpty}>
+                          {t(locale, "collab.presence.empty")}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <View style={styles.collabMetaRow}>
+                      <Text style={styles.collabMeta}>
+                        {yourRole ? t(locale, `collab.role.${yourRole}`) : ""}
+                        {collabSeeded
+                          ? `${yourRole ? " · " : ""}${t(locale, "collab.demoBadge")}`
+                          : ""}
                       </Text>
                     </View>
-                  ) : null}
+                  </SheetPresence>
                 </View>
-
-                {/* Closed-bar SoftFailNotice — invite-scoped copy; rise in/out (#46) */}
-                <SoftFailNotice
-                  open={inviteSoftOpen && !inviteOpen}
-                  style={styles.collabSoftFail}
-                >
-                  {inviteSoftCopy}
-                </SoftFailNotice>
 
                 {(yourRole === "owner" || yourRole === "editor") && (
                   <View style={styles.inviteActions}>
@@ -2125,7 +2230,8 @@ export default function TripDetailScreen() {
                   {/*
                     Invite SoftFail depth (BEA-300 after #186):
                     azure rail · Soft invite · softSupport · SoftFailNotice ·
-                    mist code · tip-011 — never timber / Failed to fetch.
+                    mist code · tip-011 — presence SoftFail yields (BEA-374).
+                    Never timber / Failed to fetch.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -3360,13 +3466,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 4,
   },
-  collabTitle: {
-    ...type.body,
-    fontSize: 11,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    color: colors.river,
-  },
   collabMetaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -3379,32 +3478,144 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.inkSoft,
   },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(47,107,255,0.1)",
-    borderRadius: radius.xs,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.river,
   },
-  liveLabel: {
+  /* Azure Presence chrome — web TripMembersBar SoftFail depth (BEA-374 / #141). */
+  presenceChrome: {
+    marginTop: 4,
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  presenceRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+    rowGap: 6,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(244, 246, 250, 0.7)",
+  },
+  presenceRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: 8,
+    rowGap: 2,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  presenceEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  presenceCount: {
     ...type.body,
     fontSize: 11,
     fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100, 116, 139, 0.8)",
+  },
+  presenceSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(100, 116, 139, 0.8)",
+    flexShrink: 1,
+  },
+  presenceRailBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+  },
+  presenceStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: radius.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  presenceStatusBadgeSoft: {
+    backgroundColor: colors.mist,
+  },
+  presenceStatusBadgeLive: {
+    backgroundColor: "rgba(47,107,255,0.12)",
+  },
+  presenceStatusBadgeIdle: {
+    backgroundColor: "rgba(230, 236, 245, 0.7)",
+  },
+  presenceStatusBadgeText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  presenceStatusBadgeTextSoft: {
+    color: colors.inkSoft,
+  },
+  presenceStatusBadgeTextLive: {
     color: colors.riverDeep,
   },
-  presenceRow: {
+  presenceStatusBadgeTextIdle: {
+    color: "rgba(100, 116, 139, 0.7)",
+  },
+  /** Mist SoftFail strip under azure Presence rail — border-b before mist body. */
+  presenceSoftFail: {
+    marginBottom: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  presenceBody: {
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  /** Mist-wash chips body when Presence SoftFail open (tip-011). */
+  presenceBodySoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.28)",
+  },
+  presenceTrack: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
-    marginTop: 2,
+    borderRadius: radius.sm,
+    padding: 4,
+    backgroundColor: "rgba(230, 236, 245, 0.5)",
+  },
+  /** Azure inset mist track when Presence SoftFail open. */
+  presenceTrackSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.72)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  presenceEmpty: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkSoft,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
   },
   presenceChip: {
     flexDirection: "row",
@@ -3494,9 +3705,6 @@ const styles = StyleSheet.create({
   presenceRoleViewer: {
     backgroundColor: colors.mist,
     color: colors.inkSoft,
-  },
-  collabSoftFail: {
-    marginTop: 6,
   },
   collabThread: {
     marginTop: 10,
