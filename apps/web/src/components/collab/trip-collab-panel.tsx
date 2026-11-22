@@ -36,11 +36,14 @@ export function TripCollabPanel({
   locale,
   selectedStopId,
   selectedStopName,
+  inviteOpen = false,
 }: {
   tripId: string;
   locale: Locale;
   selectedStopId: string | null;
   selectedStopName?: string;
+  /** SoftFail yield (BEA-379): panel/timeline SoftFail yield while invite owns. */
+  inviteOpen?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("comments");
   const [members, setMembers] = useState<TripMember[]>([]);
@@ -251,15 +254,16 @@ export function TripCollabPanel({
     pending && comments.length === 0 && events.length === 0 && !demoSeeded;
   const softNoticeOpen = demoSeeded || softOffline;
   /**
-   * Timeline SoftFailNotice depth (BEA-332 after #193):
-   * Activity sheet owns SoftFail under azure Timeline rail · Soft timeline
-   * badge · softSupport · compact SoftFail mist band (`border-b`) · tip-011
-   * mist-wash track. Panel SoftFail yields on Activity; presence/invite
-   * SoftFail (#223/#241) own their rails — no double depth. Soft copy never
-   * timber / Failed to fetch.
+   * Timeline SoftFailNotice depth / yield (BEA-379 after #135 / #252):
+   * Activity sheet owns Soft badge · softSupport · mist SoftFail band ·
+   * tip-011 mist-wash track as one unit. Panel SoftFail yields on Activity;
+   * invite SoftFail (#241) owns when invite sheet open — timeline SoftFail
+   * yields (no double depth). Soft copy never timber / Failed to fetch.
    */
-  const timelineSoftOpen = softNoticeOpen && tab === "activity";
-  const panelSoftOpen = softNoticeOpen && tab !== "activity";
+  const timelineSoftOpen =
+    softNoticeOpen && tab === "activity" && !inviteOpen;
+  const panelSoftOpen =
+    softNoticeOpen && tab !== "activity" && !inviteOpen;
   const softNoticeCopy = softOffline
     ? t(locale, "collab.panel.softOffline")
     : t(locale, "collab.panel.demoNotice");
@@ -327,13 +331,13 @@ export function TripCollabPanel({
         </div>
       </header>
 
-      {/* Panel SoftFail — Comments tab; yields when Timeline SoftFail owns Activity depth. */}
+      {/* Panel SoftFail — Comments tab; yields when Timeline SoftFail owns Activity, or invite SoftFail owns (BEA-379). */}
       <SoftFailNotice open={panelSoftOpen} className="mb-4">
         {softNoticeCopy}
       </SoftFailNotice>
 
       {error ? (
-        <p className="mb-3 text-sm text-timber" role="alert">
+        <p className="mb-3 text-sm text-ink-soft" role="alert">
           {error}
         </p>
       ) : null}
@@ -362,12 +366,12 @@ export function TripCollabPanel({
               </div>
               <span
                 className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition duration-bp-fast ease-bp-out ${
-                  softNoticeOpen
+                  panelSoftOpen
                     ? "bg-mist text-ink-soft"
                     : "bg-river/12 text-river-deep"
                 }`}
               >
-                {softNoticeOpen
+                {panelSoftOpen
                   ? t(locale, "collab.demoBadge")
                   : t(locale, "collab.panel.liveBadge")}
               </span>
@@ -510,11 +514,11 @@ export function TripCollabPanel({
       </SheetPresence>
 
       {/*
-        Timeline SoftFail depth (BEA-332 after #193):
+        Timeline SoftFail depth / yield (BEA-379 after #135 / #252):
         azure Timeline rail · Soft timeline badge · softSupport · compact
         SoftFail mist band (`border-b`) · tip-011 mist-wash track · panel
-        SoftFail yields on Activity; presence/invite SoftFail (#223/#241)
-        own their rails — never timber / Failed to fetch.
+        SoftFail yields on Activity; invite SoftFail (#241) owns when open
+        — never timber / Failed to fetch.
       */}
       <SheetPresence
         open={tab === "activity"}

@@ -100,6 +100,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
     initial?.days[0]?.id ?? null,
   );
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  /** SoftFail yield (BEA-379): invite sheet owns SoftFail → panel/timeline yield. */
+  const [collabInviteOpen, setCollabInviteOpen] = useState(false);
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
   const [placeDetailsMode, setPlaceDetailsMode] = useState<"live" | "demo">(
     "demo",
@@ -1033,6 +1035,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           onVersion={(v) =>
             setTrip((prev) => (prev ? { ...prev, version: v } : prev))
           }
+          onInviteOpenChange={setCollabInviteOpen}
         />
       </div>
 
@@ -1878,6 +1881,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           selectedStopName={
             dayStops.find((s) => s.id === selectedStopId)?.place.name
           }
+          inviteOpen={collabInviteOpen}
         />
       </div>
     </div>
