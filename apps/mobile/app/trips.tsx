@@ -200,37 +200,50 @@ function TripRow({
 }
 
 /**
- * Azure inset Start rail — Soft empty badge when SoftFail owns
- * (BEA-307 after web #224 / Expo #96).
+ * Azure inset Start rail — Soft empty badge + softSupport when SoftFail owns
+ * (BEA-307 after web #224 / Expo #96; softSupport leaf BEA-416 / #280).
  */
 function EmptyRail({ soft }: { soft: boolean }) {
   return (
-    <View style={styles.listRail}>
+    <View
+      style={StyleSheet.flatten([
+        styles.listRail,
+        soft ? styles.listRailSoft : null,
+      ])}
+    >
       <View style={styles.listRailCopy}>
         <Text style={styles.listRailLabel}>
           {t(locale, "trips.seedRail")}
         </Text>
-        <Text style={styles.listRailCount}>
-          {t(locale, "trips.emptySupport")}
-        </Text>
+        {soft ? (
+          <SoftFailSupport style={styles.softSupportShrink} numberOfLines={1}>
+            {t(locale, "trips.emptySoftSupport")}
+          </SoftFailSupport>
+        ) : (
+          <Text style={styles.listRailCount}>
+            {t(locale, "trips.emptySupport")}
+          </Text>
+        )}
       </View>
-      <View
-        style={StyleSheet.flatten([
-          styles.statusChip,
-          soft ? styles.statusChipDemo : styles.statusChipLive,
-        ])}
-      >
-        <Text
+      {soft ? (
+        <SoftFailBadge>{t(locale, "trips.emptySoftBadge")}</SoftFailBadge>
+      ) : (
+        <View
           style={StyleSheet.flatten([
-            styles.statusChipText,
-            soft ? styles.statusChipTextDemo : styles.statusChipTextLive,
+            styles.statusChip,
+            styles.statusChipLive,
           ])}
         >
-          {soft
-            ? t(locale, "trips.emptySoftBadge")
-            : t(locale, "trips.seedReady")}
-        </Text>
-      </View>
+          <Text
+            style={StyleSheet.flatten([
+              styles.statusChipText,
+              styles.statusChipTextLive,
+            ])}
+          >
+            {t(locale, "trips.seedReady")}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -642,7 +655,7 @@ export default function TripsScreen() {
             >
               {/*
                 Empty SoftFail depth (BEA-307 after web #224 / Expo #96):
-                azure Start rail · Soft empty badge · emptySupport ·
+                azure Start rail · Soft empty badge · emptySoftSupport ·
                 compact SoftFailNotice · tip-011 SheetPresence CTAs /
                 sample cards — never timber / Failed to fetch.
               */}

@@ -253,7 +253,7 @@ export default function TranslateScreen() {
           : error
             ? t(uiLocale, "translate.error")
             : t(uiLocale, "translate.talkSoftFail");
-  const talkSoftSupport = t(uiLocale, "translate.talkSupport");
+  const talkSoftSupport = t(uiLocale, "translate.talkSoftSupport");
 
   /**
    * Expo translate dual SoftFailNotice depth (BEA-335 after #202 / copy #219) +
@@ -286,7 +286,7 @@ export default function TranslateScreen() {
           : error
             ? t(uiLocale, "translate.error")
             : t(uiLocale, "translate.dualSoftFail");
-  const dualSoftSupport = t(uiLocale, "translate.dualSupport");
+  const dualSoftSupport = t(uiLocale, "translate.dualSoftSupport");
 
   useEffect(() => {
     let alive = true;
