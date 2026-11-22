@@ -999,7 +999,7 @@ export function BookingPanel({
                             locale,
                             "planner.booking.providerPlaceholder",
                           )}
-                          placeholderTextColor="rgba(100,116,139,0.5)"
+                          placeholderTextColor={`${colors.inkSoft}80`}
                           style={styles.confirmInput}
                         />
                         <TextInput
@@ -1011,7 +1011,7 @@ export function BookingPanel({
                             locale,
                             "planner.booking.urlPlaceholder",
                           )}
-                          placeholderTextColor="rgba(100,116,139,0.5)"
+                          placeholderTextColor={`${colors.inkSoft}80`}
                           style={styles.confirmInput}
                           autoCapitalize="none"
                           autoCorrect={false}
