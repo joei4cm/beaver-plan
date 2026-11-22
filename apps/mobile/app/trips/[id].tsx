@@ -2525,7 +2525,12 @@ export default function TripDetailScreen() {
                 {(yourRole === "owner" || yourRole === "editor") && (
                   <View style={styles.inviteActions}>
                     <Pressable
-                      style={StyleSheet.flatten([styles.inviteBtn])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.inviteBtn,
+                          pressed ? styles.inviteCtaPressed : null,
+                        ])
+                      }
                       onPress={() => void onInvite()}
                       accessibilityRole="button"
                     >
@@ -2534,7 +2539,12 @@ export default function TripDetailScreen() {
                       </Text>
                     </Pressable>
                     <Pressable
-                      style={StyleSheet.flatten([styles.inviteToggle])}
+                      style={({ pressed }) =>
+                        StyleSheet.flatten([
+                          styles.inviteToggle,
+                          pressed ? styles.inviteCtaPressed : null,
+                        ])
+                      }
                       onPress={() => setInviteOpen((v) => !v)}
                       accessibilityRole="button"
                     >
@@ -2556,9 +2566,10 @@ export default function TripDetailScreen() {
                 >
                   {/*
                     Invite SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
-                    wave 48 craft residual (BEA-461): foam/95 sheet · code eyebrow
-                    tracking · shareHint display weight. SoftFailBadge ·
-                    SoftFailSupport · mist band unchanged. Craft: ?inviteSoftFail=1.
+                    wave 48 craft residual (BEA-461) + wave 53 residual (BEA-506):
+                    paper/inkSoft/foam token alphas · tip-011 Invite/Copy press ·
+                    shareHint lineHeight. SoftFailBadge · SoftFailSupport · mist
+                    band unchanged. Craft: ?inviteSoftFail=1.
                   */}
                   <View style={styles.inviteSheetHeader}>
                     <View style={styles.inviteSheetTitles}>
@@ -2634,7 +2645,12 @@ export default function TripDetailScreen() {
                             {inviteCode}
                           </Text>
                           <Pressable
-                            style={StyleSheet.flatten([styles.copyBtn])}
+                            style={({ pressed }) =>
+                              StyleSheet.flatten([
+                                styles.copyBtn,
+                                pressed ? styles.inviteCtaPressed : null,
+                              ])
+                            }
                             onPress={() => void onCopyInvite()}
                             accessibilityRole="button"
                           >
@@ -4347,13 +4363,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.inkSoft,
   },
+  /* tip-011 press — parity with web Invite/Copy active:scale-[0.98] (BEA-506). */
+  inviteCtaPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
+  },
   inviteSheet: {
     marginTop: 10,
     overflow: "hidden",
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    /** Web bg-foam/95 */
+    backgroundColor: `${colors.foam}F2`,
     shadowColor: colors.ink,
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -4367,7 +4389,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244, 246, 250, 0.7)",
+    /** Web bg-paper/70 */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderLeftWidth: 3,
@@ -4393,7 +4416,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 11,
     lineHeight: 16,
-    color: "rgba(71, 85, 105, 0.8)",
+    color: `${colors.inkSoft}CC`,
   },
   inviteSheetBadges: {
     flexDirection: "row",
@@ -4408,7 +4431,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
     color: colors.riverDeep,
-    backgroundColor: "rgba(47,107,255,0.12)",
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: radius.xs,
@@ -4448,6 +4471,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     letterSpacing: -0.25,
+    lineHeight: 22,
     color: colors.ink,
   },
   inviteShareHintMuted: {
@@ -4466,7 +4490,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 1.4,
     color: colors.riverDeep,
-    backgroundColor: "rgba(47,107,255,0.1)",
+    backgroundColor: `${colors.river}1A`,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.sm,
@@ -4494,7 +4518,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 12,
     lineHeight: 18,
-    color: "rgba(71, 85, 105, 0.85)",
+    color: `${colors.inkSoft}D9`,
   },
   inviteMemberList: {
     borderTopWidth: StyleSheet.hairlineWidth,

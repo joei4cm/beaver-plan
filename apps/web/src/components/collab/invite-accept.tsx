@@ -42,9 +42,9 @@ function demoPreview(code: string): Preview {
 
 /**
  * Invite accept sheet — SoftFail depth kept (BEA-392 / BEA-420 / #241) + wave 48
- * craft residual (BEA-461): Lumen sky tokens · eyebrow tracking · tip-011 rise ·
- * Join `active:scale`. SoftFailBadge · SoftFailSupport · mist band unchanged.
- * Never timber / Failed to fetch. No `/dev` gallery.
+ * craft residual (BEA-461) + wave 53 residual (BEA-506): preview title
+ * `leading-snug` · tip-011 Join press kept. SoftFailBadge · SoftFailSupport ·
+ * mist band unchanged. Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function InviteAccept({
   code,
@@ -265,7 +265,7 @@ export function InviteAccept({
                   {preview.trip.destination ?? t(locale, "planner.trip")}
                 </p>
                 <p
-                  className="animate-rise mt-1 font-display text-3xl font-semibold tracking-tight text-ink md:text-[2rem]"
+                  className="animate-rise mt-1 font-display text-3xl font-semibold leading-snug tracking-tight text-ink md:text-[2rem]"
                   style={{ animationDelay: "120ms" }}
                 >
                   {preview.trip.title}
