@@ -51,9 +51,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Expo selected-stop place intel — Lumen hierarchy after web #85:
- * azure header rail · Snapshot / Categories / About / Note · SoftFailNotice
- * when Places API absent · SheetPresence #46 rise · StyleSheet.flatten.
+ * Expo place intel SoftFailNotice depth (BEA-359 after #108 / web #251):
+ * azure Place intel rail · Soft intel badge · softSupport · soft rail wash ·
+ * compact SoftFail mist band under rail · tip-011 mist-wash body ·
+ * StyleSheet.flatten · Lumen tokens. SoftFail stays under Place intel rail
+ * — never timber / Failed to fetch. Web map place intel SoftFail (#251)
+ * stays out of scope.
  */
 export function PlaceIntel({
   details,
@@ -76,7 +79,9 @@ export function PlaceIntel({
       >
         <View style={styles.skeletonHeader} />
         <View style={styles.skeletonBlock} />
-        <View style={StyleSheet.flatten([styles.skeletonBlock, styles.skeletonShort])} />
+        <View
+          style={StyleSheet.flatten([styles.skeletonBlock, styles.skeletonShort])}
+        />
       </View>
     );
   }
@@ -88,7 +93,7 @@ export function PlaceIntel({
   const snap = snapRef.current;
   const view = snap?.details;
   const note = snap?.userNote;
-  const demo = snap?.demoMode;
+  const demo = Boolean(snap?.demoMode);
   const hours = view?.openingHours?.[0];
   const extraHours = view?.openingHours?.slice(1, 3) ?? [];
   const tags = view?.tags?.slice(0, 4) ?? [];
@@ -96,6 +101,21 @@ export function PlaceIntel({
   const showTags = tags.length > 0;
   const showAbout = Boolean(view?.summary);
   const showNote = Boolean(note);
+  /**
+   * SoftFail depth (BEA-359 after #108): Soft intel badge · softSupport ·
+   * SoftFail under azure Place intel rail · tip-011 mist-wash body.
+   * SoftFail copy always softFail — never timber / Failed to fetch.
+   */
+  const softOpen = open && demo;
+  const sheetSupportCopy = softOpen
+    ? t(locale, "planner.place.softSupport")
+    : view?.address
+      ? view.address
+      : t(locale, "planner.place.pinSupport");
+  const tagCountLabel = t(locale, "planner.place.tagCount").replace(
+    "{n}",
+    String(tags.length),
+  );
 
   return (
     <SheetPresence
@@ -103,36 +123,91 @@ export function PlaceIntel({
       delayMs={40}
       rise={10}
       style={styles.root}
-      accessibilityLabel={t(locale, "planner.place.eyebrow")}
+      accessibilityLabel={t(locale, "planner.place.sheetEyebrow")}
     >
       {view ? (
         <>
-          <View style={styles.header}>
-            <Text style={styles.headerEyebrow}>
-              {t(locale, "planner.place.eyebrow")}
-            </Text>
-            <View
-              style={StyleSheet.flatten([
-                styles.badge,
-                demo ? styles.badgeDemo : styles.badgeLive,
-              ])}
-            >
+          {/*
+            SoftFail depth (BEA-359 after #108): azure Place intel rail · Soft
+            intel badge · softSupport · soft rail wash · tip-011 — SoftFail
+            under rail. Web map place intel SoftFail (#251) stays out of scope.
+          */}
+          <View
+            style={StyleSheet.flatten([
+              styles.header,
+              softOpen ? styles.headerSoft : null,
+            ])}
+          >
+            <View style={styles.headerText}>
+              <View style={styles.headerTitleRow}>
+                <Text style={styles.headerEyebrow}>
+                  {t(locale, "planner.place.sheetEyebrow")}
+                </Text>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.badge,
+                    demo ? styles.badgeDemo : styles.badgeLive,
+                  ])}
+                >
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.badgeText,
+                      demo ? styles.badgeTextDemo : styles.badgeTextLive,
+                    ])}
+                  >
+                    {demo
+                      ? t(locale, "planner.place.demoBadge")
+                      : t(locale, "planner.place.liveBadge")}
+                  </Text>
+                </View>
+                {softOpen ? (
+                  <View style={styles.softBadge}>
+                    <Text style={styles.softBadgeLabel}>
+                      {t(locale, "planner.place.softBadge")}
+                    </Text>
+                  </View>
+                ) : null}
+                {showTags ? (
+                  <Text style={styles.headerCount}>{tagCountLabel}</Text>
+                ) : (
+                  <Text style={styles.pinEyebrow}>
+                    {t(locale, "planner.place.pinEyebrow")}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.headerName}>{view.name}</Text>
               <Text
                 style={StyleSheet.flatten([
-                  styles.badgeText,
-                  demo ? styles.badgeTextDemo : styles.badgeTextLive,
+                  styles.headerSupport,
+                  softOpen ? styles.headerSupportSoft : null,
                 ])}
+                numberOfLines={2}
               >
-                {demo
-                  ? t(locale, "planner.place.demoBadge")
-                  : t(locale, "planner.place.liveBadge")}
+                {sheetSupportCopy}
               </Text>
             </View>
           </View>
 
-          <View style={styles.sections}>
+          {/* Compact SoftFail mist band under azure Place intel rail. */}
+          <SoftFailNotice
+            open={softOpen}
+            compact
+            style={styles.softFailBand}
+          >
+            {t(locale, "planner.place.softFail")}
+          </SoftFailNotice>
+
+          <View
+            style={StyleSheet.flatten([
+              styles.sections,
+              softOpen ? styles.sectionsSoft : null,
+            ])}
+          >
             {showSnapshot ? (
-              <View
+              <SheetPresence
+                open={open}
+                delayMs={60}
+                rise={8}
                 style={styles.section}
                 accessibilityLabel={t(locale, "planner.place.snapshotEyebrow")}
               >
@@ -171,11 +246,14 @@ export function PlaceIntel({
                     ))}
                   </View>
                 ) : null}
-              </View>
+              </SheetPresence>
             ) : null}
 
             {showTags ? (
-              <View
+              <SheetPresence
+                open={open}
+                delayMs={80}
+                rise={8}
                 style={styles.section}
                 accessibilityLabel={t(locale, "planner.place.tags")}
               >
@@ -189,11 +267,14 @@ export function PlaceIntel({
                     </Text>
                   ))}
                 </View>
-              </View>
+              </SheetPresence>
             ) : null}
 
             {showAbout ? (
-              <View
+              <SheetPresence
+                open={open}
+                delayMs={100}
+                rise={8}
                 style={styles.section}
                 accessibilityLabel={t(locale, "planner.place.aboutEyebrow")}
               >
@@ -201,11 +282,14 @@ export function PlaceIntel({
                   {t(locale, "planner.place.aboutEyebrow")}
                 </SectionEyebrow>
                 <Text style={styles.summary}>{view.summary}</Text>
-              </View>
+              </SheetPresence>
             ) : null}
 
             {showNote ? (
-              <View
+              <SheetPresence
+                open={open}
+                delayMs={120}
+                rise={8}
                 style={styles.noteSection}
                 accessibilityLabel={t(locale, "planner.place.note")}
               >
@@ -213,13 +297,9 @@ export function PlaceIntel({
                   {t(locale, "planner.place.note")}
                 </SectionEyebrow>
                 <Text style={styles.note}>{note}</Text>
-              </View>
+              </SheetPresence>
             ) : null}
           </View>
-
-          <SoftFailNotice open={Boolean(demo)} compact>
-            {t(locale, "planner.place.softFail")}
-          </SoftFailNotice>
         </>
       ) : null}
     </SheetPresence>
@@ -240,18 +320,27 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   header: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
     backgroundColor: "rgba(244, 246, 250, 0.7)",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
+  },
+  /** Soft azure Place intel rail wash when SoftFail owns depth (BEA-359). */
+  headerSoft: {
+    backgroundColor: "rgba(244, 246, 250, 0.85)",
+  },
+  headerText: {
+    minWidth: 0,
+    gap: 4,
+  },
+  headerTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
   },
   headerEyebrow: {
     ...type.body,
@@ -260,6 +349,37 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: "uppercase",
     color: colors.river,
+  },
+  headerName: {
+    ...type.display,
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+    color: colors.ink,
+  },
+  headerSupport: {
+    ...type.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: colors.inkSoft,
+  },
+  headerSupportSoft: {
+    color: "rgba(100, 116, 139, 0.85)",
+  },
+  headerCount: {
+    ...type.body,
+    fontSize: 11,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: "rgba(100,116,139,0.8)",
+  },
+  pinEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: "rgba(100,116,139,0.7)",
   },
   badge: {
     borderRadius: radius.xs,
@@ -285,8 +405,32 @@ const styles = StyleSheet.create({
   badgeTextLive: {
     color: colors.riverDeep,
   },
+  softBadge: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  softBadgeLabel: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: colors.inkSoft,
+  },
+  /** Mist SoftFail strip under azure Place intel rail — border-b before tip-011 body. */
+  softFailBand: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderTopWidth: 0,
+  },
   sections: {
     borderTopWidth: 0,
+  },
+  /** Mist-wash tip-011 sheet body when SoftFail owns the Place intel rail. */
+  sectionsSoft: {
+    backgroundColor: "rgba(230, 236, 245, 0.22)",
   },
   section: {
     paddingHorizontal: 12,
