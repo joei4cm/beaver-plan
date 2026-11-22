@@ -1585,7 +1585,8 @@ const styles = StyleSheet.create({
   confirmSupport: {
     ...type.body,
     fontSize: 12,
-    lineHeight: 17,
+    /** Web text-xs leading-relaxed · sectionSupport twin (BEA-706). */
+    lineHeight: 18,
     color: colors.inkSoft,
     flexShrink: 1,
   },
