@@ -53,9 +53,27 @@ const SHARE_EXPORT_SCALE = 2;
 
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
 
+/** Craft SoftFail query parity with web (`?studioSoftFail=1` / `?exportSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
+
 export default function ShareScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const {
+    id,
+    studioSoftFail: studioSoftFailParam,
+    exportSoftFail: exportSoftFailParam,
+  } = useLocalSearchParams<{
+    id: string;
+    studioSoftFail?: string | string[];
+    exportSoftFail?: string | string[];
+  }>();
   const tripId = typeof id === "string" ? id : "sample-kyoto";
+  /** Craft preview: /trips/…/share?studioSoftFail=1 — SoftFail depth under Export. */
+  const studioSoftPreview = craftSoftFailOn(studioSoftFailParam);
+  /** Craft preview: /trips/…/share?exportSoftFail=1 — SoftFail depth under Export. */
+  const exportSoftPreview = craftSoftFailOn(exportSoftFailParam);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -301,16 +319,18 @@ export default function ShareScreen() {
   const active = SHARE_TEMPLATES.find((x) => x.id === templateId)!;
 
   /**
-   * SoftFail helpers (BEA-397 after #284 / depth BEA-365):
-   * SoftFailBadge Soft export / Soft studio · SoftFailSupport · SoftFailNotice
-   * mist band · softFailMistWashStyle tip-011 · StyleSheet.flatten · never
-   * timber / Failed to fetch. Export SoftFail owns when exportSoftFail;
-   * softDemo (load/render) SoftFail under Export while Export yields to it
-   * when only softDemo (Expo has no Studio SoftFail rail). Web share
-   * export SoftFail (#255) / share studio SoftFail (#243) stay out of scope.
+   * SoftFail helpers (BEA-397 after #284 / depth BEA-365) + craft SoftFail
+   * query parity (BEA-404): SoftFailBadge Soft export / Soft studio ·
+   * SoftFailSupport · SoftFailNotice mist band · softFailMistWashStyle tip-011 ·
+   * StyleSheet.flatten · never timber / Failed to fetch. Export SoftFail owns
+   * when exportSoftFail / `?exportSoftFail=1`; softDemo / `?studioSoftFail=1`
+   * SoftFail under Export while Export yields to it when only studio SoftFail
+   * (Expo has no Studio SoftFail rail). Craft mirrors web share SoftFail rails.
+   * SoftFail depth + helpers kept. No /dev SoftFail gallery.
    */
-  const exportOwnsSoft = exportSoftFail;
-  const studioSoftOpen = softDemo && !exportSoftFail;
+  const exportOwnsSoft = exportSoftFail || exportSoftPreview;
+  const studioSoftOpen =
+    (softDemo || studioSoftPreview) && !exportOwnsSoft;
   const softOpen = exportOwnsSoft || studioSoftOpen;
   const exportSupportCopy = exportOwnsSoft
     ? t(locale, "share.exportSoftSupport")
@@ -580,11 +600,12 @@ export default function ShareScreen() {
             </View>
 
             {/*
-              Export SoftFail helpers (BEA-397 after #284 / depth BEA-365):
-              azure Export rail · SoftFailBadge Soft export / Soft studio ·
-              SoftFailSupport · SoftFailNotice mist band · softFailMistWashStyle
-              tip-011 · StyleSheet.flatten — never timber / Failed to fetch.
-              Web #255 / #243 stay out of scope.
+              Export SoftFail helpers (BEA-397 after #284 / depth BEA-365) +
+              craft SoftFail query parity (BEA-404): azure Export rail ·
+              SoftFailBadge Soft export / Soft studio · SoftFailSupport ·
+              SoftFailNotice mist band · softFailMistWashStyle tip-011 ·
+              StyleSheet.flatten · Craft: ?exportSoftFail=1 · ?studioSoftFail=1 —
+              never timber / Failed to fetch. No /dev SoftFail gallery.
             */}
             <SheetPresence
               open
