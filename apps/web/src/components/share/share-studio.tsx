@@ -104,6 +104,41 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [softDemo, setSoftDemo] = useState(false);
   const [exportSoftFail, setExportSoftFail] = useState(false);
+  /** Craft preview: /trips/…/share?emptySoftFail=1 — SoftFail depth under empty canvas. */
+  const [emptySoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("emptySoftFail") === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…/share?studioSoftFail=1 — SoftFail depth under Studio. */
+  const [studioSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("studioSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
+  /** Craft preview: /trips/…/share?exportSoftFail=1 — SoftFail depth under Export. */
+  const [exportSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("exportSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
   const [swapTick, setSwapTick] = useState(0);
@@ -404,36 +439,53 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
     : `${templateId}-${swapTick}`;
 
   /**
-   * SoftFail helpers (BEA-397 after #284 / depth BEA-331 + BEA-315 #243):
-   * SoftFailBadge Soft/Live · SoftFailSupport · SoftFailNotice mist band ·
-   * softFailMistWashClass tip-011 · empty canvas owns SoftFail under azure
-   * canvas rail · Studio sheet owns softDemo under azure Studio rail · Export
-   * owns exportSoftFail under Export rail · Studio SoftFail yields while Export
-   * owns (no double depth). Soft copy never timber / Failed to fetch.
+   * SoftFail helpers (BEA-397 after #284 / depth BEA-331 + BEA-315 #243) +
+   * craft SoftFail query parity (BEA-404): SoftFailBadge Soft/Live ·
+   * SoftFailSupport · SoftFailNotice mist band · softFailMistWashClass tip-011 ·
+   * empty canvas owns SoftFail under azure canvas rail · Studio sheet owns
+   * softDemo under azure Studio rail · Export owns exportSoftFail under Export
+   * rail · Studio SoftFail yields while Export owns (no double depth). Craft:
+   * /trips/…/share?emptySoftFail=1 · ?studioSoftFail=1 · ?exportSoftFail=1 —
+   * SoftFail depth without a render/export miss. Soft copy never timber /
+   * Failed to fetch. No /dev SoftFail gallery.
    */
   const canvasEmpty = !preview;
   const emptyOwnsSoft = canvasEmpty && editSeeded;
-  const exportOwnsSoft = !emptyOwnsSoft && exportSoftFail;
-  const sheetOwnsSoft = !emptyOwnsSoft && !exportOwnsSoft && softDemo;
+  const exportOwnsSoft =
+    !emptyOwnsSoft && (exportSoftFail || exportSoftPreview);
+  const sheetOwnsSoft =
+    !emptyOwnsSoft &&
+    !exportOwnsSoft &&
+    (softDemo || studioSoftPreview);
   const emptySoftOpen =
-    emptyOwnsSoft && (softDemo || exportSoftFail || !busy);
+    emptyOwnsSoft &&
+    (emptySoftPreview ||
+      softDemo ||
+      studioSoftPreview ||
+      exportSoftFail ||
+      exportSoftPreview ||
+      !busy);
   /** Studio SoftFail under azure sheet rail — yields while empty / Export owns. */
   const sheetSoftOpen = sheetOwnsSoft;
-  const emptySoftCopy = exportSoftFail
-    ? t(locale, "share.exportSoftFail")
-    : softDemo || emptyOwnsSoft
-      ? t(locale, "share.emptySoftFail")
-      : t(locale, "share.demoNotice");
+  const emptySoftCopy =
+    exportSoftFail || exportSoftPreview
+      ? t(locale, "share.exportSoftFail")
+      : softDemo || studioSoftPreview || emptyOwnsSoft
+        ? t(locale, "share.emptySoftFail")
+        : t(locale, "share.demoNotice");
   const sheetSoftCopy = t(locale, "share.softFail");
-  const exportSoftCopy = exportSoftFail
-    ? t(locale, "share.exportSoftFail")
-    : t(locale, "share.demoNotice");
+  const exportSoftCopy =
+    exportSoftFail || exportSoftPreview
+      ? t(locale, "share.exportSoftFail")
+      : t(locale, "share.demoNotice");
   const sheetSupportCopy = sheetSoftOpen
     ? t(locale, "share.softSupport")
     : t(locale, "share.sheetSupport");
   const exportSupportCopy = exportOwnsSoft
     ? t(locale, "share.exportSoftSupport")
     : t(locale, "share.exportSupport");
+  const softDemoChrome =
+    softDemo || studioSoftPreview || exportSoftFail || exportSoftPreview;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-8 md:pt-8">
@@ -518,10 +570,10 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.7fr)]">
         {/*
-          Empty SoftFail helpers (BEA-397 after #284 / BEA-240):
-          azure canvas rail · SoftFailBadge Soft/Open · SoftFailSupport ·
-          SoftFailNotice mist band · softFailMistWashClass tip-011 —
-          never timber / Failed to fetch.
+          Empty SoftFail helpers (BEA-397 after #284 / BEA-240) + craft SoftFail
+          query parity (BEA-404): azure canvas rail · SoftFailBadge Soft/Open ·
+          SoftFailSupport · SoftFailNotice mist band · softFailMistWashClass
+          tip-011 · Craft: ?emptySoftFail=1 — never timber / Failed to fetch.
         */}
         <section className="animate-rise flex flex-col items-center">
           <div
@@ -578,7 +630,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
 
             <div
               className={`animate-template-swap relative mt-3 w-full max-w-[400px] overflow-hidden rounded-bp border bg-foam shadow-bp transition-[aspect-ratio] duration-bp ease-bp-in-out ${
-                softDemo || emptyOwnsSoft
+                softDemoChrome || emptyOwnsSoft
                   ? "border-river/35 ring-2 ring-river/20"
                   : "border-[color:var(--bp-line)]"
               }`}
@@ -665,11 +717,12 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
         </section>
 
         {/*
-          Studio SoftFail helpers (BEA-397 after #284 / depth BEA-315):
-          azure Studio rail · SoftFailBadge Soft studio / Demo · SoftFailSupport ·
-          SoftFailNotice mist band · softFailMistWashClass tip-011 —
-          Empty + Export SoftFail ownership yield (no double depth) —
-          never timber / Failed to fetch.
+          Studio SoftFail helpers (BEA-397 after #284 / depth BEA-315) + craft
+          SoftFail query parity (BEA-404): azure Studio rail · SoftFailBadge Soft
+          studio / Demo · SoftFailSupport · SoftFailNotice mist band ·
+          softFailMistWashClass tip-011 · Craft: ?studioSoftFail=1 — Empty +
+          Export SoftFail ownership yield (no double depth) — never timber /
+          Failed to fetch.
         */}
         <SheetPresence
           open
@@ -684,7 +737,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
               </span>
               <SoftFailSupport>{sheetSupportCopy}</SoftFailSupport>
             </div>
-            {sheetSoftOpen || softDemo || exportSoftFail || emptyOwnsSoft ? (
+            {sheetSoftOpen || softDemoChrome || emptyOwnsSoft ? (
               <SoftFailBadge>
                 {sheetSoftOpen
                   ? t(locale, "share.softBadge")
@@ -948,10 +1001,11 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             ) : null}
 
             {/*
-              Export SoftFail helpers (BEA-397 after #284 / depth BEA-331):
-              azure Export rail · SoftFailBadge Soft export / Live · SoftFailSupport ·
-              SoftFailNotice mist band · softFailMistWashClass tip-011 —
-              Studio SoftFail (#243) yields while Export owns — never timber /
+              Export SoftFail helpers (BEA-397 after #284 / depth BEA-331) + craft
+              SoftFail query parity (BEA-404): azure Export rail · SoftFailBadge
+              Soft export / Live · SoftFailSupport · SoftFailNotice mist band ·
+              softFailMistWashClass tip-011 · Craft: ?exportSoftFail=1 — Studio
+              SoftFail (#243) yields while Export owns — never timber /
               Failed to fetch.
             */}
             <section
@@ -1044,7 +1098,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     >
                       {t(locale, "share.refresh")}
                     </button>
-                    {!softDemo && !exportSoftFail ? (
+                    {!softDemoChrome ? (
                       <p className="max-w-[16rem] text-right text-[11px] leading-relaxed text-ink-soft/75">
                         {t(locale, "share.demoHint")}
                       </p>
