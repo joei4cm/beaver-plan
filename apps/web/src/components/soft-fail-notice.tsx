@@ -32,6 +32,10 @@ function prefersReducedMotion(): boolean {
  * One muted Lumen Route notice for demo / keys-missing / API-absent / offline soft-fail.
  * Mist wash + ink-soft copy — never timber, never raw "Failed to fetch", never purple glow.
  * Enter: easeRise + tip-011 ease-out (#46). Exit: paired ease-in rise-out.
+ *
+ * A11y depth (BEA-385): `role="status"` + explicit `aria-live="polite"` / `aria-atomic`
+ * on the SoftFail mist band. Focus-safe — non-interactive `<p>`, no tabIndex / autofocus,
+ * so Soft badge · softSupport · tip-011 mist-band chrome keeps keyboard focus.
  */
 export function SoftFailNotice({
   children,
@@ -90,6 +94,8 @@ export function SoftFailNotice({
   return (
     <p
       role="status"
+      aria-live="polite"
+      aria-atomic="true"
       className={[motion, surface, className].filter(Boolean).join(" ")}
       onAnimationEnd={onAnimationEnd}
       data-notice={exiting ? "out" : "in"}
