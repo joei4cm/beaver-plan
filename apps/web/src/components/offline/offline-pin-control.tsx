@@ -26,6 +26,9 @@ type Props = {
   compact?: boolean;
 };
 
+/** SoftFail kind under pin chrome — never paint timber / raw Error.message. */
+type SoftFailKind = "pin" | "sync";
+
 export function OfflinePinControl({
   tripId,
   locale,
@@ -38,7 +41,7 @@ export function OfflinePinControl({
 }: Props) {
   const [status, setStatus] = useState<OfflinePinStatus | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [softFail, setSoftFail] = useState<SoftFailKind | null>(null);
   // Avoid SSR/client navigator.onLine mismatch → Next.js "1 Issue" pill.
   const [mounted, setMounted] = useState(false);
 
@@ -76,7 +79,7 @@ export function OfflinePinControl({
 
   async function togglePin() {
     setBusy(true);
-    setError(null);
+    setSoftFail(null);
     try {
       if (status?.pinned) {
         await unpinTripOffline(tripId);
@@ -90,8 +93,9 @@ export function OfflinePinControl({
         });
       }
       await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "pin_failed");
+    } catch {
+      // SoftFail pin chrome — soft i18n only; never timber / Failed to fetch.
+      setSoftFail("pin");
     } finally {
       setBusy(false);
     }
@@ -99,12 +103,13 @@ export function OfflinePinControl({
 
   async function onFlush() {
     setBusy(true);
-    setError(null);
+    setSoftFail(null);
     try {
       await flushJournalQueue();
       await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "flush_failed");
+    } catch {
+      // SoftFail sync chrome — soft i18n only; never timber / Failed to fetch.
+      setSoftFail("sync");
     } finally {
       setBusy(false);
     }
@@ -115,6 +120,10 @@ export function OfflinePinControl({
   const online = mounted
     ? (status?.online ?? isBrowserOnline())
     : true;
+
+  const pinSoftCopy = t(locale, "offline.pinSoftFail");
+  const syncSoftCopy = t(locale, "offline.syncSoftFail");
+  const softCopy = softFail === "sync" ? syncSoftCopy : pinSoftCopy;
 
   return (
     <div className={compact ? "inline-flex flex-col gap-1" : "flex flex-col gap-2"}>
@@ -158,8 +167,13 @@ export function OfflinePinControl({
           {t(locale, "offline.statusHint")}
         </p>
       ) : null}
-      <SoftFailNotice open={Boolean(error)} className="max-w-md text-xs">
-        {error ?? ""}
+      {/* SoftFail under pin chrome — soft copy only; SoftFail depth kept (BEA-441). */}
+      <SoftFailNotice
+        open={Boolean(softFail)}
+        className="max-w-md text-xs"
+        fallback={softCopy}
+      >
+        {softCopy}
       </SoftFailNotice>
     </div>
   );

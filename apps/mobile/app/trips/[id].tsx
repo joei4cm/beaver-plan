@@ -446,11 +446,12 @@ export default function TripDetailScreen() {
       await refreshPin();
     } catch (e) {
       // Soft-fail pin chrome — never timber the whole trip page (#87 parity).
+      // SoftFail pin SoftFailNotice always soft i18n (BEA-441) — never e.message.
       if (isNoiseError(e)) {
         setSoftNotice(t(locale, "planner.demoLocal"));
         setPinError(null);
       } else {
-        setPinError(e instanceof Error ? e.message : "pin_failed");
+        setPinError(t(locale, "offline.pinSoftFail"));
       }
     } finally {
       setPinBusy(false);
@@ -2153,8 +2154,9 @@ export default function TripDetailScreen() {
               <SoftFailNotice
                 open={Boolean(pinError)}
                 style={styles.pinSoftFail}
+                fallback={t(locale, "offline.pinSoftFail")}
               >
-                {pinError ?? ""}
+                {pinError ?? t(locale, "offline.pinSoftFail")}
               </SoftFailNotice>
 
               <View style={styles.collabBox}>
