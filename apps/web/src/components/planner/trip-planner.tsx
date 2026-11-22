@@ -39,7 +39,14 @@ import { getLocalTrip, saveLocalTrip } from "@/lib/local-trips";
 import { TripCollabPanel } from "@/components/collab/trip-collab-panel";
 import { TripMembersBar } from "@/components/collab/trip-members";
 import { OfflinePinControl } from "@/components/offline/offline-pin-control";
-import { SoftFailNotice } from "@/components/soft-fail-notice";
+import {
+  SoftFailBadge,
+  SoftFailNotice,
+  SoftFailSupport,
+  softFailBadgeClass,
+  softFailMistWashClass,
+  softFailRailClass,
+} from "@/components/soft-fail-notice";
 import { SheetPresence } from "@/components/ui/sheet-presence";
 import {
   PlannerSkeleton,
@@ -179,7 +186,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   );
   /**
    * SoftFailNotice depth ownership (BEA-367 stop chips / BEA-343 drawer /
-   * BEA-348 drag / BEA-355 empty / BEA-362 share CTA):
+   * BEA-348 drag / BEA-355 empty / BEA-362 share CTA;
+   * SoftFailBadge / SoftFailSupport helpers BEA-387 after #284):
    * Empty SoftFail depth (BEA-355 after #122) under Stops when the day is empty —
    * Soft empty badge · softSupport · tip-011 mist-wash empty body.
    * Drag SoftFail under Stops when softNotice / dragSoftPreview (BEA-348) —
@@ -944,21 +952,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.shareEyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {shareSupportCopy}
-              </span>
+              <SoftFailSupport>{shareSupportCopy}</SoftFailSupport>
             </div>
-            <span
-              className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                shareSoftOpen
-                  ? "bg-mist text-ink-soft"
-                  : "bg-river/12 text-river"
-              }`}
-            >
-              {shareSoftOpen
-                ? t(locale, "planner.shareSoftBadge")
-                : t(locale, "planner.shareLiveBadge")}
-            </span>
+            {shareSoftOpen ? (
+              <SoftFailBadge>
+                {t(locale, "planner.shareSoftBadge")}
+              </SoftFailBadge>
+            ) : (
+              <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+                {t(locale, "planner.shareLiveBadge")}
+              </span>
+            )}
           </div>
 
           {/* Compact SoftFail mist band under azure Export rail — #255/#243 yield on /share. */}
@@ -974,9 +978,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             role="group"
             aria-label={t(locale, "planner.shareActions")}
             className={`flex flex-wrap items-center justify-end gap-2 px-3 py-2.5 text-sm ${
-              shareSoftOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              shareSoftOpen ? softFailMistWashClass : ""
             }`}
           >
             <OfflinePinControl
@@ -1085,21 +1087,17 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           <div className="border-t border-[color:var(--bp-line)] bg-foam/95 backdrop-blur-sm">
             <header
               className={`relative flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 pt-2.5 pb-1.5 ${
-                modeSoftOpen
-                  ? "bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]"
-                  : ""
+                modeSoftOpen ? softFailRailClass : ""
               }`}
             >
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.mode.eyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {modeSupportCopy}
-              </span>
+              <SoftFailSupport>{modeSupportCopy}</SoftFailSupport>
               {modeSoftOpen ? (
-                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                <SoftFailBadge>
                   {t(locale, "planner.mode.softBadge")}
-                </span>
+                </SoftFailBadge>
               ) : (
                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
                   {t(locale, `planner.mode.${travelMode}`)} ·{" "}
@@ -1124,9 +1122,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             >
               <div
                 className={`animate-rise flex flex-wrap items-end gap-x-4 gap-y-3 px-4 pb-3 pt-1.5 ${
-                  modeSoftOpen
-                    ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                    : ""
+                  modeSoftOpen ? softFailMistWashClass : ""
                 }`}
                 style={{ animationDelay: "70ms" }}
               >
@@ -1205,26 +1201,24 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
                 {t(locale, "planner.drawer.eyebrow")}
               </span>
-              <span className="text-[11px] leading-snug text-ink-soft/80">
-                {drawerSupportCopy}
-              </span>
+              <SoftFailSupport>{drawerSupportCopy}</SoftFailSupport>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <span
-                className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
+                className={
                   drawerSoftOpen || demoShell
-                    ? "bg-mist text-ink-soft"
-                    : "bg-river/12 text-river"
-                }`}
+                    ? softFailBadgeClass
+                    : "rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition"
+                }
               >
                 {demoShell
                   ? t(locale, "planner.drawer.demoBadge")
                   : t(locale, "planner.drawer.liveBadge")}
               </span>
               {drawerSoftOpen ? (
-                <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                <SoftFailBadge>
                   {t(locale, "planner.drawer.softBadge")}
-                </span>
+                </SoftFailBadge>
               ) : null}
             </div>
           </header>
@@ -1244,9 +1238,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
           */}
           <div
             className={`bp-day-tabs-chrome ${
-              drawerSoftOpen
-                ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                : ""
+              drawerSoftOpen ? softFailMistWashClass : ""
             }`}
           >
             <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
@@ -1362,9 +1354,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             <div className="border-b border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
               <header
                 className={`relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5 ${
-                  chipsSoftOpen
-                    ? "bg-mist/35 shadow-[inset_3px_0_0_var(--bp-river)]"
-                    : ""
+                  chipsSoftOpen ? softFailRailClass : ""
                 }`}
               >
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -1379,31 +1369,27 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                           String(dayStops.length),
                         )}
                   </span>
-                  <span className="text-[11px] leading-snug text-ink-soft/80">
-                    {stopsSupportCopy}
-                  </span>
+                  <SoftFailSupport>{stopsSupportCopy}</SoftFailSupport>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {dayEmpty ? (
-                    <span
-                      className={`rounded-bp-xs px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] bp-transition ${
-                        emptySoftOpen
-                          ? "bg-mist text-ink-soft"
-                          : "bg-river/12 text-river"
-                      }`}
-                    >
-                      {emptySoftOpen
-                        ? t(locale, "planner.emptySoftBadge")
-                        : t(locale, "planner.emptyBadge")}
-                    </span>
+                    emptySoftOpen ? (
+                      <SoftFailBadge>
+                        {t(locale, "planner.emptySoftBadge")}
+                      </SoftFailBadge>
+                    ) : (
+                      <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
+                        {t(locale, "planner.emptyBadge")}
+                      </span>
+                    )
                   ) : dragOwnsSoft && listSoftOpen ? (
-                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    <SoftFailBadge>
                       {t(locale, "planner.stops.dragSoftBadge")}
-                    </span>
+                    </SoftFailBadge>
                   ) : chipsSoftOpen ? (
-                    <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft bp-transition">
+                    <SoftFailBadge>
                       {t(locale, "planner.stops.softBadge")}
-                    </span>
+                    </SoftFailBadge>
                   ) : selectedStopId ? (
                     <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-river bp-transition">
                       {dayStops.find((s) => s.id === selectedStopId)?.place
@@ -1430,9 +1416,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
               {!dayEmpty ? (
                 <div
                   className={`animate-rise px-4 pb-2.5 ${
-                    dragOwnsSoft || chipsSoftOpen
-                      ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                      : ""
+                    dragOwnsSoft || chipsSoftOpen ? softFailMistWashClass : ""
                   }`}
                   style={{ animationDelay: "40ms" }}
                 >
@@ -1502,7 +1486,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             <div
               className={`min-h-0 flex-1 overflow-y-auto ${
                 emptySoftOpen || dragOwnsSoft || chipsSoftOpen
-                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
+                  ? softFailMistWashClass
                   : ""
               }`}
             >
@@ -1664,15 +1648,15 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                                     String(ctx.index + 1),
                                   )}
                                 </span>
-                                <span className="text-[11px] leading-snug text-ink-soft/80">
+                                <SoftFailSupport>
                                   {t(locale, "planner.drawer.detailSupport")}
-                                </span>
+                                </SoftFailSupport>
                               </div>
                               <div className="flex flex-wrap items-center gap-1.5">
                                 {drawerSoftOpen ? (
-                                  <span className="rounded-bp-xs bg-mist px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft bp-transition">
+                                  <SoftFailBadge>
                                     {t(locale, "planner.drawer.softBadge")}
-                                  </span>
+                                  </SoftFailBadge>
                                 ) : null}
                                 <span className="rounded-bp-xs bg-river/12 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-river">
                                   {t(locale, "planner.stops.selected")}
@@ -1681,9 +1665,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                             </header>
                             <div
                               className={`animate-rise space-y-0 px-2.5 pb-2.5 pt-0.5 [&>*]:!mt-2 [&>*:first-child]:!mt-1.5 ${
-                                drawerSoftOpen
-                                  ? "bg-gradient-to-b from-mist/25 via-mist/10 to-transparent"
-                                  : ""
+                                drawerSoftOpen ? softFailMistWashClass : ""
                               }`}
                               style={{ animationDelay: "70ms" }}
                             >
