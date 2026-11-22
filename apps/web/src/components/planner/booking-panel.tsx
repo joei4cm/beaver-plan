@@ -147,10 +147,11 @@ async function searchLocal(
  * (BEA-717): `leading-snug` twin of sheet / suggest / results titles (#441).
  * Wave 73 (BEA-789): provider Use-link + Confirm draft Open CTA color settle
  * → `ease-bp-out-strong` (BookingLinkChips / Search·Open-external·Save /
- * tip-011 / #484–#488 twin). SoftFail stays under OTA / Confirm rails; craft
- * `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no
- * double depth). SoftFail Soft / Confirm nest hex / prefer LIVE leave. Never
- * timber / Failed to fetch. No `/dev` gallery.
+ * tip-011 / #484–#488 twin). Wave 74 (BEA-801): OTA sheet accordion header
+ * mist hover → `ease-bp-out-strong` (day-fill accordion twin). SoftFail stays
+ * under OTA / Confirm rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`.
+ * Confirm SoftFail yields OTA (no double depth). SoftFail Soft / Confirm nest
+ * hex / prefer LIVE leave. Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -420,15 +421,18 @@ export function BookingPanel({
     <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
       {/*
         OTA SoftFail helpers (BEA-389 after #284 / depth BEA-327) + craft SoftFail
-        query parity (BEA-418): softFailRailClass · SoftFailBadge · SoftFailSupport ·
-        SoftFailNotice tip-011. Craft: ?otaSoftFail=1 — Confirm SoftFail still
+        query parity (BEA-418) + accordion header color settle (BEA-801 /
+        wave 74): softFailRailClass · SoftFailBadge · SoftFailSupport ·
+        SoftFailNotice tip-011. Toggle mist hover `ease-bp-out-strong`
+        (day-fill accordion / tip-011 / #484–#490 twin). SoftFail / Confirm
+        CTAs (#489) leave. Craft: ?otaSoftFail=1 — Confirm SoftFail still
         owns save soft-fail.
       */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={[
-          "relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset",
+          "relative flex w-full items-center justify-between gap-3 border-b border-[color:var(--bp-line)] px-4 py-3.5 text-left transition duration-bp-fast ease-bp-out-strong hover:bg-mist/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset",
           showOtaSoftFail
             ? softFailRailClass
             : "bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]",
