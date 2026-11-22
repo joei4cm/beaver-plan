@@ -873,7 +873,12 @@ export function LiveAssist({ locale }: { locale: Locale }) {
         <p className="mt-4 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-ink-soft">
           {t(locale, "translate.eyebrow")}
         </p>
-        <p className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight text-ink/90 md:text-3xl">
+        {/*
+          Page secondary title craft residual (BEA-751 / wave 71): add
+          `leading-snug` — W71 scan #2. This `<p>` only (not journal soft
+          title · not share-studio H1). SoftFail untouched. No `/dev`.
+        */}
+        <p className="mt-2 max-w-xl font-display text-2xl font-semibold leading-snug tracking-tight text-ink/90 md:text-3xl">
           {t(locale, "translate.title")}
         </p>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft md:text-base">
