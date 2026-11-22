@@ -2118,53 +2118,94 @@ export default function TripDetailScreen() {
             </View>
 
             <View style={styles.secondaryBlock}>
-              <Pressable
+              {/*
+                SoftFailSupport residual (BEA-448 after #323): azure Offline pin
+                SoftFail rail · SoftFailBadge Soft pin · SoftFailSupport ·
+                SoftFailNotice compact mist band · tip-011 — SoftFail depth +
+                helpers kept. Soft copy never timber / Failed to fetch.
+              */}
+              <View
                 style={StyleSheet.flatten([
-                  styles.pinBtn,
-                  pinStatus?.pinned ? styles.pinBtnActive : null,
+                  styles.pinChrome,
+                  pinError ? styles.pinChromeSoft : null,
                 ])}
-                disabled={pinBusy}
-                onPress={() => void onTogglePin()}
+                accessibilityLabel={t(locale, "offline.pinRail")}
               >
-                <Text
+                {pinError ? (
+                  <View style={styles.pinSoftRail}>
+                    <View style={styles.pinSoftRailCopy}>
+                      <Text style={styles.pinSoftEyebrow}>
+                        {t(locale, "offline.pinRail")}
+                      </Text>
+                      <SoftFailSupport
+                        style={styles.softSupportShrink}
+                        numberOfLines={2}
+                      >
+                        {t(locale, "offline.softSupport")}
+                      </SoftFailSupport>
+                    </View>
+                    <SoftFailBadge>
+                      {t(locale, "offline.softBadge")}
+                    </SoftFailBadge>
+                  </View>
+                ) : null}
+                <SoftFailNotice
+                  open={Boolean(pinError)}
+                  compact
+                  style={styles.pinSoftFail}
+                  fallback={t(locale, "offline.pinSoftFail")}
+                >
+                  {pinError ?? t(locale, "offline.pinSoftFail")}
+                </SoftFailNotice>
+                <View
                   style={StyleSheet.flatten([
-                    styles.pinLabel,
-                    pinStatus?.pinned ? styles.pinLabelActive : null,
+                    styles.pinBody,
+                    pinError ? styles.pinBodySoft : null,
+                    pinError ? softFailMistWashStyle : null,
                   ])}
                 >
-                  {pinBusy
-                    ? t(locale, "offline.working")
-                    : pinStatus?.pinned
-                      ? t(locale, "offline.pinned")
-                      : t(locale, "offline.pin")}
-                </Text>
-                <Text
-                  style={StyleSheet.flatten([
-                    styles.pinMeta,
-                    pinStatus?.pinned ? styles.pinMetaActive : null,
-                  ])}
-                >
-                  {(pinStatus?.online ?? online)
-                    ? t(locale, "offline.online")
-                    : t(locale, "offline.offline")}
-                  {(pinStatus?.pendingMutations ?? 0) > 0
-                    ? ` · ${t(locale, "offline.pending").replace(
-                        "{n}",
-                        String(pinStatus?.pendingMutations ?? 0),
-                      )}`
-                    : ""}
-                </Text>
-              </Pressable>
-              <Text style={styles.pinHint}>
-                {t(locale, "offline.statusHint")}
-              </Text>
-              <SoftFailNotice
-                open={Boolean(pinError)}
-                style={styles.pinSoftFail}
-                fallback={t(locale, "offline.pinSoftFail")}
-              >
-                {pinError ?? t(locale, "offline.pinSoftFail")}
-              </SoftFailNotice>
+                  <Pressable
+                    style={StyleSheet.flatten([
+                      styles.pinBtn,
+                      pinStatus?.pinned ? styles.pinBtnActive : null,
+                    ])}
+                    disabled={pinBusy}
+                    onPress={() => void onTogglePin()}
+                  >
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.pinLabel,
+                        pinStatus?.pinned ? styles.pinLabelActive : null,
+                      ])}
+                    >
+                      {pinBusy
+                        ? t(locale, "offline.working")
+                        : pinStatus?.pinned
+                          ? t(locale, "offline.pinned")
+                          : t(locale, "offline.pin")}
+                    </Text>
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.pinMeta,
+                        pinStatus?.pinned ? styles.pinMetaActive : null,
+                      ])}
+                    >
+                      {(pinStatus?.online ?? online)
+                        ? t(locale, "offline.online")
+                        : t(locale, "offline.offline")}
+                      {(pinStatus?.pendingMutations ?? 0) > 0
+                        ? ` · ${t(locale, "offline.pending").replace(
+                            "{n}",
+                            String(pinStatus?.pendingMutations ?? 0),
+                          )}`
+                        : ""}
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.pinHint}>
+                    {t(locale, "offline.statusHint")}
+                  </Text>
+                </View>
+              </View>
 
               <View style={styles.collabBox}>
                 <Text style={styles.collabEyebrow}>
@@ -3557,6 +3598,58 @@ const styles = StyleSheet.create({
   secondaryBlock: {
     marginTop: 4,
   },
+  /** Azure Offline pin SoftFail chrome (BEA-448 SoftFailSupport residual). */
+  pinChrome: {
+    marginBottom: 18,
+  },
+  pinChromeSoft: {
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(244, 246, 250, 0.95)",
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+  },
+  pinSoftRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+    rowGap: 6,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    backgroundColor: "rgba(230, 236, 245, 0.55)",
+  },
+  pinSoftRailCopy: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: 8,
+    rowGap: 2,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  pinSoftEyebrow: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: colors.river,
+  },
+  pinBody: {
+    paddingHorizontal: 0,
+  },
+  pinBodySoft: {
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
   pinBtn: {
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
@@ -3596,7 +3689,7 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
   },
   pinSoftFail: {
-    marginBottom: 18,
+    marginBottom: 0,
   },
   collabBox: {
     paddingVertical: 14,
