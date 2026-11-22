@@ -43,9 +43,11 @@ const ROLE_CHIP: Record<TripRole, string> = {
 /** Demo / soft presence — role-tinted Lumen azure (not a live CRDT channel). */
 type PresenceState = "active" | "idle" | "away";
 
+/** Status pills — wave 51 craft residual (BEA-493): inset river/focus · type bar. */
 const PRESENCE_PILL: Record<PresenceState, string> = {
-  active: "bg-river/12 text-river-deep",
-  idle: "bg-focus/15 text-river-deep",
+  active:
+    "bg-river/12 text-river-deep shadow-[inset_2px_0_0_var(--bp-river)]",
+  idle: "bg-focus/15 text-river-deep shadow-[inset_2px_0_0_var(--bp-focus)]",
   away: "bg-mist text-ink-soft",
 };
 
@@ -57,11 +59,11 @@ function presenceFor(member: TripMember): PresenceState {
 
 /**
  * Presence + invite sheets — SoftFail depth kept (BEA-392 / BEA-420 / yield
- * #281) + wave 48 craft residual (BEA-461): Lumen eyebrow tracking · tip-011
- * presence list settle · Invite/Copy `active:scale` · mist spine tokens.
- * SoftFailBadge · SoftFailSupport · mist band unchanged. Invite SoftFail
- * yields presence (no double depth). Soft copy never timber / Failed to fetch.
- * No `/dev` gallery.
+ * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
+ * craft residual (BEA-493): status pill inset tokens · chip type/motion ·
+ * eyebrow `0.18em` bar. SoftFailBadge · SoftFailSupport · mist band unchanged.
+ * Invite SoftFail yields presence (no double depth). Soft copy never timber /
+ * Failed to fetch. No `/dev` gallery.
  */
 export function TripMembersBar({
   tripId,
@@ -282,7 +284,7 @@ export function TripMembersBar({
       <div className="overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-paper/70 shadow-[inset_3px_0_0_var(--bp-river)]">
         <header className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
               {t(locale, "collab.presence.eyebrow")}
             </span>
             <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -551,7 +553,7 @@ export function TripMembersBar({
         <div className="border-t border-[color:var(--bp-line)]">
           <header className="flex flex-wrap items-center justify-between gap-2 bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.presence.listEyebrow")}
               </span>
               <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -609,18 +611,18 @@ export function TripMembersBar({
                         presence={presence}
                       />
                       <div className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-ink">
+                        <span className="block truncate text-sm font-medium tracking-tight text-ink">
                           {m.displayName ?? m.userId}
                         </span>
                         <span
-                          className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[10px] font-semibold leading-4 ${PRESENCE_PILL[presence]}`}
+                          className={`mt-0.5 inline-flex rounded-bp-xs px-1.5 py-px text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] transition duration-bp-fast ease-bp-out ${PRESENCE_PILL[presence]}`}
                         >
                           {t(locale, `collab.presence.${presence}`)}
                         </span>
                       </div>
                     </div>
                     <span
-                      className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[11px] font-semibold ${ROLE_CHIP[m.role]}`}
+                      className={`shrink-0 rounded-bp-xs px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${ROLE_CHIP[m.role]}`}
                     >
                       {t(locale, `collab.role.${m.role}`)}
                     </span>
@@ -663,19 +665,19 @@ function PresenceChip({
     <span
       role="listitem"
       title={`${member.displayName ?? member.userId} · ${t(locale, `collab.role.${member.role}`)} · ${t(locale, `collab.presence.${presence}`)}`}
-      className={`animate-rise inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs py-1 pl-1 pr-2 transition duration-bp-fast ease-bp-out active:scale-[0.98] focus-within:ring-2 focus-within:ring-focus/35 ${
+      className={`animate-rise inline-flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-bp-xs py-1 pl-1 pr-2 transition duration-bp-fast ease-bp-out-strong active:scale-[0.98] focus-within:ring-2 focus-within:ring-focus/35 ${
         active
           ? "bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
-          : "text-ink-soft hover:bg-foam/70 hover:text-river"
+          : "text-ink-soft hover:bg-foam/80 hover:text-river hover:shadow-[inset_2px_0_0_var(--bp-river)]"
       }`}
       style={style}
     >
       <PresenceAvatar member={member} size="sm" presence={presence} />
-      <span className="min-w-0 truncate text-xs font-semibold">
+      <span className="min-w-0 truncate text-xs font-semibold tracking-tight">
         {shortName(member)}
       </span>
       <span
-        className={`shrink-0 rounded-bp-xs px-1.5 py-px text-[10px] font-semibold leading-4 ${ROLE_CHIP[member.role]}`}
+        className={`shrink-0 rounded-bp-xs px-1.5 py-px text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.14em] ${ROLE_CHIP[member.role]}`}
       >
         {t(locale, `collab.role.${member.role}`)}
       </span>
