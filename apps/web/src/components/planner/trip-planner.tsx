@@ -1256,7 +1256,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                   </p>
                 )}
                 {demoShell && dayLegs.length > 0 && (
-                  <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft transition duration-bp-fast ease-bp-out">
+                  <span className="mb-1 rounded-bp-xs bg-mist px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70 ring-1 ring-[color:var(--bp-line)] bp-transition">
                     {t(locale, "planner.transfer.demoBadge")}
                   </span>
                 )}
