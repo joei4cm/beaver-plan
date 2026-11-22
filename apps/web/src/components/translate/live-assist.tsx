@@ -279,10 +279,11 @@ export function LiveAssist({ locale }: { locale: Locale }) {
   /** SoftFail copy owned by empty chrome — never inherit softNotice / timber. */
   const emptySoftCopy = t(locale, "translate.emptySoftFail");
   /**
-   * Talk SoftFail + craft SoftFail query residual parity (BEA-429 / Expo #301):
-   * SoftFailNotice under Talk rail. Craft: `/translate?talkSoftFail=1` seeds
-   * demo turns so Talk SoftFail can own (empty yields). SoftFail copy always
-   * talkSoftFail when craft — never timber / Failed to fetch.
+   * Talk SoftFail + craft SoftFail query residual parity (BEA-429 / Expo #301)
+   * + compact mist band residual (BEA-439): compact SoftFailNotice (`border-b`)
+   * under Talk rail. Craft: `/translate?talkSoftFail=1` seeds demo turns so
+   * Talk SoftFail can own (empty yields). SoftFail copy always talkSoftFail
+   * when craft — never timber / Failed to fetch.
    */
   const talkSoftOpen =
     tab === "conversation" &&
@@ -295,9 +296,10 @@ export function LiveAssist({ locale }: { locale: Locale }) {
       : (error ?? t(locale, "translate.error"));
   /**
    * Dual / camera SoftFail + craft SoftFail query residual parity (BEA-429 /
-   * Expo #301): SoftFailNotice under camera rail. Craft:
-   * `/translate?dualSoftFail=1` opens camera tab SoftFail. SoftFail copy
-   * always dualSoftFail when craft — never timber / Failed to fetch.
+   * Expo #301) + compact mist band residual (BEA-439): compact SoftFailNotice
+   * (`border-b`) under camera rail. Craft: `/translate?dualSoftFail=1` opens
+   * camera tab SoftFail. SoftFail copy always dualSoftFail when craft —
+   * never timber / Failed to fetch.
    */
   const dualSoftOpen =
     tab === "camera" && (dualSoftPreview || cameraDenied);
@@ -1362,17 +1364,28 @@ export function LiveAssist({ locale }: { locale: Locale }) {
           className="animate-sheet-in mt-6"
           aria-label={t(locale, "translate.mode.camera")}
         >
-          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
-                {t(locale, "translate.mode.camera")}
-              </p>
-              <p className="mt-1 text-sm text-ink-soft">
-                {t(locale, "translate.dualHint")}
-              </p>
+          <div className="mb-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-river">
+                  {t(locale, "translate.mode.camera")}
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {t(locale, "translate.dualHint")}
+                </p>
+              </div>
             </div>
-            {/* Dual SoftFail craft: ?dualSoftFail=1 — SoftFail under camera rail. */}
-            <SoftFailNotice open={dualSoftOpen} className="max-w-sm">
+            {/*
+              Compact SoftFail mist band under camera rail (BEA-439) —
+              craft: ?dualSoftFail=1. SoftFailBadge / SoftFailSupport SoftFail
+              depth deferred to SoftFail Expo-web SoftFail depth parity
+              (BEA-442). Never timber / Failed to fetch.
+            */}
+            <SoftFailNotice
+              open={dualSoftOpen}
+              compact
+              className="mt-3 border-b border-[color:var(--bp-line)]"
+            >
               {dualSoftCopy}
             </SoftFailNotice>
           </div>
@@ -1567,12 +1580,20 @@ export function LiveAssist({ locale }: { locale: Locale }) {
             </div>
           </div>
 
-          <div className="space-y-3 px-6 py-4 md:px-10">
-            {/* Talk SoftFail yields while empty history owns soft-fail. Craft: ?talkSoftFail=1. */}
-            <SoftFailNotice open={talkSoftOpen} className="max-w-xl">
-              {talkSoftCopy}
-            </SoftFailNotice>
+          {/*
+            Compact SoftFail mist band under Talk rail (BEA-439) — yields while
+            empty history owns soft-fail. Craft: ?talkSoftFail=1. SoftFailBadge /
+            SoftFailSupport SoftFail depth deferred to BEA-442. Never timber.
+          */}
+          <SoftFailNotice
+            open={talkSoftOpen}
+            compact
+            className="border-b border-[color:var(--bp-line)]"
+          >
+            {talkSoftCopy}
+          </SoftFailNotice>
 
+          <div className="space-y-3 px-6 py-4 md:px-10">
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 ref={draftRef}
