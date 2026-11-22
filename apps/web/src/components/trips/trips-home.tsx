@@ -330,7 +330,7 @@ export function TripsHome({ locale }: Props) {
 
       <div className="animate-rise flex flex-wrap items-end justify-between gap-6 border-b border-[color:var(--bp-line)] pb-10">
         <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
             Beaver Plan · 海狸旅行
           </p>
           <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink md:text-6xl">
@@ -343,13 +343,13 @@ export function TripsHome({ locale }: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/trips/new"
-            className="rounded-bp bg-river px-5 py-3 text-sm font-semibold text-foam bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            className="rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
           >
             {t(locale, "trips.new")}
           </Link>
           <Link
             href="/trips/sample-kyoto"
-            className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            className="rounded-bp border border-river/35 px-5 py-3 text-sm font-semibold text-river transition duration-bp ease-bp-out-strong hover:border-river hover:bg-river hover:text-foam active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
           >
             {t(locale, "trips.openSample")}
           </Link>
@@ -367,12 +367,12 @@ export function TripsHome({ locale }: Props) {
 
       <section className="mt-16" aria-labelledby="trips-yours-heading">
         <header className="animate-rise mb-6">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
             {t(locale, "trips.yoursEyebrow")}
           </p>
           <h2
             id="trips-yours-heading"
-            className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+            className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-3xl"
           >
             {showEmptyInvite && !loading
               ? t(locale, "trips.empty")
@@ -455,14 +455,14 @@ export function TripsHome({ locale }: Props) {
             >
               <Link
                 href="/trips/new"
-                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 style={{ animationDelay: "55ms" }}
               >
                 {t(locale, "trips.new")}
               </Link>
               <Link
                 href="/trips/sample-kyoto"
-                className="animate-rise rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river transition duration-bp ease-bp-out-strong hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp border border-river/35 px-4 py-2.5 text-sm font-semibold text-river transition duration-bp ease-bp-out-strong hover:border-river hover:bg-river hover:text-foam active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 style={{ animationDelay: "85ms" }}
               >
                 {t(locale, "trips.openSample")}
@@ -479,7 +479,7 @@ export function TripsHome({ locale }: Props) {
             {sampleTrips.length > 0 ? (
               <div className="border-t border-[color:var(--bp-line)]">
                 <p
-                  className="animate-rise px-4 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river/80 sm:px-5"
+                  className="animate-rise px-4 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river/80 sm:px-5"
                   style={{ animationDelay: "85ms" }}
                 >
                   {t(locale, "trips.sampleEyebrow")}
@@ -620,7 +620,7 @@ export function TripsHome({ locale }: Props) {
                           type="button"
                           disabled={busy || Boolean(dupBusyId)}
                           onClick={() => void duplicateTrip(trip.id)}
-                          className="rounded-bp-xs border border-river/30 px-2.5 py-1 text-xs font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                          className="rounded-bp-xs border border-river/30 px-2.5 py-1 text-xs font-semibold text-river transition duration-bp-fast ease-bp-out hover:border-river hover:bg-river hover:text-foam active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                         >
                           {busy
                             ? t(locale, "trips.duplicating")
