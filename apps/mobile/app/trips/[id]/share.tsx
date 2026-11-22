@@ -1076,19 +1076,23 @@ const styles = StyleSheet.create({
     /** Web text-ink-soft/80 blurb ladder */
     color: `${colors.inkSoft}CC`,
   },
+  /** Web light-edit H2 leading-snug tracking-tight (#435) · templateTitle twin */
   section: {
     ...type.display,
     marginTop: 16,
     marginBottom: 4,
     fontSize: 20,
+    lineHeight: 26,
     fontWeight: "700",
+    letterSpacing: -0.3,
     color: colors.ink,
   },
   fieldLabel: {
     ...type.body,
     marginTop: 8,
     fontSize: 12,
-    letterSpacing: 1,
+    /** Day-fill / booking fieldLabel twin (BEA-659) · beyond #435 motion */
+    letterSpacing: 1.4,
     textTransform: "uppercase",
     color: colors.inkSoft,
   },
