@@ -310,13 +310,12 @@ export function TripsHome({ locale }: Props) {
     ? t(locale, "trips.seedSoftSupport")
     : t(locale, "trips.seedSupport");
   /**
-   * Playbooks SoftFail helpers (BEA-398 after #284 / BEA-324) + craft SoftFail
-   * query parity (BEA-405 / BEA-425): SoftFailBadge Soft playbooks ·
-   * SoftFailSupport · SoftFail mist band (`border-b`) · tip-011
-   * softFailMistWashClass body while soft · Empty + catalog share the same
-   * SoftFail strip. Craft: /trips?playbooksSoftFail=1 — mirrors Expo. Seed
-   * SoftFail (#201/#334) stays on Start rail (no overlap / yield). Soft copy
-   * never timber / Failed to fetch. No /dev SoftFail gallery.
+   * Playbooks SoftFail depth kept (BEA-398 / BEA-405) + wave 49 craft residual
+   * (BEA-471): section eyebrow 0.18em · leading-snug title · tip-011 Use /
+   * Customize / empty New `active:scale`. SoftFailBadge Soft playbooks ·
+   * SoftFailSupport · mist band · tip-011 wash unchanged. Craft:
+   * /trips?playbooksSoftFail=1 — mirrors Expo. Seed SoftFail stays on Start
+   * (yield). Soft copy never timber / Failed to fetch. No /dev gallery.
    */
   const playbooksSoftOpen = templatesSoft || playbooksSoftPreview;
   const playbooksSoftCopy = t(locale, "trips.templatesSoftOffline");
@@ -639,12 +638,12 @@ export function TripsHome({ locale }: Props) {
 
       <section className="mt-20" aria-labelledby="trips-templates-heading">
         <header className="animate-rise mb-6">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-river">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
             {t(locale, "trips.templatesEyebrow")}
           </p>
           <h2
             id="trips-templates-heading"
-            className="mt-3 font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
+            className="mt-3 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-3xl"
           >
             {showTemplatesEmpty && !loading
               ? t(locale, "trips.templatesEmpty")
@@ -711,7 +710,7 @@ export function TripsHome({ locale }: Props) {
             >
               <Link
                 href="/trips/new"
-                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                className="animate-rise rounded-bp bg-river px-5 py-3 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                 style={{ animationDelay: "55ms" }}
               >
                 {t(locale, "trips.new")}
@@ -807,7 +806,7 @@ export function TripsHome({ locale }: Props) {
                         type="button"
                         disabled={busy || Boolean(creatingId)}
                         onClick={() => void createFromTemplate(tpl.id)}
-                        className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="rounded-bp bg-river px-4 py-2.5 text-sm font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                       >
                         {busy
                           ? t(locale, "trips.creating")
@@ -815,7 +814,7 @@ export function TripsHome({ locale }: Props) {
                       </button>
                       <Link
                         href={`/trips/new?template=${tpl.id}`}
-                        className="rounded-bp border border-river/35 px-3 py-2.5 text-center text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
+                        className="rounded-bp border border-river/35 px-3 py-2.5 text-center text-sm font-semibold text-river bp-transition hover:border-river hover:bg-river hover:text-foam active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-foam"
                       >
                         {t(locale, "trips.customize")}
                       </Link>
