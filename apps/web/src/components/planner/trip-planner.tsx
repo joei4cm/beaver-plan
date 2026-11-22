@@ -1311,18 +1311,24 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             {drawerSoftCopy}
           </SoftFailNotice>
           {/*
-            Day tabs chrome (BEA-247 after #117): azure Days rail · mist
-            underline select · tip-011 settle — SoftFail stays under Itinerary
-            when drawer owns (BEA-343); empty SoftFail stays under Stops.
+            Day tabs craft residual (BEA-611 / wave 63 beyond #66 / #188) +
+            SoftFail yield kept (BEA-343): azure Days rail · eyebrow
+            `0.65rem` / `0.18em` · header `animate-rise` · mist underline
+            SheetPresence body rise 70ms (Mode #549 / Stops #594) · tip-011
+            settle — SoftFail stays under Itinerary when drawer owns; empty
+            SoftFail stays under Stops. Never timber. No `/dev` gallery.
           */}
           <div
             className={`bp-day-tabs-chrome ${
               drawerSoftOpen ? softFailMistWashClass : ""
             }`}
           >
-            <header className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5">
+            <header
+              className="animate-rise relative flex flex-wrap items-center justify-between gap-2 px-4 pt-2.5 pb-1.5"
+              style={{ animationDelay: "40ms" }}
+            >
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                   {t(locale, "planner.days.eyebrow")}
                 </span>
                 <span className="text-[11px] font-medium tabular-nums text-ink-soft/80">
@@ -1350,63 +1356,70 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 </span>
               )}
             </header>
-            <div
-              ref={dayTabsRef}
-              role="tablist"
+            <SheetPresence
+              open
+              style={{ animationDelay: "40ms" }}
               aria-label={t(locale, "planner.days.eyebrow")}
-              onKeyDown={onDayTabsKeyDown}
-              className="bp-day-tab-rail--underline relative flex gap-0 overflow-x-auto"
             >
-              {/* Tip 015 underline + tip-011 settle (pattern g / #46) */}
-              {dayTabIndicator && (
-                <span
-                  aria-hidden
-                  className={`animate-tab-indicator animate-tab-indicator--underline pointer-events-none absolute z-0${
-                    dayTabSettleOn ? " bp-tab-indicator--settle" : ""
-                  }`}
-                  style={{
-                    left: dayTabIndicator.left,
-                    width: dayTabIndicator.width,
-                  }}
-                />
-              )}
-              {days.map((day, i) => {
-                const active = dayId === day.id;
-                const stopCount = dayStopCounts.get(day.id) ?? 0;
-                return (
-                  <button
-                    key={day.id}
-                    type="button"
-                    role="tab"
-                    id={`planner-day-tab-${day.id}`}
-                    aria-selected={active}
-                    aria-controls="planner-day-panel"
-                    tabIndex={active ? 0 : -1}
-                    ref={(el) => {
-                      if (el) dayTabRefs.current.set(day.id, el);
-                      else dayTabRefs.current.delete(day.id);
+              <div
+                ref={dayTabsRef}
+                role="tablist"
+                aria-label={t(locale, "planner.days.eyebrow")}
+                onKeyDown={onDayTabsKeyDown}
+                className="bp-day-tab-rail--underline animate-rise relative flex gap-0 overflow-x-auto"
+                style={{ animationDelay: "70ms" }}
+              >
+                {/* Tip 015 underline + tip-011 settle (pattern g / #46) */}
+                {dayTabIndicator && (
+                  <span
+                    aria-hidden
+                    className={`animate-tab-indicator animate-tab-indicator--underline pointer-events-none absolute z-0${
+                      dayTabSettleOn ? " bp-tab-indicator--settle" : ""
+                    }`}
+                    style={{
+                      left: dayTabIndicator.left,
+                      width: dayTabIndicator.width,
                     }}
-                    onClick={() => selectDay(day.id)}
-                    className="bp-day-tab relative z-[1] shrink-0 px-5 pt-3 text-left"
-                  >
-                    <div className="bp-day-tab__eyebrow text-[10px] font-semibold uppercase tracking-[0.16em]">
-                      {t(locale, "planner.day")} {i + 1}
-                    </div>
-                    <div className="mt-0.5 text-sm font-semibold tabular-nums">
-                      {day.date}
-                    </div>
-                    <div className="bp-day-tab__meta">
-                      {stopCount > 0
-                        ? t(locale, "planner.days.stopsMeta").replace(
-                            "{n}",
-                            String(stopCount),
-                          )
-                        : t(locale, "planner.days.stopsMetaEmpty")}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                  />
+                )}
+                {days.map((day, i) => {
+                  const active = dayId === day.id;
+                  const stopCount = dayStopCounts.get(day.id) ?? 0;
+                  return (
+                    <button
+                      key={day.id}
+                      type="button"
+                      role="tab"
+                      id={`planner-day-tab-${day.id}`}
+                      aria-selected={active}
+                      aria-controls="planner-day-panel"
+                      tabIndex={active ? 0 : -1}
+                      ref={(el) => {
+                        if (el) dayTabRefs.current.set(day.id, el);
+                        else dayTabRefs.current.delete(day.id);
+                      }}
+                      onClick={() => selectDay(day.id)}
+                      className="bp-day-tab relative z-[1] shrink-0 px-5 pt-3 text-left"
+                    >
+                      <div className="bp-day-tab__eyebrow text-[10px] font-semibold uppercase tracking-[0.16em]">
+                        {t(locale, "planner.day")} {i + 1}
+                      </div>
+                      <div className="mt-0.5 text-sm font-semibold leading-snug tabular-nums">
+                        {day.date}
+                      </div>
+                      <div className="bp-day-tab__meta">
+                        {stopCount > 0
+                          ? t(locale, "planner.days.stopsMeta").replace(
+                              "{n}",
+                              String(stopCount),
+                            )
+                          : t(locale, "planner.days.stopsMetaEmpty")}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </SheetPresence>
           </div>
 
           <div

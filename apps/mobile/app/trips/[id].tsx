@@ -1330,11 +1330,12 @@ export default function TripDetailScreen() {
 
             <View style={styles.sheet}>
               {/*
-                Day tabs SoftFail helpers (BEA-388 after #284 / BEA-299):
-                azure Days rail · SoftFailBadge · SoftFailSupport ·
-                SoftFailNotice mist band · tip-011 SheetPresence mist tabs ·
-                StyleSheet.flatten. SoftFail yields while invite open. Never
-                timber / Failed to fetch.
+                Day tabs craft residual (BEA-611 / wave 63) + SoftFail helpers
+                kept (BEA-388 after #284 / BEA-299): azure Days rail · eyebrow
+                letterSpacing 1.8 (Mode/Stops twin) · SoftFailBadge ·
+                SoftFailSupport · SoftFailNotice mist band · tip-011
+                SheetPresence mist tabs · date lineHeight snug · SoftFail
+                yields while invite open. Never timber / Failed to fetch.
               */}
               <View
                 style={styles.daysChrome}
@@ -3324,7 +3325,7 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3434,6 +3435,7 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 2,
     fontSize: 13,
+    lineHeight: 18,
     color: colors.inkSoft,
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
