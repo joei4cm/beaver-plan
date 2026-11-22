@@ -2466,8 +2466,10 @@ export default function TripDetailScreen() {
                   (BEA-600): role/state lineHeight 16 · editor avatar river/85.
                   Foam dark Soft mist Soft twins beyond #404 (BEA-597 restore
                   after #422): viewer role + empty Live → SoftFail Soft tokens.
-                  SoftFailBadge · SoftFailSupport · mist band · away pills
-                  unchanged (#420). Craft: ?presenceSoftFail=1 — never timber.
+                  Wave 65 residual (BEA-640): away presenceStateAway ink/70 Foam
+                  AA (deferred from #424). SoftFailBadge · SoftFailSupport · mist
+                  band · Soft twins unchanged. Craft: ?presenceSoftFail=1 — never
+                  timber.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -4591,9 +4593,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: colors.focus,
   },
+  /** Foam dark AA beyond #424 Soft twins — ink/70 on mist; inset kept (BEA-640). */
   presenceStateAway: {
     backgroundColor: colors.mist,
-    color: colors.inkSoft,
+    color: "rgba(15, 23, 42, 0.7)",
     /** Web away inset ink-soft @ 55% */
     borderLeftWidth: 2,
     borderLeftColor: `${colors.inkSoft}8C`,
