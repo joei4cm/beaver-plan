@@ -91,10 +91,12 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 /**
- * Settings SoftFail helper adoption (BEA-395 after #284 / depth #255):
+ * Settings SoftFail helper adoption (BEA-395 after #284 / depth #255) +
+ * craft SoftFail query parity (BEA-403):
  * SoftFailBadge · SoftFailSupport · softFailRailClass · softFailMistWashClass ·
  * compact SoftFail mist band under azure Device rail · tip-011 mist-wash
  * Language / Maps · Hero SoftFail yields while section owns (no double depth).
+ * Craft: /settings?settingsSoftFail=1 — SoftFail depth without a resolve miss.
  * SoftFail copy always softFail (never timber / Failed to fetch) — prefs
  * still save locally.
  */
@@ -107,6 +109,18 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const [resolve, setResolve] = useState<EngineResolve | null>(null);
   const [softNotice, setSoftNotice] = useState<string | null>(null);
+  /** Craft preview: /settings?settingsSoftFail=1 — SoftFail depth under Device. */
+  const [settingsSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("settingsSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [pending, startTransition] = useTransition();
 
   const locale = prefs.locale;
@@ -156,11 +170,14 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
   const brandName = locale === "zh-CN" ? brand.zh : brand.en;
   /**
    * Device rail owns SoftFail under azure prefs chrome. SoftFail copy always
-   * softFail (never inherit noise / timber). Hide while resolving. Hero SoftFail
-   * yields while sectionOwnsSoft (no double depth).
+   * softFail (never inherit noise / timber). Hide while resolving unless craft
+   * `?settingsSoftFail=1` forces SoftFail depth. Hero SoftFail yields while
+   * sectionOwnsSoft (no double depth).
    */
-  const sectionOwnsSoft = Boolean(softNotice);
-  const sectionSoftOpen = sectionOwnsSoft && !pending;
+  const sectionOwnsSoft = settingsSoftPreview || Boolean(softNotice);
+  const sectionSoftOpen = settingsSoftPreview
+    ? true
+    : sectionOwnsSoft && !pending;
   const softCopy = softNotice ?? t(locale, "settings.softFail");
   const sheetSupportCopy = sectionSoftOpen
     ? t(locale, "settings.softSupport")
@@ -209,9 +226,11 @@ export function SettingsPanel({ locale: initialLocale }: Props) {
       </header>
 
       {/*
-        SoftFail helper adoption (BEA-395): SoftFailBadge · SoftFailSupport ·
-        softFailRailClass · softFailMistWashClass · SoftFailNotice mist band ·
-        tip-011 mist-wash Language / Maps — never timber / Failed to fetch.
+        SoftFail helper adoption (BEA-395) + craft SoftFail query parity
+        (BEA-403): SoftFailBadge · SoftFailSupport · softFailRailClass ·
+        softFailMistWashClass · SoftFailNotice mist band · tip-011 mist-wash
+        Language / Maps. Craft: ?settingsSoftFail=1 — never timber /
+        Failed to fetch.
       */}
       <div
         className="animate-rise mt-12 overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam/95 shadow-bp-soft"

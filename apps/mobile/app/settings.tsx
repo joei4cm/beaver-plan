@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Stack } from "expo-router";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
 import {
   Animated,
   Easing,
@@ -36,6 +36,12 @@ const DISTANCE_OPTS: DistanceUnit[] = ["km", "mi"];
 
 /** Tip 011 — ease-out-strong (#46). */
 const easeRise = Easing.bezier(0.22, 1, 0.36, 1);
+
+/** Craft SoftFail query parity with web (`?settingsSoftFail=1`). */
+function craftSoftFailOn(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
 
 /** River uppercase eyebrow — 0.28em tracking parity with web #162. */
 function SectionEyebrow({ children }: { children: string }) {
@@ -91,13 +97,21 @@ function Segmented<T extends string>({
 }
 
 /**
- * Expo settings SoftFail helper adoption (BEA-395 after #284 / depth #222):
+ * Expo settings SoftFail helper adoption (BEA-395 after #284 / depth #222) +
+ * craft SoftFail query parity (BEA-403):
  * SoftFailBadge · SoftFailSupport · softFailBandStyle · softFailMistWashStyle ·
  * compact SoftFail mist band under azure Device rail · tip-011 SheetPresence
- * mist-wash Language / Maps · StyleSheet.flatten. SoftFail copy always softFail
- * (never timber / Failed to fetch) — prefs still save locally.
+ * mist-wash Language / Maps · StyleSheet.flatten. Craft:
+ * /settings?settingsSoftFail=1 — SoftFail depth without a resolve miss.
+ * SoftFail copy always softFail (never timber / Failed to fetch) — prefs still
+ * save locally.
  */
 export default function SettingsScreen() {
+  const { settingsSoftFail: settingsSoftFailParam } = useLocalSearchParams<{
+    settingsSoftFail?: string | string[];
+  }>();
+  /** Craft preview: /settings?settingsSoftFail=1 — SoftFail depth under Device. */
+  const settingsSoftPreview = craftSoftFailOn(settingsSoftFailParam);
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_USER_PREFS);
   const [hydrated, setHydrated] = useState(false);
   const [resolve, setResolve] = useState<EngineResolve | null>(null);
@@ -176,10 +190,13 @@ export default function SettingsScreen() {
 
   /**
    * Device rail owns SoftFail under azure prefs chrome. SoftFail copy always
-   * softFail (never inherit noise / timber). Hide while resolving.
+   * softFail (never inherit noise / timber). Hide while resolving unless craft
+   * `?settingsSoftFail=1` forces SoftFail depth.
    */
-  const sectionOwnsSoft = Boolean(softNotice);
-  const sectionSoftOpen = sectionOwnsSoft && !pending;
+  const sectionOwnsSoft = settingsSoftPreview || Boolean(softNotice);
+  const sectionSoftOpen = settingsSoftPreview
+    ? true
+    : sectionOwnsSoft && !pending;
   const softCopy = softNotice ?? t(locale, "settings.softFail");
   const statusCopy = pending
     ? t(locale, "settings.resolving")
@@ -218,9 +235,10 @@ export default function SettingsScreen() {
         </View>
 
         {/*
-          SoftFail helper adoption (BEA-395): SoftFailBadge · SoftFailSupport ·
-          softFailBandStyle · softFailMistWashStyle · SoftFailNotice · tip-011 —
-          never timber / Failed to fetch.
+          SoftFail helper adoption (BEA-395) + craft SoftFail query parity
+          (BEA-403): SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+          softFailMistWashStyle · SoftFailNotice · tip-011. Craft:
+          ?settingsSoftFail=1 — never timber / Failed to fetch.
         */}
         <View
           style={styles.prefsSheet}
