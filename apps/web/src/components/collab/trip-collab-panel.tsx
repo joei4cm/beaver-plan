@@ -42,10 +42,12 @@ function newLocalId(prefix: string) {
  * yield #281) + wave 50–55 craft (#347 / #352 / #378) + wave 59 thread residual
  * (BEA-565): list loading rise/`/80` · empty/author snug · row out-strong.
  * Wave 69 panel brand eyebrow (BEA-721): `0.28em` → `0.26em` twin of trip
- * header brand (#375). Compose (#378) + SoftFailBadge · SoftFailSupport ·
- * SoftFailNotice mist band unchanged. Craft: `/trips/…?timelineSoftFail=1`.
- * Panel SoftFail yields on Activity; invite SoftFail yields timeline (no
- * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
+ * header brand (#375). Wave 70 panel page H2 (BEA-737): `leading-snug` twin of
+ * invite-accept / create-trip page titles · nested empty/author already snug.
+ * Compose (#378) + SoftFailBadge · SoftFailSupport · SoftFailNotice mist band
+ * unchanged. Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on
+ * Activity; invite SoftFail yields timeline (no double depth). Soft copy never
+ * timber / Failed to fetch. No `/dev` gallery. Invite / presence leave-alone.
  */
 export function TripCollabPanel({
   tripId,
@@ -323,7 +325,7 @@ export function TripCollabPanel({
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.26em] text-river">
             {t(locale, "collab.panel.eyebrow")}
           </p>
-          <h2 className="mt-2 font-display text-[clamp(1.6rem,3vw,2.1rem)] font-extrabold tracking-[-0.03em] text-ink">
+          <h2 className="mt-2 font-display text-[clamp(1.6rem,3vw,2.1rem)] font-extrabold leading-snug tracking-[-0.03em] text-ink">
             {t(locale, "collab.panel.title")}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
