@@ -1688,7 +1688,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 11,
-    lineHeight: 16,
+    /** Web footer text-[11px] leading-relaxed (BEA-716). */
+    lineHeight: 18,
     /** Web footer text-ink-soft/80 (BEA-659). */
     color: `${colors.inkSoft}CC`,
   },
