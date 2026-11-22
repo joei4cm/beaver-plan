@@ -114,10 +114,11 @@ function SectionEyebrow({ children }: { children: string }) {
 
 /**
  * Planner day-fill sheet — SoftFail depth kept (BEA-323 / BEA-400 / BEA-408) +
- * wave 48 craft residual (BEA-467): tip-011 Generate/Apply/Discard `active:scale`
- * · stop-row 4px grid. SoftFailBadge Soft fill · SoftFailSupport · mist band
- * unchanged. Stop drawer SoftFail (#225) owns Itinerary. Soft-fails to local
- * Kyoto demo — never timber / Failed to fetch. No `/dev` gallery.
+ * wave 48 (#340) + wave 53 craft residual (BEA-508): tip-011 interest-chip
+ * `active:scale` · prefs/empty/preview title `leading-snug`. SoftFailBadge Soft
+ * fill · SoftFailSupport · mist band unchanged. Stop drawer SoftFail (#225)
+ * owns Itinerary. Soft-fails to local Kyoto demo — never timber / Failed to
+ * fetch. No `/dev` gallery.
  */
 export function DayFillPanel({
   tripId,
@@ -429,7 +430,7 @@ export function DayFillPanel({
               <SectionEyebrow>
                 {t(locale, "planner.dayFill.prefsEyebrow")}
               </SectionEyebrow>
-              <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+              <h3 className="mt-1 font-display text-base leading-snug tracking-tight text-ink">
                 {t(locale, "planner.dayFill.prefsTitle")}
               </h3>
               <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
@@ -454,7 +455,7 @@ export function DayFillPanel({
                       type="button"
                       aria-pressed={on}
                       onClick={() => toggleInterest(id)}
-                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                         on
                           ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                           : "text-ink-soft hover:bg-foam/70 hover:text-river"
@@ -564,7 +565,7 @@ export function DayFillPanel({
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river/80">
                 {t(locale, "planner.dayFill.emptyEyebrow")}
               </p>
-              <p className="font-display text-lg font-semibold tracking-tight text-ink">
+              <p className="font-display text-lg font-semibold leading-snug tracking-tight text-ink">
                 {t(locale, "planner.dayFill.empty")}
               </p>
               <p className="text-sm leading-relaxed text-ink-soft">
@@ -594,7 +595,7 @@ export function DayFillPanel({
                       </SoftFailBadge>
                     )}
                   </div>
-                  <h3 className="mt-1 font-display text-base tracking-tight text-ink">
+                  <h3 className="mt-1 font-display text-base leading-snug tracking-tight text-ink">
                     {t(locale, "planner.dayFill.preview")}
                   </h3>
                   {proposal.rationale && (
