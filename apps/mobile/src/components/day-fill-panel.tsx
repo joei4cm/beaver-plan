@@ -129,6 +129,7 @@ function SectionEyebrow({ children }: { children: string }) {
  * Expo day-fill sheet — SoftFail depth kept (BEA-360 / BEA-400 / BEA-408) +
  * wave 48–56 (#340/#367/#387) + wave 60 (BEA-576) + wave 62 craft residual
  * (BEA-604): skeleton day SheetPresence mirrors live proposal stagger.
+ * Wave 68 (BEA-701): LIVE mistTrack mist@80 = web bg-mist/50 twin.
  * SoftFailBadge · SoftFailSupport · mist band unchanged. SoftFail copy never
  * timber / Failed to fetch. Yields web #248; Expo day tabs SoftFail (#230)
  * stays on Days. No `/dev` gallery.
@@ -992,8 +993,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 4,
     borderRadius: radius.sm,
-    /** Web bg-mist/50 — Lumen mist @ 0.55 */
-    backgroundColor: `${colors.mist}8C`,
+    /** Web bg-mist/50 · place-intel tagTrack / trip-detail bookingMistTrack twin (BEA-701). */
+    backgroundColor: `${colors.mist}80`,
     padding: 4,
   },
   interestChip: {
