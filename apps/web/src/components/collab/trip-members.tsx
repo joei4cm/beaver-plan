@@ -62,9 +62,8 @@ function presenceFor(member: TripMember): PresenceState {
  * #281) + wave 48 invite/presence residual (BEA-461) + wave 51 presence pills
  * (BEA-493) + wave 53 invite residual (BEA-506) + wave 54 members roster
  * (BEA-518) + wave 56 invite residual (BEA-543) + wave 57 presence pills
- * (BEA-546): away pill inset · strip empty `/80` · status pill out-strong +
- * wave 57 members invite residual (BEA-547): invite sheet eyebrow + role chip
- * `0.65rem` (roster parity) · role select hover river. SoftFailBadge ·
+ * (BEA-546) + wave 57 invite (BEA-547) + wave 58 members roster residual
+ * (BEA-562): companions loading `/80` + rise · name `leading-snug`. SoftFailBadge ·
  * SoftFailSupport · mist band unchanged. Invite SoftFail yields presence (no
  * double depth). Soft copy never timber / Failed to fetch. No `/dev` gallery.
  */
@@ -553,9 +552,9 @@ export function TripMembersBar({
         </div>
 
         {/*
-          Members roster / companions list — wave 54 residual (BEA-518): row
-          inset hover · empty leading-snug. SoftFail untouched. Beyond invite
-          #366 / presence pills #355.
+          Members roster / companions list — wave 54 (#373) + wave 58 residual
+          (BEA-562): loading `/80` + rise · name leading-snug. SoftFail untouched.
+          Beyond #373 / invite #391 / pills #389.
         */}
         <div className="border-t border-[color:var(--bp-line)]">
           <header className="flex flex-wrap items-center justify-between gap-2 bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
@@ -618,7 +617,7 @@ export function TripMembersBar({
                         presence={presence}
                       />
                       <div className="min-w-0">
-                        <span className="block truncate text-sm font-medium tracking-tight text-ink">
+                        <span className="block truncate text-sm font-medium leading-snug tracking-tight text-ink">
                           {m.displayName ?? m.userId}
                         </span>
                         <span
@@ -637,7 +636,7 @@ export function TripMembersBar({
                 );
               })}
               {pending && members.length === 0 ? (
-                <li className="px-2 py-2 text-sm text-ink-soft">
+                <li className="animate-rise px-2 py-2 text-sm leading-snug text-ink-soft/80">
                   {t(locale, "collab.loading")}
                 </li>
               ) : null}
