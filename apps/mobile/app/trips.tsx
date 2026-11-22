@@ -109,16 +109,7 @@ function tripBadge(trip: Trip): "sample" | "local" | null {
   return null;
 }
 
-/** Playbooks editorial index. */
-function IndexMark({ n }: { n: number }) {
-  return (
-    <Text style={styles.index} accessibilityElementsHidden>
-      {String(n).padStart(2, "0")}
-    </Text>
-  );
-}
-
-/** Trips list density — quieter mark, title leads hierarchy (web DenseIndexMark). */
+/** Trips + playbooks density — quieter mark, title leads hierarchy (web DenseIndexMark). */
 function DenseIndexMark({ n }: { n: number }) {
   return (
     <Text style={styles.denseIndex} accessibilityElementsHidden>
@@ -128,10 +119,22 @@ function DenseIndexMark({ n }: { n: number }) {
 }
 
 function TripBadgeChip({ kind }: { kind: "sample" | "local" }) {
+  const local = kind === "local";
   return (
-    <View style={styles.badgeChip} accessibilityElementsHidden>
-      <Text style={styles.badgeChipText}>
-        {kind === "local"
+    <View
+      style={StyleSheet.flatten([
+        styles.badgeChip,
+        local ? styles.badgeChipLocal : null,
+      ])}
+      accessibilityElementsHidden
+    >
+      <Text
+        style={StyleSheet.flatten([
+          styles.badgeChipText,
+          local ? styles.badgeChipTextLocal : null,
+        ])}
+      >
+        {local
           ? t(locale, "trips.localBadge")
           : t(locale, "trips.sampleBadge")}
       </Text>
@@ -358,15 +361,50 @@ function TripsListSkeleton() {
         <View style={styles.skeletonChip} />
       </View>
       <View style={styles.skeletonNotice} />
-      <View
-        style={StyleSheet.flatten([styles.tripRow, styles.tripRowLast])}
-      >
-        <View style={styles.skeletonDenseIndex} />
-        <View style={styles.rowBody}>
-          <View style={styles.skeletonTitle} />
-          <View style={styles.skeletonMeta} />
+      {[0, 1, 2].map((i) => (
+        <View
+          key={i}
+          style={StyleSheet.flatten([
+            styles.tripRow,
+            i === 2 ? styles.tripRowLast : null,
+          ])}
+        >
+          <View style={styles.skeletonDenseIndex} />
+          <View style={styles.rowBody}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonMeta} />
+          </View>
         </View>
+      ))}
+    </View>
+  );
+}
+
+/** Tip 017 — playbooks hydrate skeleton (web TemplatesListSkeleton parity). */
+function TemplatesListSkeleton() {
+  return (
+    <View style={styles.listSheet} accessibilityState={{ busy: true }}>
+      <View style={styles.listRail}>
+        <View style={styles.skeletonRailLabel} />
+        <View style={styles.skeletonChip} />
       </View>
+      <View style={styles.skeletonNotice} />
+      {[0, 1].map((i) => (
+        <View
+          key={i}
+          style={StyleSheet.flatten([
+            styles.templateRow,
+            i === 0 ? styles.templateRowFirst : null,
+          ])}
+        >
+          <View style={styles.skeletonDenseIndex} />
+          <View style={styles.rowBody}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonMeta} />
+            <View style={styles.skeletonUseTpl} />
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -409,6 +447,8 @@ export default function TripsScreen() {
   const [creatingId, setCreatingId] = useState<string | null>(null);
 
   const rise = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  const playbooksY = useRef(0);
 
   const load = useCallback(async () => {
     let remoteFailed = false;
@@ -584,6 +624,7 @@ export default function TripsScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.root}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -728,9 +769,21 @@ export default function TripsScreen() {
                       </Text>
                     </Pressable>
                   </Link>
-                  <Text style={styles.seedPlaybooksHint}>
-                    {t(locale, "trips.seedPlaybooks")}
-                  </Text>
+                  <Pressable
+                    style={styles.seedPlaybooksHint}
+                    onPress={() =>
+                      scrollRef.current?.scrollTo({
+                        y: Math.max(0, playbooksY.current - 12),
+                        animated: true,
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={t(locale, "trips.seedPlaybooks")}
+                  >
+                    <Text style={styles.seedPlaybooksHintText}>
+                      {t(locale, "trips.seedPlaybooks")}
+                    </Text>
+                  </Pressable>
                 </SheetPresence>
                 {sampleTrips.length > 0 ? (
                   <SheetPresence open rise={8} delayMs={80}>
@@ -814,6 +867,9 @@ export default function TripsScreen() {
 
         <View
           style={StyleSheet.flatten([styles.section, styles.sectionSpaced])}
+          onLayout={(e) => {
+            playbooksY.current = e.nativeEvent.layout.y;
+          }}
         >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionEyebrow}>
@@ -827,102 +883,110 @@ export default function TripsScreen() {
             </Text>
           </View>
 
-          <SheetPresence
-            open={hydrated}
-            rise={10}
-            delayMs={80}
-            accessibilityLabel={t(locale, "trips.templatesRail")}
-          >
-            {/*
-              Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245
-              parity) + craft SoftFail query parity (BEA-405): azure Playbooks
-              rail · SoftFailBadge · SoftFailSupport · softFailBandStyle ·
-              softFailMistWashStyle catalog · Craft: ?playbooksSoftFail=1 ·
-              StyleSheet.flatten — never timber / Failed to fetch.
-              Empty SoftFail (#233) stays on Start; cards SoftFail (#259)
-              stays on Trips (yield / no overlap). Yields web #245 / BEA-405.
-            */}
-            <View style={styles.listSheet}>
-              <PlaybooksRail
-                count={templates.length}
-                soft={playbooksSoftOpen}
-              />
-              {/* Compact SoftFail under azure Playbooks rail — never timber. */}
-              <SoftFailNotice
-                open={playbooksSoftOpen}
-                compact
-                style={softFailBandStyle}
-              >
-                {playbooksSoftCopy}
-              </SoftFailNotice>
-              <SheetPresence
-                open
-                rise={8}
-                delayMs={50}
-                style={StyleSheet.flatten([
-                  styles.playbooksBody,
-                  playbooksSoftOpen ? softFailMistWashStyle : null,
-                ])}
-                accessibilityLabel={t(locale, "trips.templates")}
-              >
-                <View
-                  style={StyleSheet.flatten([
-                    styles.playbooksStage,
-                    playbooksSoftOpen
-                      ? StyleSheet.flatten([
-                          softFailMistWashStyle,
-                          styles.playbooksStageSoft,
-                        ])
-                      : null,
-                  ])}
+          {!hydrated ? (
+            <SheetPresence open rise={10} delayMs={80}>
+              <TemplatesListSkeleton />
+            </SheetPresence>
+          ) : (
+            <SheetPresence
+              open
+              rise={10}
+              delayMs={80}
+              accessibilityLabel={t(locale, "trips.templatesRail")}
+            >
+              {/*
+                Playbooks SoftFail helpers (BEA-398 after #284 / BEA-372; web #245
+                parity) + craft SoftFail query parity (BEA-405): azure Playbooks
+                rail · SoftFailBadge · SoftFailSupport · softFailBandStyle ·
+                softFailMistWashStyle catalog · Craft: ?playbooksSoftFail=1 ·
+                StyleSheet.flatten — never timber / Failed to fetch.
+                Empty SoftFail (#233) stays on Start; cards SoftFail (#259)
+                stays on Trips (yield / no overlap). Yields web #245 / BEA-405.
+                Editorial residual (BEA-457): DenseIndexMark + denser rows —
+                web #217 parity; SoftFail depth unchanged.
+              */}
+              <View style={styles.listSheet}>
+                <PlaybooksRail
+                  count={templates.length}
+                  soft={playbooksSoftOpen}
+                />
+                {/* Compact SoftFail under azure Playbooks rail — never timber. */}
+                <SoftFailNotice
+                  open={playbooksSoftOpen}
+                  compact
+                  style={softFailBandStyle}
                 >
-                  {templates.map((tpl, index) => {
-                    const title = tpl.title[locale] ?? tpl.title["zh-CN"];
-                    const desc =
-                      tpl.description[locale] ?? tpl.description["zh-CN"];
-                    const busy = creatingId === tpl.id;
-                    const first = index === 0;
-                    const tplRowStyle = StyleSheet.flatten([
-                      styles.templateRow,
-                      playbooksSoftOpen ? styles.templateRowSoft : null,
-                      first ? styles.templateRowFirst : null,
-                    ]);
-                    const useStyle = busy
-                      ? StyleSheet.flatten([
-                          styles.useTpl,
-                          styles.useTplBusy,
-                        ])
-                      : styles.useTpl;
-                    return (
-                      <View key={tpl.id} style={tplRowStyle}>
-                        <IndexMark n={index + 1} />
-                        <View style={styles.rowBody}>
-                          <Text style={styles.templateTitle}>{title}</Text>
-                          <Text style={styles.rowMeta}>{desc}</Text>
-                          <Text style={styles.templateStats}>
-                            {tpl.destination} · {tpl.dayCount}{" "}
-                            {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
-                            {t(locale, "trips.stopUnit")}
-                          </Text>
-                          <Pressable
-                            style={useStyle}
-                            disabled={busy || Boolean(creatingId)}
-                            onPress={() => void useTemplate(tpl.id)}
-                          >
-                            <Text style={styles.useTplText}>
-                              {busy
-                                ? t(locale, "trips.creating")
-                                : t(locale, "trips.useTemplate")}
+                  {playbooksSoftCopy}
+                </SoftFailNotice>
+                <SheetPresence
+                  open
+                  rise={8}
+                  delayMs={50}
+                  style={StyleSheet.flatten([
+                    styles.playbooksBody,
+                    playbooksSoftOpen ? softFailMistWashStyle : null,
+                  ])}
+                  accessibilityLabel={t(locale, "trips.templates")}
+                >
+                  <View
+                    style={StyleSheet.flatten([
+                      styles.playbooksStage,
+                      playbooksSoftOpen
+                        ? StyleSheet.flatten([
+                            softFailMistWashStyle,
+                            styles.playbooksStageSoft,
+                          ])
+                        : null,
+                    ])}
+                  >
+                    {templates.map((tpl, index) => {
+                      const title = tpl.title[locale] ?? tpl.title["zh-CN"];
+                      const desc =
+                        tpl.description[locale] ?? tpl.description["zh-CN"];
+                      const busy = creatingId === tpl.id;
+                      const first = index === 0;
+                      const tplRowStyle = StyleSheet.flatten([
+                        styles.templateRow,
+                        playbooksSoftOpen ? styles.templateRowSoft : null,
+                        first ? styles.templateRowFirst : null,
+                      ]);
+                      const useStyle = busy
+                        ? StyleSheet.flatten([
+                            styles.useTpl,
+                            styles.useTplBusy,
+                          ])
+                        : styles.useTpl;
+                      return (
+                        <View key={tpl.id} style={tplRowStyle}>
+                          <DenseIndexMark n={index + 1} />
+                          <View style={styles.rowBody}>
+                            <Text style={styles.templateTitle}>{title}</Text>
+                            <Text style={styles.rowMeta}>{desc}</Text>
+                            <Text style={styles.templateStats}>
+                              {tpl.destination} · {tpl.dayCount}{" "}
+                              {t(locale, "trips.dayUnit")} · {tpl.stopCount}{" "}
+                              {t(locale, "trips.stopUnit")}
                             </Text>
-                          </Pressable>
+                            <Pressable
+                              style={useStyle}
+                              disabled={busy || Boolean(creatingId)}
+                              onPress={() => void useTemplate(tpl.id)}
+                            >
+                              <Text style={styles.useTplText}>
+                                {busy
+                                  ? t(locale, "trips.creating")
+                                  : t(locale, "trips.useTemplate")}
+                              </Text>
+                            </Pressable>
+                          </View>
                         </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </SheetPresence>
-            </View>
-          </SheetPresence>
+                      );
+                    })}
+                  </View>
+                </SheetPresence>
+              </View>
+            </SheetPresence>
+          )}
         </View>
       </Animated.View>
     </ScrollView>
@@ -1207,12 +1271,16 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   seedPlaybooksHint: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  seedPlaybooksHintText: {
     ...type.body,
     fontSize: 13,
     fontWeight: "600",
     color: "rgba(100, 116, 139, 0.85)",
-    paddingHorizontal: 4,
-    paddingVertical: 8,
+    textDecorationLine: "underline",
+    textDecorationColor: "rgba(100, 116, 139, 0.35)",
   },
   seedSampleBlock: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1266,6 +1334,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     backgroundColor: "rgba(230, 236, 245, 0.7)",
   },
+  skeletonUseTpl: {
+    marginTop: 12,
+    height: 34,
+    width: 96,
+    borderRadius: radius.md,
+    backgroundColor: "rgba(47, 107, 255, 0.18)",
+  },
   tripRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -1289,10 +1364,10 @@ const styles = StyleSheet.create({
   templateRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 16,
+    gap: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    paddingVertical: 18,
+    paddingVertical: 16,
     paddingHorizontal: 14,
     width: "100%",
   },
@@ -1302,15 +1377,6 @@ const styles = StyleSheet.create({
   },
   templateRowFirst: {
     borderTopWidth: 0,
-  },
-  index: {
-    ...type.display,
-    fontSize: 28,
-    fontWeight: "800",
-    color: colors.mist,
-    letterSpacing: -0.5,
-    minWidth: 40,
-    lineHeight: 32,
   },
   denseIndex: {
     ...type.display,
@@ -1347,6 +1413,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  /** Local chip — mist wash (web TripBadgeChip local parity). */
+  badgeChipLocal: {
+    backgroundColor: colors.mist,
+  },
   badgeChipText: {
     ...type.body,
     fontSize: 10,
@@ -1355,11 +1425,14 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: colors.river,
   },
+  badgeChipTextLocal: {
+    color: colors.inkSoft,
+  },
   templateTitle: {
     ...type.display,
     fontSize: 18,
     color: colors.ink,
-    fontWeight: "700",
+    fontWeight: "600",
     letterSpacing: -0.3,
   },
   tripMeta: {
@@ -1371,14 +1444,14 @@ const styles = StyleSheet.create({
   },
   rowMeta: {
     ...type.body,
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.inkSoft,
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "rgba(100, 116, 139, 0.92)",
   },
   templateStats: {
     ...type.body,
-    marginTop: 8,
+    marginTop: 6,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -1394,7 +1467,7 @@ const styles = StyleSheet.create({
   },
   useTpl: {
     alignSelf: "flex-start",
-    marginTop: 14,
+    marginTop: 12,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 10,
