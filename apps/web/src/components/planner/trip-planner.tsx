@@ -191,6 +191,18 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
       return false;
     }
   });
+  /** Craft preview: /trips/…?drawerSoftFail=1 — SoftFail depth under Itinerary (BEA-429). */
+  const [drawerSoftPreview] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("drawerSoftFail") ===
+        "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [pending, startTransition] = useTransition();
   const [duplicating, setDuplicating] = useState(false);
   const [copyJournal, setCopyJournal] = useState(false);
@@ -266,8 +278,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
    * of scope.
    */
   const chipsOwnsSoft = !dayEmpty && !dragOwnsSoft;
+  /**
+   * Drawer SoftFail craft (`?drawerSoftFail=1`) owns Itinerary SoftFail —
+   * chips SoftFail yields so SoftFail can land under the drawer rail (BEA-429).
+   */
   const chipsSoftOpen =
     chipsOwnsSoft &&
+    !drawerSoftPreview &&
     Boolean(
       stopsSoftPreview ||
         plannerNoise ||
@@ -277,7 +294,8 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   const drawerSoftOpen =
     drawerOwnsSoft &&
     Boolean(
-      plannerNoise ||
+      drawerSoftPreview ||
+        plannerNoise ||
         (demoShell && (dayLegs.length > 0 || dayStops.length > 0)),
     );
   const drawerSoftCopy = t(locale, "planner.drawer.softFail");
