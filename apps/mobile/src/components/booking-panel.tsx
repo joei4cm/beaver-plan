@@ -1638,8 +1638,9 @@ const styles = StyleSheet.create({
   openChip: {
     borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47,107,255,0.35)",
-    backgroundColor: "rgba(47,107,255,0.08)",
+    /** Web border-river/35 bg-river/5 (BEA-730). */
+    borderColor: `${colors.river}59`,
+    backgroundColor: `${colors.river}0D`,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
