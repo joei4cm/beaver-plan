@@ -2308,9 +2308,10 @@ export default function TripDetailScreen() {
 
                 {/*
                   Presence SoftFail helpers kept (BEA-392 / BEA-420 / yield #281) +
-                  wave 48 craft residual (BEA-461): active chip elevation · Invite
-                  foam/95 · code eyebrow tracking. SoftFailBadge · SoftFailSupport ·
-                  mist band unchanged. Craft: ?presenceSoftFail=1 — never timber.
+                  wave 48 invite residual (BEA-461) + wave 51 presence pills craft
+                  (BEA-493): eyebrow 1.8 · chip/role type · list status pills.
+                  SoftFailBadge · SoftFailSupport · mist band unchanged. Craft:
+                  ?presenceSoftFail=1 — never timber.
                 */}
                 <View
                   style={styles.presenceChrome}
@@ -2669,12 +2670,26 @@ export default function TripDetailScreen() {
                                   ])}
                                 />
                               </View>
-                              <Text
-                                style={styles.inviteMemberName}
-                                numberOfLines={1}
-                              >
-                                {m.displayName ?? m.userId}
-                              </Text>
+                              <View style={styles.inviteMemberCopy}>
+                                <Text
+                                  style={styles.inviteMemberName}
+                                  numberOfLines={1}
+                                >
+                                  {m.displayName ?? m.userId}
+                                </Text>
+                                <Text
+                                  style={StyleSheet.flatten([
+                                    styles.presenceStatePill,
+                                    presence === "active"
+                                      ? styles.presenceStateActive
+                                      : presence === "idle"
+                                        ? styles.presenceStateIdle
+                                        : styles.presenceStateAway,
+                                  ])}
+                                >
+                                  {t(locale, `collab.presence.${presence}`)}
+                                </Text>
+                              </View>
                             </View>
                             <Text
                               style={StyleSheet.flatten([
@@ -3908,11 +3923,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  /** Presence eyebrow — wave 51 craft residual (BEA-493): 1.8 tracking bar. */
   presenceEyebrow: {
     ...type.body,
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
   },
@@ -3993,7 +4009,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingLeft: 3,
     paddingRight: 8,
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     backgroundColor: colors.foam,
@@ -4001,8 +4017,8 @@ const styles = StyleSheet.create({
   presenceChipActive: {
     borderColor: "rgba(47, 107, 255, 0.28)",
     shadowColor: colors.river,
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
+    shadowOpacity: 0.14,
+    shadowRadius: 7,
     shadowOffset: { width: 0, height: 2 },
   },
   presenceAvatar: {
@@ -4056,11 +4072,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "600",
+    letterSpacing: -0.15,
     color: colors.ink,
   },
+  /** Role pill on presence chips — wave 51 (BEA-493) type bar. */
   presenceRole: {
     fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: radius.xs,
@@ -4075,6 +4095,36 @@ const styles = StyleSheet.create({
     color: colors.riverDeep,
   },
   presenceRoleViewer: {
+    backgroundColor: colors.mist,
+    color: colors.inkSoft,
+  },
+  /** List status pills — web PRESENCE_PILL parity (BEA-493). */
+  presenceStatePill: {
+    ...type.body,
+    alignSelf: "flex-start",
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radius.xs,
+    overflow: "hidden",
+  },
+  presenceStateActive: {
+    backgroundColor: "rgba(47,107,255,0.12)",
+    color: colors.riverDeep,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.river,
+  },
+  presenceStateIdle: {
+    backgroundColor: "rgba(96,165,250,0.15)",
+    color: colors.riverDeep,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.focus,
+  },
+  presenceStateAway: {
     backgroundColor: colors.mist,
     color: colors.inkSoft,
   },
@@ -4436,11 +4486,17 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  inviteMemberCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 2,
+  },
   inviteMemberName: {
     ...type.body,
     flexShrink: 1,
     fontSize: 14,
     fontWeight: "600",
+    letterSpacing: -0.15,
     color: colors.ink,
   },
 
