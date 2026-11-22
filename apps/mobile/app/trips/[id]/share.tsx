@@ -405,7 +405,7 @@ export default function ShareScreen() {
               })}
             </ScrollView>
 
-            {/* Preview stage — foam + river wash + azure rail (#88 / wave 55 tokens) */}
+            {/* Preview stage — foam + river wash + azure rail (#88 / wave 55 + wave 59 tokens) */}
             <View style={styles.canvasStage}>
               <View style={styles.canvasWash} pointerEvents="none" />
               <View style={styles.canvasRail} pointerEvents="none" />
@@ -810,6 +810,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     /** Web foam base — river wash sits in canvasWash (#334 parity) */
     backgroundColor: colors.foam,
+    /** Web shadow-bp-soft — Export rail / stage parity */
+    shadowColor: colors.shadowDeep,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   /** ~18% river on foam — flat RN approx of web canvas wash end-stop */
   canvasWash: {
@@ -853,7 +859,8 @@ const styles = StyleSheet.create({
     ...type.body,
     fontSize: 10,
     letterSpacing: 0.4,
-    color: colors.inkSoft,
+    /** Web text-ink-soft/80 secondary ladder */
+    color: `${colors.inkSoft}CC`,
     fontVariant: ["tabular-nums"],
   },
   preview: {

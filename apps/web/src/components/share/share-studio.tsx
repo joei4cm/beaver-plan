@@ -616,7 +616,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                   </span>
                 )
               ) : (
-                <p className="font-mono text-[10px] tracking-wide text-ink-soft">
+                <p className="font-mono text-[10px] tracking-wide text-ink-soft/80">
                   {active.width}×{active.height} · {SHARE_EXPORT_SCALE}× PNG
                 </p>
               )}
@@ -677,13 +677,13 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
                     {t(locale, "share.canvasEyebrow")}
                   </p>
                   <p
-                    className="animate-rise mt-2 font-display text-2xl font-semibold tracking-tight text-ink md:text-[1.65rem]"
+                    className="animate-rise mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-ink md:text-[1.65rem]"
                     style={{ animationDelay: "70ms" }}
                   >
                     {t(locale, "share.empty")}
                   </p>
                   <p
-                    className="animate-rise mt-2 max-w-sm text-sm leading-relaxed text-ink-soft"
+                    className="animate-rise mt-2 max-w-sm text-sm leading-relaxed text-ink-soft/80"
                     style={{ animationDelay: "100ms" }}
                   >
                     {busy
@@ -707,7 +707,7 @@ export function ShareStudio({ tripId, locale, initialTrip }: Props) {
             </div>
           </div>
           <p
-            className="animate-rise mt-4 max-w-md text-center text-sm leading-relaxed text-ink-soft"
+            className="animate-rise mt-4 max-w-md text-center text-sm leading-relaxed text-ink-soft/80"
             style={{ animationDelay: "70ms" }}
           >
             {trip.title} · {photoCount} {t(locale, "share.photos")}
