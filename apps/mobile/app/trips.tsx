@@ -680,8 +680,8 @@ export default function TripsScreen() {
                 Empty SoftFail depth (BEA-307 after web #224 / Expo #96) +
                 craft SoftFail query parity (BEA-425): azure Start rail · Soft
                 empty badge · emptySoftSupport · compact SoftFailNotice ·
-                tip-011 SheetPresence CTAs / sample cards. Craft:
-                ?emptySoftFail=1 — never timber / Failed to fetch.
+                tip-011 softFailMistWashStyle CTA body · SheetPresence sample
+                cards. Craft: ?emptySoftFail=1 — never timber / Failed to fetch.
               */}
               <View style={styles.listSheet}>
                 <EmptyRail soft={emptySoftOpen} />
@@ -697,7 +697,10 @@ export default function TripsScreen() {
                   open
                   rise={8}
                   delayMs={40}
-                  style={styles.seedActions}
+                  style={StyleSheet.flatten([
+                    styles.seedActions,
+                    emptySoftOpen ? softFailMistWashStyle : null,
+                  ])}
                   accessibilityLabel={t(locale, "trips.seedActions")}
                 >
                   <Pressable
