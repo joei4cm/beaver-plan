@@ -739,68 +739,103 @@ export default function JournalScreen() {
                             {entry.body}
                           </Text>
                         ) : null}
-                        {/* Entry photo strip — lead frame larger (#134 / #124). */}
+                        {/*
+                          Entry photo strip — web EntryPhotoStrip parity (BEA-514):
+                          foam azure rail · support · count · lead · dashed empties
+                          to PHOTO_SLOT_MAX. SoftFail stays on Entries/Compose.
+                        */}
                         <View
-                          style={styles.photoStrip}
+                          style={StyleSheet.flatten([
+                            styles.photoStrip,
+                            scrubMatch ? styles.photoStripActive : null,
+                          ])}
                           accessibilityLabel={t(locale, "journal.photoStrip")}
                         >
-                          {entry.media.length > 0 ? (
-                            <>
-                              <View style={styles.photoStripHead}>
-                                <Text style={styles.photoStripLabel}>
-                                  {t(locale, "journal.photoStrip")}
-                                </Text>
-                                <View style={styles.badge}>
-                                  <Text style={styles.badgeText}>
-                                    {t(locale, "journal.photoCount")
-                                      .replace(
-                                        "{n}",
-                                        String(entry.media.length),
-                                      )
-                                      .replace(
-                                        "{max}",
-                                        String(
-                                          Math.max(
-                                            entry.media.length,
-                                            PHOTO_SLOT_MAX,
-                                          ),
-                                        ),
-                                      )}
-                                  </Text>
-                                </View>
-                              </View>
-                              <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                              >
-                                {entry.media.map((url, mediaIndex) => (
-                                  <Image
-                                    key={`${entry.id}-${mediaIndex}`}
-                                    source={{ uri: resolveMediaUrl(url) }}
-                                    style={StyleSheet.flatten([
-                                      styles.thumb,
-                                      mediaIndex === 0
-                                        ? styles.thumbLead
-                                        : null,
-                                    ])}
-                                  />
-                                ))}
-                              </ScrollView>
-                            </>
-                          ) : (
-                            <>
-                              <Text style={styles.photoSlotsLabel}>
-                                {t(locale, "journal.photoSlots")}
+                          <View style={styles.photoStripHead}>
+                            <View style={styles.photoStripHeadTitle}>
+                              <Text style={styles.photoStripLabel}>
+                                {t(locale, "journal.photoStrip")}
                               </Text>
-                              <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
+                              <Text
+                                style={styles.photoStripSupport}
+                                numberOfLines={1}
                               >
-                                <View style={styles.slot} />
-                                <View style={styles.slot} />
-                              </ScrollView>
-                            </>
-                          )}
+                                {t(locale, "journal.photoStripSupport").replace(
+                                  "{max}",
+                                  String(PHOTO_SLOT_MAX),
+                                )}
+                              </Text>
+                            </View>
+                            <View
+                              style={StyleSheet.flatten([
+                                styles.photoStripCount,
+                                entry.media.length > 0
+                                  ? styles.photoStripCountOn
+                                  : null,
+                              ])}
+                            >
+                              <Text
+                                style={StyleSheet.flatten([
+                                  styles.photoStripCountText,
+                                  entry.media.length > 0
+                                    ? styles.photoStripCountTextOn
+                                    : null,
+                                ])}
+                              >
+                                {t(locale, "journal.photoCount")
+                                  .replace("{n}", String(entry.media.length))
+                                  .replace(
+                                    "{max}",
+                                    String(
+                                      Math.max(
+                                        entry.media.length,
+                                        PHOTO_SLOT_MAX,
+                                      ),
+                                    ),
+                                  )}
+                              </Text>
+                            </View>
+                          </View>
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.photoStripRow}
+                          >
+                            {entry.media
+                              .slice(0, PHOTO_SLOT_MAX)
+                              .map((url, mediaIndex) => (
+                                <Image
+                                  key={`${entry.id}-${mediaIndex}`}
+                                  source={{ uri: resolveMediaUrl(url) }}
+                                  style={StyleSheet.flatten([
+                                    styles.thumb,
+                                    mediaIndex === 0
+                                      ? styles.thumbLead
+                                      : null,
+                                  ])}
+                                />
+                              ))}
+                            {Array.from({
+                              length: Math.max(
+                                0,
+                                PHOTO_SLOT_MAX -
+                                  Math.min(
+                                    entry.media.length,
+                                    PHOTO_SLOT_MAX,
+                                  ),
+                              ),
+                            }).map((_, i) => (
+                              <View
+                                key={`${entry.id}-empty-${i}`}
+                                style={StyleSheet.flatten([
+                                  styles.slot,
+                                  styles.slotEntry,
+                                ])}
+                              >
+                                <Text style={styles.slotEntryMark}>+</Text>
+                              </View>
+                            ))}
+                          </ScrollView>
                         </View>
                       </View>
                     </Pressable>
@@ -983,8 +1018,9 @@ export default function JournalScreen() {
 
                 {/*
                   Compose media rail — BEA-455 nested foam + wave 49 (BEA-476)
-                  tip-011 photo drop press · foam/paper tokens. SoftFail depth
-                  kept elsewhere; no SoftFail reopen here.
+                  tip-011 photo drop press · foam/paper tokens · BEA-514 river/
+                  mist hex-alpha washes. SoftFail depth kept elsewhere; no
+                  SoftFail reopen here.
                 */}
                 <View
                   style={styles.composeMediaRail}
@@ -1290,7 +1326,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     borderRadius: radius.xs,
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** Web bg-river/12 — Lumen river @ 0.12 */
+    backgroundColor: `${colors.river}1F`,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -1436,39 +1473,89 @@ const styles = StyleSheet.create({
   entryBodySelected: {
     fontWeight: "700",
   },
+  /** Nested foam entry strip — web EntryPhotoStrip (BEA-514). */
   photoStrip: {
-    marginTop: 2,
+    marginTop: 8,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.foam,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  photoStripActive: {
+    borderColor: `${colors.river}40`,
   },
   photoStripHead: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "baseline",
     justifyContent: "space-between",
     gap: 8,
-    marginBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.river,
+    /** Web bg-paper/65 — Lumen paper @ ~0.65 */
+    backgroundColor: `${colors.paper}A6`,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  photoStripHeadTitle: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: 8,
   },
   photoStripLabel: {
     ...type.body,
-    fontSize: 11,
-    letterSpacing: 1.4,
+    fontSize: 10,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
     color: colors.river,
-    opacity: 0.8,
     fontWeight: "700",
   },
-  photoSlotsLabel: {
+  photoStripSupport: {
     ...type.body,
+    flexShrink: 1,
     fontSize: 11,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    lineHeight: 16,
     color: colors.inkSoft,
-    opacity: 0.7,
-    fontWeight: "600",
-    marginBottom: 8,
+  },
+  photoStripCount: {
+    borderRadius: radius.xs,
+    backgroundColor: colors.mist,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  photoStripCountOn: {
+    /** Web bg-river/12 */
+    backgroundColor: `${colors.river}1F`,
+  },
+  photoStripCountText: {
+    ...type.body,
+    fontSize: 10,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    color: colors.inkSoft,
+  },
+  photoStripCountTextOn: {
+    color: colors.riverDeep,
+  },
+  photoStripRow: {
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   thumb: {
     width: 72,
     height: 96,
-    marginRight: 8,
+    marginRight: 0,
     borderRadius: radius.sm,
     backgroundColor: colors.mist,
     borderWidth: StyleSheet.hairlineWidth,
@@ -1477,14 +1564,38 @@ const styles = StyleSheet.create({
   thumbLead: {
     width: 84,
     height: 112,
-    borderColor: "rgba(47, 107, 255, 0.35)",
+    /** Web ring-river/40 */
+    borderColor: `${colors.river}59`,
+    shadowColor: colors.river,
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   slot: {
     width: 72,
     height: 96,
     marginRight: 8,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(47, 107, 255, 0.1)",
+    /** Web from-river/[0.05] wash — Lumen river @ 0.1 for empty stage */
+    backgroundColor: `${colors.river}1A`,
+  },
+  slotEntry: {
+    marginRight: 0,
+    width: 72,
+    height: 96,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: "dashed",
+    /** Web border-river/20 */
+    borderColor: `${colors.river}33`,
+    backgroundColor: `${colors.river}0F`,
+  },
+  slotEntryMark: {
+    ...type.body,
+    fontSize: 14,
+    fontWeight: "600",
+    color: `${colors.river}66`,
   },
   slotRow: { flexDirection: "row", marginTop: 16 },
   empty: {
@@ -1719,7 +1830,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   composeMediaCountOn: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** Web bg-river/12 — Lumen river @ 0.12 (BEA-514 gallery tokens). */
+    backgroundColor: `${colors.river}1F`,
   },
   composeMediaCountText: {
     ...type.body,
@@ -1737,8 +1849,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderStyle: "dashed",
-    borderColor: "rgba(47, 107, 255, 0.35)",
-    backgroundColor: "rgba(230, 236, 245, 0.35)",
+    /** Web border-river/35 · mist/35 — Lumen hex-alpha (BEA-514). */
+    borderColor: `${colors.river}59`,
+    backgroundColor: `${colors.mist}59`,
     paddingHorizontal: 14,
     paddingVertical: 16,
     gap: 4,
@@ -1782,12 +1895,14 @@ const styles = StyleSheet.create({
   thumbCompose: {
     marginRight: 0,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(47, 107, 255, 0.3)",
+    /** Web ring-river ~0.3 — Lumen river @ 0.3 (BEA-514). */
+    borderColor: `${colors.river}4D`,
   },
   thumbComposeLead: {
     width: 84,
     height: 112,
-    borderColor: "rgba(47, 107, 255, 0.4)",
+    /** Web ring-river/40 */
+    borderColor: `${colors.river}66`,
     shadowColor: colors.river,
     shadowOpacity: 0.16,
     shadowRadius: 6,
@@ -1801,14 +1916,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderStyle: "dashed",
-    borderColor: "rgba(47, 107, 255, 0.22)",
-    backgroundColor: "rgba(47, 107, 255, 0.06)",
+    /** Web border-river/20 · from-river/[0.06] */
+    borderColor: `${colors.river}38`,
+    backgroundColor: `${colors.river}0F`,
   },
   slotComposeMark: {
     ...type.body,
     fontSize: 14,
     fontWeight: "600",
-    color: "rgba(47, 107, 255, 0.4)",
+    color: `${colors.river}66`,
   },
   disabled: { opacity: 0.4 },
   error: {
