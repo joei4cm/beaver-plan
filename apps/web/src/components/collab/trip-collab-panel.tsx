@@ -39,12 +39,13 @@ function newLocalId(prefix: string) {
 
 /**
  * Collab comments + activity timeline. SoftFail depth kept (BEA-392 / BEA-420 /
- * yield #281) + wave 50 craft (#347 / BEA-479) + wave 55 residual (BEA-532):
- * Timeline empty rise · actor inkSoft/80. Comments thread (BEA-487) unchanged.
- * SoftFailBadge · SoftFailSupport · SoftFailNotice mist band unchanged.
- * Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on Activity;
- * invite SoftFail yields timeline (no double depth). Soft copy never timber /
- * Failed to fetch. No `/dev` gallery.
+ * yield #281) + wave 50 craft (#347 / BEA-479 · #352 / BEA-487) + wave 55:
+ * Timeline residual (BEA-532) empty rise · actor inkSoft/80 + reply compose
+ * residual (BEA-528): Compose azure rail · paper/70 · field rise · mention
+ * tip-011 press. SoftFailBadge · SoftFailSupport · SoftFailNotice mist band
+ * unchanged. Craft: `/trips/…?timelineSoftFail=1`. Panel SoftFail yields on
+ * Activity; invite SoftFail yields timeline (no double depth). Soft copy never
+ * timber / Failed to fetch. No `/dev` gallery.
  */
 export function TripCollabPanel({
   tripId,
@@ -379,8 +380,10 @@ export function TripCollabPanel({
       <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
       {/*
         Comments thread SoftFail depth kept (panel SoftFailNotice + Demo/Live) +
-        wave 50 craft residual (BEA-487): eyebrow 0.18em · tip-011 Post press.
-        Empty rise already #351. SoftFail reopen out of scope. No `/dev` gallery.
+        wave 50 thread craft (BEA-487 / #352): eyebrow 0.18em · tip-011 Post +
+        wave 55 reply compose residual (BEA-528): Compose azure rail · paper/70 ·
+        field rise · mention tip-011. Empty rise already #351. SoftFail reopen
+        out of scope. No `/dev` gallery.
       */}
       <SheetPresence
         open={tab === "comments"}
@@ -467,9 +470,14 @@ export function TripCollabPanel({
             </ul>
           </div>
 
-          <div className="relative border-t border-[color:var(--bp-line)] bg-mist/20 lg:border-l lg:border-t-0">
-            <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/50 px-4 py-2.5">
-              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+          {/*
+            Reply compose residual (BEA-528 beyond thread #352): journal compose
+            chrome bar — azure inset · paper/70 · paper/55 aside · field rise ·
+            mention tip-011. SoftFail untouched. No Expo composer / `/dev`.
+          */}
+          <div className="relative border-t border-[color:var(--bp-line)] bg-paper/55 lg:border-l lg:border-t-0">
+            <header className="flex items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-4 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "collab.panel.composeEyebrow")}
               </span>
             </header>
@@ -485,7 +493,8 @@ export function TripCollabPanel({
                     onChange={(e) => setBody(e.target.value)}
                     rows={4}
                     placeholder={t(locale, "collab.panel.placeholder")}
-                    className="w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/40"
+                    className="animate-rise w-full resize-y rounded-bp-sm border border-[color:var(--bp-line)] bg-foam/90 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-soft/50 transition duration-bp-fast ease-bp-out focus:border-river focus:ring-2 focus:ring-focus/45"
+                    style={{ animationDelay: "40ms" }}
                   />
                   {mentionOpen && mentionCandidates.length > 0 ? (
                     <ul className="absolute left-4 z-10 min-w-[12rem] overflow-hidden rounded-bp border border-[color:var(--bp-line)] bg-foam shadow-bp-soft">
@@ -494,7 +503,7 @@ export function TripCollabPanel({
                           <button
                             type="button"
                             onClick={() => insertMention(name)}
-                            className="block w-full px-3 py-2 text-left text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river"
+                            className="block w-full px-3 py-2 text-left text-sm text-ink transition duration-bp-fast ease-bp-out hover:bg-mist/60 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"
                           >
                             @{name}
                           </button>
@@ -502,7 +511,10 @@ export function TripCollabPanel({
                       ))}
                     </ul>
                   ) : null}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div
+                    className="animate-rise flex flex-wrap items-center justify-between gap-2"
+                    style={{ animationDelay: "80ms" }}
+                  >
                     <label
                       className={`flex items-center gap-2 text-xs text-ink-soft ${
                         selectedStopId ? "cursor-pointer" : "opacity-40"
@@ -533,12 +545,18 @@ export function TripCollabPanel({
                         : t(locale, "collab.panel.post")}
                     </button>
                   </div>
-                  <p className="text-[11px] text-ink-soft/70">
+                  <p
+                    className="animate-rise text-[11px] leading-relaxed text-ink-soft/70"
+                    style={{ animationDelay: "120ms" }}
+                  >
                     {t(locale, "collab.panel.mentionHint")}
                   </p>
                 </div>
               ) : (
-                <p className="rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-mist/40 px-3 py-3 text-sm text-ink-soft">
+                <p
+                  className="animate-rise rounded-bp-sm border border-dashed border-[color:var(--bp-line)] bg-mist/40 px-3 py-3 text-sm leading-relaxed text-ink-soft"
+                  style={{ animationDelay: "40ms" }}
+                >
                   {yourRole
                     ? t(locale, "collab.panel.viewerReadonly")
                     : showLoading
