@@ -92,7 +92,8 @@ export function PlannerSkeleton() {
       aria-live="polite"
       className="mx-auto max-w-[1480px] px-3 pb-16 pt-2 md:px-6 lg:px-8 lg:pt-4"
     >
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
+      {/* Trip header chrome — brand + Export rail rise parity (BEA-524 / Mode #370) */}
+      <div className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
         <div className="space-y-3">
           <Skeleton className="h-3 w-40" />
           <Skeleton className="h-10 w-72 max-w-full" />

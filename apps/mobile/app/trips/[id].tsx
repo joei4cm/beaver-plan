@@ -1200,9 +1200,10 @@ export default function TripDetailScreen() {
 
           {/*
             Title rail — azure inset · Demo/Live/Offline chip · SoftFailNotice ·
-            tip-011 rise. Craft residual (BEA-465 / BEA-503): display weight 700 ·
-            brand 0.65rem tracking · title lineHeight 40 · support inkSoft ·
-            soft-shadow primary CTA · pressed scale.
+            tip-011 rise. Craft residual (BEA-465 / BEA-503 / BEA-524): display
+            weight 700 · brand 0.65rem tracking · title lineHeight 40 · support
+            inkSoft · paper@0.55 wash (web paper/55) · soft-shadow primary CTA ·
+            pressed scale. SoftFail rails unchanged.
           */}
           <Animated.View
             style={StyleSheet.flatten([styles.header, riseStyle])}
@@ -2965,7 +2966,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
     borderLeftWidth: 3,
     borderLeftColor: colors.river,
-    backgroundColor: "rgba(244, 246, 250, 0.55)",
+    /** Web paper/55 — Lumen paper @ 0.55 (BEA-524 beyond #336/#363). */
+    backgroundColor: `${colors.paper}8C`,
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 14,
@@ -3000,7 +3002,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mist,
   },
   statusChipLive: {
-    backgroundColor: "rgba(47, 107, 255, 0.12)",
+    /** River @ 0.12 — token alpha (BEA-524). */
+    backgroundColor: `${colors.river}1F`,
   },
   statusChipText: {
     ...type.body,
@@ -3064,7 +3067,8 @@ const styles = StyleSheet.create({
   },
   actionOutline: {
     backgroundColor: colors.foam,
-    borderColor: "rgba(47, 107, 255, 0.4)",
+    /** River @ 0.4 — token alpha (BEA-524). */
+    borderColor: `${colors.river}66`,
   },
   actionLabel: {
     ...type.body,

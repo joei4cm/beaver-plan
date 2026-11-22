@@ -1002,11 +1002,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
   return (
     <div className="mx-auto max-w-[1480px] px-3 pb-16 pt-2 md:px-6 lg:px-8 lg:pt-4">
       {/*
-        Share CTA SoftFail depth (BEA-362 after #121):
-        azure Export rail · Soft share badge · softSupport · compact SoftFail
-        mist band · tip-011 mist-wash CTA · Craft: ?shareSoftFail=1 · yield
-        share export SoftFail (#255) / share studio SoftFail (#243) on /share —
-        never timber / Failed to fetch.
+        Trip header chrome craft residual (BEA-524 / wave 54) beyond Share SoftFail
+        depth (#268 / BEA-362) + Share CTA hierarchy (#121): brand eyebrow kept
+        `0.26em` · Export azure rail eyebrow `0.65rem` / `0.18em` (Mode #370 /
+        Studio Export #364 parity) · tip-011 `active:scale-[0.98]` on Journal /
+        Share / Duplicate · SoftFail rails unchanged. Craft: ?shareSoftFail=1 ·
+        yield share export SoftFail (#255) / share studio SoftFail (#243) on
+        /share — never timber / Failed to fetch. No `/dev` gallery.
       */}
       <header className="animate-rise mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-[color:var(--bp-line)] pb-4">
         <div>
@@ -1023,7 +1025,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
         <div className="flex min-w-0 w-full flex-col overflow-hidden rounded-bp-sm border border-[color:var(--bp-line)] bg-foam shadow-bp-soft sm:max-w-xl sm:w-auto">
           <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--bp-line)] bg-paper/70 px-3 py-2.5 shadow-[inset_3px_0_0_var(--bp-river)]">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-river">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-river">
                 {t(locale, "planner.shareEyebrow")}
               </span>
               <SoftFailSupport>{shareSupportCopy}</SoftFailSupport>
@@ -1080,7 +1082,7 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
                 type="button"
                 disabled={duplicating}
                 onClick={() => void duplicateTrip()}
-                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 bp-transition hover:text-river hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
+                className="rounded-bp-xs px-2.5 py-1.5 text-ink-soft underline-offset-4 transition duration-bp-fast ease-bp-out hover:text-river hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:opacity-40"
               >
                 {duplicating
                   ? t(locale, "planner.duplicating")
@@ -1089,13 +1091,13 @@ export function TripPlanner({ tripId, locale, initial }: Props) {
             </div>
             <Link
               href={`/trips/${tripId}/journal`}
-              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft bp-transition hover:border-river/40 hover:text-river focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              className="rounded-bp border border-[color:var(--bp-line)] bg-foam/80 px-3.5 py-1.5 font-medium text-ink-soft transition duration-bp-fast ease-bp-out hover:border-river/40 hover:text-river active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "nav.journal")}
             </Link>
             <Link
               href={`/trips/${tripId}/share`}
-              className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft bp-transition hover:bg-river-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              className="rounded-bp bg-river px-4 py-2 font-semibold tracking-wide text-foam shadow-bp-soft transition duration-bp ease-bp-out-strong hover:bg-river-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t(locale, "planner.shareCta")}
             </Link>
