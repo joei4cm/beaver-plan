@@ -1524,7 +1524,8 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
-    backgroundColor: "rgba(244,246,250,0.7)",
+    /** Web bg-paper/70 · OTA header twin (BEA-746; α preserved). */
+    backgroundColor: `${colors.paper}B3`,
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderLeftWidth: 3,
