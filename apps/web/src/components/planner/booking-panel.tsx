@@ -150,11 +150,13 @@ async function searchLocal(
  * tip-011 / #484–#488 twin). Wave 74 (BEA-801): OTA sheet accordion header
  * mist hover → `ease-bp-out-strong` (day-fill accordion twin). Wave 74
  * (BEA-805): Confirm draft + OTA offer card shells border-color settle →
- * `ease-bp-out-strong` (W73 invent #6; CTA/chips already strong). SoftFail
- * stays under OTA / Confirm rails; craft `?otaSoftFail=1` /
- * `?confirmSoftFail=1`. Confirm SoftFail yields OTA (no double depth).
- * SoftFail Soft / Confirm nest hex / prefer LIVE leave. Never timber /
- * Failed to fetch. No `/dev` gallery.
+ * `ease-bp-out-strong` (W73 invent #6; CTA/chips already strong). Wave 74
+ * (BEA-807): kind-filter chips densify bare `bp-transition` →
+ * `ease-bp-out-strong` (day-fill interest #490 / Mode·Stops #485 / tip-011
+ * twin; share accent swatches leave). SoftFail stays under OTA / Confirm
+ * rails; craft `?otaSoftFail=1` / `?confirmSoftFail=1`. Confirm SoftFail
+ * yields OTA (no double depth). SoftFail Soft / Confirm nest hex / prefer
+ * LIVE leave. Never timber / Failed to fetch. No `/dev` gallery.
  */
 export function BookingPanel({
   tripId,
@@ -531,6 +533,14 @@ export function BookingPanel({
               <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
                 {t(locale, "planner.booking.filterLabel")}
               </div>
+              {/*
+                Kind-filter chip color settle (BEA-807 / wave 74): bare
+                `bp-transition` (`--bp-ease-out`) → `ease-bp-out-strong` —
+                day-fill interest #490 · Mode/Stops #485 · tip-011 /
+                #484–#496 twin. SoftFail / Confirm nest hex / BEA-805 card
+                shells / accordion (#493) / share accent swatches leave.
+                Motion-only filter chips — keep press / animate-stop-select.
+              */}
               <div
                 className="flex flex-wrap gap-0.5 rounded-bp-sm bg-mist/50 p-1"
                 role="group"
@@ -544,7 +554,7 @@ export function BookingPanel({
                       type="button"
                       aria-pressed={on}
                       onClick={() => setKindFilter(id)}
-                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold bp-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
+                      className={`rounded-bp-xs px-3 py-1.5 text-sm font-semibold transition duration-bp-fast ease-bp-out-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${
                         on
                           ? "animate-stop-select bg-foam text-river shadow-bp-soft ring-1 ring-river/25"
                           : "text-ink-soft hover:bg-foam/70 hover:text-river"
